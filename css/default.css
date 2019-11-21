@@ -1,5 +1,8 @@
 ﻿body {
-  /* Uncomment this to enable scrolling and zooming
   touch-action: manipulation;
-  */
+}
+
+.instrument {
+  border: black 1px;
+  margin: 2px;
 }

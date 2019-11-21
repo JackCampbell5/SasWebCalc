@@ -7,14 +7,24 @@
     <script src="js/main.js"></script>
 </head>
 <body>
-    <div>
-        <form target="#" onchange="main.js">
-            <select id="instrument">
-                <option value="NGB10m">NGB 10m SANS</option>
-                <option value="NGB30m">NGB 30m SANS</option>
-                <option value="NG7">NG7 SANS</option>
-                <option value="VSANS">VSANS</option>
-            </select>
+    <div id="SASWEBCALC">
+        <form target="#">
+            <div class="instrument">
+                <label for="instrument">Instrument: </label>
+                <select id="instrument" onchange="changeInstrument('instrument', 'traditionalSANS', 'VSANS')">
+                    <option value="" selected disabled hidden>Choose your instrument</option>
+                    <option value="NGB30m">NGB 30m SANS</option>
+                    <option value="NG7">NG7 SANS</option>
+                    <option value="NGB10m">NGB 10m SANS</option>
+                    <option value="VSANS">VSANS</option>
+                </select>
+            </div>
+            <div id="traditionalSANS" style="display: none">
+                <p>A web based SASCALC Coming Soon!</p>
+            </div>
+            <div id="VSANS" style="display: none">
+                <p>A web based VCALC Coming Soon!</p>
+            </div>
         </form>
     </div>
 </body>
