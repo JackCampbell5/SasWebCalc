@@ -1,93 +1,147 @@
 ﻿function loadpage() {
-    var ctx = document.getElementById('sansChart').getContext('2d');
+    var ngb30ctx = document.getElementById('ngb30SansChart').getContext('2d');
+    var ngb10ctx = document.getElementById('ngb10SansChart').getContext('2d');
+    var ng7ctx = document.getElementById('ng7SansChart').getContext('2d');
     var vctx = document.getElementById('vsansChart').getContext('2d');
-    var myChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-            datasets: [{
-                label: '# of Votes',
-                data: [12, 19, 3, 5, 2, 3],
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(54, 162, 235, 0.2)',
-                    'rgba(255, 206, 86, 0.2)',
-                    'rgba(75, 192, 192, 0.2)',
-                    'rgba(153, 102, 255, 0.2)',
-                    'rgba(255, 159, 64, 0.2)'
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
-                    'rgba(255, 159, 64, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true
-                    }
-                }]
-            }
+    // TODO: Create real base data sets
+    var sansDataSets = [
+        {
+            label: 'Sample 1',
+            backgroundColor: window.chartColors.red,
+            borderColor: window.chartColors.red,
+            data: [12, 19, 3, 5, 2, 3],
+            fill: false
         }
-    });
-    var myvChart = new Chart(vctx, {
-        type: 'bar',
-        data: {
-            labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-            datasets: [{
-                label: '# of Votes',
-                data: [12, 19, 3, 5, 2, 3],
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(54, 162, 235, 0.2)',
-                    'rgba(255, 206, 86, 0.2)',
-                    'rgba(75, 192, 192, 0.2)',
-                    'rgba(153, 102, 255, 0.2)',
-                    'rgba(255, 159, 64, 0.2)'
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)',
-                    'rgba(255, 159, 64, 1)'
-                ],
-                borderWidth: 1
-            }]
+    ]
+    var vsansDataSets = [
+        {
+            label: 'Sample 1 - FT',
+            backgroundColor: window.chartColors.red,
+            borderColor: window.chartColors.red,
+            data: [12, 19, 3, 5, 2, 3],
+            fill: false
         },
-        options: {
-            scales: {
-                yAxes: [{
-                    ticks: {
-                        beginAtZero: true
-                    }
-                }]
-            }
+        {
+            label: 'Sample 1 - FB',
+            backgroundColor: window.chartColors.red,
+            borderColor: window.chartColors.red,
+            data: [12, 19, 3, 5, 2, 3],
+            fill: false
+        },
+        {
+            label: 'Sample 1 - FL',
+            backgroundColor: window.chartColors.red,
+            borderColor: window.chartColors.red,
+            data: [12, 19, 3, 5, 2, 3],
+            fill: false
+        },
+        {
+            label: 'Sample 1 - FR',
+            backgroundColor: window.chartColors.red,
+            borderColor: window.chartColors.red,
+            data: [12, 19, 3, 5, 2, 3],
+            fill: false
+        },
+        {
+            label: 'Sample 1 - MT',
+            backgroundColor: window.chartColors.red,
+            borderColor: window.chartColors.red,
+            data: [12, 19, 3, 5, 2, 3],
+            fill: false
+        },
+        {
+            label: 'Sample 1 - MB',
+            backgroundColor: window.chartColors.red,
+            borderColor: window.chartColors.red,
+            data: [12, 19, 3, 5, 2, 3],
+            fill: false
+        },
+        {
+            label: 'Sample 1 - ML',
+            backgroundColor: window.chartColors.red,
+            borderColor: window.chartColors.red,
+            data: [12, 19, 3, 5, 2, 3],
+            fill: false
+        },
+        {
+            label: 'Sample 1 - MB',
+            backgroundColor: window.chartColors.red,
+            borderColor: window.chartColors.red,
+            data: [12, 19, 3, 5, 2, 3],
+            fill: false
+        },
+        {
+            label: 'Sample 1 - B',
+            backgroundColor: window.chartColors.red,
+            borderColor: window.chartColors.red,
+            data: [12, 19, 3, 5, 2, 3],
+            fill: false
         }
+    ]
+
+    var options = {
+        responsive: true,
+        title: {display: false },
+        tooltips: {mode: 'index', intersect: false,},
+        hover: {mode: 'nearest', intersect: true},
+        scales: {
+            xAxes: [{
+                display: true,
+                scaleLabel: { display: true, labelString: "Q (Å^-1)"}
+            }],
+            yAxes: [{
+                display: true,
+                scaleLabel: { display: true, labelString: 'Relative Intensity (Au)'},
+                ticks: {suggestedMin: 0, suggestedMax: 100, suggestedStepSize: 5}
+            }]
+        }
+    }
+
+    update1DChart(ngb30ctx, [0, 1, 2, 3, 4, 5], sansDataSets, options);
+    update1DChart(ngb10ctx, [0, 1, 2, 3, 4, 5], sansDataSets, options);
+    update1DChart(ng7ctx, [0, 1, 2, 3, 4, 5], sansDataSets, options);
+    update1DChart(vctx, [0, 1, 2, 3, 4, 5], vsansDataSets, options);
+}
+
+function updateConfiguration() {
+    
+}
+
+function changeInstrument(instrument, instrumentOptions) {
+    var inst = document.getElementById(instrument);
+    var instruments = {};
+    var instName = "";
+    for (var i in instrumentOptions) {
+        instName = instrumentOptions[i]
+        instruments[instName] = document.getElementById(instName);
+    }
+    var selectStr = inst.options[inst.selectedIndex].value;
+    for (var key in instruments) {
+        if (key === selectStr) {
+            instruments[key].style.display = "block";
+        } else {
+            instruments[key].style.display = "none";
+        }
+    }
+}
+
+function update1DChart(chartElement, xAxis, yDataSets, dataOptions) {
+    var chart = new Chart(chartElement, {
+        type: 'line',
+        data: {
+            labels: xAxis,
+            datasets: yDataSets
+        },
+        options: dataOptions
     });
 }
 
-function changeInstrument(instrument, generalSANS, VSANS) {
-    var inst = document.getElementById(instrument)
-    var genSANS = document.getElementById(generalSANS)
-    var vSANS = document.getElementById(VSANS)
-    var selectStr = inst.options[inst.selectedIndex].value;
-    if (selectStr === "VSANS") {
-        vSANS.style.display = "block";
-        genSANS.style.display = "none";
-    } else if (selectStr === "NGB30m" || selectStr === "NGB10m" || selectStr === "NG7") {
-        genSANS.style.display = "block";
-        vSANS.style.display = "none";
-    } else {
-        genSANS.style.display = "none";
-        vSANS.style.display = "none";
-    }
-}
+window.chartColors = {
+    red: 'rgb(255, 99, 132)',
+    orange: 'rgb(255, 159, 64)',
+    yellow: 'rgb(255, 205, 86)',
+    green: 'rgb(75, 192, 192)',
+    blue: 'rgb(54, 162, 235)',
+    purple: 'rgb(153, 102, 255)',
+    grey: 'rgb(201, 203, 207)'
+};

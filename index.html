@@ -3,32 +3,93 @@
 <head>
     <meta charset="utf-8" />
     <title>SASCalc Web App</title>
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700" rel="stylesheet" />
+    <link rel="shortcut icon" href="https://www.nist.gov/sites/all/themes/nist_style/favicon.ico" type="image/vnd.microsoft.icon" />
+    <link rel="stylesheet" href="css/drupal_header.css" />
     <link href="css/default.css" rel="stylesheet" />
     <script src="js/main.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.js"></script>
 </head>
 <body onload="loadpage()">
-    <div id="SASWEBCALC">
-        <form target="#">
-            <div class="instrument">
-                <label for="instrument">Instrument: </label>
-                <select id="instrument" onchange="changeInstrument('instrument', 'traditionalSANS', 'VSANS')">
-                    <option value="" selected disabled hidden>Choose your instrument</option>
-                    <option value="NGB30m">NGB 30m SANS</option>
-                    <option value="NG7">NG7 SANS</option>
-                    <option value="NGB10m">NGB 10m SANS</option>
-                    <option value="VSANS">VSANS</option>
-                </select>
+    <header class="top">
+        <div class="section-header">
+            <div class="section-header__main">
+                <h1 class="section-header__title"><a href="https://www.nist.gov/ncnr">NIST Center for Neutron Research</a></h1>
             </div>
-            <div id="traditionalSANS" style="display: none">
-                <p>A web based SASCALC Coming Soon!</p>
-                <canvas id="sansChart" width="400" height="400"></canvas>
+        </div>
+    </header>
+    <header class="title"><h1>SASCALC on the Web</h1></header>
+    <div class="content">
+        <div class="centered-column" id="preamble">
+            <div id="SASWEBCALC">
+                <form target="#">
+                    <div class="instrument">
+                        <label for="instrument">Instrument: </label>
+                        <select id="instrumentSelector" onchange="changeInstrument('instrumentSelector', ['NGB30m', 'NG7', 'NGB10m', 'VSANS'])">
+                            <option value="" selected disabled hidden>Choose your instrument</option>
+                            <option value="NGB30m">NGB 30m SANS</option>
+                            <option value="NG7">NG7 SANS</option>
+                            <option value="NGB10m">NGB 10m SANS</option>
+                            <option value="VSANS">VSANS</option>
+                        </select>
+                    </div>
+                    <div id="NGB30m" style="display: none">
+                        <label for="ngb30GuideConfig">Guides: </label>
+                        <select id="ngb30GuideConfig" onchange="updateConfiguration()">
+                            <option selected value="0_143">0 Guides, 1.43 cm Aperture</option>
+                            <option value="0_254">0 Guides, 2.54 cm Aperture</option>
+                            <option value="0_381">0 Guides, 3.81 cm Aperture</option>
+                            <option value="1">1 Guide, 5.08 cm Aperture</option>
+                            <option value="2">2 Guide, 5.08 cm Aperture</option>
+                            <option value="3">3 Guide, 5.08 cm Aperture</option>
+                            <option value="4">4 Guide, 5.08 cm Aperture</option>
+                            <option value="5">5 Guide, 5.08 cm Aperture</option>
+                            <option value="6">6 Guide, 5.08 cm Aperture</option>
+                            <option value="7_500">7 Guide, 5.00 cm Aperture</option>
+                            <option value="7_250">7 Guide, 2.50 cm Aperture</option>
+                            <option value="7_095">7 Guide, 0.95 cm Aperture</option>
+                            <option value="8">8 Guide, 5.08 cm Aperture</option>
+                            <option value="LENS">LENS</option>
+                        </select>
+                        <div class="canvas"><canvas id="ngb30SansChart"></canvas></div>
+                    </div>
+                    <div id="NG7" style="display: none">
+                        <label for="ng7GuideConfig">Guides: </label>
+                        <select id="ng7GuideConfig" onchange="updateConfiguration()">
+                            <option selected value="0_143">0 Guides, 1.43 cm Aperture</option>
+                            <option value="0_254">0 Guides, 2.54 cm Aperture</option>
+                            <option value="0_381">0 Guides, 3.81 cm Aperture</option>
+                            <option value="1">1 Guide, 5.08 cm Aperture</option>
+                            <option value="2">2 Guide, 5.08 cm Aperture</option>
+                            <option value="3">3 Guide, 5.08 cm Aperture</option>
+                            <option value="4">4 Guide, 5.08 cm Aperture</option>
+                            <option value="5">5 Guide, 5.08 cm Aperture</option>
+                            <option value="6">6 Guide, 5.08 cm Aperture</option>
+                            <option value="7">7 Guide, 5.08 cm Aperture</option>
+                            <option value="8">8 Guide, 5.08 cm Aperture</option>
+                            <option value="LENS">LENS</option>
+                        </select>
+                        <div class="canvas"><canvas id="ng7SansChart"></canvas></div>
+                    </div>
+                    <div id="NGB10m" style="display: none">
+                        <label for="ngb10mGuideConfig">Guides: </label>
+                        <select id="ngb10mGuideConfig" onchange="updateConfiguration()">
+                            <option selected value="0_13">0 Guides, 1.3 cm Aperture</option>
+                            <option value="0_25">0 Guides, 2.5 cm Aperture</option>
+                            <option value="0_38">0 Guides, 3.8 cm Aperture</option>
+                            <option value="1">1 Guide, 5.08 cm Aperture</option>
+                            <option value="2">2 Guide, 5.08 cm Aperture</option>
+                        </select>
+                        <div class="canvas"><canvas id="ngb10SansChart"></canvas></div>
+                    </div>
+                    <div id="VSANS" style="display: none">
+                        <div class="canvas"><canvas id="vsansChart"></canvas></div>
+                    </div>
+                </form>
             </div>
-            <div id="VSANS" style="display: none">
-                <p>A web based VCALC Coming Soon!</p>
-                <canvas id="vsansChart" width="400" height="400"></canvas>
-            </div>
-        </form>
+        </div>
+        <div class="centered-column" id="postscript">
+        </div>
     </div>
 </body>
 </html>
