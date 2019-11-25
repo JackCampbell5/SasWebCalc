@@ -23,6 +23,7 @@ div.centered-column {
 
 div#SASWEBCALC {
     text-align: left;
+    min-width: 300px;
 }
 
 div.instrument {
@@ -32,6 +33,9 @@ div.instrument {
 }
 
 div.canvas {
-    width: auto;
+    width: 100%;
     height: auto;
+}
+
+.slider {
 }

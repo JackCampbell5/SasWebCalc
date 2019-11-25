@@ -6,7 +6,7 @@
     // TODO: Create real base data sets
     var sansDataSets = [
         {
-            label: 'Sample 1',
+            label: 'Data',
             backgroundColor: window.chartColors.red,
             borderColor: window.chartColors.red,
             data: [12, 19, 3, 5, 2, 3],
@@ -101,21 +101,48 @@
     update1DChart(ngb10ctx, [0, 1, 2, 3, 4, 5], sansDataSets, options);
     update1DChart(ng7ctx, [0, 1, 2, 3, 4, 5], sansDataSets, options);
     update1DChart(vctx, [0, 1, 2, 3, 4, 5], vsansDataSets, options);
-}
+    //restorePersistantState();
+};
 
 function updateConfiguration() {
-    
+    // TODO: Run calculation, update charts, etc.
+
 }
 
-function changeInstrument(instrument, instrumentOptions) {
-    var inst = document.getElementById(instrument);
+function updateGuides(instrument, guideSelectStr) {
+    var apertureNode = document.getElementById(instrument + "SourceAperture");
+    var allApertureOptions = Object.values(apertureNode.options);
+    var aperturesName = instrument + "SourceApertures";
+    var guideApertureOptions = Object.values(window[aperturesName][guideSelectStr]).join(" ");
+    for (aperture in allApertureOptions) {
+        var apertureValue = allApertureOptions[aperture].value.toString();
+        if (guideApertureOptions.includes(apertureValue)) {
+            allApertureOptions[aperture].disabled = false;
+            allApertureOptions[aperture].hidden = false;
+            allApertureOptions[aperture].selected = true;
+        } else {
+            allApertureOptions[aperture].disabled = true;
+            allApertureOptions[aperture].hidden = true;
+        }
+    }
+    sessionStorage.setItem(instrument + "GuideConfig", guideSelectStr);
+    updateConfiguration();
+};
+
+function changeInstrument(domName, selectStr) {
+    var inst = document.getElementById(domName);
+    var instrumentOptions = [];
+    for (var i = 0; i < inst.options.length; i++) {
+        instrumentOptions.push(inst.options[i].value);
+    }
     var instruments = {};
     var instName = "";
-    for (var i in instrumentOptions) {
-        instName = instrumentOptions[i]
-        instruments[instName] = document.getElementById(instName);
+    for (var j in instrumentOptions) {
+        instName = instrumentOptions[j]
+        if (!(instName === "")) {
+            instruments[instName] = document.getElementById(instName);
+        }
     }
-    var selectStr = inst.options[inst.selectedIndex].value;
     for (var key in instruments) {
         if (key === selectStr) {
             instruments[key].style.display = "block";
@@ -123,7 +150,9 @@ function changeInstrument(instrument, instrumentOptions) {
             instruments[key].style.display = "none";
         }
     }
-}
+    sessionStorage.setItem('instrument', selectStr);
+    updateConfiguration();
+};
 
 function update1DChart(chartElement, xAxis, yDataSets, dataOptions) {
     var chart = new Chart(chartElement, {
@@ -136,6 +165,15 @@ function update1DChart(chartElement, xAxis, yDataSets, dataOptions) {
     });
 }
 
+function restorePersistantState() {
+    // TODO: 
+    var instrument = sessionStorage.getItem('instrument');
+    changeInstrument('instrumentSelector', instrument);
+    var ng7GuideConfig = sessionStorage.getItem('NG7GuideConfig');
+    updateGuides(instrument, ng7GuideConfig);
+    updateConfiguration();
+}
+
 window.chartColors = {
     red: 'rgb(255, 99, 132)',
     orange: 'rgb(255, 159, 64)',
@@ -144,4 +182,36 @@ window.chartColors = {
     blue: 'rgb(54, 162, 235)',
     purple: 'rgb(153, 102, 255)',
     grey: 'rgb(201, 203, 207)'
+};
+
+window.ngb30SourceApertures = {
+    '0': ['1.43', '2.54', '3.81'],
+    '1': ['5.08'],
+    '2': ['5.08'],
+    '3': ['5.08'],
+    '4': ['5.08'],
+    '5': ['5.08'],
+    '6': ['5.08'],
+    '7': ['5.00', '2.50', '0.95'],
+    '8': ['5.08'],
+    'LENS': ['1.43'],
+};
+
+window.ng7SourceApertures = {
+    '0': ['1.43', '2.54', '3.81'],
+    '1': ['5.08'],
+    '2': ['5.08'],
+    '3': ['5.08'],
+    '4': ['5.08'],
+    '5': ['5.08'],
+    '6': ['5.08'],
+    '7': ['5.08'],
+    '8': ['5.08'],
+    'LENS': ['1.43'],
+};
+
+window.ngb10SourceApertures = {
+    '0': ['1.3', '2.5', '3.8'],
+    '1': ['5.0'],
+    '2': ['5.0'],
 };
