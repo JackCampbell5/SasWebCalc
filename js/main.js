@@ -129,6 +129,20 @@ function updateGuides(instrument, guideSelectStr) {
     updateConfiguration();
 };
 
+function updateAperture(instrument) {
+    var instStr = instrument.toString();
+    var customAperture = document.getElementById(instStr + 'CustomAperture');
+    var customApertureLabel = document.getElementById(instStr + 'CustomApertureLabel');
+    var sampleApertureSelector = document.getElementById(instStr + 'SampleAperture');
+    if (sampleApertureSelector.value === "Custom") {
+        customAperture.style.display = 'inline-block';
+        customApertureLabel.style.display = 'inline-block';;
+    } else {
+        customAperture.style.display = 'none';
+        customApertureLabel.style.display = 'none';
+    }
+}
+
 function changeInstrument(domName, selectStr) {
     var inst = document.getElementById(domName);
     var instrumentOptions = [];
@@ -166,11 +180,13 @@ function update1DChart(chartElement, xAxis, yDataSets, dataOptions) {
 }
 
 function restorePersistantState() {
-    // TODO: 
+    // TODO: Update values on screen when values are loaded
     var instrument = sessionStorage.getItem('instrument');
-    changeInstrument('instrumentSelector', instrument);
-    var ng7GuideConfig = sessionStorage.getItem('NG7GuideConfig');
-    updateGuides(instrument, ng7GuideConfig);
+    var instSelector = document.getElementById('instrumentSelector');
+    instSelector.value = instrument;
+    var ng7GuideConfig = sessionStorage.getItem('ng7GuideConfig');
+    var ng7GuideSelector = document.getElementById('ng7GuideConfig');
+    ng7GuideSelector.value = ng7GuideConfig;
     updateConfiguration();
 }
 
