@@ -104,16 +104,26 @@
     //restorePersistantState();
 };
 
-function updateConfiguration() {
+/*
+ * Run SASCALC for the current instrument and model
+ */
+function SASCALC(instrument, model="Debye") {
     // TODO: Run calculation, update charts, etc.
-
+    // TODO: Calculate beamstop diameter
+    // TODO: Do Circular Average of all 1s
+    // TODO: Calculate model in Q range
 }
 
+/*
+ * Use the updated guide values to calculate the Q ranges for the current instrument
+ */
 function updateGuides(instrument, guideSelectStr) {
+    // Get guide nodes for the specific instrument
     var apertureNode = document.getElementById(instrument + "SourceAperture");
     var allApertureOptions = Object.values(apertureNode.options);
     var aperturesName = instrument + "SourceApertures";
     var guideApertureOptions = Object.values(window[aperturesName][guideSelectStr]).join(" ");
+    // Show only source apertures allowed for the current guide configuration
     for (aperture in allApertureOptions) {
         var apertureValue = allApertureOptions[aperture].value.toString();
         if (guideApertureOptions.includes(apertureValue)) {
@@ -125,15 +135,43 @@ function updateGuides(instrument, guideSelectStr) {
             allApertureOptions[aperture].hidden = true;
         }
     }
+    // Store the guide configuration to the persistant state
     sessionStorage.setItem(instrument + "GuideConfig", guideSelectStr);
-    updateConfiguration();
+    // Recalculate q range
+    SASCALC(instrument);
 };
 
+/*
+ * Use the updated detector values to calculate the Q ranges for the current instrument
+ */
+function updateDetector(instrument) {
+    // Get detector nodes for the specific instrument
+    var detectorSlider = document.getElementById(instrument + "SDDSliderBar");
+    var detectorOutput = document.getElementById(instrument + "SDDInputBox");
+    var offsetSlider = document.getElementById(instrument + "OffsetSliderBar");
+    var offsetOutput = document.getElementById(instrument + "OffsetInputBox");
+    // Set outputs and sliders to the same value
+    detectorOutput.value = detectorSlider.value;
+    offsetOutput.value = offsetSlider.value;
+    // Update the current slider value (each time you drag the slider handle)
+    detectorSlider.oninput = function () { detectorOutput.value = this.value; }
+    detectorOutput.oninput = function () { detectorSlider.value = this.value; }
+    offsetSlider.oninput = function () { offsetOutput.value = this.value; }
+    offsetOutput.oninput = function () { offsetSlider.value = this.value; }
+    // Recalculate q range
+    SASCALC(instrument);
+}
+
+/*
+ * Use the updated aperture values to calculate the Q ranges for the current instrument
+ */
 function updateAperture(instrument) {
+    // Get aperture nodes for the specific instrument
     var instStr = instrument.toString();
     var customAperture = document.getElementById(instStr + 'CustomAperture');
     var customApertureLabel = document.getElementById(instStr + 'CustomApertureLabel');
     var sampleApertureSelector = document.getElementById(instStr + 'SampleAperture');
+    // Show/hide custom aperture size box
     if (sampleApertureSelector.value === "Custom") {
         customAperture.style.display = 'inline-block';
         customApertureLabel.style.display = 'inline-block';;
@@ -141,8 +179,13 @@ function updateAperture(instrument) {
         customAperture.style.display = 'none';
         customApertureLabel.style.display = 'none';
     }
+    // Recalculate q range
+    SASCALC(instrument);
 }
 
+/*
+ * Change the instrument you want to calculate Q ranges for
+ */
 function changeInstrument(domName, selectStr) {
     var inst = document.getElementById(domName);
     var instrumentOptions = [];
@@ -165,9 +208,13 @@ function changeInstrument(domName, selectStr) {
         }
     }
     sessionStorage.setItem('instrument', selectStr);
-    updateConfiguration();
+    SASCALC(instrument);
 };
 
+
+/*
+ * Update the 1D Chart with new data sets
+ */
 function update1DChart(chartElement, xAxis, yDataSets, dataOptions) {
     var chart = new Chart(chartElement, {
         type: 'line',
@@ -179,6 +226,9 @@ function update1DChart(chartElement, xAxis, yDataSets, dataOptions) {
     });
 }
 
+/*
+ * Restore the persistant state on refresh
+ */
 function restorePersistantState() {
     // TODO: Update values on screen when values are loaded
     var instrument = sessionStorage.getItem('instrument');
@@ -187,47 +237,5 @@ function restorePersistantState() {
     var ng7GuideConfig = sessionStorage.getItem('ng7GuideConfig');
     var ng7GuideSelector = document.getElementById('ng7GuideConfig');
     ng7GuideSelector.value = ng7GuideConfig;
-    updateConfiguration();
+    SASCALC(instrument);
 }
-
-window.chartColors = {
-    red: 'rgb(255, 99, 132)',
-    orange: 'rgb(255, 159, 64)',
-    yellow: 'rgb(255, 205, 86)',
-    green: 'rgb(75, 192, 192)',
-    blue: 'rgb(54, 162, 235)',
-    purple: 'rgb(153, 102, 255)',
-    grey: 'rgb(201, 203, 207)'
-};
-
-window.ngb30SourceApertures = {
-    '0': ['1.43', '2.54', '3.81'],
-    '1': ['5.08'],
-    '2': ['5.08'],
-    '3': ['5.08'],
-    '4': ['5.08'],
-    '5': ['5.08'],
-    '6': ['5.08'],
-    '7': ['5.00', '2.50', '0.95'],
-    '8': ['5.08'],
-    'LENS': ['1.43'],
-};
-
-window.ng7SourceApertures = {
-    '0': ['1.43', '2.54', '3.81'],
-    '1': ['5.08'],
-    '2': ['5.08'],
-    '3': ['5.08'],
-    '4': ['5.08'],
-    '5': ['5.08'],
-    '6': ['5.08'],
-    '7': ['5.08'],
-    '8': ['5.08'],
-    'LENS': ['1.43'],
-};
-
-window.ngb10SourceApertures = {
-    '0': ['1.3', '2.5', '3.8'],
-    '1': ['5.0'],
-    '2': ['5.0'],
-};

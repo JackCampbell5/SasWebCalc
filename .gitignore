@@ -1,0 +1,9 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/saswebcalc_TemporaryKey.pfx
+/saswebcalc.jsproj.user
+/saswebcalc.jsproj
+/package.appxmanifest
+/bld/Debug/winrtrefs
