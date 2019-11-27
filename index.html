@@ -77,6 +77,14 @@
 
                     <!-- NG7 30m SANS -->
                     <div id="ng7" style="display: none">
+                        <h3>Sample Space:</h3>
+                        <div id="ng7Sample" class="instrument-section">
+                            <label for="ng7SampleTable">Sample Table</label>
+                            <select id="ng7SampleTable" onchange="SASCALC('ng7')">
+                                <option selected value="Chamber">Chamber</option>
+                                <option value="Huber">Huber</option>
+                            </select>
+                        </div>
                         <h3>Collimation:</h3>
                         <div id="ng7Collimation" class="instrument-section">
                             <label for="ng7GuideConfig">Guides: </label>
@@ -111,13 +119,13 @@
                                 <option value="1.00">1.00"</option>
                                 <option value="Custom">Custom</option>
                             </select>
-                            <label for="ng7CustomAperture" id="ng7CustomApertureLabel" style="display:none">Aperture Diameter (mm): </label>
+                            <label for="ng7CustomAperture" id="ng7CustomApertureLabel" style="display:none">Aperture Diameter (cm): </label>
                             <input type="number" min="0" max="25.4" id="ng7CustomAperture" style="display:none" />
                         </div>
 
-                        <h3>Detector Distance:</h3>
+                        <h3>Detector Settings:</h3>
                         <div id="ng7Detector " class="slidecontainer instrument-section">
-                            <label for="ng7SDDInputBox">Detector Distance:</label>
+                            <label for="ng7SDDInputBox">Detector Distance (cm):</label>
                             <input type="number" min="90" max="1530" value="100" id="ng7SDDInputBox" onchange="updateDetector('ng7')" />
                             <input type="range" min="90" max="1530" value="100" class="slider" list="ng7SDDDefaults" id="ng7SDDSliderBar" onchange="updateDetector('ng7')" />
                             <datalist id="ng7SDDDefaults">
@@ -126,7 +134,7 @@
                                 <option value="1300" label="1300"></option>
                                 <option value="1530" label="1530"></option>
                             </datalist>
-                            <label for="ng7OffsetInputBox">Detector Offset:</label>
+                            <label for="ng7OffsetInputBox">Detector Offset (cm):</label>
                             <input type="number" min="0" max="25" value="0" id="ng7OffsetInputBox" onchange="updateDetector('ng7')" />
                             <input type="range" min="0" max="25" value="0" class="slider" list="ng7OffsetDefaults" id="ng7OffsetSliderBar" onchange="updateDetector('ng7')" />
                             <datalist id="ng7OffsetDefaults">
@@ -141,9 +149,9 @@
 
                         <h3>Neutron Wavelength:</h3>
                         <div id="ng7Wavelength">
-                            <label for="ng7Wavelength">&lambda;: </label>
-                            <input type="number" min="4" max="20" value="6" id="ng7Wavelength" onchange="SASCALC('ng7')" />
-                            <label for="ng7WavelengthSpread">&Delta;&lambda;/&lambda;</label>
+                            <label for="ng7Wavelength">&lambda; (&#8491;): </label>
+                            <input type="number" min="4" max="20" value="6" id="ng7WavelengthInput" onchange="SASCALC('ng7')" />
+                            <label for="ng7WavelengthSpread">&Delta;&lambda;/&lambda; (%)</label>
                             <select id="ng7WavelengthSpread" onchange="SASCALC('ng7')">
                                 <option value="9.0">9.0</option>
                                 <option selected value="11.5">11.5</option>

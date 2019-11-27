@@ -1,4 +1,5 @@
 ﻿function loadpage() {
+    // TODO: only need a single chart
     var ngb30ctx = document.getElementById('ngb30SansChart').getContext('2d');
     var ngb10ctx = document.getElementById('ngb10SansChart').getContext('2d');
     var ng7ctx = document.getElementById('ng7SansChart').getContext('2d');
@@ -108,10 +109,119 @@
  * Run SASCALC for the current instrument and model
  */
 function SASCALC(instrument, model="Debye") {
+    // Calculate the beam stop diameter
+    var bsDiam = calculateBeamStopDiameter(instrument);
+
     // TODO: Run calculation, update charts, etc.
-    // TODO: Calculate beamstop diameter
-    // TODO: Do Circular Average of all 1s
+    // TODO: Do Circular Average of an array of 1s
     // TODO: Calculate model in Q range
+}
+
+/*
+ * Calculate the q values for a given configuration
+ */
+function calculateQRange(instrument) {
+    // TODO: Run calculation
+}
+
+/*
+ * Calculate the beam stop diameter needed to cover the beam
+ */
+function calculateBeamStopDiameter(instrument) {
+    if (document.getElementById(instrument + 'GuideConfig').value === 'LENS') {
+        // If LENS configuration, the beam size is the source aperture size
+        return 1;
+    } else {
+        var bm = calculateBeamDiameter(instrument, 'maximum');
+        // TODO: ngb10m has 1.5" BS, but no 2"
+        var bsDiam = Math.ceil(bm / 2.54);
+    }
+    return bsDiam;
+}
+
+/*
+ * Calculate the beam diameter at the detector
+ */
+function calculateBeamDiameter(instrument, direction='maximum') {
+    // Get values for the desired instrument
+    var a1 = parseFloat(document.getElementById(instrument + 'SourceAperture').value);
+    if (document.getElementById(instrument + 'GuideConfig').value === 'LENS') {
+        // If LENS configuration, the beam size is the source aperture size
+        return a1;
+    }
+    var sampleAperture = document.getElementById(instrument + 'SampleAperture').value;
+    if (sampleAperture === 'Custom') {
+        var a2 = parseFloat(document.getElementById(instrument + 'CustomAperture').value);
+    } else {
+        // Default values in inches - convert to cm
+        var a2 = parseFloat(sampleAperture) * 2.54;
+    }
+    var lambda = parseFloat(document.getElementById(instrument + 'WavelengthInput').value);
+    var lambdaDelta = parseFloat(document.getElementById(instrument + 'WavelengthSpread').value) / 100.0;
+    var l1 = calculateSourceToSampleDistance(instrument);
+    var sdd = parseFloat(document.getElementById(instrument + 'SDDInputBox').value);
+    var sampleSpace = document.getElementById(instrument + 'SampleTable').value;
+    var sddOffset = parseFloat(window[instrument + 'Constants'][sampleSpace + 'Offset']);
+    var bsFactor = parseFloat(window[instrument + 'Constants']['BSFactor']);
+    // Calculate beam size on the detector
+    var l2 = sdd + sddOffset;
+    var d1 = a1 * l2 / l1;
+    var d2 = a2 * (l1 + l2) / l1;
+    // Beam width
+    var bw = d1 + d2;
+    // Beam height due to gravity
+    var bv = parseFloat(bw + 1.25e-8 * (l1 + l2) * l2 * lambda * lambda * lambdaDelta);
+    // Larger of the width*safetyFactor and height
+    var bm_bs = parseFloat(bsFactor * bw);
+    let bm = (bm_bs > bv) ? bm_bs : bv;
+    switch (direction) {
+        case 'vertical':
+            return bv;
+            break;
+        case 'horizontal':
+            return bh;
+            break;
+        case 'maximum':
+        default:
+            return bm;
+    }
+}
+
+/*
+ *  Calculate the source to sample distance
+ */
+function calculateSourceToSampleDistance(instrument) {
+    // Get the number of guides
+    var guides = document.getElementById(instrument + 'GuideConfig').value;
+    if (guides === "LENS") {
+        guides = "0";
+    }
+    var nGds = parseFloat(guides);
+    // Get the sample location
+    var sampleSpace = document.getElementById(instrument + 'SampleTable').value;
+    var ssd = 0.0;
+    var ssdOffset = parseFloat(window[instrument + 'Constants'][sampleSpace + 'Offset']);
+    // Calculate certain offsets based on the sample location
+    if (sampleSpace === 'Huber') {
+        ssdOffset += parseFloat(window[instrument + 'Constants']['ChamberOffset']);
+    }
+    // Calculate the source to sample distance
+    switch (instrument) {
+        case 'ng7':
+        case 'ngb30m':
+            ssd = 1632 - 155 * nGds - ssdOffset;
+            break;
+        case 'ngb10m':
+            if (nGds == 0) {
+                ssd = 513 - ssdOffset;
+            } else {
+                ssd = 513 - 61.9 - 150 * nGds - ssdOffset;
+            }
+            break;
+        default:
+            ssd = 0.0;
+    }
+    return ssd;
 }
 
 /*
@@ -208,7 +318,7 @@ function changeInstrument(domName, selectStr) {
         }
     }
     sessionStorage.setItem('instrument', selectStr);
-    SASCALC(instrument);
+    SASCALC(selectStr);
 };
 
 
