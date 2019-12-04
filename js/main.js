@@ -1,10 +1,7 @@
 ﻿function loadpage() {
-    // TODO: only need a single chart
-    var ngb30ctx = document.getElementById('ngb30SansChart').getContext('2d');
-    var ngb10ctx = document.getElementById('ngb10SansChart').getContext('2d');
-    var ng7ctx = document.getElementById('ng7SansChart').getContext('2d');
-    var vctx = document.getElementById('vsansChart').getContext('2d');
+    var ng7ctx = document.getElementById('sascalcChart').getContext('2d');
     // TODO: Create real base data sets
+    // TODO: 
     var sansDataSets = [
         {
             label: 'Data',
@@ -97,11 +94,8 @@
             }]
         }
     }
-
-    update1DChart(ngb30ctx, [0, 1, 2, 3, 4, 5], sansDataSets, options);
-    update1DChart(ngb10ctx, [0, 1, 2, 3, 4, 5], sansDataSets, options);
     update1DChart(ng7ctx, [0, 1, 2, 3, 4, 5], sansDataSets, options);
-    update1DChart(vctx, [0, 1, 2, 3, 4, 5], vsansDataSets, options);
+    // update1DChart(vctx, [0, 1, 2, 3, 4, 5], vsansDataSets, options);
     //restorePersistantState();
 };
 
@@ -109,9 +103,16 @@
  * Run SASCALC for the current instrument and model
  */
 function SASCALC(instrument, model="Debye") {
+    // Calculate the wavelength range
+    changeWavelengthSpread(instrument);
     // Calculate the beam stop diameter
-    var bsDiam = calculateBeamStopDiameter(instrument);
-
+    calculateBeamStopDiameter(instrument);
+    // Calculate the estimated beam flux
+    calculateBeamFlux(instrument);
+    // Calculate the figure of merit
+    calculateFigureOfMerit(instrument);
+    // Calculate the number of attenuators
+    calculateNumberOfAttenuators(instrument);
     // TODO: Run calculation, update charts, etc.
     // TODO: Do Circular Average of an array of 1s
     // TODO: Calculate model in Q range
@@ -125,46 +126,107 @@ function calculateQRange(instrument) {
 }
 
 /*
+ * Calculate the estimated beam flux
+ */
+function calculateBeamFlux(instrument) {
+    var beamFlux = document.getElementById(instrument + 'BeamFlux');
+    // TODO: Run calculation
+    beamFlux.value = 1000.0;
+    return parseFloat(beamFlux.value);
+}
+
+/*
+ * Calculate the estimated beam flux
+ */
+function calculateFigureOfMerit(instrument) {
+    var lambda = parseFloat(document.getElementById(instrument + 'WavelengthInput').value);
+    var beamFlux = parseFloat(document.getElementById(instrument + 'BeamFlux').value);
+    var figureOfMerit = document.getElementById(instrument + 'FigureOfMerit');
+    var figureOfMeritValue = lambda * lambda * beamFlux;
+    figureOfMerit.value = figureOfMeritValue;
+}
+
+/*
+ * Calculate the estimated attenuation factor needed to keep the beam intensity lower than the maximum countrate per pixel
+ */
+function calculateAttenuationFactor(instrument) {
+    var a2 = getSampleApertureSize(instrument);
+    var beamDiam = calculateBeamDiameter(instrument);
+    var aPixel = parseFloat(window[instrument + "Constants"]["aPixel"]);
+    var iPixelMax = parseFloat(window[instrument + "Constants"]["iPixel"]);
+    var num_pixels = Math.PI / 4 * (0.5 * (a2 + beamDiam)) * (0.5 * (a2 + beamDiam)) / aPixel / aPixel;
+    var iPixel = calculateBeamFlux(instrument) / num_pixels;
+    var atten = (iPixel < iPixelMax) ? 1.0 : iPixelMax / iPixel;
+    // TODO: Put attenuation factor somewhere on the page
+    return atten;
+}
+
+/*
+ * Calculate the number of attenuators needed for transmission measurements
+ */
+function calculateNumberOfAttenuators(instrument) {
+    var atten = calculateAttenuationFactor(instrument);
+    var attenuatorNode = document.getElementById(instrument + "Attenuators");
+    var wavelength = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
+
+    var af = 0.498 + 0.0792 * wavelength - 1.66e-3 * wavelength * wavelength;
+    var nf = -Math.log(atten) / af;
+    var numAtten = Math.floor(nf) + 1;
+    if (numAtten > 6) {
+        numAtten = 7 + Math.floor((numAtten - 6) / 2);
+    }
+    attenuatorNode.value = numAtten;
+}
+
+/*
  * Calculate the beam stop diameter needed to cover the beam
  */
 function calculateBeamStopDiameter(instrument) {
+    var bm = calculateBeamDiameter(instrument, 'maximum');
+    // TODO: ngb10m has 1.5" BS, but no 2"
+    var bsDiam = Math.ceil(bm / 2.54);
     if (document.getElementById(instrument + 'GuideConfig').value === 'LENS') {
         // If LENS configuration, the beam size is the source aperture size
         return 1;
     } else {
-        var bm = calculateBeamDiameter(instrument, 'maximum');
-        // TODO: ngb10m has 1.5" BS, but no 2"
-        var bsDiam = Math.ceil(bm / 2.54);
+        return bsDiam;
     }
-    return bsDiam;
+}
+
+function getSampleApertureSize(instrument) {
+    var sampleAperture = document.getElementById(instrument + 'SampleAperture').value;
+    if (sampleAperture === 'Custom') {
+        return parseFloat(document.getElementById(instrument + 'CustomAperture').value);
+    } else {
+        // Default values in inches - convert to cm
+        return parseFloat(sampleAperture) * 2.54;
+    }
 }
 
 /*
  * Calculate the beam diameter at the detector
  */
-function calculateBeamDiameter(instrument, direction='maximum') {
+function calculateBeamDiameter(instrument, direction = 'maximum') {
+    // TODO: Separate this out into smaller functions probably
     // Get values for the desired instrument
     var a1 = parseFloat(document.getElementById(instrument + 'SourceAperture').value);
+    var l1 = calculateSourceToSampleApertureDistance(instrument);
+    var sdd = parseFloat(document.getElementById(instrument + 'SDDInputBox').value);
+    var sampleSpace = document.getElementById(instrument + 'SampleTable').value;
+    var sddOffset = parseFloat(window[instrument + 'Constants'][sampleSpace + 'Offset']);
+    var SDD = document.getElementById(instrument + 'SDD');
+    // FIXME: Use proper offsets for each distance 
+    var l2 = sdd + sddOffset;
+    SDD.value = l2;
     if (document.getElementById(instrument + 'GuideConfig').value === 'LENS') {
         // If LENS configuration, the beam size is the source aperture size
         return a1;
     }
-    var sampleAperture = document.getElementById(instrument + 'SampleAperture').value;
-    if (sampleAperture === 'Custom') {
-        var a2 = parseFloat(document.getElementById(instrument + 'CustomAperture').value);
-    } else {
-        // Default values in inches - convert to cm
-        var a2 = parseFloat(sampleAperture) * 2.54;
-    }
+    var a2 = getSampleApertureSize(instrument);
     var lambda = parseFloat(document.getElementById(instrument + 'WavelengthInput').value);
     var lambdaDelta = parseFloat(document.getElementById(instrument + 'WavelengthSpread').value) / 100.0;
-    var l1 = calculateSourceToSampleDistance(instrument);
-    var sdd = parseFloat(document.getElementById(instrument + 'SDDInputBox').value);
-    var sampleSpace = document.getElementById(instrument + 'SampleTable').value;
-    var sddOffset = parseFloat(window[instrument + 'Constants'][sampleSpace + 'Offset']);
     var bsFactor = parseFloat(window[instrument + 'Constants']['BSFactor']);
     // Calculate beam size on the detector
-    var l2 = sdd + sddOffset;
     var d1 = a1 * l2 / l1;
     var d2 = a2 * (l1 + l2) / l1;
     // Beam width
@@ -190,8 +252,10 @@ function calculateBeamDiameter(instrument, direction='maximum') {
 /*
  *  Calculate the source to sample distance
  */
-function calculateSourceToSampleDistance(instrument) {
+function calculateSourceToSampleApertureDistance(instrument) {
+    // TODO: Separate this out into smaller functions probably
     // Get the number of guides
+    var SSD = document.getElementById(instrument + 'SSD');
     var guides = document.getElementById(instrument + 'GuideConfig').value;
     if (guides === "LENS") {
         guides = "0";
@@ -200,11 +264,7 @@ function calculateSourceToSampleDistance(instrument) {
     // Get the sample location
     var sampleSpace = document.getElementById(instrument + 'SampleTable').value;
     var ssd = 0.0;
-    var ssdOffset = parseFloat(window[instrument + 'Constants'][sampleSpace + 'Offset']);
-    // Calculate certain offsets based on the sample location
-    if (sampleSpace === 'Huber') {
-        ssdOffset += parseFloat(window[instrument + 'Constants']['ChamberOffset']);
-    }
+    var ssdOffset = parseFloat(window[instrument + 'Constants'][sampleSpace + 'ApertureOffset']);
     // Calculate the source to sample distance
     switch (instrument) {
         case 'ng7':
@@ -221,6 +281,7 @@ function calculateSourceToSampleDistance(instrument) {
         default:
             ssd = 0.0;
     }
+    SSD.value = ssd;
     return ssd;
 }
 
@@ -291,6 +352,17 @@ function updateAperture(instrument) {
     }
     // Recalculate q range
     SASCALC(instrument);
+}
+
+/*
+ * Use the updated wavelength spread to determine the allowed wavelength range
+ */
+function changeWavelengthSpread(instrument) {
+    var wavelength = document.getElementById(instrument + 'WavelengthInput');
+    var wavelengthSpread = document.getElementById(instrument + 'WavelengthSpread').value;
+    var wavelengthOptions = window[instrument + 'WavelengthRange'][wavelengthSpread];
+    wavelength.min = parseFloat(wavelengthOptions[0]);
+    wavelength.max = parseFloat(wavelengthOptions[1]);
 }
 
 /*

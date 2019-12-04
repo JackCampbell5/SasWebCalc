@@ -35,7 +35,7 @@
         <div class="centered-column" id="preamble">
             <div id="SASWEBCALC">
                 <form target="#">
-                    <div class="instrument">
+                    <div class="instrument" title="Choose the instrument you plan to use.">
                         <label for="instrument">Instrument: </label>
                         <select id="instrumentSelector" onchange="changeInstrument('instrumentSelector', this.value)">
                             <option value="" selected disabled hidden>Choose your instrument</option>
@@ -72,18 +72,35 @@
                             <option disabled hidden value="2.50">2.50 cm</option>
                             <option disabled hidden value="0.95">0.95 cm</option>
                         </select>
-                        <div class="canvas"><canvas id="ngb30SansChart"></canvas></div>
                     </div>
 
                     <!-- NG7 30m SANS -->
                     <div id="ng7" style="display: none">
                         <h3>Sample Space:</h3>
-                        <div id="ng7Sample" class="instrument-section">
+                        <div id="ng7Sample" class="instrument-section" title="Sample location: Choose chamber for standard setups and Huber for larger equipment">
                             <label for="ng7SampleTable">Sample Table</label>
                             <select id="ng7SampleTable" onchange="SASCALC('ng7')">
                                 <option selected value="Chamber">Chamber</option>
                                 <option value="Huber">Huber</option>
                             </select>
+                        </div>
+                        <h3>Neutron Wavelength:</h3>
+                        <div id="ng7Wavelength" class="instrument-section">
+                            <label for="ng7WavelengthInput">&lambda; (&#8491;): </label>
+                            <input type="number" min="4" max="20" value="6" id="ng7WavelengthInput" onchange="SASCALC('ng7')" title="" />
+                            <label for="ng7WavelengthSpread">&Delta;&lambda;/&lambda; (%)</label>
+                            <select id="ng7WavelengthSpread" onchange="SASCALC('ng7')">
+                                <option value="9.0">9.0</option>
+                                <option selected value="11.5">11.5</option>
+                                <option value="13.5">13.5</option>
+                                <option value="22.0">22.0</option>
+                            </select>
+                            <label for="ng7BeamFlux">Beam Flux (n-cm<sup>-1</sup>-sec<sup>-1</sup>):</label>
+                            <input type="number" id="ng7BeamFlux" class="fixed-width-input" disabled />
+                            <label for="ng7FigureOfMerit">Figure of Merit:</label>
+                            <input type="number" id="ng7FigureOfMerit" class="fixed-width-input" disabled />
+                            <label for="ng7Attenuators">Attenuators:</label>
+                            <input type="number" id="ng7Attenuators" class="fixed-width-input" disabled />
                         </div>
                         <h3>Collimation:</h3>
                         <div id="ng7Collimation" class="instrument-section">
@@ -121,8 +138,9 @@
                             </select>
                             <label for="ng7CustomAperture" id="ng7CustomApertureLabel" style="display:none">Aperture Diameter (cm): </label>
                             <input type="number" min="0" max="25.4" id="ng7CustomAperture" style="display:none" />
+                            <label for="ng7SSD">Source-to-Sample Distance (cm): </label>
+                            <input type="number" id="ng7SSD" class="fixed-width-input" disabled />
                         </div>
-
                         <h3>Detector Settings:</h3>
                         <div id="ng7Detector " class="slidecontainer instrument-section">
                             <label for="ng7SDDInputBox">Detector Distance (cm):</label>
@@ -145,22 +163,20 @@
                                 <option value="20" label="20"></option>
                                 <option value="25" label="25"></option>
                             </datalist>
+                            <label for="ng7SDD">Sample-to-Detector Distance (cm): </label>
+                            <input type="number" id="ng7SDD"  class="fixed-width-input" disabled />
                         </div>
-
-                        <h3>Neutron Wavelength:</h3>
-                        <div id="ng7Wavelength">
-                            <label for="ng7Wavelength">&lambda; (&#8491;): </label>
-                            <input type="number" min="4" max="20" value="6" id="ng7WavelengthInput" onchange="SASCALC('ng7')" />
-                            <label for="ng7WavelengthSpread">&Delta;&lambda;/&lambda; (%)</label>
-                            <select id="ng7WavelengthSpread" onchange="SASCALC('ng7')">
-                                <option value="9.0">9.0</option>
-                                <option selected value="11.5">11.5</option>
-                                <option value="13.5">13.5</option>
-                                <option value="22.0">22.0</option>
-                            </select>
+                        <h3>Q Range:</h3>
+                        <div id="ng7QRange" class="instrument-section">
+                            <label for="ng7MinimumQ">Minimum Q (&#8491;<sup>-1</sup>):</label>
+                            <input type="number" id="ng7MinimumQ" class="fixed-width-input" disabled />
+                            <label for="ng7MaximumQ">Maximum Q (&#8491;<sup>-1</sup>):</label>
+                            <input type="number" id="ng7MaximumQ"  class="fixed-width-input" disabled />
+                            <label for="ng7MaximumVerticalQ">Maximum Vertical Q (&#8491;<sup>-1</sup>):</label>
+                            <input type="number" id="ng7MaximumVerticalQ"  class="fixed-width-input" disabled />
+                            <label for="ng7MaximumHorizontalQ">Maximum Horizontal Q (&#8491;<sup>-1</sup>):</label>
+                            <input type="number" id="ng7MaximumHorizontalQ"  class="fixed-width-input" disabled />
                         </div>
-
-                        <div class="canvas"><canvas id="ng7SansChart"></canvas></div>
                     </div>
 
                     <!-- NGB 10m SANS -->
@@ -178,13 +194,14 @@
                             <option value="3.8">3.8 cm</option>
                             <option disabled hidden value="5.0">5.0 cm</option>
                         </select>
-                        <div class="canvas"><canvas id="ngb10SansChart"></canvas></div>
                     </div>
 
                     <!-- VSANS -->
                     <div id="vsans" style="display: none">
-                        <div class="canvas"><canvas id="vsansChart"></canvas></div>
                     </div>
+                    
+                    <!-- Chart for all instruments -->
+                    <div class="canvas"><canvas id="sascalcChart"></canvas></div>
                 </form>
             </div>
         </div>

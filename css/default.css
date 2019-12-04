@@ -40,3 +40,6 @@ div.instrument-section {
     margin-left: 20px;
     margin-right: 20px;
 }
+input.fixed-width-input {
+    width: 10em;
+}
