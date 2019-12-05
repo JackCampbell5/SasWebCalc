@@ -29,7 +29,10 @@ window.ngb30Constants = {
     'ChamberApertureOffset': '5.0',
     'BSFactor': '1.05',
     'iPixel': '100.0',
-    'aPixel': '5.08'
+    'aPixel': '5.08',
+    'coeff': '10000',
+    'xPixels': '128',
+    'ypixels': '128'
 };
 
 // NG7 SANS
@@ -47,12 +50,14 @@ window.ng7SourceApertures = {
 };
 window.ng7Constants = {
     'HuberOffset': '54.8',
-    'HuberApertureOffset': '59.8',
     'ChamberOffset': '0.0',
-    'ChamberApertureOffset': '5.0',
+    'ApertureOffset': '5.0',
     'BSFactor': '1.05',
     'iPixel': '100.0',
-    'aPixel': '5.08'
+    'aPixel': '5.08',
+    'coeff': '10000',
+    'xPixels': '128',
+    'ypixels': '128'
 };
 window.ng7WavelengthRange = {
     "9.0": ['6.5', '20.0'],
@@ -69,10 +74,12 @@ window.ngb10SourceApertures = {
 };
 window.ngb10Constants = {
     'HuberOffset': '0.0',
-    'HuberApertureOffset': '5.0',
     'ChamberOffset': '0.0',
-    'ChamberApertureOffset': '5.0',
+    'ApertureOffset': '5.0',
     'BSFactor': '1.05',
     'iPixel': '100.0',
-    'aPixel': '5.08'
+    'aPixel': '5.08',
+    'coeff': '10000',
+    'xPixels': '128',
+    'ypixels': '128'
 };
