@@ -1,7 +1,6 @@
 ﻿function loadpage() {
     var ng7ctx = document.getElementById('sascalcChart').getContext('2d');
     // TODO: Create real base data sets
-    // TODO: 
     var sansDataSets = [
         {
             label: 'Data',
@@ -95,7 +94,6 @@
         }
     }
     update1DChart(ng7ctx, [0, 1, 2, 3, 4, 5], sansDataSets, options);
-    // update1DChart(vctx, [0, 1, 2, 3, 4, 5], vsansDataSets, options);
     //restorePersistantState();
 };
 
@@ -117,6 +115,8 @@ function SASCALC(instrument, averageType="Circular", model="Debye") {
     calculateQRange(instrument, averageType);
     // TODO: Run calculation, update charts, etc.
     // TODO: Calculate model in Q range
+
+    //restorePersistantState();
 }
 
 /*
@@ -249,6 +249,7 @@ function calculateDistanceFromBeamCenter(pixelValue, pixelCenter, pixelSize, coe
 function calculateResolutions(i, instrument) {
     var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
     var lambdaWidth = parseFloat(document.getElementById(instrument + "WavelengthSpread").value);
+    var isLenses = Boolean(document.getElementById(instrument + "GuideConfig") === "LENS");
     // Get values and be sure they are in cm
     var sourceApertureRadius = parseFloat(document.getElementById(instrument + "SourceAperture").value) * 0.5 * 0.1;
     var sampleApertureRadius = parseFloat(document.getElementById(instrument + "SampleAperture").value) * 0.5 * 0.1;
@@ -259,6 +260,7 @@ function calculateResolutions(i, instrument) {
     var SSD = calculateSourceToSampleApertureDistance(instrument) - apertureOffset;
     var SDD = calculateSampleToDetectorDistance(instrument) + apertureOffset;
     var qValue = window.qValues[i];
+    // Define constants
     var velocityNeutron1A = 3.956e5;
     var gravityConstant = 981.0;
     // Base calculations
@@ -266,9 +268,42 @@ function calculateResolutions(i, instrument) {
     var q_small = 2 * Math.PI * (beamStopSize - sampleApertureRadius) * (1 - lambdaWidth) / (lambda * SDD);
     document.getElementById(instrument + "MinimumQ").value = q_small;
     var lp = 1 / (1 / SDD + 1 / SSD);
-    var v_lambda = lambdaWidth * lambdaWidth / 6.0;
-    var v_b = 0.25 * (sourceApertureRadius * SDD / SSD) * (sourceApertureRadius * SDD / SSD) + 0.25 * (sampleApertureRadius * SDD / lp) * (sampleApertureRadius * SDD / lp);
-    //var v_d = (pixelSize / 2.3548) * (pixelSize / 2.3548) + 
+    // Calculate variances
+    var varLambda = lambdaWidth * lambdaWidth / 6.0;
+    if (isLenses) {
+        var varBeam = 0.25 * Math.pow(sourceApertureRadius * SDD / SSD, 2) + 0.25 * (2 / 3) * Math.pow(lambdaWidth / lambda, 2) * Math.pow(sampleApertureRadius * SDD / lp, 2);
+    } else {
+        var varBeam = 0.25 * (sourceApertureRadius * SDD / SSD) * (sourceApertureRadius * SDD / SSD) + 0.25 * (sampleApertureRadius * SDD / lp) * (sampleApertureRadius * SDD / lp);
+    }
+    var varDetector = Math.pow(pixelSize / 2.3548, 2) + (pixelSize * pixelSize) / 12;
+    var velocityNeutron = velocityNeutron1A / lambda;
+    var varGravity = 0.5 * gravityConstant * SDD * (SSD + SDD) / Math.pow(velocityNeutron, 2);
+    var rZero = SDD * Math.tan(2.0 * Math.asin(lambda * qValue / (4.0 * Math.PI)));
+    var delta = 0.5 * Math.pow(beamStopSize - rZero, 2) / varDetector;
+
+    // TODO: Find usable incomplete gamma function in javascript (or php)
+    var incGamma = 1.00;
+    // if (rZero < beamStopSize) {
+    //     var incGamma = Math.exp(Math.log(math.gamma(1.5))) * (1 - index.gammaInc(1.5, delta) / math.gamma(1.5));
+    // } else {
+    //     var incGamma = Math.exp(Math.log(math.gamma(1.5))) * (1 + index.gammaInc(1.5, delta) / math.gamma(1.5));
+    // }
+    var fSubS = 0.5 * (1.0 + math.erf((rZero - beamStopSize) / Math.sqrt(2.0 * varDetector)));
+    if (fSubS <= 0.0) {
+        fSubS = 1e-10;
+    }
+    var fr = 1.0 + Math.sqrt(varDetector) * Math.exp(-1.0 * delta) / (rZero * fSubS * math.sqrt(2.0 * Math.PI));
+    var fv = incGamma / (fSubS * Math.sqrt(Math.PI)) - rZero * rZero * Math.pow(fr - 1.0, 2) / varDetector;
+    var rmd = fr + rZero;
+    var varR1 = varBeam + varDetector * fv + varGravity;
+    var rm = rmd + 0.5 * varR1 / rmd;
+    var varR = varR1 - 0.5 * (varR1 / rmd) * (varR1 / rmd);
+    if (varR < 0) {
+        varR = 0.0;
+    }
+    window.qAverage[i] = (4.0 * Math.Pi / lambda) * Math.sin(0.5 * Math.atan(rm / SDD));
+    window.sigmaQ[i] = window.qAverage[i] * Math.sqrt((varR / rmd) * (varR / rmd) + varLambda);
+    window.fSubs[i] = fSubS;
 }
 
 /*
