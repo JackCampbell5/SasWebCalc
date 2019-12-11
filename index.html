@@ -10,16 +10,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/6.2.2/math.js"></script>
     <!--
-    <script src="js/validate.js"></script>
-    <script src="js/index.js"></script>
+    <script src="js/gamma_incomplete.js"></script>
     -->
     <script src="js/main.js"></script>
     <script src="js/constants.js"></script>
 </head>
 
 <!--
-    TODO: Create nodes for Qmin, Qmax, BS, Attenuation, etc.
-    TODO: Create a single chart that is updated with only the existing data, regardless of the instrument
     TODO: Copy NG7 values over to NGB30m and NGB10m
     TODO: Copy http://nicedata.ncnr.nist.gov/niceweb/nicejs/VCALC/ work into VSANS
     TODO: Add Model Selector that is tied to sasmodels
@@ -42,7 +39,7 @@
                 <form target="#">
                     <div class="instrument" title="Choose the instrument you plan to use.">
                         <label for="instrument">Instrument: </label>
-                        <select id="instrumentSelector" onchange="changeInstrument('instrumentSelector', this.value)">
+                        <select id="instrumentSelector" onchange="updateInstrument('instrumentSelector', this.value)">
                             <option value="" selected disabled hidden>Choose your instrument</option>
                             <option value="ngb30m">NGB 30m SANS</option>
                             <option value="ng7">NG7 SANS</option>
@@ -92,9 +89,9 @@
                         <h3>Neutron Wavelength:</h3>
                         <div id="ng7Wavelength" class="instrument-section">
                             <label for="ng7WavelengthInput">&lambda; (&#8491;): </label>
-                            <input type="number" min="4" max="20" value="6" id="ng7WavelengthInput" onchange="SASCALC('ng7')" title="" />
+                            <input type="number" min="4" max="20" value="6" id="ng7WavelengthInput" onchange="updateWavelengthSpread('ng7')" title="" />
                             <label for="ng7WavelengthSpread">&Delta;&lambda;/&lambda; (%)</label>
-                            <select id="ng7WavelengthSpread" onchange="SASCALC('ng7')">
+                            <select id="ng7WavelengthSpread" onchange="updateWavelengthSpread('ng7')">
                                 <option value="9.0">9.0</option>
                                 <option selected value="11.5">11.5</option>
                                 <option value="13.5">13.5</option>

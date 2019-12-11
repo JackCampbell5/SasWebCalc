@@ -94,15 +94,13 @@
         }
     }
     update1DChart(ng7ctx, [0, 1, 2, 3, 4, 5], sansDataSets, options);
-    //restorePersistantState();
+    restorePersistantState();
 };
 
 /*
  * Run SASCALC for the current instrument and model
  */
 function SASCALC(instrument, averageType="Circular", model="Debye") {
-    // Calculate the wavelength range
-    changeWavelengthSpread(instrument);
     // Calculate the beam stop diameter
     calculateBeamStopDiameter(instrument);
     // Calculate the estimated beam flux
@@ -116,15 +114,16 @@ function SASCALC(instrument, averageType="Circular", model="Debye") {
     // TODO: Run calculation, update charts, etc.
     // TODO: Calculate model in Q range
 
-    //restorePersistantState();
+    // Save persistant state
+    storePersistantState(instrument);
 }
 
 /*
  * Calculate the q values for a given configuration
  */
 function calculateQRange(instrument, averageType="Circular") {
-    var xPixels = parseInt(window[instrument + "Constants"]["xPixel"]);
-    var yPixels = parseInt(window[instrument + "Constants"]["yPixel"]);
+    var xPixels = parseInt(window[instrument + "Constants"]["xPixels"]);
+    var yPixels = parseInt(window[instrument + "Constants"]["yPixels"]);
     var xCenter = xPixels / 2 + 0.5;
     var yCenter = calculateYBeamCenter(instrument);
     var pixelSize = parseFloat(window[instrument + "Constants"]["aPixel"]);
@@ -141,16 +140,6 @@ function calculateQRange(instrument, averageType="Circular") {
     var maskI = new Array();
     var data = generateOnesData(instrument);
     var dataI = new Array();
-
-    // Define data for display
-    window.qValues = new Array();
-    window.aveIntensity = new Array();
-    window.nCells = new Array();
-    window.dSQ = new Array();
-    window.sigmaAve = new Array();
-    window.qAverage = new Array();
-    window.sigmaQ = new Array();
-    window.fSubs = new Array();
 
     // Loop over each pixel
     for (i = 0; i < xPixels; i++) {
@@ -181,11 +170,62 @@ function calculateQRange(instrument, averageType="Circular") {
                     switch (averageType) {
                         case "Circular":
                         default:
-                            nq = incrementQPixels(dataPixel, pixelSize, correctedDx, correctedDy, nq, numDSquared);
+                            var iRadius = Math.floor(Math.sqrt(correctedDx * correctedDx + correctedDy * correctedDy) / pixelSize) + 1;
+                            nq = (iRadius > nq) ? iRadius : nq;
                             break;
                         // TODO: Add in other averaging types
                     }
 
+                }
+            }
+        }
+    }
+
+    // Define data for display
+    window.qValues = new Array(nq).fill(0);
+    window.aveIntensity = new Array(nq).fill(0);
+    window.nCells = new Array(nq).fill(0);
+    window.dSQ = new Array(nq).fill(0);
+    window.sigmaAve = new Array(nq).fill(0);
+    window.qAverage = new Array(nq).fill(0);
+    window.sigmaQ = new Array(nq).fill(0);
+    window.fSubs = new Array(nq).fill(0);
+
+    // TODO: Find a way to simplify rather than looping over the same items twice
+    // Loop over each pixel
+    for (i = 0; i < xPixels; i++) {
+        xDistance = calculateDistanceFromBeamCenter(i, xCenter, pixelSize, coeff);
+        maskI = mask[i];
+        dataI = data[i];
+        for (j = 0; j < yPixels; j++) {
+            yDistance = calculateDistanceFromBeamCenter(j, yCenter, pixelSize, coeff);
+            // Ignore masked pixels (mask[i][j] = 1)
+            if (maskI[j] == 0) {
+                dataPixel = dataI[j];
+                numDSquared = numDimensions * numDimensions;
+                totalDistance = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
+                // Break pixels up into a 3x3 grid close to the beam center
+                if (totalDistance > radiusCenter) {
+                    numDimensions = 1;
+                    center = 1;
+                } else {
+                    numDimensions = 3;
+                    center = 2;
+                }
+                // Loop over sliced pixels
+                for (k = 1; k <= numDimensions; k++) {
+                    correctedDx = xDistance + (k - center) * pixelSize / numDimensions;
+                    for (l = 1; l <= numDimensions; l++) {
+                        correctedDy = yDistance + (l - center) * pixelSize / numDimensions;
+                    }
+                    switch (averageType) {
+                        case "Circular":
+                        default:
+                            var iRadius = Math.floor(Math.sqrt(correctedDx * correctedDx + correctedDy * correctedDy) / pixelSize) + 1;
+                            break;
+                        // TODO: Add in other averaging types
+                    }
+                    calculateIntensityValues(iRadius, dataPixel, numDSquared);
                 }
             }
         }
@@ -216,21 +256,21 @@ function calculateQRange(instrument, averageType="Circular") {
 /*
  * Calculate the number of q points, and sum the intensities, dsq, and number of cells.
  */
-function incrementQPixels(dataPixel, pixelSize, correctedDx, correctedDy, nq, numDSquared) {
-    var iRadius = Math.floor(Math.sqrt(correctedDx * correctedDx + correctedDy * correctedDy) / pixelSize) + 1;
-    nq = (ir > nq) ? ir : nq;
+function calculateIntensityValues(iRadius, dataPixel, numDSquared) {
     window.aveIntensity[iRadius - 1] += dataPixel / numDSquared;
     window.dSQ[iRadius - 1] += dataPixel * dataPixel / numDSquared;
     window.nCells[iRadius - 1] += 1 / numDSquared;
-    return nq;
 }
 
 /*
  * Calculate the beam center in pixels
  */
 function calculateYBeamCenter(instrument) {
-    var yPixels = parseInt(window[instrument + "Constants"]["yPixel"]);
-    var dr = parseFloat(window[instrument + "Constants"]["aPixel"]);
+    // Find the number of y pixels in the detector
+    var yPixels = parseInt(window[instrument + "Constants"]["yPixels"]);
+    // Get pixel size in mm and convert to cm
+    var dr = parseFloat(window[instrument + "Constants"]["aPixel"]) / 10;
+    // Get detector offset in cm
     var offset = parseFloat(document.getElementById(instrument + "OffsetInputBox").value);
     var yCenter = (offset / dr) + (yPixels / 2 + 0.5);
     return yCenter;
@@ -257,7 +297,7 @@ function calculateResolutions(i, instrument) {
     var beamStopSize = calculateBeamStopDiameter(instrument) * 2.54;
     var pixelSize = parseFloat(window[instrument + "Constants"]["aPixel"]) * 0.1;
     // SSD and SDD in cm, corrected for the aperture offset
-    var SSD = calculateSourceToSampleApertureDistance(instrument) - apertureOffset;
+    var SSD = calculateSourceToSampleApertureDistance(instrument);
     var SDD = calculateSampleToDetectorDistance(instrument) + apertureOffset;
     var qValue = window.qValues[i];
     // Define constants
@@ -266,7 +306,7 @@ function calculateResolutions(i, instrument) {
     // Base calculations
     var a2 = sourceApertureRadius * SDD / SSD + sampleApertureRadius * (SDD + SSD) / SSD;
     var q_small = 2 * Math.PI * (beamStopSize - sampleApertureRadius) * (1 - lambdaWidth) / (lambda * SDD);
-    document.getElementById(instrument + "MinimumQ").value = q_small;
+    document.getElementById(instrument + "MinimumQ").value = Math.round(q_small, 1000000) / 1000000;
     var lp = 1 / (1 / SDD + 1 / SSD);
     // Calculate variances
     var varLambda = lambdaWidth * lambdaWidth / 6.0;
@@ -283,11 +323,11 @@ function calculateResolutions(i, instrument) {
 
     // TODO: Find usable incomplete gamma function in javascript (or php)
     var incGamma = 1.00;
-    // if (rZero < beamStopSize) {
-    //     var incGamma = Math.exp(Math.log(math.gamma(1.5))) * (1 - index.gammaInc(1.5, delta) / math.gamma(1.5));
-    // } else {
-    //     var incGamma = Math.exp(Math.log(math.gamma(1.5))) * (1 + index.gammaInc(1.5, delta) / math.gamma(1.5));
-    // }
+    //if (rZero < beamStopSize) {
+    //    var incGamma = Math.exp(Math.log(math.gamma(1.5))) * (1 - gammainc(1.5, delta) / math.gamma(1.5));
+    //} else {
+    //    var incGamma = Math.exp(Math.log(math.gamma(1.5))) * (1 + window.gammainc(1.5, delta) / math.gamma(1.5));
+    //}
     var fSubS = 0.5 * (1.0 + math.erf((rZero - beamStopSize) / Math.sqrt(2.0 * varDetector)));
     if (fSubS <= 0.0) {
         fSubS = 1e-10;
@@ -310,19 +350,20 @@ function calculateResolutions(i, instrument) {
  * Generate a standard SANS mask with the outer 2 pixels masked
  */
 function generateStandardMask(instrument) {
-    var xPixels = parseInt(window[instrument + "Constants"]["xPixel"]);
-    var yPixels = parseInt(window[instrument + "Constants"]["yPixel"]);
+    var xPixels = parseInt(window[instrument + "Constants"]["xPixels"]);
+    var yPixels = parseInt(window[instrument + "Constants"]["yPixels"]);
     var mask = new Array();
-    var maskInset = new Array();
-    maskInset.fill(1, 0, 1);
-    maskInset.fill(1, yPixels - 2, yPixels - 1);
     for (var i = 0; i < xPixels; i++) {
+        var maskInset = new Array();
         for (var j = 0; j < yPixels; j++) {
-            if (i < 1 || i > xPixels - 2) {
+            if (i <= 1 || i >= xPixels - 2) {
+                // Top and bottom two pixels should be masked
                 maskInset[j] = 1;
-            } else if (j < 1 || j > yPixels - 2) {
+            } else if (j <= 1 || j >= yPixels - 2) {
+                // Left and right two pixels should be masked
                 maskInset[j] = 1;
             } else {
+                // Remainder should not be masked
                 maskInset[j] = 0;
             }
         }
@@ -335,8 +376,8 @@ function generateStandardMask(instrument) {
  * Generate a data set of all ones for a given detector
  */
 function generateOnesData(instrument) {
-    var xPixels = parseInt(window[instrument + "Constants"]["xPixel"]);
-    var yPixels = parseInt(window[instrument + "Constants"]["yPixel"]);
+    var xPixels = parseInt(window[instrument + "Constants"]["xPixels"]);
+    var yPixels = parseInt(window[instrument + "Constants"]["yPixels"]);
     var data = new Array();
     var dataY = new Array();
     for (var i = 0; i < xPixels; i++) {
@@ -381,7 +422,7 @@ function calculateAttenuationFactor(instrument) {
     var num_pixels = Math.PI / 4 * (0.5 * (a2 + beamDiam)) * (0.5 * (a2 + beamDiam)) / aPixel / aPixel;
     var iPixel = calculateBeamFlux(instrument) / num_pixels;
     var atten = (iPixel < iPixelMax) ? 1.0 : iPixelMax / iPixel;
-    attenFactorNode.value = atten;
+    attenFactorNode.value = Math.round(atten * 100000) / 100000;
     return atten;
 }
 
@@ -495,19 +536,21 @@ function calculateSourceToSampleApertureDistance(instrument) {
     // Get the sample location
     var sampleSpace = document.getElementById(instrument + 'SampleTable').value;
     var ssd = 0.0;
-    var ssdOffset = parseFloat(window[instrument + 'Constants']['ApertureOffset']);
+    var ssdOffset = parseFloat(window[instrument + 'Constants'][sampleSpace + 'Offset']);
+    var apertureOffset = parseFloat(window[instrument + 'Constants']['ApertureOffset'])
     // Calculate the source to sample distance
     switch (instrument) {
         case 'ng7':
         case 'ngb30m':
-            ssd = 1632 - 155 * nGds - ssdOffset;
+            ssd = 1632 - 155 * nGds - ssdOffset - apertureOffset;
             break;
         case 'ngb10m':
-            if (nGds == 0) {
-                ssd = 513 - ssdOffset;
-            } else {
-                ssd = 513 - 61.9 - 150 * nGds - ssdOffset;
+            ssd = 513 - ssdOffset;
+            if (nGds != 0) {
+                ssd -= 61.9;
+                ssd -= 150 * nGds;
             }
+            ssd -= apertureOffset;
             break;
         default:
             ssd = 0.0;
@@ -519,7 +562,7 @@ function calculateSourceToSampleApertureDistance(instrument) {
 /*
  * Use the updated guide values to calculate the Q ranges for the current instrument
  */
-function updateGuides(instrument, guideSelectStr) {
+function updateGuides(instrument, guideSelectStr, runSASCALC = true) {
     // Get guide nodes for the specific instrument
     var apertureNode = document.getElementById(instrument + "SourceAperture");
     var allApertureOptions = Object.values(apertureNode.options);
@@ -532,21 +575,21 @@ function updateGuides(instrument, guideSelectStr) {
             allApertureOptions[aperture].disabled = false;
             allApertureOptions[aperture].hidden = false;
             allApertureOptions[aperture].selected = true;
+            sessionStorage.setItem(instrument + "SourceAperture", allApertureOptions[aperture].value);
         } else {
             allApertureOptions[aperture].disabled = true;
             allApertureOptions[aperture].hidden = true;
         }
     }
-    // Store the guide configuration to the persistant state
-    sessionStorage.setItem(instrument + "GuideConfig", guideSelectStr);
-    // Recalculate q range
-    SASCALC(instrument);
+    if (runSASCALC) {
+        SASCALC(instrument);
+    }
 };
 
 /*
  * Use the updated detector values to calculate the Q ranges for the current instrument
  */
-function updateDetector(instrument) {
+function updateDetector(instrument, runSASCALC = true) {
     // Get detector nodes for the specific instrument
     var detectorSlider = document.getElementById(instrument + "SDDSliderBar");
     var detectorOutput = document.getElementById(instrument + "SDDInputBox");
@@ -560,46 +603,51 @@ function updateDetector(instrument) {
     detectorOutput.oninput = function () { detectorSlider.value = this.value; }
     offsetSlider.oninput = function () { offsetOutput.value = this.value; }
     offsetOutput.oninput = function () { offsetSlider.value = this.value; }
-    // Recalculate q range
-    SASCALC(instrument);
+    if (runSASCALC) {
+        SASCALC(instrument);
+    }
 }
 
 /*
  * Use the updated aperture values to calculate the Q ranges for the current instrument
  */
-function updateAperture(instrument) {
+function updateAperture(instrument, runSASCALC = true) {
     // Get aperture nodes for the specific instrument
-    var instStr = instrument.toString();
-    var customAperture = document.getElementById(instStr + 'CustomAperture');
-    var customApertureLabel = document.getElementById(instStr + 'CustomApertureLabel');
-    var sampleApertureSelector = document.getElementById(instStr + 'SampleAperture');
+    var customAperture = document.getElementById(instrument + 'CustomAperture');
+    var customApertureLabel = document.getElementById(instrument + 'CustomApertureLabel');
+    var sampleApertureSelector = document.getElementById(instrument + 'SampleAperture');
     // Show/hide custom aperture size box
     if (sampleApertureSelector.value === "Custom") {
         customAperture.style.display = 'inline-block';
-        customApertureLabel.style.display = 'inline-block';;
+        customApertureLabel.style.display = 'inline-block';
     } else {
         customAperture.style.display = 'none';
         customApertureLabel.style.display = 'none';
     }
-    // Recalculate q range
-    SASCALC(instrument);
+    if (runSASCALC) {
+        SASCALC(instrument);
+    }
 }
 
 /*
  * Use the updated wavelength spread to determine the allowed wavelength range
  */
-function changeWavelengthSpread(instrument) {
+function updateWavelengthSpread(instrument, runSASCALC=true) {
     var wavelength = document.getElementById(instrument + 'WavelengthInput');
     var wavelengthSpread = document.getElementById(instrument + 'WavelengthSpread').value;
     var wavelengthOptions = window[instrument + 'WavelengthRange'][wavelengthSpread];
     wavelength.min = parseFloat(wavelengthOptions[0]);
     wavelength.max = parseFloat(wavelengthOptions[1]);
+    if (runSASCALC) {
+        SASCALC(instrument);
+    }
 }
 
 /*
  * Change the instrument you want to calculate Q ranges for
  */
-function changeInstrument(domName, selectStr) {
+function updateInstrument(domName, selectStr, runSASCALC=true) {
+    // Get instrument node and create an array of the options available
     var inst = document.getElementById(domName);
     var instrumentOptions = [];
     for (var i = 0; i < inst.options.length; i++) {
@@ -607,12 +655,14 @@ function changeInstrument(domName, selectStr) {
     }
     var instruments = {};
     var instName = "";
+    // Get the divs for all possible instruments
     for (var j in instrumentOptions) {
         instName = instrumentOptions[j]
         if (!(instName === "")) {
             instruments[instName] = document.getElementById(instName);
         }
     }
+    // Show selected instrument and hide all others
     for (var key in instruments) {
         if (key === selectStr) {
             instruments[key].style.display = "block";
@@ -620,8 +670,9 @@ function changeInstrument(domName, selectStr) {
             instruments[key].style.display = "none";
         }
     }
-    sessionStorage.setItem('instrument', selectStr);
-    SASCALC(selectStr);
+    if (runSASCALC) {
+        SASCALC(selectStr);
+    }
 };
 
 
@@ -643,12 +694,81 @@ function update1DChart(chartElement, xAxis, yDataSets, dataOptions) {
  * Restore the persistant state on refresh
  */
 function restorePersistantState() {
-    // TODO: Update values on screen when values are loaded
+    // Load instrument and sample space
     var instrument = sessionStorage.getItem('instrument');
-    var instSelector = document.getElementById('instrumentSelector');
-    instSelector.value = instrument;
-    var ng7GuideConfig = sessionStorage.getItem('ng7GuideConfig');
-    var ng7GuideSelector = document.getElementById('ng7GuideConfig');
-    ng7GuideSelector.value = ng7GuideConfig;
+    if (instrument === "") {
+        return;
+    } else if (instrument === "vsans") {
+        restoreVSANSstate();
+    } else {
+        var instSelector = document.getElementById('instrumentSelector');
+        instSelector.value = instrument;
+        updateInstrument('instrumentSelector', instrument, false);
+        var sampleSpace = sessionStorage.getItem(instrument + 'SampleTable');
+        var sampleSpaceNode = document.getElementById(instrument + 'SampleTable');
+        sampleSpaceNode.value = sampleSpace;
+        // Store wavelength values
+        var wavelengthSpread = sessionStorage.getItem(instrument + 'WavelengthSpread');
+        var wavelength = sessionStorage.getItem(instrument + 'WavelengthInput');
+        var wavelengthNode = document.getElementById(instrument + 'WavelengthInput');
+        var wavelengthSpreadNode = document.getElementById(instrument + 'WavelengthSpread').value;
+        wavelengthNode.value = wavelength;
+        wavelengthSpreadNode.value = wavelengthSpread;
+        updateWavelengthSpread(instrument, false);
+        // Store aperture and guide configuration values
+        var customAperture = sessionStorage.getItem(instrument + 'CustomAperture');
+        var sampleAperture = sessionStorage.getItem(instrument + 'SampleAperture');
+        var guideConfig = sessionStorage.getItem(instrument + "GuideConfig");
+        var customApertureNode = document.getElementById(instrument + 'CustomAperture');
+        var sampleApertureSelectorNode = document.getElementById(instrument + 'SampleAperture');
+        var guideNode = document.getElementById(instrument + 'GuideConfig');
+        customApertureNode.value = customAperture;
+        sampleApertureSelectorNode.value = sampleAperture;
+        updateAperture(instrument, false);
+        guideNode.value = guideConfig;
+        updateGuides(instrument, guideConfig, false);
+        // Store detector distances
+        var detectorDistance = sessionStorage.getItem(instrument + 'SDDInputBox');
+        var detectorOffset = sessionStorage.getItem(instrument + 'OffsetInputBox');
+        var detectorNode = document.getElementById(instrument + "SDDInputBox");
+        var detectorSliderNode = document.getElementById(instrument + "SDDSliderBar");
+        var offsetNode = document.getElementById(instrument + "OffsetInputBox");
+        var offsetSliderNode = document.getElementById(instrument + "OffsetSliderBar");
+        detectorNode.value = detectorDistance;
+        detectorSliderNode.value = detectorDistance;
+        offsetNode.value = detectorOffset;
+        offsetSliderNode.value = detectorOffset;
+        updateDetector(instrument, false);
+    }
+
     SASCALC(instrument);
+}
+
+/*
+ * Store the persistant state for browser refreshes
+ */
+function storePersistantState(instrument) {
+    // Store instrument and sample space
+    sessionStorage.setItem('instrument', instrument);
+    var sampleSpaceNode = document.getElementById(instrument + 'SampleTable');
+    var sampleSelectStr = sampleSpaceNode.options[sampleSpaceNode.selectedIndex].value;
+    sessionStorage.setItem(instrument + 'SampleTable', sampleSelectStr);
+    // Store wavelength values
+    var wavelength = document.getElementById(instrument + 'WavelengthInput');
+    var wavelengthSpread = document.getElementById(instrument + 'WavelengthSpread').value;
+    sessionStorage.setItem(instrument + 'WavelengthSpread', wavelengthSpread);
+    sessionStorage.setItem(instrument + 'WavelengthInput', wavelength.value);
+    // Store aperture and guide configuration values
+    var customAperture = document.getElementById(instrument + 'CustomAperture');
+    var sampleApertureSelector = document.getElementById(instrument + 'SampleAperture');
+    var guideNode = document.getElementById(instrument + 'GuideConfig');
+    var guideSelectStr = guideNode.options[guideNode.selectedIndex].value;
+    sessionStorage.setItem(instrument + 'CustomAperture', customAperture.value);
+    sessionStorage.setItem(instrument + 'SampleAperture', sampleApertureSelector.value);
+    sessionStorage.setItem(instrument + "GuideConfig", guideSelectStr);
+    // Store detector distances
+    var detectorOutput = document.getElementById(instrument + "SDDInputBox");
+    var offsetOutput = document.getElementById(instrument + "OffsetInputBox");
+    sessionStorage.setItem(instrument + 'SDDInputBox', detectorOutput.value);
+    sessionStorage.setItem(instrument + 'OffsetInputBox', offsetOutput.value);
 }

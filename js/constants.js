@@ -32,7 +32,7 @@ window.ngb30Constants = {
     'aPixel': '5.08',
     'coeff': '10000',
     'xPixels': '128',
-    'ypixels': '128'
+    'yPixels': '128'
 };
 
 // NG7 SANS
@@ -57,7 +57,7 @@ window.ng7Constants = {
     'aPixel': '5.08',
     'coeff': '10000',
     'xPixels': '128',
-    'ypixels': '128'
+    'yPixels': '128'
 };
 window.ng7WavelengthRange = {
     "9.0": ['6.5', '20.0'],
@@ -81,5 +81,5 @@ window.ngb10Constants = {
     'aPixel': '5.08',
     'coeff': '10000',
     'xPixels': '128',
-    'ypixels': '128'
+    'yPixels': '128'
 };
