@@ -6,7 +6,9 @@ window.chartColors = {
     green: 'rgb(75, 192, 192)',
     blue: 'rgb(54, 162, 235)',
     purple: 'rgb(153, 102, 255)',
-    grey: 'rgb(201, 203, 207)'
+    grey: 'rgb(201, 203, 207)',
+    black: 'rgb(0, 0, 0)',
+    white: 'rgb(255, 255, 255)'
 };
 
 // NGB 30m SANS
@@ -83,3 +85,14 @@ window.ngb10Constants = {
     'xPixels': '128',
     'yPixels': '128'
 };
+
+// Models
+window.modelList = {
+    "Debye": {
+        "params": {
+            "scale": 1000,
+            "rg": 100,
+            "bkg": 0.0
+        }
+    }
+}

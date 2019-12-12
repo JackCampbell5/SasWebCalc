@@ -16,6 +16,8 @@ function SASCALC(instrument, averageType="Circular", model="Debye") {
     calculateNumberOfAttenuators(instrument);
     // Do Circular Average of an array of 1s
     calculateQRange(instrument, averageType);
+    // Do Circular Average of an array of 1s
+    calculateModel(model);
     // Update the chart
     update1DChart();
 
@@ -141,7 +143,7 @@ function calculateQRange(instrument, averageType="Circular") {
     var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
     var ntotal = theta = radius = aveSQ = aveisq = diff = 0;
     // Loop over every q value
-    for (i = 1; i <= nq; i++) {
+    for (i = 0; i <= nq; i++) {
         radius = (2 * i) * pixelSize / 2;
         theta = Math.atan(radius / detectorDistance) / 2;
         window.qValues[i] = (4 * Math.PI / lambda) * Math.sin(theta);
@@ -157,6 +159,18 @@ function calculateQRange(instrument, averageType="Circular") {
         }
         calculateResolutions(i, instrument);
         ntotal += window.nCells[i];
+    }
+}
+
+/*
+ * Calculate the model function used to represent the data
+ */
+function calculateModel(model="Debye") {
+    // TODO: Tie into sasmodels
+    var defaultParams = Object.values(window.modelList[model]['params']);
+    window[model.toLowerCase()](defaultParams);
+    for (var i = 0; i < window.aveIntensity.length; i++) {
+        window.aveIntensity[i] *= window.fSubs[i];
     }
 }
 
@@ -589,28 +603,38 @@ function update1DChart() {
     var chartElement = document.getElementById('sascalcChart').getContext('2d');
     var yDataSets = [
         {
-            label: 'Data',
-            backgroundColor: window.chartColors.red,
-            borderColor: window.chartColors.red,
+            label: 'SASCALC',
+            backgroundColor: window.chartColors.black,
+            borderColor: window.chartColors.black,
             data: window.aveIntensity,
             fill: false
         }
     ]
     var dataOptions = {
         responsive: true,
+        aspectRatio: 1.5,
         title: { display: false },
         tooltips: { mode: 'index', intersect: false, },
         hover: { mode: 'nearest', intersect: true },
         scales: {
             xAxes: [{
                 display: true,
-                scaleLabel: { display: true, labelString: "Q (Å^-1)" }
+                scaleLabel: { display: true, labelString: "Q (Å^-1)" },
+                // type: "logarithmic",
+                ticks: { min: 0.000001, max: Math.max(window.qValues) * 1.1 , stepSize: 0.1 },
+                autoSkip: true
             }],
             yAxes: [{
                 display: true,
+                offset: true,
                 scaleLabel: { display: true, labelString: 'Relative Intensity (Au)' },
-                ticks: { suggestedMin: 0, suggestedMax: 1, suggestedStepSize: 0.1 }
+                // type: "logarithmic",
+                ticks: { suggestedMin: 0.0001, suggestedMax: 10}
             }]
+        },
+        legend: {
+            position: 'bottom',
+            usePointStyle: true,
         }
     }
     var chart = new Chart(chartElement, {
@@ -641,7 +665,7 @@ function restorePersistantState() {
         var sampleSpace = sessionStorage.getItem(instrument + 'SampleTable');
         var sampleSpaceNode = document.getElementById(instrument + 'SampleTable');
         sampleSpaceNode.value = sampleSpace;
-        // Store wavelength values
+        // Restore wavelength values
         var wavelengthSpread = sessionStorage.getItem(instrument + 'WavelengthSpread');
         var wavelength = sessionStorage.getItem(instrument + 'WavelengthInput');
         var wavelengthNode = document.getElementById(instrument + 'WavelengthInput');
@@ -649,7 +673,7 @@ function restorePersistantState() {
         wavelengthNode.value = wavelength;
         wavelengthSpreadNode.value = wavelengthSpread;
         updateWavelengthSpread(instrument, false);
-        // Store aperture and guide configuration values
+        // Restore aperture and guide configuration values
         var customAperture = sessionStorage.getItem(instrument + 'CustomAperture');
         var sampleAperture = sessionStorage.getItem(instrument + 'SampleAperture');
         var guideConfig = sessionStorage.getItem(instrument + "GuideConfig");
@@ -661,7 +685,7 @@ function restorePersistantState() {
         updateAperture(instrument, false);
         guideNode.value = guideConfig;
         updateGuides(instrument, guideConfig, false);
-        // Store detector distances
+        // Restore detector distances
         var detectorDistance = sessionStorage.getItem(instrument + 'SDDInputBox');
         var detectorOffset = sessionStorage.getItem(instrument + 'OffsetInputBox');
         var detectorNode = document.getElementById(instrument + "SDDInputBox");
@@ -674,7 +698,7 @@ function restorePersistantState() {
         offsetSliderNode.value = detectorOffset;
         updateDetector(instrument, false);
     }
-
+    // Run SASCALC at the end
     SASCALC(instrument);
 }
 
