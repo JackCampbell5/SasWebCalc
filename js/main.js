@@ -1,99 +1,4 @@
 ﻿function loadpage() {
-    var ng7ctx = document.getElementById('sascalcChart').getContext('2d');
-    // TODO: Create real base data sets
-    var sansDataSets = [
-        {
-            label: 'Data',
-            backgroundColor: window.chartColors.red,
-            borderColor: window.chartColors.red,
-            data: [12, 19, 3, 5, 2, 3],
-            fill: false
-        }
-    ]
-    var vsansDataSets = [
-        {
-            label: 'Sample 1 - FT',
-            backgroundColor: window.chartColors.red,
-            borderColor: window.chartColors.red,
-            data: [12, 19, 3, 5, 2, 3],
-            fill: false
-        },
-        {
-            label: 'Sample 1 - FB',
-            backgroundColor: window.chartColors.red,
-            borderColor: window.chartColors.red,
-            data: [12, 19, 3, 5, 2, 3],
-            fill: false
-        },
-        {
-            label: 'Sample 1 - FL',
-            backgroundColor: window.chartColors.red,
-            borderColor: window.chartColors.red,
-            data: [12, 19, 3, 5, 2, 3],
-            fill: false
-        },
-        {
-            label: 'Sample 1 - FR',
-            backgroundColor: window.chartColors.red,
-            borderColor: window.chartColors.red,
-            data: [12, 19, 3, 5, 2, 3],
-            fill: false
-        },
-        {
-            label: 'Sample 1 - MT',
-            backgroundColor: window.chartColors.red,
-            borderColor: window.chartColors.red,
-            data: [12, 19, 3, 5, 2, 3],
-            fill: false
-        },
-        {
-            label: 'Sample 1 - MB',
-            backgroundColor: window.chartColors.red,
-            borderColor: window.chartColors.red,
-            data: [12, 19, 3, 5, 2, 3],
-            fill: false
-        },
-        {
-            label: 'Sample 1 - ML',
-            backgroundColor: window.chartColors.red,
-            borderColor: window.chartColors.red,
-            data: [12, 19, 3, 5, 2, 3],
-            fill: false
-        },
-        {
-            label: 'Sample 1 - MB',
-            backgroundColor: window.chartColors.red,
-            borderColor: window.chartColors.red,
-            data: [12, 19, 3, 5, 2, 3],
-            fill: false
-        },
-        {
-            label: 'Sample 1 - B',
-            backgroundColor: window.chartColors.red,
-            borderColor: window.chartColors.red,
-            data: [12, 19, 3, 5, 2, 3],
-            fill: false
-        }
-    ]
-
-    var options = {
-        responsive: true,
-        title: {display: false },
-        tooltips: {mode: 'index', intersect: false,},
-        hover: {mode: 'nearest', intersect: true},
-        scales: {
-            xAxes: [{
-                display: true,
-                scaleLabel: { display: true, labelString: "Q (Å^-1)"}
-            }],
-            yAxes: [{
-                display: true,
-                scaleLabel: { display: true, labelString: 'Relative Intensity (Au)'},
-                ticks: {suggestedMin: 0, suggestedMax: 100, suggestedStepSize: 5}
-            }]
-        }
-    }
-    update1DChart(ng7ctx, [0, 1, 2, 3, 4, 5], sansDataSets, options);
     restorePersistantState();
 };
 
@@ -111,10 +16,13 @@ function SASCALC(instrument, averageType="Circular", model="Debye") {
     calculateNumberOfAttenuators(instrument);
     // Do Circular Average of an array of 1s
     calculateQRange(instrument, averageType);
-    // TODO: Run calculation, update charts, etc.
+    // Update the chart
+    update1DChart();
+
+    // TODO: Populate minimum and maximum Q values
     // TODO: Calculate model in Q range
 
-    // Save persistant state
+    // Store persistant state
     storePersistantState(instrument);
 }
 
@@ -166,16 +74,15 @@ function calculateQRange(instrument, averageType="Circular") {
                     correctedDx = xDistance + (k - center) * pixelSize / numDimensions;
                     for (l = 1; l <= numDimensions; l++) {
                         correctedDy = yDistance + (l - center) * pixelSize / numDimensions;
+                        switch (averageType) {
+                            case "Circular":
+                            default:
+                                var iRadius = Math.floor(Math.sqrt(correctedDx * correctedDx + correctedDy * correctedDy) / pixelSize) + 1;
+                                break;
+                            // TODO: Add in other averaging types
+                        }
+                        nq = (iRadius > nq) ? iRadius : nq;
                     }
-                    switch (averageType) {
-                        case "Circular":
-                        default:
-                            var iRadius = Math.floor(Math.sqrt(correctedDx * correctedDx + correctedDy * correctedDy) / pixelSize) + 1;
-                            nq = (iRadius > nq) ? iRadius : nq;
-                            break;
-                        // TODO: Add in other averaging types
-                    }
-
                 }
             }
         }
@@ -217,15 +124,15 @@ function calculateQRange(instrument, averageType="Circular") {
                     correctedDx = xDistance + (k - center) * pixelSize / numDimensions;
                     for (l = 1; l <= numDimensions; l++) {
                         correctedDy = yDistance + (l - center) * pixelSize / numDimensions;
+                        switch (averageType) {
+                            case "Circular":
+                            default:
+                                var iRadius = Math.floor(Math.sqrt(correctedDx * correctedDx + correctedDy * correctedDy) / pixelSize) + 1;
+                                break;
+                            // TODO: Add in other averaging types
+                        }
+                        calculateIntensityValues(iRadius, dataPixel, numDSquared);
                     }
-                    switch (averageType) {
-                        case "Circular":
-                        default:
-                            var iRadius = Math.floor(Math.sqrt(correctedDx * correctedDx + correctedDy * correctedDy) / pixelSize) + 1;
-                            break;
-                        // TODO: Add in other averaging types
-                    }
-                    calculateIntensityValues(iRadius, dataPixel, numDSquared);
                 }
             }
         }
@@ -234,7 +141,7 @@ function calculateQRange(instrument, averageType="Circular") {
     var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
     var ntotal = theta = radius = aveSQ = aveisq = diff = 0;
     // Loop over every q value
-    for (i = 0; i <= nq; i++) {
+    for (i = 1; i <= nq; i++) {
         radius = (2 * i) * pixelSize / 2;
         theta = Math.atan(radius / detectorDistance) / 2;
         window.qValues[i] = (4 * Math.PI / lambda) * Math.sin(theta);
@@ -246,7 +153,7 @@ function calculateQRange(instrument, averageType="Circular") {
             aveSQ = window.aveIntensity[i] * window.aveIntensity[i];
             aveisq = window.dSQ[i] / window.nCells[i];
             diff = aveisq - aveSQ;
-            window.sigmaAve = (diff < 0) ? largeNumber : Math.sqrt(diff / (window.nCells[i] - 1));
+            window.sigmaAve[i] = (diff < 0) ? largeNumber : Math.sqrt(diff / (window.nCells[i] - 1));
         }
         calculateResolutions(i, instrument);
         ntotal += window.nCells[i];
@@ -322,7 +229,7 @@ function calculateResolutions(i, instrument) {
     var delta = 0.5 * Math.pow(beamStopSize - rZero, 2) / varDetector;
 
     // TODO: Find usable incomplete gamma function in javascript (or php)
-    var incGamma = 1.00;
+    var incGamma = 1.00e-10;
     //if (rZero < beamStopSize) {
     //    var incGamma = Math.exp(Math.log(math.gamma(1.5))) * (1 - gammainc(1.5, delta) / math.gamma(1.5));
     //} else {
@@ -675,19 +582,46 @@ function updateInstrument(domName, selectStr, runSASCALC=true) {
     }
 };
 
-
 /*
  * Update the 1D Chart with new data sets
  */
-function update1DChart(chartElement, xAxis, yDataSets, dataOptions) {
+function update1DChart() {
+    var chartElement = document.getElementById('sascalcChart').getContext('2d');
+    var yDataSets = [
+        {
+            label: 'Data',
+            backgroundColor: window.chartColors.red,
+            borderColor: window.chartColors.red,
+            data: window.aveIntensity,
+            fill: false
+        }
+    ]
+    var dataOptions = {
+        responsive: true,
+        title: { display: false },
+        tooltips: { mode: 'index', intersect: false, },
+        hover: { mode: 'nearest', intersect: true },
+        scales: {
+            xAxes: [{
+                display: true,
+                scaleLabel: { display: true, labelString: "Q (Å^-1)" }
+            }],
+            yAxes: [{
+                display: true,
+                scaleLabel: { display: true, labelString: 'Relative Intensity (Au)' },
+                ticks: { suggestedMin: 0, suggestedMax: 1, suggestedStepSize: 0.1 }
+            }]
+        }
+    }
     var chart = new Chart(chartElement, {
         type: 'line',
         data: {
-            labels: xAxis,
+            labels: window.qValues,
             datasets: yDataSets
         },
         options: dataOptions
     });
+    chart.update();
 }
 
 /*
@@ -742,6 +676,14 @@ function restorePersistantState() {
     }
 
     SASCALC(instrument);
+}
+
+/*
+ * Placeholder for the VSANS persistant state restore function
+ * TODO: Actually write this
+ */
+function restoreVSANSstate() {
+    return;
 }
 
 /*
