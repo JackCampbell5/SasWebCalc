@@ -1,4 +1,14 @@
 ﻿function loadpage() {
+    // Initialize data sets
+    window.qValues = new Array(1).fill(0);
+    window.aveIntensity = new Array(1).fill(0);
+    window.nCells = new Array(1).fill(0);
+    window.dSQ = new Array(1).fill(0);
+    window.sigmaAve = new Array(1).fill(0);
+    window.qAverage = new Array(1).fill(0);
+    window.sigmaQ = new Array(1).fill(0);
+    window.fSubs = new Array(1).fill(0);
+    // Restore persistant state on refresh
     restorePersistantState();
 };
 
@@ -22,7 +32,7 @@ function SASCALC(instrument, averageType="Circular", model="Debye") {
     update1DChart();
 
     // TODO: Populate minimum and maximum Q values
-    // TODO: Calculate model in Q range
+    // TODO: Calculate Qx and Qy matrices, apply model to 2D and then I vs. Q for 1D and 2D plots
 
     // Store persistant state
     storePersistantState(instrument);
@@ -89,16 +99,6 @@ function calculateQRange(instrument, averageType="Circular") {
             }
         }
     }
-
-    // Define data for display
-    window.qValues = new Array(nq).fill(0);
-    window.aveIntensity = new Array(nq).fill(0);
-    window.nCells = new Array(nq).fill(0);
-    window.dSQ = new Array(nq).fill(0);
-    window.sigmaAve = new Array(nq).fill(0);
-    window.qAverage = new Array(nq).fill(0);
-    window.sigmaQ = new Array(nq).fill(0);
-    window.fSubs = new Array(nq).fill(0);
 
     // TODO: Find a way to simplify rather than looping over the same items twice
     // Loop over each pixel
@@ -602,52 +602,30 @@ function updateInstrument(domName, selectStr, runSASCALC=true) {
  * Update the 1D Chart with new data sets
  */
 function update1DChart() {
-    var chartElement = document.getElementById('sascalcChart').getContext('2d');
-    var yDataSets = [
-        {
-            label: 'SASCALC',
-            backgroundColor: window.chartColors.black,
-            borderColor: window.chartColors.black,
-            data: window.aveIntensity,
-            fill: false
-        }
-    ]
-    var dataOptions = {
-        responsive: true,
-        aspectRatio: 1.5,
-        title: { display: false },
-        tooltips: { mode: 'index', intersect: false, },
-        hover: { mode: 'nearest', intersect: true },
-        scales: {
-            xAxes: [{
-                display: true,
-                scaleLabel: { display: true, labelString: "Q (Å^-1)" },
-                // type: "logarithmic",
-                ticks: { min: 0.000001, max: Math.max(window.qValues) * 1.1 , stepSize: 0.1 },
-                autoSkip: true
-            }],
-            yAxes: [{
-                display: true,
-                offset: true,
-                scaleLabel: { display: true, labelString: 'Relative Intensity (Au)' },
-                // type: "logarithmic",
-                ticks: { suggestedMin: 0.0001, suggestedMax: 10}
-            }]
+    var dataSet = {
+        x: window.qValues,
+        y: window.aveIntensity,
+        mode: 'lines+markers',
+        marker: {
+            color: window.chartColors.black,
+            size: 5,
         },
-        legend: {
-            position: 'bottom',
-            usePointStyle: true,
-        }
-    }
-    var chart = new Chart(chartElement, {
-        type: 'line',
-        data: {
-            labels: window.qValues,
-            datasets: yDataSets
+        line: {
+            color: window.chartColors.black,
+            size: 1,
         },
-        options: dataOptions
-    });
-    chart.update();
+        name: "SASCALC"
+    };
+    var layout = {
+        title: "SASCALC 1D Plot",
+        xaxis: {
+            title: "Q (Å^-1)",
+        },
+        yaxis: {
+            title: 'Relative Intensity (Au)',
+        }
+    };
+    Plotly.newPlot('sasCalcChart', [dataSet], layout);
 }
 
 /*
