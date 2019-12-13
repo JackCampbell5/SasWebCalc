@@ -368,16 +368,18 @@ function calculateNumberOfAttenuators(instrument) {
  * Calculate the beam stop diameter needed to cover the beam
  */
 function calculateBeamStopDiameter(instrument) {
+    var beamDiamNode = document.getElementById(instrument + "BeamSize");
+    var beamStopDiamNode = document.getElementById(instrument + "BeamStopSize");
     var bm = calculateBeamDiameter(instrument, 'maximum');
+    beamDiamNode.value = Math.round(bm * 10000) / 10000;
     // TODO: ngb10m has 1.5" BS, but no 2"
-    // TODO: Put the calculated size on the page
     var bsDiam = Math.ceil(bm / 2.54);
     if (document.getElementById(instrument + 'GuideConfig').value === 'LENS') {
         // If LENS configuration, the beam size is the source aperture size
-        return 1;
-    } else {
-        return bsDiam;
+        bsDiam = 1;
     }
+    beamStopDiamNode.value = bsDiam;
+    return bsDiam;
 }
 
 function getSampleApertureSize(instrument) {
