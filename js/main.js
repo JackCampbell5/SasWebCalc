@@ -8,6 +8,10 @@
     window.qAverage = new Array(1).fill(0);
     window.sigmaQ = new Array(1).fill(0);
     window.fSubs = new Array(1).fill(0);
+    window.qxValues = new Array(1).fill(0);
+    window.qyValues = new Array(1).fill(0);
+    window.intensity2D = new Array(1).fill(0);
+    window.frozenCalculations = [];
     // Restore persistant state on refresh
     restorePersistantState();
 };
@@ -28,8 +32,9 @@ function SASCALC(instrument, averageType="Circular", model="Debye") {
     calculateQRange(instrument, averageType);
     // Do Circular Average of an array of 1s
     calculateModel(model);
-    // Update the chart
+    // Update the charts
     update1DChart();
+    update2DChart();
 
     // TODO: Populate minimum and maximum Q values
     // TODO: Calculate Qx and Qy matrices, apply model to 2D and then I vs. Q for 1D and 2D plots
@@ -51,14 +56,15 @@ function calculateQRange(instrument, averageType="Circular") {
     var xDistance = yDistance = totalDistance = correctedDx = correctedDy = dataPixel = numDSquared = 0;
     var radiusCenter = 100;
     var numDimensions = center = largeNumber = 1;
-    var smallNumber = 1e-10;
-    var i = j = k = l = nq = 0;
+    var i = j = k = l = nq = theta = thetaX = thetaY = radius = radX = radY = 0;
+    var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
 
     // Detector values pixel size in mm
     var detectorDistance = parseFloat(document.getElementById(instrument + "SDDInputBox").value) * 10;
     var mask = generateStandardMask(instrument);
     var maskI = new Array();
     var data = generateOnesData(instrument);
+    window.intensity2D = data;
     var dataI = new Array();
 
     // Loop over each pixel
@@ -81,6 +87,9 @@ function calculateQRange(instrument, averageType="Circular") {
                     numDimensions = 3;
                     center = 2;
                 }
+                thetaX = Math.atan(xDistance / detectorDistance) / 2;
+                thetaY = Math.atan(yDistance / detectorDistance) / 2;
+                window.qyValues[j] = (4 * Math.PI / lambda) * Math.sin(thetaY);
                 // Loop over sliced pixels
                 for (k = 1; k <= numDimensions; k++) {
                     correctedDx = xDistance + (k - center) * pixelSize / numDimensions;
@@ -94,54 +103,15 @@ function calculateQRange(instrument, averageType="Circular") {
                             // TODO: Add in other averaging types
                         }
                         nq = (iRadius > nq) ? iRadius : nq;
-                    }
-                }
-            }
-        }
-    }
-
-    // TODO: Find a way to simplify rather than looping over the same items twice
-    // Loop over each pixel
-    for (i = 0; i < xPixels; i++) {
-        xDistance = calculateDistanceFromBeamCenter(i, xCenter, pixelSize, coeff);
-        maskI = mask[i];
-        dataI = data[i];
-        for (j = 0; j < yPixels; j++) {
-            yDistance = calculateDistanceFromBeamCenter(j, yCenter, pixelSize, coeff);
-            // Ignore masked pixels (mask[i][j] = 1)
-            if (maskI[j] == 0) {
-                dataPixel = dataI[j];
-                numDSquared = numDimensions * numDimensions;
-                totalDistance = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
-                // Break pixels up into a 3x3 grid close to the beam center
-                if (totalDistance > radiusCenter) {
-                    numDimensions = 1;
-                    center = 1;
-                } else {
-                    numDimensions = 3;
-                    center = 2;
-                }
-                // Loop over sliced pixels
-                for (k = 1; k <= numDimensions; k++) {
-                    correctedDx = xDistance + (k - center) * pixelSize / numDimensions;
-                    for (l = 1; l <= numDimensions; l++) {
-                        correctedDy = yDistance + (l - center) * pixelSize / numDimensions;
-                        switch (averageType) {
-                            case "Circular":
-                            default:
-                                var iRadius = Math.floor(Math.sqrt(correctedDx * correctedDx + correctedDy * correctedDy) / pixelSize) + 1;
-                                break;
-                            // TODO: Add in other averaging types
-                        }
                         calculateIntensityValues(iRadius, dataPixel, numDSquared);
                     }
                 }
+                window.qxValues[i] = (4 * Math.PI / lambda) * Math.sin(thetaX);
             }
         }
     }
 
-    var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
-    var ntotal = theta = radius = aveSQ = aveisq = diff = 0;
+    var ntotal = aveSQ = aveisq = diff = 0;
     // Loop over every q value
     for (i = 0; i <= nq; i++) {
         radius = (2 * i) * pixelSize / 2;
@@ -165,12 +135,18 @@ function calculateQRange(instrument, averageType="Circular") {
 /*
  * Calculate the model function used to represent the data
  */
-function calculateModel(model="Debye") {
-    // TODO: Tie into sasmodels
-    var defaultParams = Object.values(window.modelList[model]['params']);
-    window[model.toLowerCase()](defaultParams);
-    for (var i = 0; i < window.aveIntensity.length; i++) {
-        window.aveIntensity[i] *= window.fSubs[i];
+function calculateModel(model = "Debye", defaultParams = []) {
+    if (defaultParams.length == 0) {
+        defaultParams = Object.values(window.modelList[model]['params']);
+    }
+    for (var i = 0; i < window.qValues.length; i++) {
+        // Create 
+        var params = new Array();
+        for (item in defaultParams) {
+            params.push(defaultParams[item]);
+        }
+        params.push(window.qValues[i]);
+        window.aveIntensity[i] = window.fSubs[i] * window[model.toLowerCase()](params);
     }
 }
 
@@ -224,6 +200,7 @@ function calculateResolutions(i, instrument) {
     // Define constants
     var velocityNeutron1A = 3.956e5;
     var gravityConstant = 981.0;
+    var smallNumber = 1e-10;
     // Base calculations
     var a2 = sourceApertureRadius * SDD / SSD + sampleApertureRadius * (SDD + SSD) / SSD;
     var q_small = 2 * Math.PI * (beamStopSize - sampleApertureRadius) * (1 - lambdaWidth) / (lambda * SDD);
@@ -243,7 +220,7 @@ function calculateResolutions(i, instrument) {
     var delta = 0.5 * Math.pow(beamStopSize - rZero, 2) / varDetector;
 
     // TODO: Find usable incomplete gamma function in javascript (or php)
-    var incGamma = 1.00e-10;
+    var incGamma = smallNumber;
     //if (rZero < beamStopSize) {
     //    var incGamma = Math.exp(Math.log(math.gamma(1.5))) * (1 - gammainc(1.5, delta) / math.gamma(1.5));
     //} else {
@@ -251,7 +228,7 @@ function calculateResolutions(i, instrument) {
     //}
     var fSubS = 0.5 * (1.0 + math.erf((rZero - beamStopSize) / Math.sqrt(2.0 * varDetector)));
     if (fSubS <= 0.0) {
-        fSubS = 1e-10;
+        fSubS = smallNumber;
     }
     var fr = 1.0 + Math.sqrt(varDetector) * Math.exp(-1.0 * delta) / (rZero * fSubS * math.sqrt(2.0 * Math.PI));
     var fv = incGamma / (fSubS * Math.sqrt(Math.PI)) - rZero * rZero * Math.pow(fr - 1.0, 2) / varDetector;
@@ -596,7 +573,7 @@ function updateInstrument(domName, selectStr, runSASCALC=true) {
     if (runSASCALC) {
         SASCALC(selectStr);
     }
-};
+}
 
 /*
  * Update the 1D Chart with new data sets
@@ -625,7 +602,31 @@ function update1DChart() {
             title: 'Relative Intensity (Au)',
         }
     };
-    Plotly.newPlot('sasCalcChart', [dataSet], layout);
+    Plotly.newPlot('sasCalc1DChart', [dataSet], layout);
+}
+
+/*
+ * Update the 2D Chart with the current calculated 2D pattern
+ */
+function update2DChart() {
+    var dataSet = {
+        x: window.qxValues,
+        y: window.qyValues,
+        z: window.intensity2D,
+        type: 'heatmap',
+    };
+    var layout = {
+        title: "SASCALC 2D Plot",
+        xaxis: {
+            title: "Qx (Å^-1)",
+            range: [Math.min(window.qxValues), Math.max(window.qxValues)]
+        },
+        yaxis: {
+            title: "Qy (Å^-1)",
+            range: [Math.min(window.qyValues), Math.max(window.qyValues)]
+        }
+    };
+    Plotly.newPlot('sasCalc2DChart', [dataSet], layout);
 }
 
 /*
@@ -637,7 +638,7 @@ function restorePersistantState() {
     if (instrument === "") {
         return;
     } else if (instrument === "vsans") {
-        restoreVSANSstate();
+        restoreVSANSpersistantState();
     } else {
         var instSelector = document.getElementById('instrumentSelector');
         instSelector.value = instrument;
@@ -686,7 +687,7 @@ function restorePersistantState() {
  * Placeholder for the VSANS persistant state restore function
  * TODO: Actually write this
  */
-function restoreVSANSstate() {
+function restoreVSANSpersistantState() {
     return;
 }
 
