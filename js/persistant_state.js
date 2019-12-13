@@ -47,6 +47,8 @@ function restorePersistantState() {
         offsetNode.value = detectorOffset;
         offsetSliderNode.value = detectorOffset;
         updateDetector(instrument, false);
+        // Restore frozen datasets
+        window.frozenCalculations = sessionStorage.getItem(instrument + 'FrozenDataSets');
     }
     // Run SASCALC at the end
     SASCALC(instrument);
@@ -87,4 +89,6 @@ function storePersistantState(instrument) {
     var offsetOutput = document.getElementById(instrument + "OffsetInputBox");
     sessionStorage.setItem(instrument + 'SDDInputBox', detectorOutput.value);
     sessionStorage.setItem(instrument + 'OffsetInputBox', offsetOutput.value);
+    // Store frozen datasets
+    sessionStorage.setItem(instrument + 'FrozenDataSets', window.frozenCalculations);
 }

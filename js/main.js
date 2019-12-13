@@ -1,5 +1,14 @@
 ﻿function loadpage() {
     // Initialize data sets
+    initializeData();
+    // Reset frozen calculations
+    window.frozenCalculations = [];
+    // Restore persistant state on refresh
+    restorePersistantState();
+};
+
+function initializeData() {
+    // Initialize data sets
     window.qValues = new Array(1).fill(0);
     window.aveIntensity = new Array(1).fill(0);
     window.nCells = new Array(1).fill(0);
@@ -11,15 +20,14 @@
     window.qxValues = new Array(1).fill(0);
     window.qyValues = new Array(1).fill(0);
     window.intensity2D = new Array(1).fill(0);
-    window.frozenCalculations = [];
-    // Restore persistant state on refresh
-    restorePersistantState();
-};
+}
 
 /*
  * Run SASCALC for the current instrument and model
  */
-function SASCALC(instrument, averageType="Circular", model="Debye") {
+function SASCALC(instrument, averageType = "Circular", model = "Debye") {
+    // Initialize data sets
+    initializeData();
     // Calculate the beam stop diameter
     calculateBeamStopDiameter(instrument);
     // Calculate the estimated beam flux
@@ -50,8 +58,8 @@ function SASCALC(instrument, averageType="Circular", model="Debye") {
 function calculateQRange(instrument, averageType="Circular") {
     var xPixels = parseInt(window[instrument + "Constants"]["xPixels"]);
     var yPixels = parseInt(window[instrument + "Constants"]["yPixels"]);
-    var xCenter = xPixels / 2 + 0.5;
-    var yCenter = calculateYBeamCenter(instrument);
+    var xCenter = calculateXBeamCenter(instrument);
+    var yCenter = yPixels / 2 + 0.5;
     var pixelSize = parseFloat(window[instrument + "Constants"]["aPixel"]);
     var coeff = parseFloat(window[instrument + "Constants"]["coeff"]);
     var xDistance = yDistance = totalDistance = correctedDx = correctedDy = dataPixel = numDSquared = 0;
@@ -218,13 +226,9 @@ function calculateModel(model = "Debye", defaultParams = []) {
         defaultParams = Object.values(window.modelList[model]['params']);
     }
     for (var i = 0; i < window.qValues.length; i++) {
-        // Create 
-        var params = new Array();
-        for (item in defaultParams) {
-            params.push(defaultParams[item]);
-        }
-        params.push(window.qValues[i]);
-        window.aveIntensity[i] = window.fSubs[i] * window[model.toLowerCase()](params);
+        defaultParams.push(window.qValues[i]);
+        window.aveIntensity[i] = window.fSubs[i] * window[model.toLowerCase()](defaultParams);
+        defaultParams.pop();
     }
 }
 
@@ -240,15 +244,15 @@ function calculateIntensityValues(iRadius, dataPixel, numDSquared) {
 /*
  * Calculate the beam center in pixels
  */
-function calculateYBeamCenter(instrument) {
-    // Find the number of y pixels in the detector
-    var yPixels = parseInt(window[instrument + "Constants"]["yPixels"]);
+function calculateXBeamCenter(instrument) {
+    // Find the number of x pixels in the detector
+    var xPixels = parseInt(window[instrument + "Constants"]["xPixels"]);
     // Get pixel size in mm and convert to cm
     var dr = parseFloat(window[instrument + "Constants"]["aPixel"]) / 10;
     // Get detector offset in cm
     var offset = parseFloat(document.getElementById(instrument + "OffsetInputBox").value);
-    var yCenter = (offset / dr) + (yPixels / 2 + 0.5);
-    return yCenter;
+    var xCenter = (offset / dr) + (xPixels / 2 + 0.5);
+    return xCenter;
 }
 
 /*
@@ -662,7 +666,37 @@ function updateInstrument(domName, selectStr, runSASCALC=true) {
             instruments[key].style.display = "none";
         }
     }
-    if (runSASCALC) {
+    if (runSASCALC && selectStr != "") {
         SASCALC(selectStr);
+        var buttons = document.getElementById('buttons');
+        buttons.style.display = "block";
     }
+}
+
+/*
+ * Freeze the current calculation
+ */
+function freezeSASCALC() {
+    var frozen = new Array(1).fill(0);
+    frozen[0] = window.qValues;
+    frozen[1] = window.aveIntensity;
+    frozen[2] = window.nCells;
+    frozen[3] = window.dSQ;
+    frozen[4] = window.sigmaAve;
+    frozen[5] = window.qAverage;
+    frozen[6] = window.sigmaQ;
+    frozen[7] = window.fSubs;
+    frozen[8] = window.qxValues;
+    frozen[9] = window.qyValues;
+    frozen[10] = window.intensity2D;
+    window.frozenCalculations.push(frozen);
+    update1DChart();
+}
+
+/*
+ * Clear all frozen calculations
+ */
+function clearFrozen() {
+    window.frozenCalculations = [];
+    update1DChart();
 }

@@ -182,11 +182,11 @@
                             <label for="ng7MinimumQ">Minimum Q (&#8491;<sup>-1</sup>):</label>
                             <input type="number" id="ng7MinimumQ" class="fixed-width-input" disabled />
                             <label for="ng7MaximumQ">Maximum Q (&#8491;<sup>-1</sup>):</label>
-                            <input type="number" id="ng7MaximumQ"  class="fixed-width-input" disabled />
+                            <input type="number" id="ng7MaximumQ" class="fixed-width-input" disabled />
                             <label for="ng7MaximumVerticalQ">Maximum Vertical Q (&#8491;<sup>-1</sup>):</label>
-                            <input type="number" id="ng7MaximumVerticalQ"  class="fixed-width-input" disabled />
+                            <input type="number" id="ng7MaximumVerticalQ" class="fixed-width-input" disabled />
                             <label for="ng7MaximumHorizontalQ">Maximum Horizontal Q (&#8491;<sup>-1</sup>):</label>
-                            <input type="number" id="ng7MaximumHorizontalQ"  class="fixed-width-input" disabled />
+                            <input type="number" id="ng7MaximumHorizontalQ" class="fixed-width-input" disabled />
                         </div>
                     </div>
 
@@ -210,8 +210,12 @@
                     <!-- VSANS -->
                     <div id="vsans" style="display: none">
                     </div>
-                    
+
                     <!-- Chart for all instruments -->
+                    <div id="buttons" style="display: none">
+                        <button type="button" onclick="freezeSASCALC()">Freeze Current Calculation</button>
+                        <button type="button" onclick="clearFrozen()">Clear Frozen</button>
+                    </div>
                     <div id="sasCalcCharts"><div id="sasCalc1DChart"></div><div id="sasCalc2DChart"></div></div>
                 </form>
             </div>

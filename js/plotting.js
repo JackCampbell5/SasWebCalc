@@ -2,6 +2,7 @@
  * Update the 1D Chart with new data sets
  */
 function update1DChart() {
+    var data = [];
     var dataSet = {
         x: window.qValues,
         y: window.aveIntensity,
@@ -16,6 +17,27 @@ function update1DChart() {
         },
         name: "SASCALC"
     };
+    data.push(dataSet);
+    for (frozen in window.frozenCalculations) {
+        var frozenData = window.frozenCalculations[frozen];
+        var color = window.chartColors[frozen];
+        var title = 'Frozen ${frozen}';
+        var frozenDataSet = {
+            x: frozenData[0],
+            y: frozenData[1],
+            mode: 'lines+markers',
+            marker: {
+                color: color,
+                size: 5,
+            },
+            line: {
+                color: color,
+                size: 1,
+            },
+            name: title
+        };
+        data.push(frozenDataSet);
+    };
     var layout = {
         title: "SASCALC 1D Plot",
         xaxis: {
@@ -25,7 +47,7 @@ function update1DChart() {
             title: 'Relative Intensity (Au)',
         }
     };
-    Plotly.newPlot('sasCalc1DChart', [dataSet], layout);
+    Plotly.newPlot('sasCalc1DChart', data, layout);
 }
 
 /*
