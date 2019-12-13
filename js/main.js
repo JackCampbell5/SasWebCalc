@@ -30,6 +30,7 @@ function SASCALC(instrument, averageType="Circular", model="Debye") {
     calculateNumberOfAttenuators(instrument);
     // Do Circular Average of an array of 1s
     calculateQRange(instrument, averageType);
+    calculateMinimumAndMaximumQ(instrument);
     // Do Circular Average of an array of 1s
     calculateModel(model);
     // Update the charts
@@ -133,6 +134,83 @@ function calculateQRange(instrument, averageType="Circular") {
 }
 
 /*
+ * Calculate the minimum and maximum Q-values for the given configuration
+ */
+function calculateMinimumAndMaximumQ(instrument) {
+    calculateMinimumQ(instrument);
+    calculateMaximumQ(instrument);
+    calculateMaximumVerticalQ(instrument);
+    calculateMaximumHorizontalQ(instrument);
+}
+
+/*
+ * Calculate Q-maximum at the corner(s) of the detector
+ */
+function calculateMaximumQ(instrument) {
+    var SDD = calculateSampleToDetectorDistance(instrument);
+    var offset = parseFloat(document.getElementById(instrument + "OffsetInputBox").value);
+    var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
+    var pixelSize = parseFloat(window[instrument + "Constants"]["aPixel"]) * 0.1;
+    var xPixels = parseFloat(window[instrument + "Constants"]["xPixels"]);
+    var detWidth = pixelSize * xPixels;
+
+    // Calculate Q-maximum and populate the page
+    var radial = Math.sqrt(Math.pow(0.5 * detWidth, 2) + Math.pow(0.5 * detWidth + offset, 2));
+    var qMaximum = (4 * (Math.PI / lambda) * Math.sin(0.5 * Math.atan(radial / SDD)));
+    var qMaxNode = document.getElementById(instrument + "MaximumQ");
+    qMaxNode.value = Math.round(qMaximum*100000) / 100000;
+}
+
+/*
+ * Calculate Q-maximum at the top/bottom of the detector
+ */
+function calculateMaximumVerticalQ(instrument) {
+    var SDD = calculateSampleToDetectorDistance(instrument);
+    var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
+    var pixelSize = parseFloat(window[instrument + "Constants"]["aPixel"]) * 0.1;
+    var xPixels = parseFloat(window[instrument + "Constants"]["xPixels"]);
+    var detWidth = pixelSize * xPixels;
+
+    // Calculate Q-maximum and populate the page
+    var theta = Math.atan((detWidth / 2.0) / SDD);
+    var qMaxVert = (4 * (Math.PI / lambda) * Math.sin(0.5 * theta));
+    var qMaxVertNode = document.getElementById(instrument + "MaximumVerticalQ");
+    qMaxVertNode.value = Math.round(qMaxVert * 100000) / 100000;
+}
+
+/*
+ * Calculate Q-maximum at the left/right edge of the detector
+ */
+function calculateMaximumHorizontalQ(instrument) {
+    var SDD = calculateSampleToDetectorDistance(instrument);
+    var offset = parseFloat(document.getElementById(instrument + "OffsetInputBox").value);
+    var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
+    var pixelSize = parseFloat(window[instrument + "Constants"]["aPixel"]) * 0.1;
+    var xPixels = parseFloat(window[instrument + "Constants"]["xPixels"]);
+    var detWidth = pixelSize * xPixels;
+
+    // Calculate Q-maximum and populate the page
+    var theta = Math.atan((detWidth / 2.0 + offset) / SDD);
+    var qMaxHorizon = (4 * (Math.PI / lambda) * Math.sin(0.5 * theta));
+    var qMaxHorizonNode = document.getElementById(instrument + "MaximumHorizontalQ");
+    qMaxHorizonNode.value = Math.round(qMaxHorizon * 100000) / 100000;
+}
+
+/*
+ * Calculate Q-minimum, accounting for the beam stop
+ */
+function calculateMinimumQ(instrument) {
+    var SDD = calculateSampleToDetectorDistance(instrument);
+    var bsProjection = calculateProjectedBeamStopDiameter(instrument);
+    var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
+    var pixelSize = parseFloat(window[instrument + "Constants"]["aPixel"]) * 0.1;
+    // Calculate Q-minimum and populate the page
+    var qMinimum = ((Math.PI / lambda) * (bsProjection + pixelSize + pixelSize) / SDD);
+    var qMinNode = document.getElementById(instrument + "MinimumQ");
+    qMinNode.value = Math.round(qMinimum * 100000) / 100000;
+}
+
+/*
  * Calculate the model function used to represent the data
  */
 function calculateModel(model = "Debye", defaultParams = []) {
@@ -191,7 +269,7 @@ function calculateResolutions(i, instrument) {
     var sourceApertureRadius = parseFloat(document.getElementById(instrument + "SourceAperture").value) * 0.5 * 0.1;
     var sampleApertureRadius = parseFloat(document.getElementById(instrument + "SampleAperture").value) * 0.5 * 0.1;
     var apertureOffset = parseFloat(window[instrument + "Constants"]["ApertureOffset"]);
-    var beamStopSize = calculateBeamStopDiameter(instrument) * 2.54;
+    var beamStopSize = calculateProjectedBeamStopDiameter(instrument) * 2.54;
     var pixelSize = parseFloat(window[instrument + "Constants"]["aPixel"]) * 0.1;
     // SSD and SDD in cm, corrected for the aperture offset
     var SSD = calculateSourceToSampleApertureDistance(instrument);
@@ -356,7 +434,21 @@ function calculateBeamStopDiameter(instrument) {
         bsDiam = 1;
     }
     beamStopDiamNode.value = bsDiam;
-    return bsDiam;
+    return bsDiam; // Return value is in inches
+}
+
+/*
+ * Calculate the size of the beam stop as projected onto the detector
+ */
+function calculateProjectedBeamStopDiameter(instrument) {
+    var bsDiam = calculateBeamStopDiameter(instrument) * 2.54;
+    var SDD = calculateSampleToDetectorDistance(instrument);
+    var sampleAperture = getSampleApertureSize(instrument);
+    var apertureOffset = parseFloat(window[instrument + 'Constants']['ApertureOffset']);
+
+    var L2 = SDD + apertureOffset;
+    var LBeamstop = 20.1 + 1.61 * bsDiam; //distance in cm from beamstop to anode plane (empirical)
+    return bsDiam + (bsDiam + sampleAperture) * LBeamstop / (L2 - LBeamstop); // Return value is in cm
 }
 
 function getSampleApertureSize(instrument) {
@@ -437,7 +529,7 @@ function calculateSourceToSampleApertureDistance(instrument) {
     var sampleSpace = document.getElementById(instrument + 'SampleTable').value;
     var ssd = 0.0;
     var ssdOffset = parseFloat(window[instrument + 'Constants'][sampleSpace + 'Offset']);
-    var apertureOffset = parseFloat(window[instrument + 'Constants']['ApertureOffset'])
+    var apertureOffset = parseFloat(window[instrument + 'Constants']['ApertureOffset']);
     // Calculate the source to sample distance
     switch (instrument) {
         case 'ng7':
