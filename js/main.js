@@ -78,6 +78,8 @@ function calculateQRange(instrument, averageType="Circular") {
     // Loop over each pixel
     for (i = 0; i < xPixels; i++) {
         xDistance = calculateDistanceFromBeamCenter(i, xCenter, pixelSize, coeff);
+        thetaX = Math.atan(xDistance / detectorDistance) / 2;
+        window.qxValues[i] = (4 * Math.PI / lambda) * Math.sin(thetaX);
         maskI = mask[i];
         dataI = data[i];
         for (j = 0; j < yPixels; j++) {
@@ -95,7 +97,6 @@ function calculateQRange(instrument, averageType="Circular") {
                     numDimensions = 3;
                     center = 2;
                 }
-                thetaX = Math.atan(xDistance / detectorDistance) / 2;
                 thetaY = Math.atan(yDistance / detectorDistance) / 2;
                 window.qyValues[j] = (4 * Math.PI / lambda) * Math.sin(thetaY);
                 // Loop over sliced pixels
@@ -114,7 +115,6 @@ function calculateQRange(instrument, averageType="Circular") {
                         calculateIntensityValues(iRadius, dataPixel, numDSquared);
                     }
                 }
-                window.qxValues[i] = (4 * Math.PI / lambda) * Math.sin(thetaX);
             }
         }
     }
@@ -224,10 +224,29 @@ function calculateModel(model = "Debye", defaultParams = []) {
     if (defaultParams.length == 0) {
         defaultParams = Object.values(window.modelList[model]['params']);
     }
+    // 1D calculation
     for (var i = 0; i < window.qValues.length; i++) {
         defaultParams.push(window.qValues[i]);
         window.aveIntensity[i] = window.fSubs[i] * window[model.toLowerCase()](defaultParams);
         defaultParams.pop();
+    }
+    // 2D calculation
+    var q = q_closest = qx = qy = index = 0;
+    for (var j = 0; j < window.qxValues.length; j++) {
+        qx = window.qxValues[j];
+        var data_k = new Array(1).fill(0);
+        for (var k = 0; k < window.qyValues.length; k++) {
+            qy = window.qyValues[k];
+            q = Math.sqrt(qx * qx + qy * qy);
+            q_closest = window.qValues.reduce(function (prev, curr) {
+                return (Math.abs(curr - q) < Math.abs(prev - q) ? curr : prev);
+            });
+            index = window.qValues.indexOf(q_closest);
+            defaultParams.push(q);
+            data_k[k] = window.fSubs[index] * window[model.toLowerCase()](defaultParams);
+            defaultParams.pop();
+        }
+        window.intensity2D[j] = data_k;
     }
 }
 

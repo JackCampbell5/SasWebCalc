@@ -25,11 +25,6 @@ div.instrument {
     margin: 2px;
 }
 
-div.canvas {
-    width: 100%;
-    height: auto;
-}
-
 .slider {
     vertical-align: middle;
 }
@@ -40,6 +35,12 @@ div.instrument-section {
     margin-left: 20px;
     margin-right: 20px;
 }
+
 input.fixed-width-input {
     width: 10em;
+}
+
+#sasCalc1DChart, #sasCalc2DChart {
+    width: 49%;
+    float: left;
 }
