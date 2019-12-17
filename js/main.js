@@ -44,9 +44,8 @@ function SASCALC(instrument, averageType = "Circular", model = "Debye") {
     // Update the charts
     update1DChart();
     update2DChart();
-
-    // TODO: Populate minimum and maximum Q values
-    // TODO: Calculate Qx and Qy matrices, apply model to 2D and then I vs. Q for 1D and 2D plots
+    
+    // TODO: Apply model to 2D and then I vs. Q for 1D and 2D plots
 
     // Store persistant state
     storePersistantState(instrument);
@@ -209,7 +208,7 @@ function calculateMaximumHorizontalQ(instrument) {
  */
 function calculateMinimumQ(instrument) {
     var SDD = calculateSampleToDetectorDistance(instrument);
-    var bsProjection = calculateProjectedBeamStopDiameter(instrument);
+    var bsProjection = calculateBeamStopDiameter(instrument);
     var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
     var pixelSize = parseFloat(window[instrument + "Constants"]["aPixel"]) * 0.1;
     // Calculate Q-minimum and populate the page
@@ -521,7 +520,6 @@ function calculateSampleToDetectorDistance(instrument) {
  *  Calculate the source to sample distance
  */
 function calculateSourceToSampleApertureDistance(instrument) {
-    // TODO: Separate this out into smaller functions probably
     // Get the number of guides
     var SSD = document.getElementById(instrument + 'SSD');
     var guides = document.getElementById(instrument + 'GuideConfig').value;
@@ -642,9 +640,9 @@ function updateWavelengthSpread(instrument, runSASCALC=true) {
 /*
  * Change the instrument you want to calculate Q ranges for
  */
-function updateInstrument(domName, selectStr, runSASCALC=true) {
+function updateInstrument(selectStr, runSASCALC=true) {
     // Get instrument node and create an array of the options available
-    var inst = document.getElementById(domName);
+    var inst = document.getElementById('instrumentSelector');
     var instrumentOptions = [];
     for (var i = 0; i < inst.options.length; i++) {
         instrumentOptions.push(inst.options[i].value);
@@ -666,11 +664,30 @@ function updateInstrument(domName, selectStr, runSASCALC=true) {
             instruments[key].style.display = "none";
         }
     }
-    if (runSASCALC && selectStr != "") {
-        SASCALC(selectStr);
+    if (selectStr != "") {
         var buttons = document.getElementById('buttons');
-        buttons.style.display = "block";
+        buttons.style.display = "inline-block";
+        var model = document.getElementById("model");
+        model.style.display = "inline-block";
+        var modelLabel = document.getElementById("modelLabel");
+        modelLabel.style.display = "inline-block";
+        var averagingType = document.getElementById("averagingType");
+        averagingType.style.display = "inline-block";
+        var averagingTypeLabel = document.getElementById("averagingTypeLabel");
+        averagingTypeLabel.style.display = "inline-block";
+        if (runSASCALC) {
+            SASCALC(selectStr);
+        }
     }
+}
+
+/*
+ * Update the instrument with no instrument name passed
+ */
+function updateInstrumentNoInstrument() {
+    var inst = document.getElementById('instrumentSelector');
+    var instrument = inst.value;
+    updateInstrument(instrument);
 }
 
 /*

@@ -21,7 +21,7 @@ function update1DChart() {
     for (frozen in window.frozenCalculations) {
         var frozenData = window.frozenCalculations[frozen];
         var color = window.chartColors[frozen];
-        var title = 'Frozen ${frozen}';
+        var title = `Frozen ${frozen}`;
         var frozenDataSet = {
             x: frozenData[0],
             y: frozenData[1],

@@ -20,9 +20,9 @@
 </head>
 
 <!--
-    TODO: Copy NG7 values over to NGB30m and NGB10m
+    TODO: Populate instruments dynamically
     TODO: Copy http://nicedata.ncnr.nist.gov/niceweb/nicejs/VCALC/ work into VSANS
-    TODO: Add Model Selector that is tied to sasmodels
+    TODO: Tie Model Selector to sasmodels
     TODO: Copy https://ncnr.nist.gov/staff/kkrycka/webcalc/calculate.html work into model selector
     TODO: Write SASCALC
 -->
@@ -40,18 +40,26 @@
         <div class="centered-column" id="preamble">
             <div id="SASWEBCALC">
                 <form target="#">
-                    <div class="instrument" title="Choose the instrument you plan to use.">
+                    <div class="instrument-section" title="Choose the instrument you plan to use.">
                         <label for="instrument">Instrument: </label>
-                        <select id="instrumentSelector" onchange="updateInstrument('instrumentSelector', this.value)">
+                        <select id="instrumentSelector" onchange="updateInstrument(this.value)">
                             <option value="" selected disabled hidden>Choose your instrument</option>
                             <option value="ngb30m">NGB 30m SANS</option>
                             <option value="ng7">NG7 SANS</option>
                             <option value="ngb10m">NGB 10m SANS</option>
                             <option value="vsans">VSANS</option>
                         </select>
-                        <hr />
+                        <label id="modelLabel" for="model" style="display: none">Model: </label>
+                        <select id="model" onchange="updateInstrumentNoInstrument()" style="display: none">
+                            <option value="debye" selected>Debye</option>
+                        </select>
+                        <label id="averagingTypeLabel" for="averagingType" style="display: none">Averaging Method: </label>
+                        <select id="averagingType" onchange="updateInstrumentNoInstrument()" style="display: none">
+                            <option value="circular" selected>Circular</option>
+                        </select>
                     </div>
 
+                    <hr />
                     <!-- NGB 30m SANS -->
                     <div id="ngb30m" style="display: none">
                         <label for="ngb30GuideConfig">Guides: </label>
@@ -211,12 +219,17 @@
                     <div id="vsans" style="display: none">
                     </div>
 
+                    <hr />
+
                     <!-- Chart for all instruments -->
                     <div id="buttons" style="display: none">
                         <button type="button" onclick="freezeSASCALC()">Freeze Current Calculation</button>
                         <button type="button" onclick="clearFrozen()">Clear Frozen</button>
                     </div>
-                    <div id="sasCalcCharts"><div id="sasCalc1DChart"></div><div id="sasCalc2DChart"></div></div>
+
+                    <hr />
+
+                    <div id="sasCalcCharts"><div class="chart" id="sasCalc1DChart"></div><div class="chart" id="sasCalc2DChart"></div></div>
                 </form>
             </div>
         </div>

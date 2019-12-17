@@ -2,16 +2,24 @@
  * Restore the persistant state on refresh
  */
 function restorePersistantState() {
-    // Load instrument and sample space
     var instrument = sessionStorage.getItem('instrument');
     if (instrument === "") {
-        return;
-    } else if (instrument === "vsans") {
+        updateInstrument(instrument);
+    }
+    else if (instrument === "vsans") {
         restoreVSANSpersistantState();
     } else {
+        // Load instrument and sample space
         var instSelector = document.getElementById('instrumentSelector');
         instSelector.value = instrument;
-        updateInstrument('instrumentSelector', instrument, false);
+        updateInstrument(instrument, false);
+        // Load model, model parameters, and averaging method and parameters
+        var model = sessionStorage.getItem('model');
+        var averageType = sessionStorage.getItem('averageType');
+        var modelNode = document.getElementById('model');
+        var averageTypeNode = document.getElementById('averagingType');
+        modelNode.value = model;
+        averageTypeNode.value = averageType;
         var sampleSpace = sessionStorage.getItem(instrument + 'SampleTable');
         var sampleSpaceNode = document.getElementById(instrument + 'SampleTable');
         sampleSpaceNode.value = sampleSpace;
@@ -71,10 +79,15 @@ function storePersistantState(instrument) {
     var sampleSpaceNode = document.getElementById(instrument + 'SampleTable');
     var sampleSelectStr = sampleSpaceNode.options[sampleSpaceNode.selectedIndex].value;
     sessionStorage.setItem(instrument + 'SampleTable', sampleSelectStr);
+    // Store model, model parameters, and averaging method and parameters
+    var modelNode = document.getElementById('model');
+    var averageTypeNode = document.getElementById('averagingType');
+    sessionStorage.setItem('model', modelNode.value);
+    sessionStorage.setItem('averageType', averageTypeNode.value);
     // Store wavelength values
     var wavelength = document.getElementById(instrument + 'WavelengthInput');
-    var wavelengthSpread = document.getElementById(instrument + 'WavelengthSpread').value;
-    sessionStorage.setItem(instrument + 'WavelengthSpread', wavelengthSpread);
+    var wavelengthSpread = document.getElementById(instrument + 'WavelengthSpread');
+    sessionStorage.setItem(instrument + 'WavelengthSpread', wavelengthSpread.value);
     sessionStorage.setItem(instrument + 'WavelengthInput', wavelength.value);
     // Store aperture and guide configuration values
     var customAperture = document.getElementById(instrument + 'CustomAperture');
