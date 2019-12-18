@@ -2,11 +2,7 @@
  * Debye model for simulating intensities
  */
 function debye(params) {
-    // params are:
-    //[0] scale factor
-    //[1] radius of gyration [A]
-    //[2] background	[cm-1]
-    //[3] q value [A^-1]
+    // params are: [0] scale factor, [1] radius of gyration [A], [2] background [cm-1], [3] q value [A^-1]
 
     // calculates (scale*debye)+bkg
     var scale = params[0];

@@ -13,7 +13,6 @@ Known issues:
 
 - NG7 is the only instrument currently available
 - No incomplete gamma function available in javascript, so resolution calculations are not correct
-- 2D view is rotated by 90 degrees
 
 Anticipated features:
 

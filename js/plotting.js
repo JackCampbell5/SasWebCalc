@@ -48,7 +48,7 @@ function update1DChart() {
         yaxis: {
             exponentformat: 'power',
             title: 'Relative Intensity (Au)',
-            range: [1e-5, NaN],
+            range: [-3, 5],
             type: 'log'
         }
     };

@@ -229,7 +229,6 @@ function calculateModel(model = "Debye", defaultParams = []) {
     }
     // 2D calculation
     var q = q_closest = qx = qy = index = 0;
-    // FIXME: Image is rotated 90 degrees
     for (var j = 0; j < window.qxValues.length; j++) {
         qx = window.qxValues[j];
         var data_k = new Array(1).fill(0);
@@ -246,6 +245,7 @@ function calculateModel(model = "Debye", defaultParams = []) {
         }
         window.intensity2D[j] = data_k;
     }
+    window.intensity2D = window.intensity2D[0].map((col, i) => window.intensity2D.map(row => row[i]));
 }
 
 /*
@@ -287,9 +287,9 @@ function calculateResolutions(i, instrument) {
     var isLenses = Boolean(document.getElementById(instrument + "GuideConfig") === "LENS");
     // Get values and be sure they are in cm
     var sourceApertureRadius = parseFloat(document.getElementById(instrument + "SourceAperture").value) * 0.5;
-    var sampleApertureRadius = parseFloat(document.getElementById(instrument + "SampleAperture").value) * 0.5 * 2.54;
+    var sampleApertureRadius = getSampleApertureSize(instrument) * 0.5;
     var apertureOffset = parseFloat(window[instrument + "Constants"]["ApertureOffset"]);
-    var beamStopSize = calculateProjectedBeamStopDiameter(instrument);
+    var beamStopSize = calculateBeamStopDiameter(instrument) * 2.54;
     var pixelSize = parseFloat(window[instrument + "Constants"]["aPixel"]) * 0.1;
     // SSD and SDD in cm, corrected for the aperture offset
     var SSD = calculateSourceToSampleApertureDistance(instrument);
