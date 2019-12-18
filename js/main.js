@@ -44,9 +44,6 @@ function SASCALC(instrument, averageType = "Circular", model = "Debye") {
     // Update the charts
     update1DChart();
     update2DChart();
-    
-    // TODO: Apply model to 2D and then I vs. Q for 1D and 2D plots
-
     // Store persistant state
     storePersistantState(instrument);
 }
@@ -208,7 +205,7 @@ function calculateMaximumHorizontalQ(instrument) {
  */
 function calculateMinimumQ(instrument) {
     var SDD = calculateSampleToDetectorDistance(instrument);
-    var bsProjection = calculateBeamStopDiameter(instrument);
+    var bsProjection = calculateProjectedBeamStopDiameter(instrument);
     var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
     var pixelSize = parseFloat(window[instrument + "Constants"]["aPixel"]) * 0.1;
     // Calculate Q-minimum and populate the page
@@ -232,6 +229,7 @@ function calculateModel(model = "Debye", defaultParams = []) {
     }
     // 2D calculation
     var q = q_closest = qx = qy = index = 0;
+    // FIXME: Image is rotated 90 degrees
     for (var j = 0; j < window.qxValues.length; j++) {
         qx = window.qxValues[j];
         var data_k = new Array(1).fill(0);
@@ -288,10 +286,10 @@ function calculateResolutions(i, instrument) {
     var lambdaWidth = parseFloat(document.getElementById(instrument + "WavelengthSpread").value);
     var isLenses = Boolean(document.getElementById(instrument + "GuideConfig") === "LENS");
     // Get values and be sure they are in cm
-    var sourceApertureRadius = parseFloat(document.getElementById(instrument + "SourceAperture").value) * 0.5 * 0.1;
-    var sampleApertureRadius = parseFloat(document.getElementById(instrument + "SampleAperture").value) * 0.5 * 0.1;
+    var sourceApertureRadius = parseFloat(document.getElementById(instrument + "SourceAperture").value) * 0.5;
+    var sampleApertureRadius = parseFloat(document.getElementById(instrument + "SampleAperture").value) * 0.5 * 2.54;
     var apertureOffset = parseFloat(window[instrument + "Constants"]["ApertureOffset"]);
-    var beamStopSize = calculateProjectedBeamStopDiameter(instrument) * 2.54;
+    var beamStopSize = calculateProjectedBeamStopDiameter(instrument);
     var pixelSize = parseFloat(window[instrument + "Constants"]["aPixel"]) * 0.1;
     // SSD and SDD in cm, corrected for the aperture offset
     var SSD = calculateSourceToSampleApertureDistance(instrument);
@@ -302,9 +300,6 @@ function calculateResolutions(i, instrument) {
     var gravityConstant = 981.0;
     var smallNumber = 1e-10;
     // Base calculations
-    var a2 = sourceApertureRadius * SDD / SSD + sampleApertureRadius * (SDD + SSD) / SSD;
-    var q_small = 2 * Math.PI * (beamStopSize - sampleApertureRadius) * (1 - lambdaWidth) / (lambda * SDD);
-    document.getElementById(instrument + "MinimumQ").value = Math.round(q_small, 1000000) / 1000000;
     var lp = 1 / (1 / SDD + 1 / SSD);
     // Calculate variances
     var varLambda = lambdaWidth * lambdaWidth / 6.0;
@@ -714,8 +709,14 @@ function updateInstrumentNoInstrument() {
  */
 function freezeSASCALC() {
     var frozen = new Array(1).fill(0);
+    // Offset intensities by a factor of 2
+    var intensities = new Array(1).fill(0);
+    var n = 2 * (window.frozenCalculations.length + 1);
+    for (var i = 0; i < window.aveIntensity.length; i++) {
+        intensities[i] = n * window.aveIntensity[i];
+    }
     frozen[0] = window.qValues;
-    frozen[1] = window.aveIntensity;
+    frozen[1] = intensities;
     frozen[2] = window.nCells;
     frozen[3] = window.dSQ;
     frozen[4] = window.sigmaAve;

@@ -57,6 +57,9 @@ function restorePersistantState() {
         updateDetector(instrument, false);
         // Restore frozen datasets
         window.frozenCalculations = sessionStorage.getItem(instrument + 'FrozenDataSets');
+        if (window.frozenCalculations == "") {
+            window.frozenCalculations = [];
+        }
     }
     // Run SASCALC at the end
     SASCALC(instrument);

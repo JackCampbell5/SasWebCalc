@@ -13,7 +13,7 @@ function debye(params) {
     var rg = params[1];
     var bkg = params[2];
     var q = params[3];
-    var qrSquared = (q * rg) ^ 2;
+    var qrSquared = (q * rg) * (q * rg);
     var pOfQ = 2 * (Math.exp(-1 * qrSquared) - 1 + qrSquared) / Math.pow(qrSquared, 2);
 
     //scale

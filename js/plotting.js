@@ -41,10 +41,15 @@ function update1DChart() {
     var layout = {
         title: "SASCALC 1D Plot",
         xaxis: {
+            exponentformat: 'power',
             title: "Q (Å^-1)",
+            type: 'log'
         },
         yaxis: {
+            exponentformat: 'power',
             title: 'Relative Intensity (Au)',
+            range: [1e-5, NaN],
+            type: 'log'
         }
     };
     Plotly.newPlot('sasCalc1DChart', data, layout);
