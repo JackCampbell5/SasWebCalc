@@ -69,11 +69,13 @@ function update2DChart() {
         title: "SASCALC 2D Plot",
         xaxis: {
             title: "Qx (Å^-1)",
-            range: [Math.min(window.qxValues), Math.max(window.qxValues)]
+            range: [Math.min(window.qxValues), Math.max(window.qxValues)],
+            constrain: 'domain'
         },
         yaxis: {
             title: "Qy (Å^-1)",
-            range: [Math.min(window.qyValues), Math.max(window.qyValues)]
+            range: [Math.min(window.qyValues), Math.max(window.qyValues)],
+            scaleanchor: 'x'
         }
     };
     Plotly.newPlot('sasCalc2DChart', [dataSet], layout);
