@@ -34,7 +34,8 @@ window.ngb30Constants = {
     'aPixel': '5.08',
     'coeff': '10000',
     'xPixels': '128',
-    'yPixels': '128'
+    'yPixels': '128',
+    'serverName': 'ngb30sans.ncnr.nist.gov'
 };
 
 // NG7 SANS
@@ -59,7 +60,8 @@ window.ng7Constants = {
     'aPixel': '5.08',
     'coeff': '10000',
     'xPixels': '128',
-    'yPixels': '128'
+    'yPixels': '128',
+    'serverName': 'ng7sans.ncnr.nist.gov'
 };
 window.ng7WavelengthRange = {
     "9.0": ['6.5', '20.0'],
@@ -83,7 +85,8 @@ window.ngb10Constants = {
     'aPixel': '5.08',
     'coeff': '10000',
     'xPixels': '128',
-    'yPixels': '128'
+    'yPixels': '128',
+    'serverName': 'ngbsans.ncnr.nist.gov'
 };
 
 // Models

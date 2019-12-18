@@ -221,14 +221,17 @@
 
                     <hr />
 
-                    <!-- Chart for all instruments -->
+                    <!-- Freeze and send to instrument -->
                     <div id="buttons" style="display: none">
                         <button type="button" onclick="freezeSASCALC()">Freeze Current Calculation</button>
                         <button type="button" onclick="clearFrozen()">Clear Frozen</button>
+                        <input type="text" id="serverName" />
+                        <button type="button" id="sendToNICE" onclick="sendToNICE()">Send to running NICE server</button>
                     </div>
 
                     <hr />
 
+                    <!-- Chart for all instruments -->
                     <div id="sasCalcCharts"><div class="chart" id="sasCalc1DChart"></div><div class="chart" id="sasCalc2DChart"></div></div>
                 </form>
             </div>

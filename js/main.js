@@ -20,6 +20,23 @@ function initializeData() {
     window.qxValues = new Array(1).fill(0);
     window.qyValues = new Array(1).fill(0);
     window.intensity2D = new Array(1).fill(0);
+    window.frozenConfigs = {};
+    window.currentConfig = {
+        "areaDetector.beamCenterX": NaN,
+        "areaDetector.beamCenterY": NaN,
+        "attenuator.key": NaN,
+        "beamStop.beamStop": NaN,
+        "beamStopX.softPostion": NaN,
+        "BeamStopY.softPosition": NaN,
+        "detectorOffset.softPosition": NaN,
+        "geometry.externalSampleApertureShape": "CIRCLE",
+        "geometry.externalSampleAperture": NaN,
+        "geometry.sampleToAreaDetector": NaN,
+        "guide.guide": NaN,
+        "guide.sourceAperture": NaN,
+        "wavelength.wavelength": NaN,
+        "wavelengthSpread.wavelengthSpread": NaN,
+    };
 }
 
 /*
@@ -611,6 +628,8 @@ function updateDetector(instrument, runSASCALC = true) {
     detectorOutput.oninput = function () { detectorSlider.value = this.value; }
     offsetSlider.oninput = function () { offsetOutput.value = this.value; }
     offsetOutput.oninput = function () { offsetSlider.value = this.value; }
+    window.currentConfig["geometry.sampleToAreaDetector"] = detectorOutput.value;
+    window.currentConfig["detectorOffset.softPosition"] = offsetOutput.value;
     if (runSASCALC) {
         SASCALC(instrument);
     }
@@ -626,11 +645,17 @@ function updateAperture(instrument, runSASCALC = true) {
     var sampleApertureSelector = document.getElementById(instrument + 'SampleAperture');
     // Show/hide custom aperture size box
     if (sampleApertureSelector.value === "Custom") {
+        // TODO: Allow different aperture shapes
         customAperture.style.display = 'inline-block';
         customApertureLabel.style.display = 'inline-block';
+        window.currentConfig["geometry.externalSampleAperture"] = customAperture.value;
+
     } else {
         customAperture.style.display = 'none';
         customApertureLabel.style.display = 'none';
+        window.currentConfig["geometry.externalSampleAperture"] = sampleApertureSelector.value;
+        window.currentConfig["geometry.externalSampleApertureShape"] = "CIRCLE";
+
     }
     if (runSASCALC) {
         SASCALC(instrument);
@@ -679,6 +704,8 @@ function updateInstrument(selectStr, runSASCALC=true) {
         }
     }
     if (selectStr != "") {
+        var serverNameNode = document.getElementById('serverName');
+        serverNameNode.value = window[selectStr + "Constants"]['serverName'];
         var buttons = document.getElementById('buttons');
         buttons.style.display = "inline-block";
         var model = document.getElementById("model");
@@ -709,6 +736,7 @@ function updateInstrumentNoInstrument() {
  */
 function freezeSASCALC() {
     var frozen = new Array(1).fill(0);
+    // TODO: Freeze configuration to be sent to NICE
     // Offset intensities by a factor of 2
     var intensities = new Array(1).fill(0);
     var n = 2 * (window.frozenCalculations.length + 1);
