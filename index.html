@@ -9,9 +9,31 @@
     <link rel="stylesheet" href="css/default.css" />
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/6.2.2/math.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ice/3.7.1/Ice.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ice/3.7.1/Glacier2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ice/3.7.1/IceStorm.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ice/3.7.1/IceGrid.min.js"></script>
+
+    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/data.js"></script>
+    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/file.js"></script>
+    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/system.js"></script>
+    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/devices.js"></script>
+    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/console.js"></script>
+    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/dryrun.js"></script>
+    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/exceptions.js"></script>
+    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/nice.js"></script>
+    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/events.js"></script>
+    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/experiment.js"></script>
+    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/queue.js"></script>
+    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/sampleAlignment.js"></script>
+    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/clientapi.js"></script>
+    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/async_connect_zeroc.js"></script>
     <!--
     <script src="js/gamma_incomplete.js"></script>
     -->
+    <script src="js/nice_connection.js"></script>
     <script src="js/constants.js"></script>
     <script src="js/persistant_state.js"></script>
     <script src="js/plotting.js"></script>
@@ -226,7 +248,7 @@
                         <button type="button" onclick="freezeSASCALC()">Freeze Current Calculation</button>
                         <button type="button" onclick="clearFrozen()">Clear Frozen</button>
                         <input type="text" id="serverName" />
-                        <button type="button" id="sendToNICE" onclick="sendToNICE()">Send to running NICE server</button>
+                        <button type="button" id="sendToNICE">Send to running NICE server</button>
                     </div>
 
                     <hr />

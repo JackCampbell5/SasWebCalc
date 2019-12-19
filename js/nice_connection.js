@@ -1,24 +1,35 @@
-﻿function sendToNICE() {
-    var router_spec = "NiceGlacier2/router:ws -p <port> -h <host>";
-    var nice_connection = new NiceConnection();
-    let hostname = document.getElementById("nice_hostname").value;
-    let username = "user";
-    let password = "";
-    let port = "9999";
-    let ice_protocol_version = "1.1";
-    await nice_connection.signin(router_spec.replace(/<host>/, hostname).replace(/<port>/, port), ice_protocol_version, false, username, password);
-    let api = nice_connection.api;
-    let existing_map = await api.readValue("configuration.map");
-    if (existing_map.val.has(app.name)) {
-        if (!confirm("configuration named " + app.name + " exists; Overwrite?")) {
-            return false
-        }
+﻿function sascalcToMoveValue() {
+    var configs = {}
+    var frozenConfigs = window.frozenConfigs;
+    for (frozenConfig in frozenConfigs) {
+        var scattConfig = frozenConfigs[frozenConfig];
+        var transConfig = frozenConfigs[frozenConfig];
+        transConfig["BeamStopY.softPosition"] = "-15.0cm";
+        scattConfig["attenuator.attenuator"] = "0";
+        configs[frozenConfig + " Scatt"] = scattConfig;
+        configs[frozenConfig + " Trans"] = transConfig;
     }
-    api.move(["configuration.mapPut", sascalcToMoveValue(app)], false)
-    nice_connection.disconnect();
+    return configs;
 }
 
-function sascalcToMoveValue() {
-    var currentConfig = window.currentConfigs;
-    var frozenConfigs = window.frozenConfigs;
+function generateConfigName(config) {
+    var SDD = parseFloat(config["geometry.sampleToAreaDetector"])/100;
+    return SDD + "m";
+}
+
+function stringifyConfigMap(configs) {
+    var sendString = "{";
+    for (var configName in configs) {
+        var config = configs[configName];
+        sendString += "\"" + configName + "\"={";
+        for (var node in config) {
+            var value = config[node];
+            sendString += "\"" + node + "\"=\"" + value + "\", "; 
+        }
+        sendString = sendString.slice(0, -2);
+        sendString += "}, ";
+    }
+    sendString = sendString.slice(0, -2);
+    sendString += "}";
+    return sendString;
 }

@@ -11,6 +11,14 @@ window.chartColors = {
     white: 'rgb(255, 255, 255)'
 };
 
+// Default units for inputs
+window.units = {
+    "wavelength": "Å",
+    "sampleAperture": "mm",
+    "detectorOffset": "cm",
+    "detectorDistance": "cm"
+}
+
 // NGB 30m SANS
 window.ngb30SourceApertures = {
     '0': ['1.43', '2.54', '3.81'],

@@ -3,8 +3,35 @@
     initializeData();
     // Reset frozen calculations
     window.frozenCalculations = [];
+    window.frozenConfigs = {};
     // Restore persistant state on refresh
     restorePersistantState();
+
+    // SENDING TO NICE DIRECTLY:
+    var router_spec = "NiceGlacier2/router:ws -p <port> -h <host>";
+    var send_button = document.getElementById('sendToNICE');
+    send_button.onclick = async function () {
+        var nice_connection = new NiceConnection();
+        var configs = sascalcToMoveValue();
+        let hostname = document.getElementById("serverName").value;
+        let username = "user";
+        let password = "";
+        let port = "9999";
+        let ice_protocol_version = "1.1";
+        await nice_connection.signin(router_spec.replace(/<host>/, hostname).replace(/<port>/, port), ice_protocol_version, false, username, password);
+        let api = nice_connection.api;
+        let existing_map = await api.readValue("configuration.map");
+        for (config in configs) {
+            if (existing_map.val.has(config)) {
+                if (!confirm("configuration named " + config + " exists; Overwrite?")) {
+                    return false
+                }
+            }
+        }
+        api.move(["configuration.mapPut", stringifyConfigMap(configs)], false)
+        //console.log(vcalcToMoveValue(app));
+        nice_connection.disconnect();
+    }
 };
 
 function initializeData() {
@@ -22,20 +49,20 @@ function initializeData() {
     window.intensity2D = new Array(1).fill(0);
     window.frozenConfigs = {};
     window.currentConfig = {
-        "areaDetector.beamCenterX": NaN,
-        "areaDetector.beamCenterY": NaN,
-        "attenuator.key": NaN,
-        "beamStop.beamStop": NaN,
-        "beamStopX.softPostion": NaN,
-        "BeamStopY.softPosition": NaN,
-        "detectorOffset.softPosition": NaN,
+        "areaDetector.beamCenterX": 64.5,
+        "areaDetector.beamCenterY": 64.5,
+        "attenuator.key": 0,
+        "beamStop.beamStop": 2,
+        "beamStopX.softPostion": "0.0cm",
+        "BeamStopY.softPosition": "0.0cm",
+        "detectorOffset.softPosition": "0.0cm",
         "geometry.externalSampleApertureShape": "CIRCLE",
-        "geometry.externalSampleAperture": NaN,
-        "geometry.sampleToAreaDetector": NaN,
-        "guide.guide": NaN,
-        "guide.sourceAperture": NaN,
-        "wavelength.wavelength": NaN,
-        "wavelengthSpread.wavelengthSpread": NaN,
+        "geometry.externalSampleAperture": "12.7mm",
+        "geometry.sampleToAreaDetector": "100cm",
+        "guide.guide": 0,
+        "guide.sourceAperture": "5.08",
+        "wavelength.wavelength": "6",
+        "wavelengthSpread.wavelengthSpread": 11.5,
     };
 }
 
@@ -73,13 +100,14 @@ function calculateQRange(instrument, averageType="Circular") {
     var yPixels = parseInt(window[instrument + "Constants"]["yPixels"]);
     var xCenter = calculateXBeamCenter(instrument);
     var yCenter = yPixels / 2 + 0.5;
+    window.currentConfig["areaDetector.beamCenterY"] = yCenter;
     var pixelSize = parseFloat(window[instrument + "Constants"]["aPixel"]);
     var coeff = parseFloat(window[instrument + "Constants"]["coeff"]);
     var xDistance = yDistance = totalDistance = correctedDx = correctedDy = dataPixel = numDSquared = 0;
     var radiusCenter = 100;
     var numDimensions = center = largeNumber = 1;
     var i = j = k = l = nq = theta = thetaX = thetaY = radius = radX = radY = 0;
-    var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
+    var lambda = getWavelength(instrument);
 
     // Detector values pixel size in mm
     var detectorDistance = parseFloat(document.getElementById(instrument + "SDDInputBox").value) * 10;
@@ -170,7 +198,7 @@ function calculateMinimumAndMaximumQ(instrument) {
 function calculateMaximumQ(instrument) {
     var SDD = calculateSampleToDetectorDistance(instrument);
     var offset = parseFloat(document.getElementById(instrument + "OffsetInputBox").value);
-    var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
+    var lambda = getWavelength(instrument);
     var pixelSize = parseFloat(window[instrument + "Constants"]["aPixel"]) * 0.1;
     var xPixels = parseFloat(window[instrument + "Constants"]["xPixels"]);
     var detWidth = pixelSize * xPixels;
@@ -187,7 +215,7 @@ function calculateMaximumQ(instrument) {
  */
 function calculateMaximumVerticalQ(instrument) {
     var SDD = calculateSampleToDetectorDistance(instrument);
-    var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
+    var lambda = getWavelength(instrument);
     var pixelSize = parseFloat(window[instrument + "Constants"]["aPixel"]) * 0.1;
     var xPixels = parseFloat(window[instrument + "Constants"]["xPixels"]);
     var detWidth = pixelSize * xPixels;
@@ -205,7 +233,7 @@ function calculateMaximumVerticalQ(instrument) {
 function calculateMaximumHorizontalQ(instrument) {
     var SDD = calculateSampleToDetectorDistance(instrument);
     var offset = parseFloat(document.getElementById(instrument + "OffsetInputBox").value);
-    var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
+    var lambda = getWavelength(instrument);
     var pixelSize = parseFloat(window[instrument + "Constants"]["aPixel"]) * 0.1;
     var xPixels = parseFloat(window[instrument + "Constants"]["xPixels"]);
     var detWidth = pixelSize * xPixels;
@@ -223,7 +251,7 @@ function calculateMaximumHorizontalQ(instrument) {
 function calculateMinimumQ(instrument) {
     var SDD = calculateSampleToDetectorDistance(instrument);
     var bsProjection = calculateProjectedBeamStopDiameter(instrument);
-    var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
+    var lambda = getWavelength(instrument);
     var pixelSize = parseFloat(window[instrument + "Constants"]["aPixel"]) * 0.1;
     // Calculate Q-minimum and populate the page
     var qMinimum = ((Math.PI / lambda) * (bsProjection + pixelSize + pixelSize) / SDD);
@@ -285,6 +313,7 @@ function calculateXBeamCenter(instrument) {
     // Get detector offset in cm
     var offset = parseFloat(document.getElementById(instrument + "OffsetInputBox").value);
     var xCenter = (offset / dr) + (xPixels / 2 + 0.5);
+    window.currentConfig["areaDetector.beamCenterX"] = xCenter;
     return xCenter;
 }
 
@@ -299,11 +328,11 @@ function calculateDistanceFromBeamCenter(pixelValue, pixelCenter, pixelSize, coe
  * Calculate the resolutions for the ith q value
  */
 function calculateResolutions(i, instrument) {
-    var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
-    var lambdaWidth = parseFloat(document.getElementById(instrument + "WavelengthSpread").value);
+    var lambda = getWavelength(instrument);
+    var lambdaWidth = getWavelengthSpread(instrument);
     var isLenses = Boolean(document.getElementById(instrument + "GuideConfig") === "LENS");
     // Get values and be sure they are in cm
-    var sourceApertureRadius = parseFloat(document.getElementById(instrument + "SourceAperture").value) * 0.5;
+    var sourceApertureRadius = getSourceAperture(instrument) * 0.5;
     var sampleApertureRadius = getSampleApertureSize(instrument) * 0.5;
     var apertureOffset = parseFloat(window[instrument + "Constants"]["ApertureOffset"]);
     var beamStopSize = calculateBeamStopDiameter(instrument) * 2.54;
@@ -413,7 +442,7 @@ function calculateBeamFlux(instrument) {
  * Calculate the estimated beam flux
  */
 function calculateFigureOfMerit(instrument) {
-    var lambda = parseFloat(document.getElementById(instrument + 'WavelengthInput').value);
+    var lambda = getWavelength(instrument);
     var beamFlux = parseFloat(document.getElementById(instrument + 'BeamFlux').value);
     var figureOfMerit = document.getElementById(instrument + 'FigureOfMerit');
     var figureOfMeritValue = lambda * lambda * beamFlux;
@@ -442,7 +471,8 @@ function calculateAttenuationFactor(instrument) {
 function calculateNumberOfAttenuators(instrument) {
     var atten = calculateAttenuationFactor(instrument);
     var attenuatorNode = document.getElementById(instrument + "Attenuators");
-    var wavelength = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
+    getAttenuators(instrument);
+    var wavelength = getWavelength(instrument);
 
     var af = 0.498 + 0.0792 * wavelength - 1.66e-3 * wavelength * wavelength;
     var nf = -Math.log(atten) / af;
@@ -468,6 +498,7 @@ function calculateBeamStopDiameter(instrument) {
         bsDiam = 1;
     }
     beamStopDiamNode.value = bsDiam;
+    window.currentConfig["beamStop.beamStop"] = bsDiam;
     return bsDiam; // Return value is in inches
 }
 
@@ -485,22 +516,12 @@ function calculateProjectedBeamStopDiameter(instrument) {
     return bsDiam + (bsDiam + sampleAperture) * LBeamstop / (L2 - LBeamstop); // Return value is in cm
 }
 
-function getSampleApertureSize(instrument) {
-    var sampleAperture = document.getElementById(instrument + 'SampleAperture').value;
-    if (sampleAperture === 'Custom') {
-        return parseFloat(document.getElementById(instrument + 'CustomAperture').value);
-    } else {
-        // Default values in inches - convert to cm
-        return parseFloat(sampleAperture) * 2.54;
-    }
-}
-
 /*
  * Calculate the beam diameter at the detector
  */
 function calculateBeamDiameter(instrument, direction = 'maximum') {
     // Get values for the desired instrument
-    var a1 = parseFloat(document.getElementById(instrument + 'SourceAperture').value);
+    var a1 = getSourceAperture(instrument);
     var l1 = calculateSourceToSampleApertureDistance(instrument);
     var l2 = calculateSampleToDetectorDistance(instrument)
     if (document.getElementById(instrument + 'GuideConfig').value === 'LENS') {
@@ -508,8 +529,8 @@ function calculateBeamDiameter(instrument, direction = 'maximum') {
         return a1;
     }
     var a2 = getSampleApertureSize(instrument);
-    var lambda = parseFloat(document.getElementById(instrument + 'WavelengthInput').value);
-    var lambdaDelta = parseFloat(document.getElementById(instrument + 'WavelengthSpread').value) / 100.0;
+    var lambda = getWavelength(instrument);
+    var lambdaDelta = getWavelengthSpread(instrument) / 100.0;
     var bsFactor = parseFloat(window[instrument + 'Constants']['BSFactor']);
     // Calculate beam size on the detector
     var d1 = a1 * l2 / l1;
@@ -552,12 +573,9 @@ function calculateSampleToDetectorDistance(instrument) {
  */
 function calculateSourceToSampleApertureDistance(instrument) {
     // Get the number of guides
-    var SSD = document.getElementById(instrument + 'SSD');
-    var guides = document.getElementById(instrument + 'GuideConfig').value;
-    if (guides === "LENS") {
-        guides = "0";
-    }
-    var nGds = parseFloat(guides);
+    var nGds = getNumberOfGuides(instrument);
+    // Get the source to sample distance node
+    var SSD = document.getElementById(instrument + "SSD");
     // Get the sample location
     var sampleSpace = document.getElementById(instrument + 'SampleTable').value;
     var ssd = 0.0;
@@ -600,7 +618,6 @@ function updateGuides(instrument, guideSelectStr, runSASCALC = true) {
             allApertureOptions[aperture].disabled = false;
             allApertureOptions[aperture].hidden = false;
             allApertureOptions[aperture].selected = true;
-            sessionStorage.setItem(instrument + "SourceAperture", allApertureOptions[aperture].value);
         } else {
             allApertureOptions[aperture].disabled = true;
             allApertureOptions[aperture].hidden = true;
@@ -628,8 +645,8 @@ function updateDetector(instrument, runSASCALC = true) {
     detectorOutput.oninput = function () { detectorSlider.value = this.value; }
     offsetSlider.oninput = function () { offsetOutput.value = this.value; }
     offsetOutput.oninput = function () { offsetSlider.value = this.value; }
-    window.currentConfig["geometry.sampleToAreaDetector"] = detectorOutput.value;
-    window.currentConfig["detectorOffset.softPosition"] = offsetOutput.value;
+    window.currentConfig["geometry.sampleToAreaDetector"] = detectorOutput.value + window.units["detectorDistance"];
+    window.currentConfig["detectorOffset.softPosition"] = offsetOutput.value + window.units["detectorOffset"];
     if (runSASCALC) {
         SASCALC(instrument);
     }
@@ -666,8 +683,8 @@ function updateAperture(instrument, runSASCALC = true) {
  * Use the updated wavelength spread to determine the allowed wavelength range
  */
 function updateWavelengthSpread(instrument, runSASCALC=true) {
-    var wavelength = document.getElementById(instrument + 'WavelengthInput');
-    var wavelengthSpread = document.getElementById(instrument + 'WavelengthSpread').value;
+    var wavelength = getWavelength(instrument);
+    var wavelengthSpread = getWavelengthSpread(instrument);
     var wavelengthOptions = window[instrument + 'WavelengthRange'][wavelengthSpread];
     wavelength.min = parseFloat(wavelengthOptions[0]);
     wavelength.max = parseFloat(wavelengthOptions[1]);
@@ -703,7 +720,7 @@ function updateInstrument(selectStr, runSASCALC=true) {
             instruments[key].style.display = "none";
         }
     }
-    if (selectStr != "") {
+    if (selectStr != '') {
         var serverNameNode = document.getElementById('serverName');
         serverNameNode.value = window[selectStr + "Constants"]['serverName'];
         var buttons = document.getElementById('buttons');
@@ -732,12 +749,60 @@ function updateInstrumentNoInstrument() {
 }
 
 /*
+ * Various getter functions - set current config on get
+ * 
+ */
+function getWavelength(instrument) {
+    var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
+    window.currentConfig["wavelength.wavelength"] = lambda + window.units["wavelength"];
+    return lambda;
+}
+function getWavelengthSpread(instrument) {
+    var wavelengthSpread = parseFloat(document.getElementById(instrument + "WavelengthSpread").value);
+    window.currentConfig["wavelengthSpread.wavelengthSpread"] = `${wavelengthSpread}`;
+    return wavelengthSpread;
+}
+function getAttenuators(instrument) {
+    var attenuators = parseFloat(document.getElementById(instrument + "Attenuators").value);
+    window.currentConfig["attenuator.attenuator"] = `${attenuators}`;
+    return attenuators;
+}
+function getSourceAperture(instrument) {
+    var sourceAperture = parseFloat(document.getElementById(instrument + "SourceAperture").value);
+    window.currentConfig["guide.sourceAperture"] = `${sourceAperture}`;
+    return sourceAperture;
+}
+function getSampleApertureSize(instrument) {
+    var sampleApertureRawValue = document.getElementById(instrument + 'SampleAperture').value;
+    var sampleApertureCalculations = 0.0;
+    var sampleApertureConfigs = 0.0;
+    if (sampleApertureRawValue === 'Custom') {
+        sampleApertureCalculations = parseFloat(document.getElementById(instrument + 'CustomAperture').value);
+    } else {
+        // Default values in inches - convert to cm for calculations 
+        sampleApertureCalculations = parseFloat(sampleApertureRawValue) * 2.54;
+    }
+    // Configurations sent to instrument use mm
+    sampleApertureConfigs = sampleApertureCalculations * 10;
+    window.currentConfig["geometry.externalSampleAperture"] = sampleApertureConfigs + window.units["sampleAperture"];
+    return sampleApertureCalculations;
+}
+function getNumberOfGuides(instrument) {
+    var guides = document.getElementById(instrument + 'GuideConfig').value;
+    if (guides === "LENS") {
+        guides = "0";
+    }
+    var nGds = parseFloat(guides);
+    window.currentConfig["guide.guide"] = guides;
+    return nGds;
+}
+
+/*
  * Freeze the current calculation
  */
 function freezeSASCALC() {
     var frozen = new Array(1).fill(0);
-    // TODO: Freeze configuration to be sent to NICE
-    // Offset intensities by a factor of 2
+    // Offset intensities of frozen configs by a factor of 2
     var intensities = new Array(1).fill(0);
     var n = 2 * (window.frozenCalculations.length + 1);
     for (var i = 0; i < window.aveIntensity.length; i++) {
@@ -755,6 +820,8 @@ function freezeSASCALC() {
     frozen[9] = window.qyValues;
     frozen[10] = window.intensity2D;
     window.frozenCalculations.push(frozen);
+    var configName = generateConfigName(window.currentConfig);
+    window.frozenConfigs[configName] = window.currentConfig;
     update1DChart();
 }
 
@@ -763,5 +830,6 @@ function freezeSASCALC() {
  */
 function clearFrozen() {
     window.frozenCalculations = [];
+    window.frozenConfigs = {};
     update1DChart();
 }
