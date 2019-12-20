@@ -19,6 +19,7 @@ function restorePersistantState() {
         var modelNode = document.getElementById('model');
         var averageTypeNode = document.getElementById('averagingType');
         modelNode.value = model;
+        selectModel(model, false);
         averageTypeNode.value = averageType;
         var sampleSpace = sessionStorage.getItem(instrument + 'SampleTable');
         var sampleSpaceNode = document.getElementById(instrument + 'SampleTable');

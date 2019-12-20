@@ -77,7 +77,7 @@ window.ng7WavelengthRange = {
     "11.5": ['5.5', '20.0'],
     "13.9": ['4.8', '20.0'],
     "22.1": ['4.0', '20.0']
-}
+};
 
 // NGB 10m SANS
 window.ngb10SourceApertures = {
@@ -100,11 +100,19 @@ window.ngb10Constants = {
 
 // Models
 window.modelList = {
-    "Debye": {
+    "debye": {
         "params": {
             "scale": 1000,
             "rg": 100,
             "bkg": 0.0
+        }
+    },
+    "sphere": {
+        "params": {
+            "scale": 1,
+            "radius": 1000,
+            "deltaRho": 1.0e-7,
+            "bkg": 0.1,
         }
     }
 }

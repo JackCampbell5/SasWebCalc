@@ -68,14 +68,16 @@
                             <option value="vsans">VSANS</option>
                         </select>
                         <label id="modelLabel" for="model" style="display: none">Model: </label>
-                        <select id="model" onchange="updateInstrumentNoInstrument()" style="display: none">
+                        <select id="model" onchange="selectModel(this.value)" style="display: none">
                             <option value="debye" selected>Debye</option>
+                            <option value="sphere" selected>Sphere</option>
                         </select>
                         <label id="averagingTypeLabel" for="averagingType" style="display: none">Averaging Method: </label>
                         <select id="averagingType" onchange="updateInstrumentNoInstrument()" style="display: none">
                             <option value="circular" selected>Circular</option>
                         </select>
                     </div>
+                    <div class="instrument-section" id="modelParams" style="display: none"></div>
 
                     <hr />
                     <!-- NGB 30m SANS -->

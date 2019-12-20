@@ -42,7 +42,7 @@ function initializeData() {
 /*
  * Run SASCALC for the current instrument and model
  */
-function SASCALC(instrument, averageType = "Circular", model = "Debye") {
+function SASCALC(instrument, averageType = "Circular") {
     // Initialize data sets
     initializeData();
     // Calculate the beam stop diameter
@@ -57,7 +57,7 @@ function SASCALC(instrument, averageType = "Circular", model = "Debye") {
     calculateQRange(instrument, averageType);
     calculateMinimumAndMaximumQ(instrument);
     // Do Circular Average of an array of 1s
-    calculateModel(model);
+    calculateModel();
     // Update the charts
     update1DChart();
     update2DChart();
@@ -236,15 +236,20 @@ function calculateMinimumQ(instrument) {
 /*
  * Calculate the model function used to represent the data
  */
-function calculateModel(model = "Debye", defaultParams = []) {
-    if (defaultParams.length == 0) {
-        defaultParams = Object.values(window.modelList[model]['params']);
+function calculateModel() {
+    var model = document.getElementById("model").value;
+    // TODO: Get parameters from window
+    defaultParams = Object.keys(window.modelList[model]['params']);
+    params = [];
+    for (var i = 0; i < defaultParams.length; i++) {
+        var paramName = model + "_" + defaultParams[i];
+        params[i] = parseFloat(document.getElementById(paramName).value);
     }
     // 1D calculation
     for (var i = 0; i < window.qValues.length; i++) {
-        defaultParams.push(window.qValues[i]);
-        window.aveIntensity[i] = window.fSubs[i] * window[model.toLowerCase()](defaultParams);
-        defaultParams.pop();
+        params.push(window.qValues[i]);
+        window.aveIntensity[i] = window.fSubs[i] * window[model.toLowerCase()](params);
+        params.pop();
     }
     // 2D calculation
     var q = q_closest = qx = qy = index = 0;
@@ -258,9 +263,9 @@ function calculateModel(model = "Debye", defaultParams = []) {
                 return (Math.abs(curr - q) < Math.abs(prev - q) ? curr : prev);
             });
             index = window.qValues.indexOf(q_closest);
-            defaultParams.push(q);
-            data_k[k] = window.fSubs[index] * window[model.toLowerCase()](defaultParams);
-            defaultParams.pop();
+            params.push(q);
+            data_k[k] = window.fSubs[index] * window[model.toLowerCase()](params);
+            params.pop();
         }
         window.intensity2D[j] = data_k;
     }
@@ -697,13 +702,15 @@ function updateInstrument(selectStr, runSASCALC=true) {
         buttons.style.display = "inline-block";
         var model = document.getElementById("model");
         model.style.display = "inline-block";
+        selectModel(model.value, false);
         var modelLabel = document.getElementById("modelLabel");
         modelLabel.style.display = "inline-block";
+        var modelParams = document.getElementById("modelParams");
+        modelParams.style.display = "inline-block";
         var averagingType = document.getElementById("averagingType");
         averagingType.style.display = "inline-block";
         var averagingTypeLabel = document.getElementById("averagingTypeLabel");
         averagingTypeLabel.style.display = "inline-block";
-
         // Initialize routine when button is displayed:
         var router_spec = "NiceGlacier2/router:ws -p <port> -h <host>";
         var send_button = document.getElementById('sendToNICE');
@@ -739,15 +746,42 @@ function updateInstrument(selectStr, runSASCALC=true) {
 /*
  * Update the instrument with no instrument name passed
  */
-function updateInstrumentNoInstrument() {
-    var inst = document.getElementById('instrumentSelector');
-    var instrument = inst.value;
-    updateInstrument(instrument);
+function selectModel(model, runSASCALC = true) {
+    var modelParams = document.getElementById("modelParams");
+    // Show the node
+    modelParams.style.display = "inline-block";
+    // Remove existing nodes
+    while (modelParams.lastChild) {
+        modelParams.removeChild(modelParams.lastChild);
+    }
+    var instrument = document.getElementById('instrumentSelector').value;
+    var params = window.modelList[model]["params"];
+    var paramNames = Object.keys(params);
+    var defaultValues = Object.values(params);
+    // Create new nodes for parameters
+    for (var i = 0; i < paramNames.length; i++) {
+        var id = model + "_" + paramNames[i];
+        var label = document.createElement("LABEL");
+        var for_att = document.createAttribute("for");
+        for_att.value = id;
+        label.setAttributeNode(for_att);
+        label.innerHTML = paramNames[i].charAt(0).toUpperCase() + paramNames[i].slice(1) + ": ";
+        var input = document.createElement("input");
+        var id_att = document.createAttribute("id");
+        id_att.value = id;
+        input.setAttributeNode(id_att);
+        input.value = defaultValues[i];
+        input.oninput = function () { SASCALC(instrument); }
+        modelParams.appendChild(label);
+        modelParams.appendChild(input);
+    }
+    if (runSASCALC) {
+        SASCALC(instrument);
+    }
 }
 
 /*
  * Various getter functions - set current config on get
- * 
  */
 function getWavelength(instrument) {
     var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
