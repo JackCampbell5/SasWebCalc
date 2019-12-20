@@ -7,7 +7,8 @@ Current features:
 - Calculate I vs. Q for NG7 SANS configurations using the Debye model
 - Freeze configuration/model combinations
 - Plot I vs. Q of any number of configuration/model combinations
-- 2D heatmap of I(Q) for the current calculation
+- 2D heatmap of I(Q) for the most recent calculation
+- Configurations can be sent directly to the desired instrument
 
 Known issues:
 
@@ -18,7 +19,6 @@ Anticipated features:
 
 - Instrument selection tool for NIST center for neturon research instruments
 	- Option of inputting a Q range and model only, with no instrumental resolution calculations
-- Ability to send frozen configurations directly to the desired instrument
 - Ability to read instrumental values directly from the SAS instrument
 - Model selection tool based off of [sasmodels] (https://github.com/SasView/sasmodels)
 - Modify model parameters to better tune and plan for an experiment
