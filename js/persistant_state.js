@@ -57,8 +57,16 @@ function restorePersistantState() {
         updateDetector(instrument, false);
         // Restore frozen datasets
         window.frozenCalculations = sessionStorage.getItem(instrument + 'FrozenDataSets');
+        window.frozenConfigs = sessionStorage.getItem(instrument + 'FrozenConfigs');
+        window.currentConfig = sessionStorage.getItem(instrument + 'CurrentConfig');
         if (window.frozenCalculations == "") {
             window.frozenCalculations = [];
+        }
+        if (window.frozenConfigs == "") {
+            window.frozenConfigs = {};
+        }
+        if (window.currentConfig == "") {
+            window.currentConfig = {};
         }
     }
     // Run SASCALC at the end
@@ -107,4 +115,6 @@ function storePersistantState(instrument) {
     sessionStorage.setItem(instrument + 'OffsetInputBox', offsetOutput.value);
     // Store frozen datasets
     sessionStorage.setItem(instrument + 'FrozenDataSets', window.frozenCalculations);
+    sessionStorage.setItem(instrument + 'FrozenConfigs', window.frozenConfigs);
+    sessionStorage.setItem(instrument + 'CurrentConfig', window.currentConfig);
 }

@@ -16,7 +16,8 @@ window.units = {
     "wavelength": "Å",
     "sampleAperture": "mm",
     "detectorOffset": "cm",
-    "detectorDistance": "cm"
+    "detectorDistance": "cm",
+    "beamCenter": "cm",
 }
 
 // NGB 30m SANS

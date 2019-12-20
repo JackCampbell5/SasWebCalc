@@ -2,10 +2,10 @@
     var configs = {}
     var frozenConfigs = window.frozenConfigs;
     for (frozenConfig in frozenConfigs) {
-        var scattConfig = frozenConfigs[frozenConfig];
-        var transConfig = frozenConfigs[frozenConfig];
-        transConfig["BeamStopY.softPosition"] = "-15.0cm";
-        scattConfig["attenuator.attenuator"] = "0";
+        var scattConfig = Object.assign({}, frozenConfigs[frozenConfig]);
+        var transConfig = Object.assign({}, frozenConfigs[frozenConfig]);
+        transConfig["beamStopX.softPosition"] = "-15.0cm";
+        scattConfig["attenuator.key"] = "0";
         configs[frozenConfig + " Scatt"] = scattConfig;
         configs[frozenConfig + " Trans"] = transConfig;
     }

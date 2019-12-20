@@ -1,37 +1,27 @@
 ﻿function loadpage() {
     // Initialize data sets
     initializeData();
-    // Reset frozen calculations
+    // Reset frozen values and set current config to default values
     window.frozenCalculations = [];
     window.frozenConfigs = {};
+    window.currentConfig = {
+        "areaDetector.beamCenterX": "64.5cm",
+        "areaDetector.beamCenterY": "64.5cm",
+        "attenuator.key": 0,
+        "beamStop.beamStop": 2,
+        "beamStopX.softPosition": "0.0cm",
+        "BeamStopY.softPosition": "0.0cm",
+        "detectorOffset.softPosition": "0.0cm",
+        "geometry.externalSampleApertureShape": "CIRCLE",
+        "geometry.externalSampleAperture": "12.7mm",
+        "geometry.sampleToAreaDetector": "100cm",
+        "guide.guide": 0,
+        "guide.sourceAperture": "5.08",
+        "wavelength.wavelength": "6",
+        "wavelengthSpread.wavelengthSpread": 0.115,
+    };
     // Restore persistant state on refresh
     restorePersistantState();
-
-    // SENDING TO NICE DIRECTLY:
-    var router_spec = "NiceGlacier2/router:ws -p <port> -h <host>";
-    var send_button = document.getElementById('sendToNICE');
-    send_button.onclick = async function () {
-        var nice_connection = new NiceConnection();
-        var configs = sascalcToMoveValue();
-        let hostname = document.getElementById("serverName").value;
-        let username = "user";
-        let password = "";
-        let port = "9999";
-        let ice_protocol_version = "1.1";
-        await nice_connection.signin(router_spec.replace(/<host>/, hostname).replace(/<port>/, port), ice_protocol_version, false, username, password);
-        let api = nice_connection.api;
-        let existing_map = await api.readValue("configuration.map");
-        for (config in configs) {
-            if (existing_map.val.has(config)) {
-                if (!confirm("configuration named " + config + " exists; Overwrite?")) {
-                    return false
-                }
-            }
-        }
-        api.move(["configuration.mapPut", stringifyConfigMap(configs)], false)
-        //console.log(vcalcToMoveValue(app));
-        nice_connection.disconnect();
-    }
 };
 
 function initializeData() {
@@ -47,23 +37,6 @@ function initializeData() {
     window.qxValues = new Array(1).fill(0);
     window.qyValues = new Array(1).fill(0);
     window.intensity2D = new Array(1).fill(0);
-    window.frozenConfigs = {};
-    window.currentConfig = {
-        "areaDetector.beamCenterX": 64.5,
-        "areaDetector.beamCenterY": 64.5,
-        "attenuator.key": 0,
-        "beamStop.beamStop": 2,
-        "beamStopX.softPostion": "0.0cm",
-        "BeamStopY.softPosition": "0.0cm",
-        "detectorOffset.softPosition": "0.0cm",
-        "geometry.externalSampleApertureShape": "CIRCLE",
-        "geometry.externalSampleAperture": "12.7mm",
-        "geometry.sampleToAreaDetector": "100cm",
-        "guide.guide": 0,
-        "guide.sourceAperture": "5.08",
-        "wavelength.wavelength": "6",
-        "wavelengthSpread.wavelengthSpread": 11.5,
-    };
 }
 
 /*
@@ -88,6 +61,8 @@ function SASCALC(instrument, averageType = "Circular", model = "Debye") {
     // Update the charts
     update1DChart();
     update2DChart();
+    // Set current configuration
+    setCurrentConfig(instrument);
     // Store persistant state
     storePersistantState(instrument);
 }
@@ -100,7 +75,6 @@ function calculateQRange(instrument, averageType="Circular") {
     var yPixels = parseInt(window[instrument + "Constants"]["yPixels"]);
     var xCenter = calculateXBeamCenter(instrument);
     var yCenter = yPixels / 2 + 0.5;
-    window.currentConfig["areaDetector.beamCenterY"] = yCenter;
     var pixelSize = parseFloat(window[instrument + "Constants"]["aPixel"]);
     var coeff = parseFloat(window[instrument + "Constants"]["coeff"]);
     var xDistance = yDistance = totalDistance = correctedDx = correctedDy = dataPixel = numDSquared = 0;
@@ -313,7 +287,6 @@ function calculateXBeamCenter(instrument) {
     // Get detector offset in cm
     var offset = parseFloat(document.getElementById(instrument + "OffsetInputBox").value);
     var xCenter = (offset / dr) + (xPixels / 2 + 0.5);
-    window.currentConfig["areaDetector.beamCenterX"] = xCenter;
     return xCenter;
 }
 
@@ -471,7 +444,6 @@ function calculateAttenuationFactor(instrument) {
 function calculateNumberOfAttenuators(instrument) {
     var atten = calculateAttenuationFactor(instrument);
     var attenuatorNode = document.getElementById(instrument + "Attenuators");
-    getAttenuators(instrument);
     var wavelength = getWavelength(instrument);
 
     var af = 0.498 + 0.0792 * wavelength - 1.66e-3 * wavelength * wavelength;
@@ -481,6 +453,7 @@ function calculateNumberOfAttenuators(instrument) {
         numAtten = 7 + Math.floor((numAtten - 6) / 2);
     }
     attenuatorNode.value = numAtten;
+    getAttenuators(instrument);
 }
 
 /*
@@ -498,7 +471,6 @@ function calculateBeamStopDiameter(instrument) {
         bsDiam = 1;
     }
     beamStopDiamNode.value = bsDiam;
-    window.currentConfig["beamStop.beamStop"] = bsDiam;
     return bsDiam; // Return value is in inches
 }
 
@@ -645,8 +617,6 @@ function updateDetector(instrument, runSASCALC = true) {
     detectorOutput.oninput = function () { detectorSlider.value = this.value; }
     offsetSlider.oninput = function () { offsetOutput.value = this.value; }
     offsetOutput.oninput = function () { offsetSlider.value = this.value; }
-    window.currentConfig["geometry.sampleToAreaDetector"] = detectorOutput.value + window.units["detectorDistance"];
-    window.currentConfig["detectorOffset.softPosition"] = offsetOutput.value + window.units["detectorOffset"];
     if (runSASCALC) {
         SASCALC(instrument);
     }
@@ -733,6 +703,33 @@ function updateInstrument(selectStr, runSASCALC=true) {
         averagingType.style.display = "inline-block";
         var averagingTypeLabel = document.getElementById("averagingTypeLabel");
         averagingTypeLabel.style.display = "inline-block";
+
+        // Initialize routine when button is displayed:
+        var router_spec = "NiceGlacier2/router:ws -p <port> -h <host>";
+        var send_button = document.getElementById('sendToNICE');
+        send_button.onclick = async function () {
+            var nice_connection = new NiceConnection();
+            var configs = sascalcToMoveValue();
+            let hostname = document.getElementById("serverName").value;
+            let username = "user";
+            let password = "";
+            let port = "9999";
+            let ice_protocol_version = "1.1";
+            await nice_connection.signin(router_spec.replace(/<host>/, hostname).replace(/<port>/, port), ice_protocol_version, false, username, password);
+            let api = nice_connection.api;
+            let existing_map = await api.readValue("configuration.map");
+            for (config in configs) {
+                if (existing_map.val.has(config)) {
+                    if (!confirm("configuration named " + config + " exists; Overwrite?")) {
+                        return false
+                    }
+                }
+            }
+            api.move(["configuration.mapPut", stringifyConfigMap(configs)], false)
+            //console.log(vcalcToMoveValue(app));
+            nice_connection.disconnect();
+        }
+
         if (runSASCALC) {
             SASCALC(selectStr);
         }
@@ -754,37 +751,29 @@ function updateInstrumentNoInstrument() {
  */
 function getWavelength(instrument) {
     var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
-    window.currentConfig["wavelength.wavelength"] = lambda + window.units["wavelength"];
     return lambda;
 }
 function getWavelengthSpread(instrument) {
     var wavelengthSpread = parseFloat(document.getElementById(instrument + "WavelengthSpread").value);
-    window.currentConfig["wavelengthSpread.wavelengthSpread"] = `${wavelengthSpread}`;
     return wavelengthSpread;
 }
 function getAttenuators(instrument) {
     var attenuators = parseFloat(document.getElementById(instrument + "Attenuators").value);
-    window.currentConfig["attenuator.attenuator"] = `${attenuators}`;
     return attenuators;
 }
 function getSourceAperture(instrument) {
     var sourceAperture = parseFloat(document.getElementById(instrument + "SourceAperture").value);
-    window.currentConfig["guide.sourceAperture"] = `${sourceAperture}`;
     return sourceAperture;
 }
 function getSampleApertureSize(instrument) {
     var sampleApertureRawValue = document.getElementById(instrument + 'SampleAperture').value;
     var sampleApertureCalculations = 0.0;
-    var sampleApertureConfigs = 0.0;
     if (sampleApertureRawValue === 'Custom') {
         sampleApertureCalculations = parseFloat(document.getElementById(instrument + 'CustomAperture').value);
     } else {
         // Default values in inches - convert to cm for calculations 
         sampleApertureCalculations = parseFloat(sampleApertureRawValue) * 2.54;
     }
-    // Configurations sent to instrument use mm
-    sampleApertureConfigs = sampleApertureCalculations * 10;
-    window.currentConfig["geometry.externalSampleAperture"] = sampleApertureConfigs + window.units["sampleAperture"];
     return sampleApertureCalculations;
 }
 function getNumberOfGuides(instrument) {
@@ -792,9 +781,20 @@ function getNumberOfGuides(instrument) {
     if (guides === "LENS") {
         guides = "0";
     }
-    var nGds = parseFloat(guides);
-    window.currentConfig["guide.guide"] = guides;
-    return nGds;
+    return parseFloat(guides);
+}
+function setCurrentConfig(instrument) {
+    window.currentConfig["guide.guide"] = document.getElementById(instrument + 'GuideConfig').value;
+    window.currentConfig["geometry.externalSampleAperture"] = getSampleApertureSize(instrument) * 10 + window.units["sampleAperture"];
+    window.currentConfig["guide.sourceAperture"] = getSourceAperture(instrument);
+    window.currentConfig["attenuator.key"] = getAttenuators(instrument);
+    window.currentConfig["wavelength.wavelength"] = getWavelength(instrument) + window.units["wavelength"];
+    window.currentConfig["wavelengthSpread.wavelengthSpread"] = getWavelengthSpread(instrument) / 100;
+    window.currentConfig["areaDetector.beamCenterY"] = parseInt(window[instrument + "Constants"]["yPixels"]) / 2 + 0.5 + window.units["beamCenter"];
+    window.currentConfig["areaDetector.beamCenterX"] = (Math.round(calculateXBeamCenter(instrument) * 1000) / 1000) + window.units["beamCenter"];
+    window.currentConfig["beamStop.beamStop"] = calculateBeamStopDiameter(instrument);
+    window.currentConfig["geometry.sampleToAreaDetector"] = document.getElementById(instrument + "SDDInputBox").value + window.units["detectorDistance"];
+    window.currentConfig["detectorOffset.softPosition"] = document.getElementById(instrument + "OffsetInputBox").value + window.units["detectorOffset"];
 }
 
 /*
@@ -821,7 +821,7 @@ function freezeSASCALC() {
     frozen[10] = window.intensity2D;
     window.frozenCalculations.push(frozen);
     var configName = generateConfigName(window.currentConfig);
-    window.frozenConfigs[configName] = window.currentConfig;
+    window.frozenConfigs[configName] = Object.assign({}, window.currentConfig);
     update1DChart();
 }
 
