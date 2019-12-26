@@ -775,6 +775,8 @@ function selectModel(model, runSASCALC = true) {
         modelParams.appendChild(label);
         modelParams.appendChild(input);
     }
+    var hr = document.createElement("hr");
+    modelParams.appendChild(hr);
     if (runSASCALC) {
         SASCALC(instrument);
     }

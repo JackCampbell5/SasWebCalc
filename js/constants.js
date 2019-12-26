@@ -111,7 +111,8 @@ window.modelList = {
         "params": {
             "scale": 1,
             "radius": 1000,
-            "deltaRho": 1.0e-7,
+            "sld_sphere": 1.0,
+            "sld_solvent": 6.3,
             "bkg": 0.1,
         }
     }

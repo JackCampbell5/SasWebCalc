@@ -27,20 +27,22 @@ function sphere(params) {
     // calculates scale * f^2 / volume where f = volume * 3 * deltaRho * (sin(qr) - q*r*cos(qr)) / (q*r)^3
     var scale = params[0];
     var radius = params[1];
-    var deltaRho = params[2];
-    var bkg = params[3];
-    var q = params[3];
+    var sldSphere = params[2] * 10e-6;
+    var sldSolvent = params[3] * 10e-6;
+    var bkg = params[4];
+    var q = params[5];
+    var deltaRho = sldSphere - sldSolvent;
 
     var radius_cubed = radius * radius * radius;
-    var q_cubed = q * q * q;
+    var q_rad = q * radius;
     var deltaRhoSquared = deltaRho * deltaRho;
 
     if (q == 0) {
         return (4 / 3) * Math.PI * radius_cubed * deltaRhoSquared * scale * 1e8 + bkg;
     }
 
-    var bessel = 3 * (Math.sin(q * radius) - q * radius * Math.cos(q * radius)) / (q_cubed * radius_cubed);
-    var volume = 4 * Math.PI / (3 * radius_cubed);
+    var bessel = 3 * (Math.sin(q_rad) - q_rad * Math.cos(q_rad)) / (q_rad * q_rad * q_rad);
+    var volume = 4 * Math.PI * radius_cubed / 3;
     var f = volume * bessel * deltaRho;
 
     var f_squared = (f * f / volume) * 1e8;

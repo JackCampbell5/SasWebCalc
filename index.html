@@ -79,7 +79,6 @@
                     </div>
                     <div class="instrument-section" id="modelParams" style="display: none"></div>
 
-                    <hr />
                     <!-- NGB 30m SANS -->
                     <div id="ngb30m" style="display: none">
                         <label for="ngb30GuideConfig">Guides: </label>
@@ -239,20 +238,23 @@
                     <div id="vsans" style="display: none">
                     </div>
 
-                    <hr />
 
                     <!-- Freeze and send to instrument -->
                     <div id="buttons" style="display: none">
+                        <hr />
                         <button type="button" onclick="freezeSASCALC()">Freeze Current Calculation</button>
                         <button type="button" onclick="clearFrozen()">Clear Frozen</button>
                         <input type="text" id="serverName" />
                         <button type="button" id="sendToNICE">Send to running NICE server</button>
+                        <hr />
                     </div>
 
-                    <hr />
 
                     <!-- Chart for all instruments -->
-                    <div id="sasCalcCharts"><div class="chart" id="sasCalc1DChart"></div><div class="chart" id="sasCalc2DChart"></div></div>
+                    <div id="sasCalcCharts">
+                        <div class="chart" id="sasCalc1DChart"></div>
+                        <div class="chart" id="sasCalc2DChart"></div>
+                    </div>
                 </form>
             </div>
         </div>
