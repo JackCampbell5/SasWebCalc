@@ -70,6 +70,16 @@ window.ng7Constants = {
     'coeff': '10000',
     'xPixels': '128',
     'yPixels': '128',
+    'peakFlux': '2.55e13',
+    'peakLambda': '5.5',
+    'b': '0.0395',
+    'c': '0.0442',
+    'trans1': '0.63',
+    'trans2': '0.7',
+    'trans3': '0.75',
+    'guideGap': '188',
+    'guideWidth': '5',
+    'guideLoss': '0.974',
     'serverName': 'ng7sans.ncnr.nist.gov'
 };
 window.ng7WavelengthRange = {

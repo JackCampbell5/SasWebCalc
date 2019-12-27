@@ -65,6 +65,7 @@ function restorePersistantState() {
         window.frozenCalculations = JSON.parse(sessionStorage.getItem(instrument + 'FrozenDataSets'));
         window.frozenConfigs = JSON.parse(sessionStorage.getItem(instrument + 'FrozenConfigs'));
         window.currentConfig = JSON.parse(sessionStorage.getItem(instrument + 'CurrentConfig'));
+        window.configNames = JSON.parse(sessionStorage.getItem(instrument + 'ConfigName'));
         if (window.frozenCalculations == "") {
             window.frozenCalculations = [];
         }
@@ -73,6 +74,9 @@ function restorePersistantState() {
         }
         if (window.currentConfig == "") {
             window.currentConfig = {};
+        }
+        if (window.configNames == "") {
+            window.configNames = [];
         }
     }
     // Run SASCALC at the end
@@ -129,4 +133,5 @@ function storePersistantState(instrument) {
     sessionStorage.setItem(instrument + 'FrozenDataSets', JSON.stringify(window.frozenCalculations));
     sessionStorage.setItem(instrument + 'FrozenConfigs', JSON.stringify(window.frozenConfigs));
     sessionStorage.setItem(instrument + 'CurrentConfig', JSON.stringify(window.currentConfig));
+    sessionStorage.setItem(instrument + 'ConfigName', JSON.stringify(window.configNames));
 }

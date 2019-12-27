@@ -33,6 +33,7 @@
         "wavelength.wavelength": "6",
         "wavelengthSpread.wavelengthSpread": 0.115,
     };
+    window.configNames = [];
     // Restore persistant state on refresh
     restorePersistantState();
 };
@@ -384,10 +385,45 @@ function generateOnesData(instrument) {
  * Calculate the estimated beam flux
  */
 function calculateBeamFlux(instrument) {
-    var beamFlux = document.getElementById(instrument + 'BeamFlux');
-    // TODO: Run calculation
-    beamFlux.value = 1000.0;
-    return parseFloat(beamFlux.value);
+    var beamFluxNode = document.getElementById(instrument + 'BeamFlux');
+    
+    // Get instrumental values
+    var SSD = calculateSourceToSampleApertureDistance(instrument);
+    var sourceAperture = getSourceAperture(instrument);
+    var sampleAperture = getSampleApertureSize(instrument);
+    var lambda = getWavelength(instrument);
+    var lambdaWidth = getWavelengthSpread(instrument) / 100;
+    var numGuides = getNumberOfGuides(instrument);
+
+    // Get constants
+    var peakFlux = parseFloat(window[instrument + 'Constants']['peakFlux']);
+    var peakLambda = parseFloat(window[instrument + 'Constants']['peakLambda']);
+    var guideGap = parseFloat(window[instrument + 'Constants']['guideGap']);
+    var guideLoss = parseFloat(window[instrument + 'Constants']['guideLoss']);
+    var guideWidth = parseFloat(window[instrument + 'Constants']['guideWidth']);
+    var trans1 = parseFloat(window[instrument + 'Constants']['trans1']);
+    var trans2 = parseFloat(window[instrument + 'Constants']['trans2']);
+    var trans3 = parseFloat(window[instrument + 'Constants']['trans3']);
+    var b = parseFloat(window[instrument + 'Constants']['b']);
+    var c = parseFloat(window[instrument + 'Constants']['c']);
+
+    // Run calculations
+    var alpha = (sourceAperture + sampleAperture) / (2 * SSD);
+    var f = guideGap * alpha / (2 * guideWidth);
+    var trans4 = (1 - f) * (1 - f);
+    var trans5 = Math.exp(numGuides * Math.log(guideLoss));
+    var trans6 = 1 - lambda * (b - (numGuides / 8) * (b - c));
+    var totalTrans = trans1 * trans2 * trans3 * trans4 * trans5 * trans6;
+
+    var area = Math.PI / (4 * sampleAperture * sampleAperture);
+    var d2_phi = peakFlux / (2 * Math.PI);
+    d2_phi *= Math.exp(4 * Math.log(peakLambda / lambda));
+    d2_phi *= Math.exp(-1 * (peakLambda * peakLambda / (lambda * lambda)));
+    var solid_angle = (Math.PI / 4) * (sourceAperture / SSD) * (sourceAperture / SSD);
+    var beamFlux = Math.round(area * d2_phi * lambdaWidth * solid_angle * totalTrans);
+
+    beamFluxNode.value = beamFlux;
+    return parseFloat(beamFluxNode.value);
 }
 
 /*
@@ -410,7 +446,7 @@ function calculateAttenuationFactor(instrument) {
     var beamDiam = calculateBeamDiameter(instrument);
     var aPixel = parseFloat(window[instrument + "Constants"]["aPixel"]);
     var iPixelMax = parseFloat(window[instrument + "Constants"]["iPixel"]);
-    var num_pixels = Math.PI / 4 * (0.5 * (a2 + beamDiam)) * (0.5 * (a2 + beamDiam)) / aPixel / aPixel;
+    var num_pixels = (Math.PI / 4) * (0.5 * (a2 + beamDiam)) * (0.5 * (a2 + beamDiam)) / (aPixel * aPixel);
     var iPixel = calculateBeamFlux(instrument) / num_pixels;
     var atten = (iPixel < iPixelMax) ? 1.0 : iPixelMax / iPixel;
     attenFactorNode.value = Math.round(atten * 100000) / 100000;
