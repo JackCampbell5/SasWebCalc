@@ -3,6 +3,12 @@
  */
 function update1DChart() {
     var data = [];
+    var xmin = Math.log10(0.0001);
+    var xmin_limit = Math.log10(0.0001);
+    var xmax = Math.log10(1.0);
+    var ymin = Math.log10(0.001);
+    var ymin_limit = Math.log10(0.001);
+    var ymax = Math.log10(100000);
     var dataSet = {
         x: window.qValues,
         y: window.aveIntensity,
@@ -17,6 +23,14 @@ function update1DChart() {
         },
         name: "SASCALC"
     };
+    var qmin = Math.log10(Math.min(...window.qValues));
+    var qmax = Math.log10(Math.max(...window.qValues));
+    var imin = Math.log10(Math.min(...window.aveIntensity));
+    var imax = Math.log10(Math.max(...window.aveIntensity));
+    xmin = (xmin_limit < qmin && qmin < xmin) ? qmin : xmin;
+    xmax = (qmax > xmax) ? qmax : xmax;
+    ymin = (ymin_limit < imin && imin < ymin) ? imin : ymin;
+    ymax = (imax > ymax) ? imax : ymax;
     data.push(dataSet);
     for (frozen in window.frozenCalculations) {
         var frozenData = window.frozenCalculations[frozen];
@@ -36,6 +50,14 @@ function update1DChart() {
             },
             name: title
         };
+        qmin = Math.log10(Math.min(...frozenData[0]));
+        qmax = Math.log10(Math.max(...frozenData[0]));
+        imin = Math.log10(Math.min(...frozenData[1]));
+        imax = Math.log10(Math.max(...frozenData[1]));
+        xmin = (xmin_limit < qmin && qmin < xmin) ? qmin : xmin;
+        xmax = (qmax > xmax) ? qmax : xmax;
+        ymin = (ymin_limit < imin && imin < ymin) ? imin : ymin;
+        ymax = (imax > ymax) ? imax : ymax;
         data.push(frozenDataSet);
     };
     var layout = {
@@ -43,12 +65,13 @@ function update1DChart() {
         xaxis: {
             exponentformat: 'power',
             title: "Q (Å^-1)",
+            range: [xmin, xmax],
             type: 'log'
         },
         yaxis: {
             exponentformat: 'power',
             title: 'Relative Intensity (Au)',
-            range: [-3, 5],
+            range: [ymin, ymax],
             type: 'log'
         }
     };
