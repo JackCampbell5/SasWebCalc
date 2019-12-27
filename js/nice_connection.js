@@ -1,4 +1,7 @@
-﻿function sascalcToMoveValue() {
+﻿/*
+ * Generates unique scattering and transmission configurations for each frozen config
+ */
+function sascalcToMoveValue() {
     var configs = {}
     var frozenConfigs = window.frozenConfigs;
     for (frozenConfig in frozenConfigs) {
@@ -12,11 +15,17 @@
     return configs;
 }
 
+/*
+ * Generates a unique configuration name for the configuration
+ */
 function generateConfigName(config) {
     var SDD = parseFloat(config["geometry.sampleToAreaDetector"])/100;
     return SDD + "m";
 }
 
+/*
+ * Converts a list of config dictionaries to a string that can be accept by the NICE software
+ */
 function stringifyConfigMap(configs) {
     var sendString = "{";
     for (var configName in configs) {

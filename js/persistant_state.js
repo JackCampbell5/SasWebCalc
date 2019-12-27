@@ -31,7 +31,7 @@ function restorePersistantState() {
         var wavelengthSpreadNode = document.getElementById(instrument + 'WavelengthSpread').value;
         wavelengthNode.value = wavelength;
         wavelengthSpreadNode.value = wavelengthSpread;
-        updateWavelengthSpread(instrument, false);
+        updateWavelength(instrument, false);
         // Restore aperture and guide configuration values
         var customAperture = sessionStorage.getItem(instrument + 'CustomAperture');
         var sampleAperture = sessionStorage.getItem(instrument + 'SampleAperture');
@@ -55,7 +55,6 @@ function restorePersistantState() {
         detectorSliderNode.value = detectorDistance;
         offsetNode.value = detectorOffset;
         offsetSliderNode.value = detectorOffset;
-        updateDetector(instrument, false);
         // Restore frozen datasets
         window.frozenCalculations = sessionStorage.getItem(instrument + 'FrozenDataSets');
         window.frozenConfigs = sessionStorage.getItem(instrument + 'FrozenConfigs');

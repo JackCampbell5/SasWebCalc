@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="css/default.css" />
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/6.2.2/math.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ice/3.7.1/Ice.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ice/3.7.1/Glacier2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ice/3.7.1/IceStorm.min.js"></script>
@@ -60,7 +59,7 @@
                 <form target="#">
                     <div class="instrument-section" title="Choose the instrument you plan to use.">
                         <label for="instrument">Instrument: </label>
-                        <select id="instrumentSelector" onchange="updateInstrument(this.value)">
+                        <select id="instrumentSelector">
                             <option value="" selected disabled hidden>Choose your instrument</option>
                             <option value="ngb30m">NGB 30m SANS</option>
                             <option value="ng7">NG7 SANS</option>
@@ -68,12 +67,12 @@
                             <option value="vsans">VSANS</option>
                         </select>
                         <label id="modelLabel" for="model" style="display: none">Model: </label>
-                        <select id="model" onchange="selectModel(this.value)" style="display: none">
+                        <select id="model" style="display: none">
                             <option value="debye" selected>Debye</option>
                             <option value="sphere" selected>Sphere</option>
                         </select>
                         <label id="averagingTypeLabel" for="averagingType" style="display: none">Averaging Method: </label>
-                        <select id="averagingType" onchange="updateInstrumentNoInstrument()" style="display: none">
+                        <select id="averagingType" style="display: none">
                             <option value="circular" selected>Circular</option>
                         </select>
                     </div>
@@ -82,7 +81,7 @@
                     <!-- NGB 30m SANS -->
                     <div id="ngb30m" style="display: none">
                         <label for="ngb30GuideConfig">Guides: </label>
-                        <select id="ngb30GuideConfig" onchange="updateGuides('ngb30')">
+                        <select id="ngb30GuideConfig">
                             <option selected value="0">0 Guides</option>
                             <option value="1">1 Guide</option>
                             <option value="2">2 Guides</option>
@@ -95,7 +94,7 @@
                             <option value="LENS">LENS</option>
                         </select>
                         <label for="ngb30SourceAperture">Source Aperture: </label>
-                        <select id="ngb30SourceAperture" onchange="SASCALC('ngb30')">
+                        <select id="ngb30SourceAperture">
                             <option value="1.43">1.43 cm</option>
                             <option value="2.54">2.54 cm</option>
                             <option value="3.81">3.81 cm</option>
@@ -111,7 +110,7 @@
                         <h3>Sample Space:</h3>
                         <div id="ng7Sample" class="instrument-section" title="Sample location: Choose chamber for standard setups and Huber for larger equipment">
                             <label for="ng7SampleTable">Sample Table</label>
-                            <select id="ng7SampleTable" onchange="SASCALC('ng7')">
+                            <select id="ng7SampleTable">
                                 <option selected value="Chamber">Chamber</option>
                                 <option value="Huber">Huber</option>
                             </select>
@@ -119,9 +118,9 @@
                         <h3>Neutron Wavelength:</h3>
                         <div id="ng7Wavelength" class="instrument-section">
                             <label for="ng7WavelengthInput">&lambda; (&#8491;): </label>
-                            <input type="number" min="4" max="20" value="6" id="ng7WavelengthInput" onchange="updateWavelengthSpread('ng7')" title="" />
+                            <input type="number" min="4" max="20" value="6" id="ng7WavelengthInput" title="" />
                             <label for="ng7WavelengthSpread">&Delta;&lambda;/&lambda; (%)</label>
-                            <select id="ng7WavelengthSpread" onchange="updateWavelengthSpread('ng7')">
+                            <select id="ng7WavelengthSpread">
                                 <option value="9.0">9.0</option>
                                 <option selected value="11.5">11.5</option>
                                 <option value="13.9">13.9</option>
@@ -139,7 +138,7 @@
                         <h3>Collimation:</h3>
                         <div id="ng7Collimation" class="instrument-section">
                             <label for="ng7GuideConfig">Guides: </label>
-                            <select id="ng7GuideConfig" onchange="updateGuides('ng7', this.value)">
+                            <select id="ng7GuideConfig">
                                 <option selected value="0">0 Guides</option>
                                 <option value="1">1 Guide</option>
                                 <option value="2">2 Guides</option>
@@ -152,14 +151,14 @@
                                 <option value="LENS">LENS</option>
                             </select>
                             <label for="ng7SourceAperture">Source Aperture: </label>
-                            <select id="ng7SourceAperture" onchange="SASCALC('ng7')">
+                            <select id="ng7SourceAperture">
                                 <option value="1.43">1.43 cm</option>
                                 <option value="2.54">2.54 cm</option>
                                 <option value="3.81">3.81 cm</option>
                                 <option disabled hidden value="5.08">5.08 cm</option>
                             </select>
                             <label for="ng7SampleAperture">Sample Aperture: </label>
-                            <select id="ng7SampleAperture" onchange="updateAperture('ng7')">
+                            <select id="ng7SampleAperture">
                                 <option value="0.125">0.125"</option>
                                 <option value="0.25">0.25"</option>
                                 <option value="0.375">0.375"</option>
@@ -178,8 +177,8 @@
                         <h3>Detector Settings:</h3>
                         <div id="ng7Detector " class="slidecontainer instrument-section">
                             <label for="ng7SDDInputBox">Detector Distance (cm):</label>
-                            <input type="number" min="90" max="1530" value="100" id="ng7SDDInputBox" onchange="updateDetector('ng7')" />
-                            <input type="range" min="90" max="1530" value="100" class="slider" list="ng7SDDDefaults" id="ng7SDDSliderBar" onchange="updateDetector('ng7')" />
+                            <input type="number" min="90" max="1530" value="100" id="ng7SDDInputBox" />
+                            <input type="range" min="90" max="1530" value="100" class="slider" list="ng7SDDDefaults" id="ng7SDDSliderBar" />
                             <datalist id="ng7SDDDefaults">
                                 <option value="100" label="100"></option>
                                 <option value="400" label="400"></option>
@@ -187,8 +186,8 @@
                                 <option value="1530" label="1530"></option>
                             </datalist>
                             <label for="ng7OffsetInputBox">Detector Offset (cm):</label>
-                            <input type="number" min="0" max="25" value="0" id="ng7OffsetInputBox" onchange="updateDetector('ng7')" />
-                            <input type="range" min="0" max="25" value="0" class="slider" list="ng7OffsetDefaults" id="ng7OffsetSliderBar" onchange="updateDetector('ng7')" />
+                            <input type="number" min="0" max="25" value="0" id="ng7OffsetInputBox" />
+                            <input type="range" min="0" max="25" value="0" class="slider" list="ng7OffsetDefaults" id="ng7OffsetSliderBar" />
                             <datalist id="ng7OffsetDefaults">
                                 <option value="0" label="0"></option>
                                 <option value="5" label="5"></option>
@@ -220,13 +219,13 @@
                     <!-- NGB 10m SANS -->
                     <div id="ngb10m" style="display: none">
                         <label for="ngb10GuideConfig">Guides: </label>
-                        <select id="ngb10GuideConfig" onchange="updateGuides('ngb10')">
+                        <select id="ngb10GuideConfig">
                             <option selected value="0">0 Guides</option>
                             <option value="1">1 Guide</option>
                             <option value="2">2 Guides</option>
                         </select>
                         <label for="ngb10SourceAperture">Source Aperture: </label>
-                        <select id="ngb10SourceAperture" onchange="SASCALC('ngb10')">
+                        <select id="ngb10SourceAperture">
                             <option value="1.3">1.3 cm</option>
                             <option value="2.5">2.5 cm</option>
                             <option value="3.8">3.8 cm</option>
@@ -242,8 +241,8 @@
                     <!-- Freeze and send to instrument -->
                     <div id="buttons" style="display: none">
                         <hr />
-                        <button type="button" onclick="freezeSASCALC()">Freeze Current Calculation</button>
-                        <button type="button" onclick="clearFrozen()">Clear Frozen</button>
+                        <button type="button" id="freezeButton">Freeze Current Calculation</button>
+                        <button type="button" id="clearFrozenButton">Clear Frozen</button>
                         <input type="text" id="serverName" />
                         <button type="button" id="sendToNICE">Send to running NICE server</button>
                         <hr />

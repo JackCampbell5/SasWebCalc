@@ -1,6 +1,19 @@
 ﻿function loadpage() {
     // Initialize data sets
     initializeData();
+    // Define base event handlers
+    var instrumentNode = document.getElementById('instrumentSelector');
+    instrumentNode.onchange = function () {
+        updateInstrumentNoInstrument();
+    }
+    var modelNode = document.getElementById('model');
+    modelNode.onchange = function () {
+        selectModel(this.value);
+    }
+    var averagingNode = document.getElementById('averagingType');
+    averagingNode.onchange = function () {
+        updateInstrumentNoInstrument();
+    }
     // Reset frozen values and set current config to default values
     window.frozenCalculations = [];
     window.frozenConfigs = {};
@@ -338,7 +351,7 @@ function calculateResolutions(i, instrument) {
     var rZero = SDD * Math.tan(2.0 * Math.asin(lambda * qValue / (4.0 * Math.PI)));
     var delta = 0.5 * Math.pow(beamStopSize - rZero, 2) / varDetector;
 
-    // TODO: Find usable incomplete gamma function in javascript (or php)
+    // FIXME: Find usable incomplete gamma function in javascript (or php)
     var incGamma = smallNumber;
     //if (rZero < beamStopSize) {
     //    var incGamma = Math.exp(Math.log(math.gamma(1.5))) * (1 - gammainc(1.5, delta) / math.gamma(1.5));
@@ -606,28 +619,6 @@ function updateGuides(instrument, guideSelectStr, runSASCALC = true) {
 };
 
 /*
- * Use the updated detector values to calculate the Q ranges for the current instrument
- */
-function updateDetector(instrument, runSASCALC = true) {
-    // Get detector nodes for the specific instrument
-    var detectorSlider = document.getElementById(instrument + "SDDSliderBar");
-    var detectorOutput = document.getElementById(instrument + "SDDInputBox");
-    var offsetSlider = document.getElementById(instrument + "OffsetSliderBar");
-    var offsetOutput = document.getElementById(instrument + "OffsetInputBox");
-    // Set outputs and sliders to the same value
-    detectorOutput.value = detectorSlider.value;
-    offsetOutput.value = offsetSlider.value;
-    // Update the current slider value (each time you drag the slider handle)
-    detectorSlider.oninput = function () { detectorOutput.value = this.value; }
-    detectorOutput.oninput = function () { detectorSlider.value = this.value; }
-    offsetSlider.oninput = function () { offsetOutput.value = this.value; }
-    offsetOutput.oninput = function () { offsetSlider.value = this.value; }
-    if (runSASCALC) {
-        SASCALC(instrument);
-    }
-}
-
-/*
  * Use the updated aperture values to calculate the Q ranges for the current instrument
  */
 function updateAperture(instrument, runSASCALC = true) {
@@ -657,7 +648,7 @@ function updateAperture(instrument, runSASCALC = true) {
 /*
  * Use the updated wavelength spread to determine the allowed wavelength range
  */
-function updateWavelengthSpread(instrument, runSASCALC=true) {
+function updateWavelength(instrument, runSASCALC=true) {
     var wavelength = getWavelength(instrument);
     var wavelengthSpread = getWavelengthSpread(instrument);
     var wavelengthOptions = window[instrument + 'WavelengthRange'][wavelengthSpread];
@@ -671,7 +662,14 @@ function updateWavelengthSpread(instrument, runSASCALC=true) {
 /*
  * Change the instrument you want to calculate Q ranges for
  */
-function updateInstrument(selectStr, runSASCALC=true) {
+function updateInstrumentNoInstrument(runSASCALC = true) {
+    var instrument = document.getElementById('instrumentSelector').value;
+    updateInstrument(instrument, runSASCALC);
+}
+/*
+ * Change the instrument you want to calculate Q ranges for
+ */
+function updateInstrument(instrument, runSASCALC=true) {
     // Get instrument node and create an array of the options available
     var inst = document.getElementById('instrumentSelector');
     var instrumentOptions = [];
@@ -689,15 +687,15 @@ function updateInstrument(selectStr, runSASCALC=true) {
     }
     // Show selected instrument and hide all others
     for (var key in instruments) {
-        if (key === selectStr) {
+        if (key === instrument) {
             instruments[key].style.display = "block";
         } else {
             instruments[key].style.display = "none";
         }
     }
-    if (selectStr != '') {
+    if (instrument != '') {
         var serverNameNode = document.getElementById('serverName');
-        serverNameNode.value = window[selectStr + "Constants"]['serverName'];
+        serverNameNode.value = window[instrument + "Constants"]['serverName'];
         var buttons = document.getElementById('buttons');
         buttons.style.display = "inline-block";
         var model = document.getElementById("model");
@@ -711,35 +709,69 @@ function updateInstrument(selectStr, runSASCALC=true) {
         averagingType.style.display = "inline-block";
         var averagingTypeLabel = document.getElementById("averagingTypeLabel");
         averagingTypeLabel.style.display = "inline-block";
-        // Initialize routine when button is displayed:
-        var router_spec = "NiceGlacier2/router:ws -p <port> -h <host>";
-        var send_button = document.getElementById('sendToNICE');
-        send_button.onclick = async function () {
-            var nice_connection = new NiceConnection();
-            var configs = sascalcToMoveValue();
-            let hostname = document.getElementById("serverName").value;
-            let username = "user";
-            let password = "";
-            let port = "9999";
-            let ice_protocol_version = "1.1";
-            await nice_connection.signin(router_spec.replace(/<host>/, hostname).replace(/<port>/, port), ice_protocol_version, false, username, password);
-            let api = nice_connection.api;
-            let existing_map = await api.readValue("configuration.map");
-            for (config in configs) {
-                if (existing_map.val.has(config)) {
-                    if (!confirm("configuration named " + config + " exists; Overwrite?")) {
-                        return false
-                    }
+        setEventHandlers(instrument);
+        // Run SASCALC
+        if (runSASCALC) {
+            SASCALC(instrument);
+        }
+    }
+}
+/*
+ * Set the event handlers for the current active instrument
+ */
+function setEventHandlers(instrument) {
+    // Initialize oninput and onchange events for the given instrument
+    var sampleTableNode = document.getElementById(instrument + 'SampleTable');
+    sampleTableNode.onchange = function () { SASCALC(instrument); }
+    var wavelengthNode = document.getElementById(instrument + 'WavelengthInput');
+    wavelengthNode.onchange = function () { updateWavelength(instrument); }
+    var wavelengthSpreadNode = document.getElementById(instrument + 'WavelengthSpread');
+    wavelengthSpreadNode.onchange = function () { updateWavelength(instrument); }
+    var guideConfigNode = document.getElementById(instrument + 'GuideConfig');
+    guideConfigNode.onchange = function () { updateGuides(instrument, this.value); }
+    var apertureSourceNode = document.getElementById(instrument + 'SourceAperture');
+    apertureSourceNode.onchange = function () { SASCALC(instrument); }
+    var apertureSampleNode = document.getElementById(instrument + 'SampleAperture');
+    apertureSampleNode.onchange = function () { updateAperture(instrument); }
+    var apertureSampleCustomNode = document.getElementById(instrument + 'CustomAperture');
+    apertureSampleCustomNode.onchange = function () { updateAperture(instrument); }
+    var detectorSlider = document.getElementById(instrument + "SDDSliderBar");
+    detectorSlider.onchange = function () { detectorOutput.value = this.value; SASCALC(instrument); }
+    var detectorOutput = document.getElementById(instrument + "SDDInputBox");
+    detectorOutput.oninput = function () { detectorSlider.value = this.value; SASCALC(instrument); }
+    var offsetSlider = document.getElementById(instrument + "OffsetSliderBar");
+    offsetSlider.onchange = function () { offsetOutput.value = this.value; SASCALC(instrument); }
+    var offsetOutput = document.getElementById(instrument + "OffsetInputBox");
+    offsetOutput.oninput = function () { offsetSlider.value = this.value; SASCALC(instrument); }
+    // Initialize onclick events for freezing and clearing calculations
+    var freezeButton = document.getElementById("freezeButton");
+    freezeButton.onclick = function () { freezeSASCALC(); }
+    var clearFrozenButton = document.getElementById("clearFrozenButton");
+    clearFrozenButton.onclick = function () { clearFrozen(); }
+
+    // Initialize routine when button is displayed:
+    var router_spec = "NiceGlacier2/router:ws -p <port> -h <host>";
+    var send_button = document.getElementById('sendToNICE');
+    send_button.onclick = async function () {
+        var nice_connection = new NiceConnection();
+        var configs = sascalcToMoveValue();
+        let hostname = document.getElementById("serverName").value;
+        let username = "user";
+        let password = "";
+        let port = "9999";
+        let ice_protocol_version = "1.1";
+        await nice_connection.signin(router_spec.replace(/<host>/, hostname).replace(/<port>/, port), ice_protocol_version, false, username, password);
+        let api = nice_connection.api;
+        let existing_map = await api.readValue("configuration.map");
+        for (config in configs) {
+            if (existing_map.val.has(config)) {
+                if (!confirm("configuration named " + config + " exists; Overwrite?")) {
+                    return false
                 }
             }
-            api.move(["configuration.mapPut", stringifyConfigMap(configs)], false)
-            //console.log(vcalcToMoveValue(app));
-            nice_connection.disconnect();
         }
-
-        if (runSASCALC) {
-            SASCALC(selectStr);
-        }
+        api.move(["configuration.mapPut", stringifyConfigMap(configs)], false)
+        nice_connection.disconnect();
     }
 }
 
