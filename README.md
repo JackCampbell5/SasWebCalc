@@ -14,8 +14,7 @@ Current features:
 Known issues:
 
 - NG7 is the only instrument currently available
-- No incomplete gamma function available in javascript, so resolution calculations are not correct
-- Model parameters are reset on page refresh
+- No incomplete gamma function available in javascript, so resolution calculations are not correct=
 
 Anticipated features:
 

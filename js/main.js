@@ -247,45 +247,6 @@ function calculateMinimumQ(instrument) {
 }
 
 /*
- * Calculate the model function used to represent the data
- */
-function calculateModel() {
-    var model = document.getElementById("model").value;
-    // TODO: Get parameters from window
-    defaultParams = Object.keys(window.modelList[model]['params']);
-    params = [];
-    for (var i = 0; i < defaultParams.length; i++) {
-        var paramName = model + "_" + defaultParams[i];
-        params[i] = parseFloat(document.getElementById(paramName).value);
-    }
-    // 1D calculation
-    for (var i = 0; i < window.qValues.length; i++) {
-        params.push(window.qValues[i]);
-        window.aveIntensity[i] = window.fSubs[i] * window[model.toLowerCase()](params);
-        params.pop();
-    }
-    // 2D calculation
-    var q = q_closest = qx = qy = index = 0;
-    for (var j = 0; j < window.qxValues.length; j++) {
-        qx = window.qxValues[j];
-        var data_k = new Array(1).fill(0);
-        for (var k = 0; k < window.qyValues.length; k++) {
-            qy = window.qyValues[k];
-            q = Math.sqrt(qx * qx + qy * qy);
-            q_closest = window.qValues.reduce(function (prev, curr) {
-                return (Math.abs(curr - q) < Math.abs(prev - q) ? curr : prev);
-            });
-            index = window.qValues.indexOf(q_closest);
-            params.push(q);
-            data_k[k] = window.fSubs[index] * window[model.toLowerCase()](params);
-            params.pop();
-        }
-        window.intensity2D[j] = data_k;
-    }
-    window.intensity2D = window.intensity2D[0].map((col, i) => window.intensity2D.map(row => row[i]));
-}
-
-/*
  * Calculate the number of q points, and sum the intensities, dsq, and number of cells.
  */
 function calculateIntensityValues(iRadius, dataPixel, numDSquared) {
@@ -891,6 +852,8 @@ function freezeSASCALC() {
     var configName = generateConfigName(window.currentConfig);
     window.frozenConfigs[configName] = Object.assign({}, window.currentConfig);
     update1DChart();
+    var instrument = document.getElementById('instrumentSelector').value;
+    storePersistantState(instrument);
 }
 
 /*
@@ -900,4 +863,6 @@ function clearFrozen() {
     window.frozenCalculations = [];
     window.frozenConfigs = {};
     update1DChart();
+    var instrument = document.getElementById('instrumentSelector').value;
+    storePersistantState(instrument);
 }

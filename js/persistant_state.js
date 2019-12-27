@@ -20,6 +20,12 @@ function restorePersistantState() {
         var averageTypeNode = document.getElementById('averagingType');
         modelNode.value = model;
         selectModel(model, false);
+        modelParams = Object.keys(window.modelList[modelNode.value]['params']);
+        for (var i = 0; i < modelParams.length; i++) {
+            var paramName = model + "_" + modelParams[i];
+            var paramNode = document.getElementById(paramName);
+            paramNode.value = sessionStorage.getItem(paramName);
+        }
         averageTypeNode.value = averageType;
         var sampleSpace = sessionStorage.getItem(instrument + 'SampleTable');
         var sampleSpaceNode = document.getElementById(instrument + 'SampleTable');
@@ -56,9 +62,9 @@ function restorePersistantState() {
         offsetNode.value = detectorOffset;
         offsetSliderNode.value = detectorOffset;
         // Restore frozen datasets
-        window.frozenCalculations = sessionStorage.getItem(instrument + 'FrozenDataSets');
-        window.frozenConfigs = sessionStorage.getItem(instrument + 'FrozenConfigs');
-        window.currentConfig = sessionStorage.getItem(instrument + 'CurrentConfig');
+        window.frozenCalculations = JSON.parse(sessionStorage.getItem(instrument + 'FrozenDataSets'));
+        window.frozenConfigs = JSON.parse(sessionStorage.getItem(instrument + 'FrozenConfigs'));
+        window.currentConfig = JSON.parse(sessionStorage.getItem(instrument + 'CurrentConfig'));
         if (window.frozenCalculations == "") {
             window.frozenCalculations = [];
         }
@@ -87,14 +93,20 @@ function restoreVSANSpersistantState() {
 function storePersistantState(instrument) {
     // Store instrument and sample space
     sessionStorage.setItem('instrument', instrument);
-    var sampleSpaceNode = document.getElementById(instrument + 'SampleTable');
-    var sampleSelectStr = sampleSpaceNode.options[sampleSpaceNode.selectedIndex].value;
+    var sampleSelectStr = document.getElementById(instrument + 'SampleTable').value;
     sessionStorage.setItem(instrument + 'SampleTable', sampleSelectStr);
     // Store model, model parameters, and averaging method and parameters
     var modelNode = document.getElementById('model');
     var averageTypeNode = document.getElementById('averagingType');
     sessionStorage.setItem('model', modelNode.value);
     sessionStorage.setItem('averageType', averageTypeNode.value);
+    defaultParams = Object.keys(window.modelList[modelNode.value]['params']);
+    for (var i = 0; i < defaultParams.length; i++) {
+        var paramName = modelNode.value + "_" + defaultParams[i];
+        var paramNode = document.getElementById(paramName);
+        var paramValue = paramNode.value;
+        sessionStorage.setItem(paramName, paramValue);
+    }
     // Store wavelength values
     var wavelength = document.getElementById(instrument + 'WavelengthInput');
     var wavelengthSpread = document.getElementById(instrument + 'WavelengthSpread');
@@ -114,7 +126,7 @@ function storePersistantState(instrument) {
     sessionStorage.setItem(instrument + 'SDDInputBox', detectorOutput.value);
     sessionStorage.setItem(instrument + 'OffsetInputBox', offsetOutput.value);
     // Store frozen datasets
-    sessionStorage.setItem(instrument + 'FrozenDataSets', window.frozenCalculations);
-    sessionStorage.setItem(instrument + 'FrozenConfigs', window.frozenConfigs);
-    sessionStorage.setItem(instrument + 'CurrentConfig', window.currentConfig);
+    sessionStorage.setItem(instrument + 'FrozenDataSets', JSON.stringify(window.frozenCalculations));
+    sessionStorage.setItem(instrument + 'FrozenConfigs', JSON.stringify(window.frozenConfigs));
+    sessionStorage.setItem(instrument + 'CurrentConfig', JSON.stringify(window.currentConfig));
 }
