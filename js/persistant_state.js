@@ -2,12 +2,15 @@
  * Restore the persistant state on refresh
  */
 function restorePersistantState() {
+    var runSasCalc = true;
     var instrument = sessionStorage.getItem('instrument');
-    if (instrument === "") {
+    if (instrument == "" || instrument == null) {
         updateInstrument(instrument);
+        runSasCalc = false;
     }
     else if (instrument === "vsans") {
         restoreVSANSpersistantState();
+        runSasCalc = false;
     } else {
         // Load instrument and sample space
         var instSelector = document.getElementById('instrumentSelector');
@@ -80,7 +83,9 @@ function restorePersistantState() {
         }
     }
     // Run SASCALC at the end
-    SASCALC(instrument);
+    if (runSasCalc) {
+        SASCALC(instrument);
+    }
 }
 
 /*

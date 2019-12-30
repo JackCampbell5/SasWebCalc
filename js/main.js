@@ -690,7 +690,7 @@ function updateInstrument(instrument, runSASCALC=true) {
             instruments[key].style.display = "none";
         }
     }
-    if (instrument != '') {
+    if (instrument != '' && instrument != null) {
         var serverNameNode = document.getElementById('serverName');
         serverNameNode.value = window[instrument + "Constants"]['serverName'];
         var buttons = document.getElementById('buttons');
@@ -747,29 +747,8 @@ function setEventHandlers(instrument) {
     clearFrozenButton.onclick = function () { clearFrozen(); }
 
     // Initialize routine when button is displayed:
-    var router_spec = "NiceGlacier2/router:ws -p <port> -h <host>";
     var send_button = document.getElementById('sendToNICE');
-    send_button.onclick = async function () {
-        var nice_connection = new NiceConnection();
-        var configs = sascalcToMoveValue();
-        let hostname = document.getElementById("serverName").value;
-        let username = "user";
-        let password = "";
-        let port = "9999";
-        let ice_protocol_version = "1.1";
-        await nice_connection.signin(router_spec.replace(/<host>/, hostname).replace(/<port>/, port), ice_protocol_version, false, username, password);
-        let api = nice_connection.api;
-        let existing_map = await api.readValue("configuration.map");
-        for (config in configs) {
-            if (existing_map.val.has(config)) {
-                if (!confirm("configuration named " + config + " exists; Overwrite?")) {
-                    return false
-                }
-            }
-        }
-        api.move(["configuration.mapPut", stringifyConfigMap(configs)], false)
-        nice_connection.disconnect();
-    }
+    send_button.onclick = async function () { connectToNice(sendConfigsToNice); }
 }
 
 /*
