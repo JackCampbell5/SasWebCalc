@@ -415,10 +415,10 @@ function calculateBeamFlux(instrument) {
     var trans6 = 1 - lambda * (b - (numGuides / 8) * (b - c));
     var totalTrans = trans1 * trans2 * trans3 * trans4 * trans5 * trans6;
 
-    var area = Math.PI / (4 * sampleAperture * sampleAperture);
+    var area = Math.PI * sampleAperture * sampleAperture / 4;
     var d2_phi = peakFlux / (2 * Math.PI);
     d2_phi *= Math.exp(4 * Math.log(peakLambda / lambda));
-    d2_phi *= Math.exp(-1 * (peakLambda * peakLambda / (lambda * lambda)));
+    d2_phi *= Math.exp(-1 * (Math.pow(peakLambda  / lambda, 2)));
     var solid_angle = (Math.PI / 4) * (sourceAperture / SSD) * (sourceAperture / SSD);
     var beamFlux = Math.round(area * d2_phi * lambdaWidth * solid_angle * totalTrans);
 
@@ -444,7 +444,7 @@ function calculateAttenuationFactor(instrument) {
     var attenFactorNode = document.getElementById(instrument + "AttenuationFactor");
     var a2 = getSampleApertureSize(instrument);
     var beamDiam = calculateBeamDiameter(instrument);
-    var aPixel = parseFloat(window[instrument + "Constants"]["aPixel"]);
+    var aPixel = parseFloat(window[instrument + "Constants"]["aPixel"]) / 10;
     var iPixelMax = parseFloat(window[instrument + "Constants"]["iPixel"]);
     var num_pixels = (Math.PI / 4) * (0.5 * (a2 + beamDiam)) * (0.5 * (a2 + beamDiam)) / (aPixel * aPixel);
     var iPixel = calculateBeamFlux(instrument) / num_pixels;
@@ -525,9 +525,9 @@ function calculateBeamDiameter(instrument, direction = 'maximum') {
     // Beam width
     var bw = d1 + d2;
     // Beam height due to gravity
-    var bv = parseFloat(bw + 1.25e-8 * (l1 + l2) * l2 * lambda * lambda * lambdaDelta);
+    var bv = bw + 1.25e-8 * (l1 + l2) * l2 * lambda * lambda * lambdaDelta;
     // Larger of the width*safetyFactor and height
-    var bm_bs = parseFloat(bsFactor * bw);
+    var bm_bs = bsFactor * bw;
     let bm = (bm_bs > bv) ? bm_bs : bv;
     switch (direction) {
         case 'vertical':
