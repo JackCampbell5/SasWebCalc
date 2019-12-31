@@ -11,14 +11,16 @@ async function connectToNice(callback) {
     let ice_protocol_version = "1.1";
     await nice_connection.signin(router_spec.replace(/<host>/, hostname).replace(/<port>/, port), ice_protocol_version, false, username, password);
     let api = nice_connection.api;
-    callback(api);
+    // Run the callback function and capture any return(s)
+    var returnValue = await callback(nice, api);
     nice_connection.disconnect();
+    return returnValue;
 }
 
 /*
- * Using the NICE api, sends a set of configurations to the instrument
+ * Using the NICE api, send a set of configurations to the instrument
  */
-async function sendConfigsToNice(api) {
+async function sendConfigsToNice(nice, api) {
     var configs = sascalcToMoveValue();
     let existing_map = await api.readValue("configuration.map");
     for (config in configs) {
@@ -28,7 +30,16 @@ async function sendConfigsToNice(api) {
             }
         }
     }
-    api.move(["configuration.mapPut", stringifyConfigMap(configs)], false);
+    await api.move(["configuration.mapPut", stringifyConfigMap(configs)], false);
+}
+
+/*
+ * Using the NICE api, read the available wavelength spread values
+ */
+async function getWavelengthSpreads(nice, api) {
+    // TODO: Get the static/hidden nodes in some way. Might need an API change
+    var allDevices = await api.getAllDevices();
+    return allDevices;
 }
 
 /*
@@ -54,6 +65,7 @@ function generateConfigName(config) {
     var SDD = parseFloat(config["geometry.sampleToAreaDetector"]) / 100;
     configName = SDD + "m";
     window.configNames.push(SDD);
+    // TODO: Check if the name already exists and update as needed
     return configName;
 }
 /*
