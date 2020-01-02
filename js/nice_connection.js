@@ -1,28 +1,36 @@
 ﻿/*
  * General NICE connection scheme using a callback function
  */
-async function connectToNice(callback) {
+async function connectToNice(callback = null, persistConnection = false) {
     var router_spec = "NiceGlacier2/router:ws -p <port> -h <host>";
-    var nice_connection = new NiceConnection();
+    try {
+        var nice_connection = new NiceConnection();
+    } catch (error) {
+        console.error(error);
+        return null;
+    }
     let hostname = document.getElementById("serverName").value;
     let username = "user";
     let password = "";
     let port = "9999";
     let ice_protocol_version = "1.1";
     await nice_connection.signin(router_spec.replace(/<host>/, hostname).replace(/<port>/, port), ice_protocol_version, false, username, password);
-    let api = nice_connection.api;
     // Run the callback function and capture any return(s)
-    var returnValue = await callback(nice, api);
-    nice_connection.disconnect();
+    if (callback != null) {
+        var returnValue = await callback(nice_connection);
+    }
+    if (!persistConnection) {
+        nice_connection.disconnect();
+    }
     return returnValue;
 }
 
 /*
  * Using the NICE api, send a set of configurations to the instrument
  */
-async function sendConfigsToNice(nice, api) {
+async function sendConfigsToNice(nice) {
     var configs = sascalcToMoveValue();
-    let existing_map = await api.readValue("configuration.map");
+    let existing_map = await nice.api.readValue("configuration.map");
     for (config in configs) {
         if (existing_map.val.has(config)) {
             if (!confirm("configuration named " + config + " exists; Overwrite?")) {
@@ -30,16 +38,19 @@ async function sendConfigsToNice(nice, api) {
             }
         }
     }
-    await api.move(["configuration.mapPut", stringifyConfigMap(configs)], false);
+    await nice.api.move(["configuration.mapPut", stringifyConfigMap(configs)], false);
 }
 
 /*
  * Using the NICE api, read the available wavelength spread values
  */
-async function getWavelengthSpreads(nice, api) {
-    // TODO: Get the static/hidden nodes in some way. Might need an API change
-    var allDevices = await api.getAllDevices();
-    return allDevices;
+async function getWavelengthSpreads(nice) {
+    var devicesMonitor = new DevicesMonitorI();
+    await Promise.all([
+        nice.subscribe(devicesMonitor, 'devices'),
+        devicesMonitor.subscribed,
+    ]);
+    return devicesMonitor.staticNodeMap['wavelengthSpread.wavelengthSpread']['permittedValues'];
 }
 
 /*
@@ -86,4 +97,94 @@ function stringifyConfigMap(configs) {
     sendString = sendString.slice(0, -2);
     sendString += "}";
     return sendString;
+}
+
+/*
+ * Class for monitoring devices on NICE
+ * Source: http://nicedata.ncnr.nist.gov/niceweb/nicejs/devicetree_vue.html
+ */
+var DevicesMonitorI = class extends nice.api.devices.DevicesMonitor {
+    constructor() {
+        super();
+        this.promise = Promise.resolve();
+        var _resolve, _reject;
+        this.subscribed = new Promise(function (resolve, reject) {
+            _resolve = resolve;
+            _reject = reject;
+        })
+        this.postSubscribeHooks = [function () { _resolve() }];
+        this.postAddedHooks = [];
+        this.postRemovedHooks = [];
+        //WorkerQueue.createQueue('dataRecord', this._queueProcessor.handle_record);
+    }
+    onSubscribe(devices, nodes, staticNodeMap, groups, __current) {
+        var devices = this.MapToObject(devices);
+        var nodes = this.MapToObject(nodes);
+        var groups = this.MapToObject(groups);
+        var staticNodeMap = this.MapToObject(staticNodeMap);
+        this.devices = devices;
+        this.nodes = nodes;
+        this.groups = groups;
+        this.staticNodeMap = staticNodeMap;
+        this.dynamic_devices = {};
+        this.postChangedHooks = (this.postChangedHooks == null) ? [] : this.postChangedHooks;
+        if (this.postSubscribeHooks) {
+            this.postSubscribeHooks.forEach(function (callback) { callback(devices, nodes, staticNodeMap, groups); });
+        }
+    }
+    changed(nodes, __current) {
+        var changed = this.MapToObject(nodes);
+        jQuery.extend(this.nodes, changed);
+        this._lastChanged = changed;
+        if (this.postChangedHooks) {
+            this.postChangedHooks.forEach(function (callback) { callback(changed); });
+        }
+    }
+    removed(devices, nodes, __current) {
+        var devices = this.MapToObject(devices);
+        var nodes = this.MapToObject(nodes);
+        this._lastDevicesRemoved = devices;
+        this._lastNodesRemoved = nodes;
+        for (var d in devices) {
+            delete this.devices[d];
+        }
+        for (var n in nodes) {
+            delete this.nodes[n];
+        }
+        if (this.postRemovedHooks) {
+            this.postRemovedHooks.forEach(function (callback) { callback(devices, nodes); });
+        }
+    }
+    added(devices, nodes, staticNodeMap, __current) {
+        var devices = this.MapToObject(devices);
+        var nodes = this.MapToObject(nodes);
+        jQuery.extend(true, this.devices, devices);
+        jQuery.extend(true, this.nodes, nodes);
+        //jQuery.extend(true, this.staticNodeMap, this.MapToObject(staticNodeMap));
+        this._lastDevicesAdded = devices;
+        this._lastNodesAdded = nodes;
+        if (this.postAddedHooks) {
+            this.postAddedHooks.forEach(function (callback) { callback(devices, nodes); });
+        }
+    }
+    dynamicDevicesAdded(addRemoveID, childDeviceIDs, __current) {
+        this.groups[addRemoveID] = childDeviceIDs;
+    }
+    dynamicDevicesRemoved(addRemoveID, __current) {
+        console.log(addRemoveID);
+        delete this.dynamic_devices[addRemoveID];
+        delete this.groups[addRemoveID];
+    }
+    getAllDeviceNames() {
+        var devices = [];
+        this.devices.forEach(function (d) { devices.push(d); });
+        return devices;
+    }
+    MapToObject(m) {
+        var obj = {};
+        m.forEach(function (value, key, map) {
+            obj[key] = value;
+        });
+        return obj
+    }
 }

@@ -716,13 +716,27 @@ function updateInstrument(instrument, runSASCALC=true) {
 /*
  * Set the event handlers for the current active instrument
  */
-function setEventHandlers(instrument) {
+async function setEventHandlers(instrument) {
     // Initialize oninput and onchange events for the given instrument
     var sampleTableNode = document.getElementById(instrument + 'SampleTable');
     sampleTableNode.onchange = function () { SASCALC(instrument); }
     var wavelengthNode = document.getElementById(instrument + 'WavelengthInput');
     wavelengthNode.onchange = function () { updateWavelength(instrument); }
     var wavelengthSpreadNode = document.getElementById(instrument + 'WavelengthSpread');
+    var wavelengthSpreads = await connectToNice(getWavelengthSpreads);
+    if (wavelengthSpreads != null && typeof wavelengthSpreads[Symbol.iterator] === 'function') {
+        while (wavelengthSpreadNode.lastChild) {
+            wavelengthSpreadNode.removeChild(wavelengthSpreadNode.lastChild);
+        }
+        for (var wavelengthSpread in wavelengthSpreads) {
+            spread = wavelengthSpreads[wavelengthSpread];
+            var option = document.createElement("OPTION");
+            var val = Math.round(1000 * parseFloat(spread.val)) / 10;
+            option.value = val;
+            option.appendChild(document.createTextNode(val));
+            wavelengthSpreadNode.appendChild(option);
+        }
+    }
     wavelengthSpreadNode.onchange = function () { updateWavelength(instrument); }
     var guideConfigNode = document.getElementById(instrument + 'GuideConfig');
     guideConfigNode.onchange = function () { updateGuides(instrument, this.value); }
