@@ -42,15 +42,27 @@ async function sendConfigsToNice(nice) {
 }
 
 /*
- * Using the NICE api, read the available wavelength spread values
+ * Using the NICE api, read the available static nodes
  */
-async function getWavelengthSpreads(nice) {
+async function getStaticNodeMap(nice) {
     var devicesMonitor = new DevicesMonitorI();
     await Promise.all([
         nice.subscribe(devicesMonitor, 'devices'),
         devicesMonitor.subscribed,
     ]);
-    return devicesMonitor.staticNodeMap['wavelengthSpread.wavelengthSpread']['permittedValues'];
+    return devicesMonitor.staticNodeMap;
+}
+
+/*
+ * Using the NICE api, read the available devices present on the system
+ */
+async function getDevicesMap(nice) {
+    var devicesMonitor = new DevicesMonitorI();
+    await Promise.all([
+        nice.subscribe(devicesMonitor, 'devices'),
+        devicesMonitor.subscribed,
+    ]);
+    return devicesMonitor.devices;
 }
 
 /*

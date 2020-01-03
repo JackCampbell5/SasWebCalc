@@ -83,7 +83,7 @@ window.ng7Constants = {
     'serverName': 'ng7sans.ncnr.nist.gov'
 };
 window.ng7WavelengthRange = {
-    "9.0": ['6.5', '20.0'],
+    "9.7": ['6.5', '20.0'],
     "11.5": ['5.5', '20.0'],
     "13.9": ['4.8', '20.0'],
     "22.1": ['4.0', '20.0']

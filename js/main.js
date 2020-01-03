@@ -706,6 +706,11 @@ function updateInstrument(instrument, runSASCALC=true) {
         averagingType.style.display = "inline-block";
         var averagingTypeLabel = document.getElementById("averagingTypeLabel");
         averagingTypeLabel.style.display = "inline-block";
+        try {
+            populatePageDynamically(instrument);
+        } catch (error) {
+            console.info("Unable to connect to the instrument. Using standard values and limits.")
+        }
         setEventHandlers(instrument);
         // Run SASCALC
         if (runSASCALC) {
@@ -716,27 +721,13 @@ function updateInstrument(instrument, runSASCALC=true) {
 /*
  * Set the event handlers for the current active instrument
  */
-async function setEventHandlers(instrument) {
+function setEventHandlers(instrument) {
     // Initialize oninput and onchange events for the given instrument
     var sampleTableNode = document.getElementById(instrument + 'SampleTable');
     sampleTableNode.onchange = function () { SASCALC(instrument); }
     var wavelengthNode = document.getElementById(instrument + 'WavelengthInput');
     wavelengthNode.onchange = function () { updateWavelength(instrument); }
     var wavelengthSpreadNode = document.getElementById(instrument + 'WavelengthSpread');
-    var wavelengthSpreads = await connectToNice(getWavelengthSpreads);
-    if (wavelengthSpreads != null && typeof wavelengthSpreads[Symbol.iterator] === 'function') {
-        while (wavelengthSpreadNode.lastChild) {
-            wavelengthSpreadNode.removeChild(wavelengthSpreadNode.lastChild);
-        }
-        for (var wavelengthSpread in wavelengthSpreads) {
-            spread = wavelengthSpreads[wavelengthSpread];
-            var option = document.createElement("OPTION");
-            var val = Math.round(1000 * parseFloat(spread.val)) / 10;
-            option.value = val;
-            option.appendChild(document.createTextNode(val));
-            wavelengthSpreadNode.appendChild(option);
-        }
-    }
     wavelengthSpreadNode.onchange = function () { updateWavelength(instrument); }
     var guideConfigNode = document.getElementById(instrument + 'GuideConfig');
     guideConfigNode.onchange = function () { updateGuides(instrument, this.value); }
@@ -764,9 +755,35 @@ async function setEventHandlers(instrument) {
     var send_button = document.getElementById('sendToNICE');
     send_button.onclick = async function () { connectToNice(sendConfigsToNice); }
 }
+/*
+ * Attempt to populate the page using values taken directly from the instrument
+ * Any failed connections will cause the page to use the default values for all inputs
+ */
+async function populatePageDynamically(instrument) {
+    var staticNodeMap = await connectToNice(getStaticNodeMap);
+    var deviceMap = await connectToNice(getDevicesMap);
+    // Available wavelength spreads
+    var wavelengthSpreads = staticNodeMap['wavelengthSpread.wavelengthSpread']['permittedValues'];
+    var wavelengthSpreadNode = document.getElementById(instrument + 'WavelengthSpread');
+    if (wavelengthSpreads != null && typeof wavelengthSpreads[Symbol.iterator] === 'function') {
+        while (wavelengthSpreadNode.lastChild) {
+            wavelengthSpreadNode.removeChild(wavelengthSpreadNode.lastChild);
+        }
+        for (var wavelengthSpread in wavelengthSpreads) {
+            var spread = wavelengthSpreads[wavelengthSpread];
+            var option = document.createElement("OPTION");
+            var val = Math.round(1000 * parseFloat(spread.val)) / 10;
+            option.value = val;
+            option.appendChild(document.createTextNode(val));
+            wavelengthSpreadNode.appendChild(option);
+        }
+    }
+    var sourceApertures = staticNodeMap['guide.sourceAperture']['permittedValues'];
+    var sourceAperturesGuide1 = staticNodeMap['guide01.key']['permittedValues'];
+}
 
 /*
- * Update the instrument with no instrument name passed
+ * Update the page when a new model is selected
  */
 function selectModel(model, runSASCALC = true) {
     var modelParams = document.getElementById("modelParams");
