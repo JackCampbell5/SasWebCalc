@@ -87,6 +87,7 @@ function update2DChart() {
         y: window.qyValues,
         z: window.intensity2D,
         type: 'heatmap',
+        colorscale: 'Portland'
     };
     var layout = {
         title: "SASCALC 2D Plot",
