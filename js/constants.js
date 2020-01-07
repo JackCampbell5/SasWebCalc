@@ -20,6 +20,15 @@ window.units = {
     "beamCenter": "cm",
 }
 
+// Inputs for averaging types
+window.averagingInputs = {
+    "circular": [],
+    "sector": ["phi", "dPhi", "detectorSections"],
+    "annular": ["qCenter", "qWidth", "detectorSections"],
+    "rectangular": ["phi", "qWidth", "detectorSections"],
+    "elliptical": ["phi", "aspectRatio"]
+}
+
 // NGB 30m SANS
 window.ngb30SourceApertures = {
     '0': ['1.43', '2.54', '3.81'],

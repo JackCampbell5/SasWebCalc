@@ -74,9 +74,33 @@
                         <label id="averagingTypeLabel" for="averagingType" style="display: none">Averaging Method: </label>
                         <select id="averagingType" style="display: none">
                             <option value="circular" selected>Circular</option>
+                            <option value="sector">Sector</option>
+                            <option value="annular">Annular</option>
+                            <option value="rectangular">Rectangular</option>
+                            <option value="elliptical">Elliptical</option>
                         </select>
                     </div>
+                    <h3 id="averagingAndModelHeading" style="display: none">Averaging and Model Parameters:</h3>
+                    <div class="instrument-section" id="averagingParams">
+                        <label for="phi" style="display: none">Orientation Angle (degrees): </label>
+                        <input type="number" min="4" max="20" value="0" id="phi" title="" style="display: none" />
+                        <label for="dPhi" style="display: none">Azimuthal Range (degrees): </label>
+                        <input type="number" min="4" max="20" value="0" id="dPhi" title="" style="display: none" />
+                        <label for="detectorSections" style="display: none">Detector Sections: </label>
+                        <select id="detectorSections" style="display: none">
+                            <option value="both" selected>Entire Detector</option>
+                            <option value="bottom" selected>Bottom Only</option>
+                            <option value="top" selected>Top Only</option>
+                        </select>
+                        <label for="qCenter" style="display: none">Q Center of Annulus (&#8491;<sup>-1</sup>): </label>
+                        <input type="number" min="4" max="20" value="0" id="qCenter" title="" style="display: none" />
+                        <label for="qWidth" style="display: none">Q Width of Annulus (&#8491;<sup>-1</sup>): </label>
+                        <input type="number" min="4" max="20" value="0" id="qWidth" title="" style="display: none" />
+                        <label for="aspectRatio" style="display: none">Ellipse Aspect Ratio: </label>
+                        <input type="number" min="4" max="20" value="0" id="aspectRatio" title="" style="display: none" />
+                    </div>
                     <div class="instrument-section" id="modelParams" style="display: none"></div>
+
 
                     <!-- NGB 30m SANS -->
                     <div id="ngb30m" style="display: none">

@@ -12,7 +12,7 @@
     }
     var averagingNode = document.getElementById('averagingType');
     averagingNode.onchange = function () {
-        updateInstrumentNoInstrument();
+        selectAveragingMethod(this.value);
     }
     // Reset frozen values and set current config to default values
     window.frozenCalculations = [];
@@ -96,6 +96,13 @@ function calculateQRange(instrument, averageType="Circular") {
     var numDimensions = center = largeNumber = 1;
     var i = j = k = l = nq = theta = thetaX = thetaY = radius = radX = radY = 0;
     var lambda = getWavelength(instrument);
+    var includePixel = true;
+    var averagingParams = getAveragingParams();
+    var phiRadians = (Math.PI / 180) * averagingParams[0];
+    var dPhiRadians = (Math.PI / 180) * averagingParams[1];
+    var detectorHalves = averagingParams[2];
+    var phiX = Math.cos(phiRadians);
+    var phiY = Math.sin(phiRadians);
 
     // Detector values pixel size in mm
     var detectorDistance = parseFloat(document.getElementById(instrument + "SDDInputBox").value) * 10;
@@ -137,12 +144,25 @@ function calculateQRange(instrument, averageType="Circular") {
                         switch (averageType) {
                             case "Circular":
                             default:
-                                var iRadius = Math.floor(Math.sqrt(correctedDx * correctedDx + correctedDy * correctedDy) / pixelSize) + 1;
+                                includePixel = true;
+                                break;
+                            case "Sector":
+                                var azimuthalAngle = calculateAzimuthalAngle(correctedDx, correctedDy, phiX, phiY);
+                                var forward = (azimuthalAngle < dPhiRadians);
+                                var mirror = (Math.PI - azimuthalAngle < dPhiRadians);
+                                if ((detectorHalves == "both" && (mirror || forward)) || (detectorHalves = "right" && forward) || (detectorHalves == "left" && mirror)) {
+                                    includePixel = true;
+                                } else {
+                                    includePixel = false;
+                                }
                                 break;
                             // TODO: Add in other averaging types
                         }
-                        nq = (iRadius > nq) ? iRadius : nq;
-                        calculateIntensityValues(iRadius, dataPixel, numDSquared);
+                        if (includePixel) {
+                            var iRadius = Math.floor(Math.sqrt(correctedDx * correctedDx + correctedDy * correctedDy) / pixelSize) + 1;
+                            nq = (iRadius > nq) ? iRadius : nq;
+                            calculateIntensityValues(iRadius, dataPixel, numDSquared);
+                        }
                     }
                 }
             }
@@ -275,6 +295,16 @@ function calculateXBeamCenter(instrument) {
  */
 function calculateDistanceFromBeamCenter(pixelValue, pixelCenter, pixelSize, coeff) {
     return coeff * Math.tan((pixelValue - pixelCenter) * pixelSize / coeff);
+}
+
+/*
+ * Calculate the azimuthal angle of pixel from center of detector
+ */
+function calculateAzimuthalAngle(dxx, dyy, phi_x, phi_y) {
+    var radius = sqrt(dxx ^ 2 + dyy ^ 2);
+    var dot_prod = (dxx * phi_x + dyy * phi_y) / radius;
+    var angle = Math.acos(dot_prod);
+    return angle;
 }
 
 /*
@@ -706,6 +736,9 @@ function updateInstrument(instrument, runSASCALC=true) {
         averagingType.style.display = "inline-block";
         var averagingTypeLabel = document.getElementById("averagingTypeLabel");
         averagingTypeLabel.style.display = "inline-block";
+        var averagingAndModelHeadingNode = document.getElementById("averagingAndModelHeading");
+        averagingAndModelHeadingNode.style.display = "block";
+        selectAveragingMethod(averagingType.value, false);
         try {
             populatePageDynamically(instrument);
         } catch (error) {
@@ -778,6 +811,7 @@ async function populatePageDynamically(instrument) {
             wavelengthSpreadNode.appendChild(option);
         }
     }
+    // TODO: Populate GUIDES, SOURCE APERTURES, and DETECTOR LIMITS (and wavelenth limits?)
     var sourceApertures = staticNodeMap['guide.sourceAperture']['permittedValues'];
     var sourceAperturesGuide1 = staticNodeMap['guide01.key']['permittedValues'];
 }
@@ -814,9 +848,33 @@ function selectModel(model, runSASCALC = true) {
         modelParams.appendChild(label);
         modelParams.appendChild(input);
     }
-    var hr = document.createElement("hr");
-    modelParams.appendChild(hr);
     if (runSASCALC) {
+        SASCALC(instrument);
+    }
+}
+
+/*
+ * Update the page when a new averaging method is selected
+ */
+function selectAveragingMethod(averagingMethod, runSASCALC = true) {
+    var inputs = window.averagingInputs[averagingMethod];
+    var paramNodes = document.getElementById("averagingParams");
+    paramNodes.onchange = function () {
+        var instrument = document.getElementById('instrumentSelector').value;
+        SASCALC(instrument);
+    }
+    var params = paramNodes.children;
+    for (var i = 0; i < params.length; i++) {
+        var node = params[i];
+        if (inputs.includes(node.getAttribute('for')) || inputs.includes(node.getAttribute('id'))) {
+            node.style.display = "inline-block";
+        } else {
+            node.style.display = "none";
+        }
+    }
+    // TODO: Add averaging representation to 2D heatmap (sector lines, ellipse, etc.)
+    if (runSASCALC) {
+        var instrument = document.getElementById('instrumentSelector').value;
         SASCALC(instrument);
     }
 }
@@ -857,6 +915,16 @@ function getNumberOfGuides(instrument) {
         guides = "0";
     }
     return parseFloat(guides);
+}
+function getAveragingParams() {
+    var phi = parseFloat(document.getElementById('phi').value);
+    var dPhi = parseFloat(document.getElementById('dPhi').value);
+    var detectorHalves = document.getElementById('detectorSections').value;
+    var qCenter = parseFloat(document.getElementById('qCenter').value);
+    var qWidth = parseFloat(document.getElementById('qWidth').value);
+    var aspectRatio = parseFloat(document.getElementById('aspectRatio').value);
+    var params = [phi, dPhi, detectorHalves, qCenter, qWidth, aspectRatio];
+    return params;
 }
 function setCurrentConfig(instrument) {
     window.currentConfig["guide.guide"] = document.getElementById(instrument + 'GuideConfig').value;

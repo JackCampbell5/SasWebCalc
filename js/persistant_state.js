@@ -16,9 +16,8 @@ function restorePersistantState() {
         var instSelector = document.getElementById('instrumentSelector');
         instSelector.value = instrument;
         updateInstrument(instrument, false);
-        // Load model, model parameters, and averaging method and parameters
+        // Load model and model parameters
         var model = sessionStorage.getItem('model');
-        var averageType = sessionStorage.getItem('averageType');
         var modelNode = document.getElementById('model');
         var averageTypeNode = document.getElementById('averagingType');
         modelNode.value = model;
@@ -29,7 +28,22 @@ function restorePersistantState() {
             var paramNode = document.getElementById(paramName);
             paramNode.value = sessionStorage.getItem(paramName);
         }
+        // Load averaging method and averaging parameters
+        var averageType = sessionStorage.getItem('averageType');
         averageTypeNode.value = averageType;
+        var phiNode = document.getElementById('phi');
+        phiNode.value = sessionStorage.getItem('phi');
+        var deltaPhiNode = document.getElementById('dPhi');
+        deltaPhiNode.value = sessionStorage.getItem('dPhi');
+        var detectorSectionsNode = document.getElementById('detectorSections');
+        detectorSectionsNode.value = sessionStorage.getItem('detectorSections');
+        var qCenterNode = document.getElementById('qCenter');
+        qCenterNode.value = sessionStorage.getItem('qCenter');
+        var qWidthNode = document.getElementById('qWidth');
+        qWidthNode.value = sessionStorage.getItem('qWidth');
+        var aspectRatioNode = document.getElementById('aspectRatio');
+        aspectRatioNode.value = sessionStorage.getItem('aspectRatio');
+        selectAveragingMethod(averageType, false);
         var sampleSpace = sessionStorage.getItem(instrument + 'SampleTable');
         var sampleSpaceNode = document.getElementById(instrument + 'SampleTable');
         sampleSpaceNode.value = sampleSpace;
@@ -104,11 +118,9 @@ function storePersistantState(instrument) {
     sessionStorage.setItem('instrument', instrument);
     var sampleSelectStr = document.getElementById(instrument + 'SampleTable').value;
     sessionStorage.setItem(instrument + 'SampleTable', sampleSelectStr);
-    // Store model, model parameters, and averaging method and parameters
+    // Store model and model parameters
     var modelNode = document.getElementById('model');
-    var averageTypeNode = document.getElementById('averagingType');
     sessionStorage.setItem('model', modelNode.value);
-    sessionStorage.setItem('averageType', averageTypeNode.value);
     defaultParams = Object.keys(window.modelList[modelNode.value]['params']);
     for (var i = 0; i < defaultParams.length; i++) {
         var paramName = modelNode.value + "_" + defaultParams[i];
@@ -116,6 +128,22 @@ function storePersistantState(instrument) {
         var paramValue = paramNode.value;
         sessionStorage.setItem(paramName, paramValue);
     }
+    // Store averaging type and averaging parameters
+    var averageTypeNode = document.getElementById('averagingType');
+    sessionStorage.setItem('averageType', averageTypeNode.value);
+    var phiNode = document.getElementById('phi');
+    sessionStorage.setItem('phi', phiNode.value);
+    var deltaPhiNode = document.getElementById('dPhi');
+    sessionStorage.setItem('dPhi', deltaPhiNode.value);
+    var detectorSectionsNode = document.getElementById('detectorSections');
+    sessionStorage.setItem('detectorSections', detectorSectionsNode.value);
+    var qCenterNode = document.getElementById('qCenter');
+    sessionStorage.setItem('qCenter', qCenterNode.value);
+    var qWidthNode = document.getElementById('qWidth');
+    sessionStorage.setItem('qWidth', qWidthNode.value);
+    var aspectRatioNode = document.getElementById('aspectRatio');
+    sessionStorage.setItem('aspectRatio', aspectRatioNode.value);
+
     // Store wavelength values
     var wavelength = document.getElementById(instrument + 'WavelengthInput');
     var wavelengthSpread = document.getElementById(instrument + 'WavelengthSpread');
@@ -134,6 +162,7 @@ function storePersistantState(instrument) {
     var offsetOutput = document.getElementById(instrument + "OffsetInputBox");
     sessionStorage.setItem(instrument + 'SDDInputBox', detectorOutput.value);
     sessionStorage.setItem(instrument + 'OffsetInputBox', offsetOutput.value);
+
     // Store frozen datasets
     sessionStorage.setItem(instrument + 'FrozenDataSets', JSON.stringify(window.frozenCalculations));
     sessionStorage.setItem(instrument + 'FrozenConfigs', JSON.stringify(window.frozenConfigs));
