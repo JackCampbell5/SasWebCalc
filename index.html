@@ -83,9 +83,9 @@
                     <h3 id="averagingAndModelHeading" style="display: none">Averaging and Model Parameters:</h3>
                     <div class="instrument-section" id="averagingParams">
                         <label for="phi" style="display: none">Orientation Angle (degrees): </label>
-                        <input type="number" min="4" max="20" value="0" id="phi" title="" style="display: none" />
+                        <input type="number" min="0" max="90" value="0" id="phi" title="" style="display: none" />
                         <label for="dPhi" style="display: none">Azimuthal Range (degrees): </label>
-                        <input type="number" min="4" max="20" value="0" id="dPhi" title="" style="display: none" />
+                        <input type="number" min="0" max="45" value="0" id="dPhi" title="" style="display: none" />
                         <label for="detectorSections" style="display: none">Detector Sections: </label>
                         <select id="detectorSections" style="display: none">
                             <option value="both" selected>Entire Detector</option>
@@ -93,11 +93,13 @@
                             <option value="top" selected>Top Only</option>
                         </select>
                         <label for="qCenter" style="display: none">Q Center of Annulus (&#8491;<sup>-1</sup>): </label>
-                        <input type="number" min="4" max="20" value="0" id="qCenter" title="" style="display: none" />
-                        <label for="qWidth" style="display: none">Q Width of Annulus (&#8491;<sup>-1</sup>): </label>
-                        <input type="number" min="4" max="20" value="0" id="qWidth" title="" style="display: none" />
+                        <input type="number" min="0.00" max="1.0" value="0.10" step="0.01" id="qCenter" title="" style="display: none" />
+                        <label for="qWidth" style="display: none">Q Width (&#8491;<sup>-1</sup>): </label>
+                        <input type="number" min="0.00" max="1.0" value="0.05" step="0.01" id="qWidth" title="" style="display: none" />
+                        <label for="qHeight" style="display: none">Q Height (&#8491;<sup>-1</sup>): </label>
+                        <input type="number" min="0.00" max="1.0" value="0.05" step="0.01" id="qHeight" title="" style="display: none" />
                         <label for="aspectRatio" style="display: none">Ellipse Aspect Ratio: </label>
-                        <input type="number" min="4" max="20" value="0" id="aspectRatio" title="" style="display: none" />
+                        <input type="number" min="0" max="1" value="1" step="0.1" id="aspectRatio" title="" style="display: none" />
                     </div>
                     <div class="instrument-section" id="modelParams" style="display: none"></div>
 
