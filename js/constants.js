@@ -26,7 +26,7 @@ window.averagingInputs = {
     "sector": ["phi", "dPhi", "detectorSections"],
     "annular": ["qCenter", "qWidth"],
     "rectangular": ["qWidth", "qHeight", "detectorSections"],
-    "elliptical": ["phi", "aspectRatio"]
+    "elliptical": ["phi", "aspectRatio", "detectorSections"]
 }
 
 // NGB 30m SANS

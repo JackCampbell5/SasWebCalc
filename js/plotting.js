@@ -175,15 +175,16 @@ function makeAveragingShapes() {
             }
             break;
         case "elliptical":
+            var detector = paramVals['detectorSections'];
             var phi = parseFloat(paramVals['phi']) * Math.PI / 180;
-            var phiDegrees = parseFloat(paramVals['phi']);
             var aspectRatio = parseFloat(paramVals['aspectRatio']);
             var side = aspectRatio * maxQy;
-            var xSVG = side * Math.cos(phi);
-            var ySVG = side * Math.sin(phi);
-            // FIXME: plotly doesn't accept arc paths yet
-            var path = "M " + -1 * xSVG + " " + ySVG + " A " + side + " " + maxQx + " " + phiDegrees + " 0 1 " + xSVG + " " + -1 * ySVG;
-            shapes.push(makeSVGPath(path));
+            var start = 0;
+            var end = 2 * Math.PI;
+            var steps = 100;
+            if (detector == "top") { end = Math.PI; steps = 50; }
+            if (detector == "bottom") { start = Math.PI; steps = 50; }
+            shapes.push(makeSVGPath(makeEllipseArc(0, 0, side, maxQy, start, end, phi, steps, false)));
             break;
     }
     return shapes;
@@ -206,7 +207,6 @@ function makeLine(x0, y0, x1, y1, color = "black") {
         }
     };
 }
-
 /*
  * Return a dictionary that defines a circular-like object in plot.ly
  */
@@ -224,7 +224,6 @@ function makeCircle(x0, y0, x1, y1, color = "black") {
         }
     };
 }
-
 /*
  * Return a dictionary that defines a rectagular-like object in plot.ly
  */
@@ -242,7 +241,6 @@ function makeRectangle(x0, y0, x1, y1, color = "black") {
         }
     };
 }
-
 /*
  * Return a dictionary that defines a path-like object in plot.ly
  */
@@ -254,4 +252,33 @@ function makeSVGPath(path, color = "black") {
             color: color,
         }
     };
+}
+/*
+ * Return a path-like object that represents an oriented ellipse-like shape
+ */
+function makeEllipseArc(xCenter = 0, yCenter = 0, a = 1, b = 1, startAngle = 0, endAngle = 2 * Math.PI, orientationAngle = 0, N = 100, closed = false) {
+    // FIXME: orientationAngle needs to work properly
+    var x = [];
+    var y = [];
+    var t = makeArr(startAngle, endAngle, N);
+    for (var i = 0; i < t.length; i++) {
+        x[i] = xCenter + a * Math.cos(t[i] + orientationAngle);
+        y[i] = yCenter + b * Math.sin(t[i] + orientationAngle);
+    }
+    var path = 'M ' + x[0] + ', ' + y[0];
+    for (var k = 1; k < t.length; k++) {
+        path += ' L' + x[k] + ', ' + y[k];
+    }
+    if (closed) {
+        path += ' Z';
+    }
+    return path
+}
+function makeArr(startValue, stopValue, cardinality) {
+    var arr = [];
+    var step = (stopValue - startValue) / (cardinality - 1);
+    for (var i = 0; i < cardinality; i++) {
+        arr.push(startValue + (step * i));
+    }
+    return arr;
 }
