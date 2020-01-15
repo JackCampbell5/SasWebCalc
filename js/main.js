@@ -103,6 +103,8 @@ function calculateQRange(instrument) {
     var dPhiRadians = (Math.PI / 180) * averagingParams[1];
     var ratioAxes = averagingParams[5];
     var detectorHalves = averagingParams[2];
+    var qCenter = averagingParams[3];
+    var qWidth = averagingParams[4];
     var phiX = Math.cos(phiRadians);
     var phiY = Math.sin(phiRadians);
 
@@ -161,7 +163,7 @@ function calculateQRange(instrument) {
                                 var forward = (azimuthalAngle < dPhiRadians);
                                 var mirror = (Math.PI - azimuthalAngle < dPhiRadians);
                                 var iRadius = Math.floor(Math.sqrt(correctedDx * correctedDx + correctedDy * correctedDy) / pixelSize) + 1;
-                                if ((detectorHalves == "both" && (mirror || forward)) || (detectorHalves = "top" && forward) || (detectorHalves == "bottom" && mirror)) {
+                                if ((detectorHalves == "both" && (mirror || forward)) || (detectorHalves = "right" && forward) || (detectorHalves == "left" && mirror)) {
                                     includePixel = true;
                                 } else {
                                     includePixel = false;
@@ -178,8 +180,8 @@ function calculateQRange(instrument) {
                                 var dPhiPixel = Math.acos(dotProduct);
                                 var dPerp = correctedRadius * Math.sin(dPhiPixel);
                                 var dParallel = correctedRadius * Math.cos(dPhiPixel);
-                                var iRadius = Math.floor(Math.abs(dPerp) / pixelSize) + 1;
-                                if (detectorHalves == "both" || (detectorHalves = "top" && mirror) || (detectorHalves == "bottom" && forward)) {
+                                var iRadius = Math.floor(Math.abs(dParallel) / pixelSize) + 1;
+                                if ((dPerp <= 0.5 * qWidth * pixelSize) && (detectorHalves == "both" || (detectorHalves = "left" && mirror) || (detectorHalves == "right" && forward))) {
                                     includePixel = true;
                                 } else {
                                     includePixel = false;
@@ -202,11 +204,7 @@ function calculateQRange(instrument) {
         radius = (2 * i) * pixelSize / 2;
         theta = Math.atan(radius / detectorDistance) / 2;
         window.qValues[i] = (4 * Math.PI / lambda) * Math.sin(theta);
-        if (window.nCells[i] == 0) {
-            window.aveIntensity[i] = 0;
-            window.sigmaAve[i] = largeNumber;
-        }
-        else if (window.nCells[i] <= 1) {
+        if (window.nCells[i] <= 1) {
             window.aveIntensity[i] = (window.nCells[i] == 0) ? 0 : window.aveIntensity[i] / window.nCells[i];
             window.sigmaAve[i] = largeNumber;
         } else {
