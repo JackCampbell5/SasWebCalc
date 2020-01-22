@@ -129,6 +129,7 @@ function makeAveragingShapes() {
     if (Number.isNaN(maxQx)) { maxQx = 1; }
     var minQy = d3.min(window.qyValues);
     if (Number.isNaN(maxQy)) { maxQy = 1; }
+    var ratio = Math.abs(maxQx / minQx);
 
     // Create the shape(s) needed for the averaging type
     var shapes = [];
@@ -138,19 +139,34 @@ function makeAveragingShapes() {
             // No shape necessary
             break;
         case "sector":
+        // FIXME: Fix this for offsets
             var detector = paramVals['detectorSections'];
             var phi = parseFloat(paramVals['phi']) * Math.PI / 180;
             var dPhi = parseFloat(paramVals['dPhi']) * Math.PI / 180;
-            if (detector == "both" || detector == "top") {
-                shapes.push(makeLine(0, 0, maxQx * Math.sin(phi), maxQy * Math.cos(phi)));
-                shapes.push(makeLine(0, 0, maxQx * Math.sin(phi - dPhi), maxQy * Math.cos(phi - dPhi), "orange"));
-                shapes.push(makeLine(0, 0, maxQx * Math.sin(phi + dPhi), maxQy * Math.cos(phi + dPhi), "orange"));
+            var phiUp = phi + dPhi;
+            var phiDown = phi - dPhi;
+            var phiTwoPi = Math.PI * 2 + phi;
+            var phiUpTwoPi = Math.PI * 2 + phiDown;
+            var phiDownTwoPi = Math.PI * 2 + phiUp;
+            var phiToURCorner = Math.tan(maxQy / maxQx);
+            var phiToULCorner = Math.tan(maxQy / minQx);
+            var phiToLLCorner = Math.tan(minQy / minQx);
+            var phiToLRCorner = Math.tan(minQy / maxQx);
+            if (detector == "both" || detector == "right") {
+                shapes.push(makeLine(0, 0, (phi > phiToURCorner && phi < phiToULCorner) ? maxQy / Math.tan(phi) : maxQx,
+                    (phi > phiToURCorner && phi < phiToULCorner) ? maxQy : maxQx * Math.tan(phi)));
+                shapes.push(makeLine(0, 0, (phiUp > phiToURCorner && phiUp < phiToULCorner) ? maxQy / Math.tan(phiUp) : maxQx,
+                    (phiUp > phiToURCorner && phiUp < phiToULCorner) ? maxQy : maxQx * Math.tan(phiUp), "orange"));
+                shapes.push(makeLine(0, 0, (phiDown > phiToURCorner && phiDown < phiToULCorner) ? maxQy / Math.tan(phiDown) : maxQx,
+                    (phiDown > phiToURCorner && phiDown < phiToULCorner) ? maxQy : maxQx * Math.tan(phiDown), "orange"));
             }
-            if (detector == "both" || detector == "bottom") {
-                shapes.push(makeLine(0, 0, minQx * Math.sin(phi), -1 * maxQy * Math.cos(phi)));
-                shapes.push(makeLine(0, 0, minQx * Math.sin(phi - dPhi), minQy * Math.cos(phi - dPhi), "orange"));
-                shapes.push(makeLine(0, 0, minQx * Math.sin(phi + dPhi), minQy * Math.cos(phi + dPhi), "orange"));
-
+            if (detector == "both" || detector == "left") {
+                shapes.push(makeLine(0, 0, (phiTwoPi > phiToLLCorner && phiTwoPi < phiToLRCorner) ? minQy / Math.tan(phiTwoPi) : minQx,
+                    (phiTwoPi > phiToLLCorner && phiTwoPi < phiToLRCorner) ? minQy : minQx * Math.tan(phiTwoPi)));
+                shapes.push(makeLine(0, 0, (phiUpTwoPi > phiToLLCorner && phiUpTwoPi < phiToLRCorner) ? minQy / Math.tan(phiUpTwoPi) : minQx,
+                    (phiUpTwoPi > phiToLLCorner && phiUpTwoPi < phiToLRCorner) ? minQy : minQx * Math.tan(phiUpTwoPi), "orange"));
+                shapes.push(makeLine(0, 0, (phiDownTwoPi > phiToLLCorner && phiDownTwoPi < phiToLRCorner) ? minQy / Math.tan(phiDownTwoPi) : minQx,
+                    (phiDownTwoPi > phiToLLCorner && phiDownTwoPi < phiToLRCorner) ? minQy : minQx * Math.tan(phiDownTwoPi), "orange"));
             }
             break;
         case "annular":
@@ -163,12 +179,14 @@ function makeAveragingShapes() {
             shapes.push(makeCircle(-1 * outerQ, -1 * outerQ, outerQ, outerQ, "orange"));
             break;
         case "rectangular":
+        // TODO: Rewrite this for left and right sides of the detector
             var detector = paramVals['detectorSections'];
             var qWidth = parseFloat(paramVals['qWidth']);
             var qHeight = parseFloat(paramVals['qHeight']);
-            if (detector == "top") {
+            if (detector == "left") {
+                // FIXME: Write two lines, one on top and one on bottom
                 shapes.push(makeRectangle(-1 * qWidth / 2, qHeight / 2, qWidth / 2, 0, "orange"));
-            } else if (detector == "bottom") {
+            } else if (detector == "right") {
                 shapes.push(makeRectangle(-1 * qWidth / 2, -1 * qHeight / 2, qWidth / 2, 0, "orange"));
             } else {
                 shapes.push(makeRectangle(-1 * qWidth / 2, -1 * qHeight / 2, qWidth / 2, qHeight / 2, "orange"));

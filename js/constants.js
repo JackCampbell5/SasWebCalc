@@ -44,16 +44,32 @@ window.ngb30SourceApertures = {
 };
 window.ngb30Constants = {
     'HuberOffset': '54.8',
-    'HuberApertureOffset': '5.0',
     'ChamberOffset': '0.0',
-    'ChamberApertureOffset': '5.0',
+    'ApertureOffset': '5.0',
     'BSFactor': '1.05',
     'iPixel': '100.0',
     'aPixel': '5.08',
     'coeff': '10000',
     'xPixels': '128',
     'yPixels': '128',
+    'peakFlux': '2.42e13',
+    'peakLambda': '5.5',
+    'b': '0.0',
+    'c': '-0.0243',
+    'trans1': '0.63',
+    'trans2': '1.0',
+    'trans3': '0.75',
+    'guideGap': '100',
+    'guideWidth': '6.0',
+    'guideLoss': '0.924',
     'serverName': 'ngb30sans.ncnr.nist.gov'
+};
+window.ngb30WavelengthRange = {
+    "10.9": ['6.0', '20.0'],
+    "12.1": ['5.5', '20.0'],
+    "13.8": ['4.5', '20.0'],
+    "16.8": ['3.0', '20.0'],
+    "25.6": ['3.0', '20.0']
 };
 
 // NG7 SANS
@@ -93,8 +109,8 @@ window.ng7Constants = {
 };
 window.ng7WavelengthRange = {
     "9.7": ['6.5', '20.0'],
-    "11.5": ['5.5', '20.0'],
     "13.9": ['4.8', '20.0'],
+    "15.0": ['4.5', '20.0'],
     "22.1": ['4.0', '20.0']
 };
 

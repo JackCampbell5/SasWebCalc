@@ -99,14 +99,14 @@ function calculateQRange(instrument) {
     var includePixel = true;
     var averagingParams = getAveragingParams();
     var averageType = document.getElementById("averagingType").value;
-    var phiRadians = (Math.PI / 180) * averagingParams[0];
+    var phiRadians = (Math.PI / 180) * averagingParams[0] + Math.PI / 2;
     var dPhiRadians = (Math.PI / 180) * averagingParams[1];
-    var ratioAxes = averagingParams[5];
+    var phiUpper = phiRadians + dPhiRadians;
+    var phiLower = phiRadians - dPhiRadians;
     var detectorHalves = averagingParams[2];
     var qCenter = averagingParams[3];
     var qWidth = averagingParams[4];
-    var phiX = Math.cos(phiRadians);
-    var phiY = Math.sin(phiRadians);
+    var ratioAxes = averagingParams[5];
 
     // Detector values pixel size in mm
     var detectorDistance = parseFloat(document.getElementById(instrument + "SDDInputBox").value) * 10;
@@ -159,12 +159,20 @@ function calculateQRange(instrument) {
                                 includePixel = true;
                                 break;
                             case "sector":
-                                var azimuthalAngle = calculateAzimuthalAngle(correctedDx, correctedDy, phiX, phiY);
-                                var forward = (azimuthalAngle < dPhiRadians);
-                                var mirror = (Math.PI - azimuthalAngle < dPhiRadians);
+                                // Get raw angle
+                                // FIXME: rotate calculation by 90 degrees...
+                                var pixelAngle = Math.atan(Math.abs(correctedDy) / Math.abs(correctedDx)) + Math.PI / 2;
+                                var isCorrectAngle = (pixelAngle > phiLower) && (pixelAngle < phiUpper);
+                                var isCorrectAngleMirror = (pixelAngle > phiLower) && (pixelAngle < phiUpper);
+                                var forward = (isCorrectAngle && correctedDx > 0);
+                                var mirror = (isCorrectAngleMirror && correctedDx < 0);
                                 var iRadius = Math.floor(Math.sqrt(correctedDx * correctedDx + correctedDy * correctedDy) / pixelSize) + 1;
-                                if ((detectorHalves == "both" && (mirror || forward)) || (detectorHalves = "right" && forward) || (detectorHalves == "left" && mirror)) {
+                                var both = (detectorHalves == "both" && (mirror || forward));
+                                var left = (detectorHalves == "left" && mirror);
+                                var right = (detectorHalves = "right" && forward);
+                                if (both || right || left) {
                                     includePixel = true;
+                                    console.log("x: " + i + ", y: " + j, ". correctDx: " + correctedDx + ", correctedDy: " + correctedDy + ", pixelAngle: " + pixelAngle);
                                 } else {
                                     includePixel = false;
                                 }
@@ -205,7 +213,7 @@ function calculateQRange(instrument) {
         theta = Math.atan(radius / detectorDistance) / 2;
         window.qValues[i] = (4 * Math.PI / lambda) * Math.sin(theta);
         if (window.nCells[i] <= 1) {
-            window.aveIntensity[i] = (window.nCells[i] == 0) ? 0 : window.aveIntensity[i] / window.nCells[i];
+            window.aveIntensity[i] = (window.nCells[i] == 0 || Number.isNaN(window.nCells[i])) ? 0 : window.aveIntensity[i] / window.nCells[i];
             window.sigmaAve[i] = largeNumber;
         } else {
             window.aveIntensity[i] = window.aveIntensity[i] / window.nCells[i];
@@ -324,16 +332,6 @@ function calculateXBeamCenter(instrument) {
  */
 function calculateDistanceFromBeamCenter(pixelValue, pixelCenter, pixelSize, coeff) {
     return coeff * Math.tan((pixelValue - pixelCenter) * pixelSize / coeff);
-}
-
-/*
- * Calculate the azimuthal angle of pixel from center of detector
- */
-function calculateAzimuthalAngle(dxx, dyy, phi_x, phi_y) {
-    var radius = Math.sqrt(dxx * dxx + dyy * dyy);
-    var dot_prod = (dxx * phi_x + dyy * phi_y) / radius;
-    var angle = Math.acos(dot_prod);
-    return angle;
 }
 
 /*
@@ -630,7 +628,7 @@ function calculateSourceToSampleApertureDistance(instrument) {
     // Calculate the source to sample distance
     switch (instrument) {
         case 'ng7':
-        case 'ngb30m':
+        case 'ngb30':
             ssd = 1632 - 155 * nGds - ssdOffset - apertureOffset;
             break;
         case 'ngb10m':
