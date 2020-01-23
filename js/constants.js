@@ -29,6 +29,24 @@ window.averagingInputs = {
     "elliptical": ["phi", "aspectRatio", "detectorSections"]
 }
 
+// Default configuration values onloading the page
+window.defaultConfiguration = {
+    "areaDetector.beamCenterX": "64.5cm",
+    "areaDetector.beamCenterY": "64.5cm",
+    "attenuator.key": 0,
+    "beamStop.beamStop": 2,
+    "beamStopX.softPosition": "0.0cm",
+    "BeamStopY.softPosition": "0.0cm",
+    "detectorOffset.softPosition": "0.0cm",
+    "geometry.externalSampleApertureShape": "CIRCLE",
+    "geometry.externalSampleAperture": "12.7mm",
+    "geometry.sampleToAreaDetector": "100cm",
+    "guide.guide": 0,
+    "guide.sourceAperture": "5.08",
+    "wavelength.wavelength": "6",
+    "wavelengthSpread.wavelengthSpread": 0.115,
+};
+
 // NGB 30m SANS
 window.ngb30SourceApertures = {
     '0': ['1.43', '2.54', '3.81'],
