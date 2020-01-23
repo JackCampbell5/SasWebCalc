@@ -690,7 +690,11 @@ function updateAperture(instrument, runSASCALC = true) {
 function updateWavelength(instrument, runSASCALC=true) {
     var wavelength = getWavelength(instrument);
     var wavelengthSpread = getWavelengthSpread(instrument);
-    var wavelengthOptions = window[instrument + 'WavelengthRange'][wavelengthSpread];
+    try {
+        var wavelengthOptions = window[instrument + 'WavelengthRange'][wavelengthSpread];
+    } catch (err) {
+        wavelengthOptions = ['4.0', '20.0'];
+    }
     wavelength.min = parseFloat(wavelengthOptions[0]);
     wavelength.max = parseFloat(wavelengthOptions[1]);
     if (runSASCALC) {
