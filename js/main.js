@@ -631,7 +631,7 @@ function calculateSourceToSampleApertureDistance(instrument) {
         case 'ngb30':
             ssd = 1632 - 155 * nGds - ssdOffset - apertureOffset;
             break;
-        case 'ngb10m':
+        case 'ngb10':
             ssd = 513 - ssdOffset;
             if (nGds != 0) {
                 ssd -= 61.9;

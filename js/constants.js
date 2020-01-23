@@ -110,7 +110,7 @@ window.ng7Constants = {
 window.ng7WavelengthRange = {
     "9.7": ['6.5', '20.0'],
     "13.9": ['4.8', '20.0'],
-    "15.0": ['4.5', '20.0'],
+    "15": ['4.5', '20.0'],
     "22.1": ['4.0', '20.0']
 };
 
@@ -130,7 +130,23 @@ window.ngb10Constants = {
     'coeff': '10000',
     'xPixels': '128',
     'yPixels': '128',
+    'peakFlux': '2.5e13',
+    'peakLambda': '5.5',
+    'b': '0.03',
+    'c': '0.03',
+    'trans1': '0.63',
+    'trans2': '1.0',
+    'trans3': '0.75',
+    'guideGap': '165',
+    'guideWidth': '5',
+    'guideLoss': '0.974',
     'serverName': 'ngbsans.ncnr.nist.gov'
+};
+window.ngb10WavelengthRange = {
+    "9.2": ['5.5', '20.0'],
+    "12": ['4.0', '20.0'],
+    "14": ['3.0', '20.0'],
+    "25": ['3.0', '20.0']
 };
 
 // Models
