@@ -153,19 +153,19 @@ function makeAveragingShapes() {
             var phiToLLCorner = Math.tan(minQy / minQx);
             var phiToLRCorner = Math.tan(minQy / maxQx);
             if (detector == "both" || detector == "right") {
-                shapes.push(makeLine(0, 0, (phi > phiToURCorner && phi < phiToULCorner) ? maxQy / Math.tan(phi) : maxQx,
+                shapes.push(makeShape('line', 0, 0, (phi > phiToURCorner && phi < phiToULCorner) ? maxQy / Math.tan(phi) : maxQx,
                     (phi > phiToURCorner && phi < phiToULCorner) ? maxQy : maxQx * Math.tan(phi)));
-                shapes.push(makeLine(0, 0, (phiUp > phiToURCorner && phiUp < phiToULCorner) ? maxQy / Math.tan(phiUp) : maxQx,
+                shapes.push(makeShape('line', 0, 0, (phiUp > phiToURCorner && phiUp < phiToULCorner) ? maxQy / Math.tan(phiUp) : maxQx,
                     (phiUp > phiToURCorner && phiUp < phiToULCorner) ? maxQy : maxQx * Math.tan(phiUp), "orange"));
-                shapes.push(makeLine(0, 0, (phiDown > phiToURCorner && phiDown < phiToULCorner) ? maxQy / Math.tan(phiDown) : maxQx,
+                shapes.push(makeShape('line', 0, 0, (phiDown > phiToURCorner && phiDown < phiToULCorner) ? maxQy / Math.tan(phiDown) : maxQx,
                     (phiDown > phiToURCorner && phiDown < phiToULCorner) ? maxQy : maxQx * Math.tan(phiDown), "orange"));
             }
             if (detector == "both" || detector == "left") {
-                shapes.push(makeLine(0, 0, (phiTwoPi > phiToLLCorner && phiTwoPi < phiToLRCorner) ? minQy / Math.tan(phiTwoPi) : minQx,
+                shapes.push(makeShape('line', 0, 0, (phiTwoPi > phiToLLCorner && phiTwoPi < phiToLRCorner) ? minQy / Math.tan(phiTwoPi) : minQx,
                     (phiTwoPi > phiToLLCorner && phiTwoPi < phiToLRCorner) ? minQy : minQx * Math.tan(phiTwoPi)));
-                shapes.push(makeLine(0, 0, (phiUpTwoPi > phiToLLCorner && phiUpTwoPi < phiToLRCorner) ? minQy / Math.tan(phiUpTwoPi) : minQx,
+                shapes.push(makeShape('line', 0, 0, (phiUpTwoPi > phiToLLCorner && phiUpTwoPi < phiToLRCorner) ? minQy / Math.tan(phiUpTwoPi) : minQx,
                     (phiUpTwoPi > phiToLLCorner && phiUpTwoPi < phiToLRCorner) ? minQy : minQx * Math.tan(phiUpTwoPi), "orange"));
-                shapes.push(makeLine(0, 0, (phiDownTwoPi > phiToLLCorner && phiDownTwoPi < phiToLRCorner) ? minQy / Math.tan(phiDownTwoPi) : minQx,
+                shapes.push(makeShape('line', 0, 0, (phiDownTwoPi > phiToLLCorner && phiDownTwoPi < phiToLRCorner) ? minQy / Math.tan(phiDownTwoPi) : minQx,
                     (phiDownTwoPi > phiToLLCorner && phiDownTwoPi < phiToLRCorner) ? minQy : minQx * Math.tan(phiDownTwoPi), "orange"));
             }
             break;
@@ -174,9 +174,9 @@ function makeAveragingShapes() {
             var qWidth = parseFloat(paramVals['qWidth']);
             var innerQ = qCenter - qWidth;
             var outerQ = qCenter + qWidth;
-            shapes.push(makeCircle(-1 * qCenter, -1 * qCenter, qCenter, qCenter, "white"));
-            shapes.push(makeCircle(-1 * innerQ, -1 * innerQ, innerQ, innerQ, "orange"));
-            shapes.push(makeCircle(-1 * outerQ, -1 * outerQ, outerQ, outerQ, "orange"));
+            shapes.push(makeShape('circle', -1 * qCenter, -1 * qCenter, qCenter, qCenter, "white"));
+            shapes.push(makeShape('circle', -1 * innerQ, -1 * innerQ, innerQ, innerQ, "orange"));
+            shapes.push(makeShape('circle', -1 * outerQ, -1 * outerQ, outerQ, outerQ, "orange"));
             break;
         case "rectangular":
         // TODO: Rewrite this for left and right sides of the detector
@@ -185,11 +185,11 @@ function makeAveragingShapes() {
             var qHeight = parseFloat(paramVals['qHeight']);
             if (detector == "left") {
                 // FIXME: Write two lines, one on top and one on bottom
-                shapes.push(makeRectangle(-1 * qWidth / 2, qHeight / 2, qWidth / 2, 0, "orange"));
+                shapes.push(makeShape('rectangle', -1 * qWidth / 2, qHeight / 2, qWidth / 2, 0, "orange"));
             } else if (detector == "right") {
-                shapes.push(makeRectangle(-1 * qWidth / 2, -1 * qHeight / 2, qWidth / 2, 0, "orange"));
+                shapes.push(makeShape('rectangle', -1 * qWidth / 2, -1 * qHeight / 2, qWidth / 2, 0, "orange"));
             } else {
-                shapes.push(makeRectangle(-1 * qWidth / 2, -1 * qHeight / 2, qWidth / 2, qHeight / 2, "orange"));
+                shapes.push(makeShape('rectangle', -1 * qWidth / 2, -1 * qHeight / 2, qWidth / 2, qHeight / 2, "orange"));
             }
             break;
         case "elliptical":
@@ -211,43 +211,9 @@ function makeAveragingShapes() {
 /*
  * Return a dictionary that defines a line object in plot.ly
  */
-function makeLine(x0, y0, x1, y1, color = "black") {
+function makeShape(shape, x0, y0, x1, y1, color = "black") {
     return {
-        type: 'line',
-        xref: 'x',
-        yref: 'y',
-        x0: x0,
-        y0: y0,
-        x1: x1,
-        y1: y1,
-        line: {
-            color: color,
-        }
-    };
-}
-/*
- * Return a dictionary that defines a circular-like object in plot.ly
- */
-function makeCircle(x0, y0, x1, y1, color = "black") {
-    return {
-        type: 'circle',
-        xref: 'x',
-        yref: 'y',
-        x0: x0,
-        y0: y0,
-        x1: x1,
-        y1: y1,
-        line: {
-            color: color,
-        }
-    };
-}
-/*
- * Return a dictionary that defines a rectagular-like object in plot.ly
- */
-function makeRectangle(x0, y0, x1, y1, color = "black") {
-    return {
-        type: 'rect',
+        type: shape,
         xref: 'x',
         yref: 'y',
         x0: x0,
