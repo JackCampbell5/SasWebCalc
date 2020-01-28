@@ -113,7 +113,6 @@ function calculateQRange(instrument) {
             // Ignore masked pixels (mask[i][j] = 1)
             if (maskI[j] == 0) {
                 dataPixel = dataI[j];
-                numDSquared = numDimensions * numDimensions;
                 totalDistance = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
                 // Break pixels up into a 3x3 grid close to the beam center
                 if (totalDistance > radiusCenter) {
@@ -123,6 +122,7 @@ function calculateQRange(instrument) {
                     numDimensions = 3;
                     center = 2;
                 }
+                numDSquared = numDimensions * numDimensions;
                 thetaY = Math.atan(yDistance / detectorDistance) / 2;
                 window.qyValues[j] = (4 * Math.PI / lambda) * Math.sin(thetaY);
                 // Loop over sliced pixels
@@ -130,6 +130,7 @@ function calculateQRange(instrument) {
                     correctedDx = xDistance + (k - center) * pixelSize / numDimensions;
                     for (l = 1; l <= numDimensions; l++) {
                         correctedDy = yDistance + (l - center) * pixelSize / numDimensions;
+                        // TODO: Replace all of this and create a Slicer object
                         // FIXME: Averaging isn't accurate for 1D data
                         switch (averageType) {
                             case "circular":
@@ -157,7 +158,6 @@ function calculateQRange(instrument) {
                                 var right = (detectorHalves = "right" && forward);
                                 if (both || right || left) {
                                     includePixel = true;
-                                    console.log("x: " + i + ", y: " + j, ". correctDx: " + correctedDx + ", correctedDy: " + correctedDy + ", pixelAngle: " + pixelAngle);
                                 } else {
                                     includePixel = false;
                                 }
@@ -210,6 +210,68 @@ function calculateQRange(instrument) {
         calculateResolutions(i, instrument);
         ntotal += window.nCells[i];
     }
+}
+
+function calculateQRangeSlicer(instrument) {
+    var xPixels = parseInt(window[instrument + "Constants"]["xPixels"]);
+    var yPixels = parseInt(window[instrument + "Constants"]["yPixels"]);
+    var xCenter = calculateXBeamCenter(instrument);
+    var yCenter = yPixels / 2 + 0.5;
+    var pixelSize = parseFloat(window[instrument + "Constants"]["aPixel"]);
+    var coeff = parseFloat(window[instrument + "Constants"]["coeff"]);
+    var averageType = document.getElementById("averagingType").value;
+    var lambda = getWavelength(instrument);
+    var apertureOffset = parseFloat(window[instrument + "Constants"]["ApertureOffset"]);
+
+    var averagingParams = getAveragingParams();
+    var params = {};
+    params['phi'] = (Math.PI / 180) * averagingParams[0] + Math.PI / 2;
+    params['dPhi'] = (Math.PI / 180) * averagingParams[1];
+    params['detectorSections'] = averagingParams[2];
+    params['qCenter'] = averagingParams[3];
+    params['qWidth'] = averagingParams[4];
+    params['aspectRatio'] = averagingParams[5];
+    params['lambda'] = lambda;
+    params['pixelSize'] = parseFloat(window[instrument + "Constants"]["aPixel"]);
+    params['lambdaWidth'] = getWavelengthSpread(instrument);
+    params['guides'] = document.getElementById(instrument + "GuideConfig");
+    params['sourceAperture'] = getSourceAperture(instrument) * 0.5;
+    params['sampleAperture'] = getSampleApertureSize(instrument) * 0.5;
+    params['apertureOffset'] = apertureOffset;
+    params['beamStopSize'] = calculateBeamStopDiameter(instrument) * 2.54;
+    params['SSD'] = calculateSourceToSampleApertureDistance(instrument);
+    params['SDD'] = calculateSampleToDetectorDistance(instrument) + apertureOffset;
+
+    switch (averageType) {
+        case "circular":
+        default:
+            var slicer = new Circular(params);
+            break;
+        case "sector":
+            var slicer = new Sector(params);
+            break;
+        case "rectangular":
+            var slicer = new Rectangular(params);
+            break;
+        case "elliptical":
+            var slicer = new Elliptical(params);
+            break;
+    }
+
+    // Detector values pixel size in mm
+    var detectorDistance = parseFloat(document.getElementById(instrument + "SDDInputBox").value) * 10;
+    window.intensity2D = generateOnesData(instrument);
+
+    // Calculate Qx and Qy values
+    for (var i = 2; i < xPixels - 2; i++) {
+        var xDistance = calculateDistanceFromBeamCenter(i, xCenter, pixelSize, coeff);
+        var thetaX = Math.atan(xDistance / detectorDistance) / 2;
+        window.qxValues.push((4 * Math.PI / lambda) * Math.sin(thetaX));
+        yDistance = calculateDistanceFromBeamCenter(i, yCenter, pixelSize, coeff);
+        var thetaY = Math.atan(yDistance / detectorDistance) / 2;
+        window.qyValues.push((4 * Math.PI / lambda) * Math.sin(thetaY));
+    }
+    slicer.calculate();
 }
 
 /*
@@ -690,13 +752,13 @@ function updateAperture(instrument, runSASCALC = true) {
 function updateWavelength(instrument, runSASCALC=true) {
     var wavelength = getWavelength(instrument);
     var wavelengthSpread = getWavelengthSpread(instrument);
+     var wavelengthOptions = window[instrument + 'WavelengthRange'][wavelengthSpread];
     try {
-        var wavelengthOptions = window[instrument + 'WavelengthRange'][wavelengthSpread];
+        wavelength.min = parseFloat(wavelengthOptions[0]);
+        wavelength.max = parseFloat(wavelengthOptions[1]);
     } catch (err) {
         wavelengthOptions = ['4.0', '20.0'];
     }
-    wavelength.min = parseFloat(wavelengthOptions[0]);
-    wavelength.max = parseFloat(wavelengthOptions[1]);
     if (runSASCALC) {
         SASCALC(instrument);
     }
