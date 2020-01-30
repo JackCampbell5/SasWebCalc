@@ -110,6 +110,9 @@ function update2DChart() {
  * Make shapes based on the averaging type and parameters on the page
  */
 function makeAveragingShapes() {
+    if (window.slicer != null) {
+        return window.slicer.createPlot();
+    }
     var d3 = Plotly.d3;
     var averagingType = document.getElementById('averagingType').value;
 
@@ -139,19 +142,15 @@ function makeAveragingShapes() {
             // No shape necessary
             break;
         case "sector":
-        // FIXME: Fix this for offsets
             var detector = paramVals['detectorSections'];
             var phi = parseFloat(paramVals['phi']) * Math.PI / 180;
             var dPhi = parseFloat(paramVals['dPhi']) * Math.PI / 180;
             var phiUp = phi + dPhi;
             var phiDown = phi - dPhi;
-            var phiTwoPi = Math.PI * 2 + phi;
-            var phiUpTwoPi = Math.PI * 2 + phiDown;
-            var phiDownTwoPi = Math.PI * 2 + phiUp;
-            var phiToURCorner = Math.tan(maxQy / maxQx);
-            var phiToULCorner = Math.tan(maxQy / minQx);
-            var phiToLLCorner = Math.tan(minQy / minQx);
-            var phiToLRCorner = Math.tan(minQy / maxQx);
+            var phiToURCorner = Math.atan(maxQy / maxQx);
+            var phiToULCorner = Math.atan(maxQy / minQx) + Math.PI;
+            var phiToLLCorner = Math.atan(minQy / minQx) + Math.PI;
+            var phiToLRCorner = Math.atan(minQy / maxQx) + 2 * Math.PI;
             if (detector == "both" || detector == "right") {
                 shapes.push(makeShape('line', 0, 0, (phi > phiToURCorner && phi < phiToULCorner) ? maxQy / Math.tan(phi) : maxQx,
                     (phi > phiToURCorner && phi < phiToULCorner) ? maxQy : maxQx * Math.tan(phi)));
@@ -161,12 +160,12 @@ function makeAveragingShapes() {
                     (phiDown > phiToURCorner && phiDown < phiToULCorner) ? maxQy : maxQx * Math.tan(phiDown), "orange"));
             }
             if (detector == "both" || detector == "left") {
-                shapes.push(makeShape('line', 0, 0, (phiTwoPi > phiToLLCorner && phiTwoPi < phiToLRCorner) ? minQy / Math.tan(phiTwoPi) : minQx,
-                    (phiTwoPi > phiToLLCorner && phiTwoPi < phiToLRCorner) ? minQy : minQx * Math.tan(phiTwoPi)));
-                shapes.push(makeShape('line', 0, 0, (phiUpTwoPi > phiToLLCorner && phiUpTwoPi < phiToLRCorner) ? minQy / Math.tan(phiUpTwoPi) : minQx,
-                    (phiUpTwoPi > phiToLLCorner && phiUpTwoPi < phiToLRCorner) ? minQy : minQx * Math.tan(phiUpTwoPi), "orange"));
-                shapes.push(makeShape('line', 0, 0, (phiDownTwoPi > phiToLLCorner && phiDownTwoPi < phiToLRCorner) ? minQy / Math.tan(phiDownTwoPi) : minQx,
-                    (phiDownTwoPi > phiToLLCorner && phiDownTwoPi < phiToLRCorner) ? minQy : minQx * Math.tan(phiDownTwoPi), "orange"));
+                shapes.push(makeShape('line', 0, 0, (phi > phiToLLCorner && phi < phiToLRCorner) ? minQy / Math.tan(phi) : minQx,
+                    (phi > phiToLLCorner && phi < phiToLRCorner) ? minQy : minQx * Math.tan(phi)));
+                shapes.push(makeShape('line', 0, 0, (phiUp > phiToLLCorner && phiUp < phiToLRCorner) ? minQy / Math.tan(phiUp) : minQx,
+                    (phiUpTwoPi > phiToLLCorner && phiUp < phiToLRCorner) ? minQy : minQx * Math.tan(phiUp), "orange"));
+                shapes.push(makeShape('line', 0, 0, (phiDown > phiToLLCorner && phiDown < phiToLRCorner) ? minQy / Math.tan(phiDown) : minQx,
+                    (phiDown > phiToLLCorner && phiDown < phiToLRCorner) ? minQy : minQx * Math.tan(phiDown), "orange"));
             }
             break;
         case "annular":

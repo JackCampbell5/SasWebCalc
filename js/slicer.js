@@ -14,8 +14,8 @@ class Slicer {
         this.minQy = (Math.min(...this.qyVals) === undefined) ? 0.0 : Math.min(...this.qyVals);
         // Averaging Parameters
         this.detectorSections = (params['detectorSections'] === undefined) ? 'both' : params['detectorSections'];
-        this.phi = (params['phi'] === undefined) ? 0.0 : parseFloat(params['phi']) * Math.PI / 180;
-        this.dPhi = (params['dPhi'] === undefined) ? Math.PI / 2 : parseFloat(params['dPhi']) * Math.PI / 180;
+        this.phi = (params['phi'] === undefined) ? 0.0 : parseFloat(params['phi']);
+        this.dPhi = (params['dPhi'] === undefined) ? Math.PI / 2 : parseFloat(params['dPhi']);
         this.qCenter = (params['qCenter'] === undefined) ? 0.0 : parseFloat(params['qCenter']);
         this.qWidth = (params['qWidth'] === undefined) ? 0.3 : parseFloat(params['qWidth']);
         this.aspectRatio = (params['aspectRatio'] === undefined) ? 1.0 : parseFloat(params['aspectRatio']);
@@ -34,14 +34,14 @@ class Slicer {
         this.xBeamCenter = (params['xBeamCenter'] === undefined) ? 64.5 : parseFloat(params['xBeamCenter']);
         this.yBeamCenter = (params['yBeamCenter'] === undefined) ? 64.5 : parseFloat(params['yBeamCenter']);
         // Calculated parameters
-        this.phiUpper = phi - dPhi;
-        this.phiLower = phi + dPhi;
-        this.phiX = Math.cos(phi);
-        this.phiY = Math.sin(phi);
+        this.phiUpper = this.phi + this.dPhi;
+        this.phiLower = this.phi - this.dPhi;
+        this.phiX = Math.cos(this.phi);
+        this.phiY = Math.sin(this.phi);
         this.phiToURCorner = Math.atan(this.maxQy / this.maxQx);
-        this.phiToULCorner = Math.atan(this.maxQy / this.minQx);
-        this.phiToLLCorner = Math.atan(this.minQy / this.minQx);
-        this.phiToLRCorner = Math.atan(this.minQy / this.maxQx);
+        this.phiToULCorner = Math.atan(this.maxQy / this.minQx) + Math.PI;
+        this.phiToLLCorner = Math.atan(this.minQy / this.minQx) + Math.PI;
+        this.phiToLRCorner = Math.atan(this.minQy / this.maxQx) + 2 * Math.PI;
     }
 
     calculate() {
@@ -56,13 +56,13 @@ class Slicer {
 
         for (var i = 0; i < this.qxVals.length; i++) {
             var qxVal = this.qxVals[i];
-            var xDistance = calculateDistanceFromBeamCenter(i, this.xBeamCenter, this.pixelSize, this.coeff);
+            var xDistance = this.calculateDistanceFromBeamCenter(i, "x");
             maskI = window.mask[i];
             dataI = data[i];
             for (var j = 0; j < this.qyVals.length; j++) {
+                var qyVal = this.qyVals[j];
                 if (this.includePixel(qxVal, qyVal, maskI[j])) {
-                    var qyVal = this.qyVals[j];
-                    var yDistance = calculateDistanceFromBeamCenter(j, this.yBeamCenter, this.pixelSize, this.coeff);
+                    var yDistance = this.calculateDistanceFromBeamCenter(j, "y");
                     var dataPixel = dataI[j];
                     var totalDistance = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
                     // Break pixels up into a 3x3 grid close to the beam center
@@ -81,9 +81,9 @@ class Slicer {
                             var correctedDy = yDistance + (l - center) * this.pixelSize / numDimensions;
                             var iRadius = this.getIRadius(correctedDx, correctedDy);
                             nq = (iRadius > nq) ? iRadius : nq;
-                            window.aveIntensity[iRadius] += dataPixel / numDSquared;
-                            window.dSQ[iRadius] += dataPixel * dataPixel / numDSquared;
-                            window.nCells[iRadius] += 1 / numDSquared;
+                            window.aveIntensity[iRadius] = (window.aveIntensity[iRadius] === undefined) ? dataPixel / numDSquared : window.aveIntensity[iRadius] + dataPixel / numDSquared;
+                            window.dSQ[iRadius] = (window.dSQ[iRadius] === undefined) ? dataPixel * dataPixel / numDSquared : window.dSQ[iRadius] + dataPixel * dataPixel / numDSquared;
+                            window.nCells[iRadius] = (window.nCells[iRadius] === undefined) ? 1 / numDSquared : window.nCells[iRadius] + 1 / numDSquared;
                         }
                     }
                 }
@@ -95,13 +95,15 @@ class Slicer {
                 window.aveIntensity[i] = (window.nCells[i] == 0 || Number.isNaN(window.nCells[i])) ? 0 : window.aveIntensity[i] / window.nCells[i];
                 window.sigmaAve[i] = largeNumber;
             } else {
-                window.aveIntensity[i] = window.aveIntensity[i] / window.nCells[i];
+                window.aveIntensity[i] = isNaN(window.nCells[i]) ? window.aveIntensity[i] : window.aveIntensity[i] / window.nCells[i];
                 var aveSQ = window.aveIntensity[i] * window.aveIntensity[i];
-                var aveisq = window.dSQ[i] / window.nCells[i];
+                var aveisq = isNaN(window.nCells[i]) ? window.dSQ[i] : window.dSQ[i] / window.nCells[i];
                 var diff = aveisq - aveSQ;
                 window.sigmaAve[i] = (diff < 0) ? largeNumber : Math.sqrt(diff / (window.nCells[i] - 1));
             }
-            this.calculateResolution(i);
+            if (window.qValues[i] > 0.0) {
+                this.calculateResolution(i);
+            }
         }
     }
 
@@ -112,7 +114,7 @@ class Slicer {
     }
 
     getIRadius(xVal, yVal) {
-        return Math.floor(Math.sqrt(xVal * xVal + yVal * yVal) / this.pixelSize);
+        return Math.floor(Math.sqrt(xVal * xVal + yVal * yVal) / this.pixelSize) + 1;
     }
 
     calculateResolution(i) {
@@ -170,24 +172,27 @@ class Slicer {
     createPlot() {
         return [];
     }
+
+    calculateDistanceFromBeamCenter(pixelValue, xOrY) {
+        if (xOrY.toLowerCase() === "x")
+            var pixelCenter = this.xBeamCenter;
+        else {
+            var pixelCenter = this.yBeamCenter;
+        }
+        return this.coeff * Math.tan((pixelValue - pixelCenter) * this.pixelSize / this.coeff);
+    }
 }
 
 /*
  * Circular averaging class
  */
 class Circular extends Slicer{
-    constructor(params) {
-        super(params);
-    }
 }
 
 /*
  * Sector averaging class
  */
 class Sector extends Slicer {
-    constructor(params) {
-        super(params);
-    }
 
     includePixel(xVal, yVal, mask) {
         var pixelAngle = Math.atan(Math.abs(yVal) / Math.abs(xVal));
@@ -197,8 +202,8 @@ class Sector extends Slicer {
         var mirror = (isCorrectAngleMirror && xVal < 0);
         var both = (this.detectorSections == "both" && (mirror || forward));
         var left = (this.detectorSections == "left" && mirror);
-        var right = (this.detectorSections = "right" && forward);
-        return (both || right || left);
+        var right = (this.detectorSections == "right" && forward);
+        return ((both || right || left) && (mask === 0));
     }
 
     createPlot() {
@@ -207,30 +212,30 @@ class Sector extends Slicer {
         var phi = this.phi;
         var phiUp = this.phiUpper;
         var phiDown = this.phiLower;
-        var phiPi = Math.PI + phi;
-        var phiUpPi = Math.PI + phiDown;
-        var phiDownPi = Math.PI + phiUp;
+        var phiPi = this.phi + math.PI;
+        var phiUpPi = this.phiUpper + Math.PI;
+        var phiDownPi = this.phiLower + Math.PI;
         if (detector == "both" || detector == "right") {
             // Center of sector
-            shapes.push(makeShape('line', 0, 0, (phi > this.phiToURCorner && phi < this.phiToULCorner) ? maxQy / Math.tan(phi) : maxQx,
-                (phi > this.phiToURCorner && phi < this.phiToULCorner) ? maxQy : maxQx * Math.tan(phi)));
+            shapes.push(makeShape('line', 0, 0, (phi > this.phiToURCorner && phi < this.phiToULCorner) ? this.maxQy / Math.tan(phi) : this.maxQx,
+                (phi > this.phiToURCorner && phi < this.phiToULCorner) ? this.maxQy : this.maxQx * Math.tan(phi)));
             // Top of sector
-            shapes.push(makeShape('line', 0, 0, (phiUp > this.phiToURCorner && phiUp < this.phiToULCorner) ? maxQy / Math.tan(phiUp) : maxQx,
-                (phiUp > this.phiToURCorner && phiUp < this.phiToULCorner) ? maxQy : maxQx * Math.tan(phiUp), "orange"));
+            shapes.push(makeShape('line', 0, 0, (phiUp > this.phiToURCorner && phiUp < this.phiToULCorner) ? this.maxQy / Math.tan(phiUp) : this.maxQx,
+                (phiUp > this.phiToURCorner && phiUp < this.phiToULCorner) ? this.maxQy : this.maxQx * Math.tan(phiUp), "orange"));
             // Bottom of sector
-            shapes.push(makeShape('line', 0, 0, (phiDown > this.phiToURCorner && phiDown < this.phiToULCorner) ? maxQy / Math.tan(phiDown) : maxQx,
-                (phiDown > this.phiToURCorner && phiDown < this.phiToULCorner) ? maxQy : maxQx * Math.tan(phiDown), "orange"));
+            shapes.push(makeShape('line', 0, 0, (phiDown > this.phiToURCorner && phiDown < this.phiToULCorner) ? this.maxQy / Math.tan(phiDown) : this.maxQx,
+                (phiDown > this.phiToURCorner && phiDown < this.phiToULCorner) ? this.maxQy : this.maxQx * Math.tan(phiDown), "orange"));
         }
         if (detector == "both" || detector == "left") {
             // Center of sector
-            shapes.push(makeShape('line', 0, 0, (phiPi > this.phiToLLCorner && phiPi < this.phiToLRCorner) ? minQy / Math.tan(phiPi) : minQx,
-                (phiPi > this.phiToLLCorner && phiPi < this.phiToLRCorner) ? minQy : minQx * Math.tan(phiPi)));
+            shapes.push(makeShape('line', 0, 0, (phiPi > this.phiToLLCorner && phiPi < this.phiToLRCorner) ? this.minQy / Math.tan(phiPi) : this.minQx,
+                (phiPi > this.phiToLLCorner && phiPi < this.phiToLRCorner) ? this.minQy : this.minQx * Math.tan(phiPi)));
             // Bottom of sector
-            shapes.push(makeShape('line', 0, 0, (phiUpPi > this.phiToLLCorner && phiUpPi < this.phiToLRCorner) ? minQy / Math.tan(phiUpPi) : minQx,
-                (phiUpPi > this.phiToLLCorner && phiUpPi < this.phiToLRCorner) ? minQy : minQx * Math.tan(phiUpPi), "orange"));
+            shapes.push(makeShape('line', 0, 0, (phiUpPi > this.phiToLLCorner && phiUpPi < this.phiToLRCorner) ? this.minQy / Math.tan(phiUpPi) : this.minQx,
+                (phiUpPi > this.phiToLLCorner && phiUpPi < this.phiToLRCorner) ? this.minQy : this.minQx * Math.tan(phiUpPi), "orange"));
             // Top of sector
-            shapes.push(makeShape('line', 0, 0, (phiDownPi > this.phiToLLCorner && phiDownPi < this.phiToLRCorner) ? minQy / Math.tan(phiDownPi) : minQx,
-                (phiDownPi > this.phiToLLCorner && phiDownPi < this.phiToLRCorner) ? minQy : minQx * Math.tan(phiDownPi), "orange"));
+            shapes.push(makeShape('line', 0, 0, (phiDownPi > this.phiToLLCorner && phiDownPi < this.phiToLRCorner) ? this.minQy / Math.tan(phiDownPi) : this.minQx,
+                (phiDownPi > this.phiToLLCorner && phiDownPi < this.phiToLRCorner) ? this.minQy : this.minQx * Math.tan(phiDownPi), "orange"));
         }
         return shapes;
     }
@@ -311,15 +316,4 @@ class Elliptical extends Circular {
         var rho = Math.atan(xVal / yVal) - this.phi;
         return Math.floor(iCircular * Math.sqrt(Math.cos(rho) * Math.cos(rho) + this.aspectRatio * this.aspectRatio * Math.sin(rho) * Math.sin(rho))) + 1;
     }
-}
-
-/********************************************************
- * Static methods
- ********************************************************/
-
-/*
- * Calculate the x or y distance from the beam center of a given pixel
- */
-function calculateDistanceFromBeamCenter(pixelValue, pixelCenter, pixelSize, coeff) {
-    return coeff * Math.tan((pixelValue - pixelCenter) * pixelSize / coeff);
 }

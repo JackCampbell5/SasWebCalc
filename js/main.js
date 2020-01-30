@@ -14,17 +14,16 @@
     averagingNode.onchange = function () {
         selectAveragingMethod(this.value);
     }
-    // Reset frozen values and set current config to default values
-    window.frozenCalculations = [];
-    window.frozenConfigs = {};
-    window.currentConfig = window.defaultConfiguration;
-    window.configNames = [];
     // Restore persistant state on refresh
     restorePersistantState();
 };
 
 function initializeData() {
-    // Initialize data sets
+    window.frozenCalculations = [];
+    window.frozenConfigs = {};
+    window.configNames = [];
+    window.slicer = null;
+    window.currentConfig = window.defaultConfiguration;
     window.qValues = new Array(1).fill(0);
     window.aveIntensity = new Array(1).fill(0);
     window.nCells = new Array(1).fill(0);
@@ -223,44 +222,6 @@ function calculateQRangeSlicer(instrument) {
     var lambda = getWavelength(instrument);
     var apertureOffset = parseFloat(window[instrument + "Constants"]["ApertureOffset"]);
 
-    var averagingParams = getAveragingParams();
-    var params = {};
-    params['phi'] = (Math.PI / 180) * averagingParams[0] + Math.PI / 2;
-    params['dPhi'] = (Math.PI / 180) * averagingParams[1];
-    params['detectorSections'] = averagingParams[2];
-    params['qCenter'] = averagingParams[3];
-    params['qWidth'] = averagingParams[4];
-    params['aspectRatio'] = averagingParams[5];
-    params['lambda'] = lambda;
-    params['xBeamCenter'] = xCenter;
-    params['yBeamCenter'] = yCenter;
-    params['pixelSize'] = parseFloat(window[instrument + "Constants"]["aPixel"]);
-    params['coeff'] = parseFloat(window[instrument + "Constants"]["coeff"]);
-    params['lambdaWidth'] = getWavelengthSpread(instrument);
-    params['guides'] = document.getElementById(instrument + "GuideConfig");
-    params['sourceAperture'] = getSourceAperture(instrument) * 0.5;
-    params['sampleAperture'] = getSampleApertureSize(instrument) * 0.5;
-    params['apertureOffset'] = apertureOffset;
-    params['beamStopSize'] = calculateBeamStopDiameter(instrument) * 2.54;
-    params['SSD'] = calculateSourceToSampleApertureDistance(instrument);
-    params['SDD'] = calculateSampleToDetectorDistance(instrument) + apertureOffset;
-
-    switch (averageType) {
-        case "circular":
-        default:
-            var slicer = new Circular(params);
-            break;
-        case "sector":
-            var slicer = new Sector(params);
-            break;
-        case "rectangular":
-            var slicer = new Rectangular(params);
-            break;
-        case "elliptical":
-            var slicer = new Elliptical(params);
-            break;
-    }
-
     // Detector values pixel size in mm
     var detectorDistance = parseFloat(document.getElementById(instrument + "SDDInputBox").value) * 10;
     window.intensity2D = generateOnesData(instrument);
@@ -277,7 +238,45 @@ function calculateQRangeSlicer(instrument) {
         var thetaY = Math.atan(yDistance / detectorDistance) / 2;
         window.qyValues[i] = (4 * Math.PI / lambda) * Math.sin(thetaY);
     }
-    slicer.calculate();
+
+    var averagingParams = getAveragingParams();
+    var params = {};
+    params['phi'] = (Math.PI / 180) * averagingParams[0];
+    params['dPhi'] = (Math.PI / 180) * averagingParams[1];
+    params['detectorSections'] = averagingParams[2];
+    params['qCenter'] = averagingParams[3];
+    params['qWidth'] = averagingParams[4];
+    params['aspectRatio'] = averagingParams[5];
+    params['lambda'] = lambda;
+    params['xBeamCenter'] = xCenter;
+    params['yBeamCenter'] = yCenter;
+    params['pixelSize'] = parseFloat(window[instrument + "Constants"]["aPixel"]);
+    params['coeff'] = parseFloat(window[instrument + "Constants"]["coeff"]);
+    params['lambdaWidth'] = getWavelengthSpread(instrument);
+    params['guides'] = document.getElementById(instrument + "GuideConfig").value;
+    params['sourceAperture'] = getSourceAperture(instrument) * 0.5;
+    params['sampleAperture'] = getSampleApertureSize(instrument) * 0.5;
+    params['apertureOffset'] = apertureOffset;
+    params['beamStopSize'] = calculateBeamStopDiameter(instrument) * 2.54;
+    params['SSD'] = calculateSourceToSampleApertureDistance(instrument);
+    params['SDD'] = calculateSampleToDetectorDistance(instrument);
+
+    switch (averageType) {
+        case "circular":
+        default:
+            window.slicer = new Circular(params);
+            break;
+        case "sector":
+            window.slicer = new Sector(params);
+            break;
+        case "rectangular":
+            window.slicer = new Rectangular(params);
+            break;
+        case "elliptical":
+            window.slicer = new Elliptical(params);
+            break;
+    }
+    window.slicer.calculate();
 }
 
 /*
