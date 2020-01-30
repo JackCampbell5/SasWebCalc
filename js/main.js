@@ -53,7 +53,7 @@ function SASCALC(instrument) {
     // Calculate the number of attenuators
     calculateNumberOfAttenuators(instrument);
     // Do Circular Average of an array of 1s
-    calculateQRange(instrument);
+    calculateQRangeSlicer(instrument);
     calculateMinimumAndMaximumQ(instrument);
     // Do Circular Average of an array of 1s
     calculateModel();
@@ -232,7 +232,10 @@ function calculateQRangeSlicer(instrument) {
     params['qWidth'] = averagingParams[4];
     params['aspectRatio'] = averagingParams[5];
     params['lambda'] = lambda;
+    params['xBeamCenter'] = xCenter;
+    params['yBeamCenter'] = yCenter;
     params['pixelSize'] = parseFloat(window[instrument + "Constants"]["aPixel"]);
+    params['coeff'] = parseFloat(window[instrument + "Constants"]["coeff"]);
     params['lambdaWidth'] = getWavelengthSpread(instrument);
     params['guides'] = document.getElementById(instrument + "GuideConfig");
     params['sourceAperture'] = getSourceAperture(instrument) * 0.5;
@@ -261,15 +264,18 @@ function calculateQRangeSlicer(instrument) {
     // Detector values pixel size in mm
     var detectorDistance = parseFloat(document.getElementById(instrument + "SDDInputBox").value) * 10;
     window.intensity2D = generateOnesData(instrument);
+    window.mask = generateStandardMask(instrument);
 
     // Calculate Qx and Qy values
-    for (var i = 2; i < xPixels - 2; i++) {
+    for (var i = 0; i < xPixels; i++) {
         var xDistance = calculateDistanceFromBeamCenter(i, xCenter, pixelSize, coeff);
         var thetaX = Math.atan(xDistance / detectorDistance) / 2;
-        window.qxValues.push((4 * Math.PI / lambda) * Math.sin(thetaX));
+        window.qxValues[i] = (4 * Math.PI / lambda) * Math.sin(thetaX);
+    }
+    for (var i = 0; i < yPixels; i++) {
         yDistance = calculateDistanceFromBeamCenter(i, yCenter, pixelSize, coeff);
         var thetaY = Math.atan(yDistance / detectorDistance) / 2;
-        window.qyValues.push((4 * Math.PI / lambda) * Math.sin(thetaY));
+        window.qyValues[i] = (4 * Math.PI / lambda) * Math.sin(thetaY);
     }
     slicer.calculate();
 }

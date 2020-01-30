@@ -30,6 +30,9 @@ class Slicer {
         this.SSD = (params['SSD'] === undefined) ? 1627 : parseFloat(params['SSD']);
         this.SDD = (params['SDD'] === undefined) ? 1530 : parseFloat(params['SDD']);
         this.pixelSize = (params['pixelSize'] === undefined) ? 5.08 : parseFloat(params['pixelSize']);
+        this.coeff = (params['coeff'] === undefined) ? 10000 : parseFloat(params['coeff']);
+        this.xBeamCenter = (params['xBeamCenter'] === undefined) ? 64.5 : parseFloat(params['xBeamCenter']);
+        this.yBeamCenter = (params['yBeamCenter'] === undefined) ? 64.5 : parseFloat(params['yBeamCenter']);
         // Calculated parameters
         this.phiUpper = phi - dPhi;
         this.phiLower = phi + dPhi;
@@ -42,55 +45,74 @@ class Slicer {
     }
 
     calculate() {
-        var tempQArray = [];
-        var tempIMap = {};
-        var tempDSQMap = {};
-        var tempNCellsMap = {};
+        var nq = 0;
         var largeNumber = 1.0;
+        var radiusCenter = 100;
         var data = window.intensity2D;
         var dataI = new Array();
+        var maskI = new Array();
+        var numDimensions = 1;
+        var center = 1;
 
         for (var i = 0; i < this.qxVals.length; i++) {
             var qxVal = this.qxVals[i];
+            var xDistance = calculateDistanceFromBeamCenter(i, this.xBeamCenter, this.pixelSize, this.coeff);
+            maskI = window.mask[i];
             dataI = data[i];
             for (var j = 0; j < this.qyVals.length; j++) {
-                var qyVal = this.qyVals[j];
-                var dataPixel = dataI[j];
-                if (this.includePixel(qxVal, qyVal)) {
-                    var qCurrent = Math.round(this.calculateQ(qxVal, qyVal) * 10000) / 10000;
-                    tempQArray.push(qCurrent);
-                    tempIMap[qCurrent] = (qCurrent in tempIMap) ? tempIMap[qCurrent] + dataPixel : dataPixel;
-                    tempDSQMap[qCurrent] = (qCurrent in tempDSQMap) ? tempDSQMap[qCurrent] + dataPixel * dataPixel : dataPixel * dataPixel;
-                    tempNCellsMap[qCurrent] = (qCurrent in tempNCellsMap) ? tempNCellsMap[qCurrent] + 1 : 1;
+                if (this.includePixel(qxVal, qyVal, maskI[j])) {
+                    var qyVal = this.qyVals[j];
+                    var yDistance = calculateDistanceFromBeamCenter(j, this.yBeamCenter, this.pixelSize, this.coeff);
+                    var dataPixel = dataI[j];
+                    var totalDistance = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
+                    // Break pixels up into a 3x3 grid close to the beam center
+                    if (totalDistance > radiusCenter) {
+                        numDimensions = 1;
+                        center = 1;
+                    } else {
+                        numDimensions = 3;
+                        center = 2;
+                    }
+                   var numDSquared = numDimensions * numDimensions;
+                    // Loop over sliced pixels
+                    for (var k = 1; k <= numDimensions; k++) {
+                        var correctedDx = xDistance + (k - center) * this.pixelSize / numDimensions;
+                        for (var l = 1; l <= numDimensions; l++) {
+                            var correctedDy = yDistance + (l - center) * this.pixelSize / numDimensions;
+                            var iRadius = this.getIRadius(correctedDx, correctedDy);
+                            nq = (iRadius > nq) ? iRadius : nq;
+                            window.aveIntensity[iRadius] += dataPixel / numDSquared;
+                            window.dSQ[iRadius] += dataPixel * dataPixel / numDSquared;
+                            window.nCells[iRadius] += 1 / numDSquared;
+                        }
+                    }
                 }
             }
         }
-        var sortedQValues = [...new Set(tempQArray)];
-        sortedQValues.sort(function (a, b) { return a - b });
-        var k = 0;
-        for (var i = 0; i < sortedQValues.length; i += 30) {
-            var qValue = sortedQValues[i];
-            window.qValues[k] = qValue;
-            window.aveIntensity[k] = tempIMap[qValue];
-            window.dSQ[k] = tempDSQMap[qValue];
-            window.nCells[k] = tempNCellsMap[qValue];
-            if (window.nCells[k] <= 1) {
-                window.aveIntensity[k] = (window.nCells[k] == 0 || Number.isNaN(window.nCells[k])) ? 0 : window.aveIntensity[k] / window.nCells[k];
-                window.sigmaAve[k] = largeNumber;
+        for (var i = 0; i < nq; i++) {
+            this.calculateQ(i);
+            if (window.nCells[i] <= 1) {
+                window.aveIntensity[i] = (window.nCells[i] == 0 || Number.isNaN(window.nCells[i])) ? 0 : window.aveIntensity[i] / window.nCells[i];
+                window.sigmaAve[i] = largeNumber;
             } else {
-                window.aveIntensity[k] = window.aveIntensity[k] / window.nCells[k];
-                var aveSQ = window.aveIntensity[k] * window.aveIntensity[k];
-                var aveisq = window.dSQ[k] / window.nCells[k];
+                window.aveIntensity[i] = window.aveIntensity[i] / window.nCells[i];
+                var aveSQ = window.aveIntensity[i] * window.aveIntensity[i];
+                var aveisq = window.dSQ[i] / window.nCells[i];
                 var diff = aveisq - aveSQ;
-                window.sigmaAve[k] = (diff < 0) ? largeNumber : Math.sqrt(diff / (window.nCells[k] - 1));
+                window.sigmaAve[i] = (diff < 0) ? largeNumber : Math.sqrt(diff / (window.nCells[i] - 1));
             }
-            this.calculateResolution(k);
-            k++;
+            this.calculateResolution(i);
         }
     }
 
-    calculateQ(qxVal, qyVal) {
-        return Math.sqrt(qxVal * qxVal + qyVal * qyVal);
+    calculateQ(i) {
+        var radius = (2 * i) * this.pixelSize / 2;
+        var theta = Math.atan(radius / this.SDD) / 2;
+        window.qValues[i] = (4 * Math.PI / this.lambda) * Math.sin(theta);
+    }
+
+    getIRadius(xVal, yVal) {
+        return Math.floor(Math.sqrt(xVal * xVal + yVal * yVal) / this.pixelSize);
     }
 
     calculateResolution(i) {
@@ -141,8 +163,8 @@ class Slicer {
         window.fSubs[i] = fSubS;
     }
 
-    includePixel(xVal, yVal) {
-        return true;
+    includePixel(xVal, yVal, mask) {
+        return (mask === 0);
     }
 
     createPlot() {
@@ -167,7 +189,7 @@ class Sector extends Slicer {
         super(params);
     }
 
-    includePixel(xVal, yVal) {
+    includePixel(xVal, yVal, mask) {
         var pixelAngle = Math.atan(Math.abs(yVal) / Math.abs(xVal));
         var isCorrectAngle = (pixelAngle > this.phiLower) && (pixelAngle < this.phiUpper);
         var isCorrectAngleMirror = (pixelAngle > this.phiLower) && (pixelAngle < this.phiUpper);
@@ -231,7 +253,7 @@ class Rectangular extends Slicer {
         return super.calculateQ(theta);
     }
 
-    includePixel(xVal, yVal) {
+    includePixel(xVal, yVal, mask) {
         var correctedRadius = Math.sqrt(xVal * xVal + yVal * yVal);
         var dotProduct = (xVal * this.phiX + yVal * this.phiY) / correctedRadius;
         var dPhiPixel = Math.acos(dotProduct);
@@ -289,4 +311,15 @@ class Elliptical extends Circular {
         var rho = Math.atan(xVal / yVal) - this.phi;
         return Math.floor(iCircular * Math.sqrt(Math.cos(rho) * Math.cos(rho) + this.aspectRatio * this.aspectRatio * Math.sin(rho) * Math.sin(rho))) + 1;
     }
+}
+
+/********************************************************
+ * Static methods
+ ********************************************************/
+
+/*
+ * Calculate the x or y distance from the beam center of a given pixel
+ */
+function calculateDistanceFromBeamCenter(pixelValue, pixelCenter, pixelSize, coeff) {
+    return coeff * Math.tan((pixelValue - pixelCenter) * pixelSize / coeff);
 }
