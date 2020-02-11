@@ -25,7 +25,7 @@ window.averagingInputs = {
     "circular": [],
     "sector": ["phi", "dPhi", "detectorSections"],
     "annular": ["qCenter", "qWidth"],
-    "rectangular": ["qWidth", "detectorSections"],
+    "rectangular": ["qWidth", "phi", "detectorSections"],
     "elliptical": ["phi", "aspectRatio", "detectorSections"]
 }
 

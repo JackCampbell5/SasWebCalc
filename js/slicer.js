@@ -195,11 +195,10 @@ class Circular extends Slicer{
 class Sector extends Slicer {
 
     includePixel(xVal, yVal, mask) {
-        var pixelAngle = Math.atan(Math.abs(yVal) / Math.abs(xVal));
+        var pixelAngle = Math.atan(yVal / xVal);
         var isCorrectAngle = (pixelAngle > this.phiLower) && (pixelAngle < this.phiUpper);
-        var isCorrectAngleMirror = (pixelAngle > this.phiLower) && (pixelAngle < this.phiUpper);
         var forward = (isCorrectAngle && xVal > 0);
-        var mirror = (isCorrectAngleMirror && xVal < 0);
+        var mirror = (isCorrectAngle && xVal < 0);
         var both = (this.detectorSections == "both" && (mirror || forward));
         var left = (this.detectorSections == "left" && mirror);
         var right = (this.detectorSections == "right" && forward);
@@ -265,34 +264,35 @@ class Rectangular extends Slicer {
         var dPerpendicular = correctedRadius * Math.sin(dPhiPixel);
         var a = (dPerpendicular <= 0.5 * this.qWidth * this.pixelSize);
         var b = (this.detectorSections == "both");
-        var c = (this.detectorSections == "left" && mirror);
-        var d = (this.detectorSections == "right" && forward);
-        return  a && (b || c || d);
+        var c = (this.detectorSections == "left" && dotProduct >= 0);
+        var d = (this.detectorSections == "right" && dotProduct < 0);
+        return  a && (b || c || d) && (mask === 0);
     }
 
     createPlot() {
         var shapes = super.createPlot();
-        if (detector == "both" || detector == "right") {
+        var phiPi = this.phi + math.PI;
+        var deltax = isFinite(this.qWidth / (2 * Math.sin(this.phi))) ? this.qWidth / (2 * Math.sin(this.phi)) : 0;
+        var deltay = isFinite(this.qWidth / (2 * Math.cos(this.phi))) ? this.qWidth / (2 * Math.cos(this.phi)) : 0;
+        var mainInUpper = (this.phi > this.phiToURCorner && this.phi < this.phiToULCorner);
+        var mainInLower = (phiPi > this.phiToLLCorner && phiPi < this.phiToLRCorner);
+        var mainQxRight = mainInUpper ? this.maxQy / Math.tan(this.phi) : this.maxQx;
+        var mainQxLeft = mainInLower ? this.minQy / Math.tan(this.phi) : this.minQx;
+        var mainQyRight = mainInUpper ? this.maxQy : this.maxQx * Math.tan(this.phi);
+        var mainQyLeft = mainInLower ? this.minQy : this.minQx * Math.tan(this.phi);
+        if (this.detectorSections == "both" || this.detectorSections == "right") {
             // Center of rectangle
-            shapes.push(makeShape('line', 0, 0, (phi > this.phiToURCorner && phi < this.phiToULCorner) ? maxQy / Math.tan(phi) : maxQx,
-                (phi > this.phiToURCorner && phi < this.phiToULCorner) ? maxQy : maxQx * Math.tan(phi)));
+            shapes.push(makeShape('line', 0, 0, mainQxRight, mainQyRight));
             // Top of rectangle
-            shapes.push(makeShape('line', 0, this.qWidth / 2, (phiUp > this.phiToURCorner && phiUp < this.phiToULCorner) ? maxQy / Math.tan(phiUp) : maxQx,
-                (phiUp > this.phiToURCorner && phiUp < this.phiToULCorner) ? maxQy : maxQx * Math.tan(phiUp), "orange"));
+            shapes.push(makeShape('line', 0, deltay, (mainQyRight + deltay > this.maxQy) ? this.maxQx : mainQxRight + deltax,
+                (mainQxRight + deltax > this.maxQx) ? mainQyRight + deltay : this.maxQy, "orange"));
             // Bottom of rectangle
-            shapes.push(makeShape('line', 0, -1 * this.qWidth / 2, (phiDown > this.phiToURCorner && phiDown < this.phiToULCorner) ? maxQy / Math.tan(phiDown) : maxQx,
-                (phiDown > this.phiToURCorner && phiDown < this.phiToULCorner) ? maxQy : maxQx * Math.tan(phiDown), "orange"));
+            shapes.push(makeShape('line', 0, -1 * deltay, (mainQxRight + deltax > this.maxQx) ? this.maxQx : mainQxRight - deltax,
+                (mainQyRight - deltay > this.maxQy) ? this.maxQy : mainQyRight - deltay, "orange"));
         }
-        if (detector == "both" || detector == "left") {
+        if (this.detectorSections == "both" || this.detectorSections == "left") {
             // Center of rectangle
-            shapes.push(makeShape('line', 0, 0, (phiPi > this.phiToLLCorner && phiPi < this.phiToLRCorner) ? minQy / Math.tan(phiPi) : minQx,
-                (phiPi > this.phiToLLCorner && phiPi < this.phiToLRCorner) ? minQy : minQx * Math.tan(phiPi)));
-            // Bottom of sector
-            shapes.push(makeShape('line', 0, this.qWidth / 2, (phiUpPi > this.phiToLLCorner && phiUpPi < this.phiToLRCorner) ? minQy / Math.tan(phiUpPi) : minQx,
-                (phiUpPi > this.phiToLLCorner && phiUpPi < this.phiToLRCorner) ? minQy : minQx * Math.tan(phiUpPi), "orange"));
-            // Top of sector
-            shapes.push(makeShape('line', 0, 1 * this.qWidth / 2, (phiDownPi > this.phiToLLCorner && phiDownPi < this.phiToLRCorner) ? minQy / Math.tan(phiDownPi) : minQx,
-                (phiDownPi > this.phiToLLCorner && phiDownPi < this.phiToLRCorner) ? minQy : minQx * Math.tan(phiDownPi), "orange"));
+            shapes.push(makeShape('line', 0, 0, mainQxLeft, mainQyLeft));
         }
         return shapes;
     }
