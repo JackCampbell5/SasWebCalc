@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/drupal_header.css" />
     <link rel="stylesheet" href="css/default.css" />
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/brython/3.8.7/brython.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/6.2.2/math.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ice/3.7.1/Ice.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ice/3.7.1/Glacier2.min.js"></script>
@@ -45,7 +46,7 @@
     TODO: Copy https://ncnr.nist.gov/staff/kkrycka/webcalc/calculate.html work into model selector
 -->
 
-<body onload="loadpage()">
+<body onload="loadpage(); brython();">
     <header class="top">
         <div class="section-header">
             <div class="section-header__main">
@@ -70,15 +71,15 @@
                         <label id="modelLabel" for="model" style="display: none">Model: </label>
                         <select id="model" style="display: none">
                             <option value="debye" selected>Debye</option>
-                            <option value="sphere" selected>Sphere</option>
+                            <option value="sphere">Sphere</option>
                         </select>
                         <label id="averagingTypeLabel" for="averagingType" style="display: none">Averaging Method: </label>
                         <select id="averagingType" style="display: none">
                             <option value="circular" selected>Circular</option>
                             <option value="sector">Sector</option>
+                            <option value="rectangular">Rectangular</option>
                             <!--
     <option value="annular">Annular</option>
-    <option value="rectangular">Rectangular</option>
     <option value="elliptical">Elliptical</option>
     -->
                         </select>
