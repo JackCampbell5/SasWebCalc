@@ -43,17 +43,21 @@ function initializeData() {
 function SASCALC(instrument) {
     // Initialize data sets
     initializeData();
-    // Calculate the beam stop diameter
-    calculateBeamStopDiameter(instrument);
-    // Calculate the estimated beam flux
-    calculateBeamFlux(instrument);
-    // Calculate the figure of merit
-    calculateFigureOfMerit(instrument);
-    // Calculate the number of attenuators
-    calculateNumberOfAttenuators(instrument);
-    // Do Circular Average of an array of 1s
-    calculateQRangeSlicer(instrument);
-    calculateMinimumAndMaximumQ(instrument);
+    if (instrument == 'qrange') {
+        // TODO: generate 1D and 2D data for a given q-range
+    } else {
+        // Calculate the beam stop diameter
+        calculateBeamStopDiameter(instrument);
+        // Calculate the estimated beam flux
+        calculateBeamFlux(instrument);
+        // Calculate the figure of merit
+        calculateFigureOfMerit(instrument);
+        // Calculate the number of attenuators
+        calculateNumberOfAttenuators(instrument);
+        // Do Circular Average of an array of 1s
+        calculateQRangeSlicer(instrument);
+        calculateMinimumAndMaximumQ(instrument);
+    }
     // Do Circular Average of an array of 1s
     calculateModel();
     // Update the charts

@@ -38,6 +38,7 @@
     <script src="js/slicer.js"></script>
     <script src="js/models.js"></script>
     <script src="js/main.js"></script>
+    <script src="python/link_to_sasmodels.py" type="text/python"></script>
 </head>
 
 <!--
@@ -62,7 +63,8 @@
                     <div class="instrument-section" title="Choose the instrument you plan to use.">
                         <label for="instrument">Instrument: </label>
                         <select id="instrumentSelector">
-                            <option value="" selected disabled hidden>Choose your instrument</option>
+                            <option value="" selected disabled hidden>Choose your setting</option>
+                            <option value="qrange">User-Defined Q-Range and Resolutions</option>
                             <option value="ngb30">NGB 30m SANS</option>
                             <option value="ng7">NG7 SANS</option>
                             <option value="ngb10">NGB 10m SANS</option>
@@ -79,9 +81,9 @@
                             <option value="sector">Sector</option>
                             <option value="rectangular">Rectangular</option>
                             <!--
-    <option value="annular">Annular</option>
-    <option value="elliptical">Elliptical</option>
-    -->
+            <option value="annular">Annular</option>
+            <option value="elliptical">Elliptical</option>
+            -->
                         </select>
                     </div>
                     <h3 id="averagingAndModelHeading" style="display: none">Averaging and Model Parameters:</h3>
@@ -427,6 +429,50 @@
                             <input type="number" id="ngb10MaximumVerticalQ" class="fixed-width-input" disabled />
                             <label for="ngb10MaximumHorizontalQ">Maximum Horizontal Q (&#8491;<sup>-1</sup>):</label>
                             <input type="number" id="ngb10MaximumHorizontalQ" class="fixed-width-input" disabled />
+                        </div>
+                    </div>
+
+                    <!-- User-Defined Parameters -->
+                    <div id="qrange" style="display: none">
+                        <h3>Neutron Wavelength:</h3>
+                        <div id="qrangeWavelength" class="instrument-section">
+                            <label for="qrangeWavelengthInput">&lambda; (&#8491;): </label>
+                            <input type="number" id="qrangeWavelengthInput" title="" />
+                            <label for="qrangeWavelengthSpread">&Delta;&lambda;/&lambda; (%)</label>
+                            <input type="number" id="qrangeWavelengthSpread" title="" />
+                            <label for="qrangeBeamFlux">Beam Flux (n-cm<sup>-1</sup>-sec<sup>-1</sup>):</label>
+                            <input type="number" id="qrangeBeamFlux" class="fixed-width-input"/>
+                            <label for="qrangeFigureOfMerit">Figure of Merit:</label>
+                            <input type="number" id="qrangeFigureOfMerit" class="fixed-width-input" disabled />
+                        </div>
+                        <h3>Collimation:</h3>
+                        <div id="qrangeCollimation" class="instrument-section">
+                            <label for="qrangeSourceAperture">Source Aperture: </label>
+                            <input type="number" min="0" id="qrangeSourceAperture"/>
+                            <label for="qrangeSampleAperture" id="qrangeCustomApertureLabel">Aperture Diameter (cm): </label>
+                            <input type="number" min="0" id="qrangeSampleAperture"/>
+                            <label for="qrangeSSD">Source-to-Sample Distance (cm): </label>
+                            <input type="number" id="qrangeSSD" class="fixed-width-input" />
+                        </div>
+                        <h3>Detector Settings:</h3>
+                        <div id="qrangeDetector " class="slidecontainer instrument-section">
+                            <label for="qrangeSDDInputBox">Detector Distance (cm):</label>
+                            <input type="number" id="qrangeSDDInputBox" />
+                            <label for="qrangeOffsetInputBox">Detector Offset (cm):</label>
+                            <input type="number" value="0" id="qrangeOffsetInputBox" />
+                            <label for="qrangeBeamSize">Beam Diameter (cm): </label>
+                            <input type="number" id="qrangeBeamSize" class="fixed-width-input" disabled />
+                        </div>
+                        <h3>Q Range:</h3>
+                        <div id="qrangeQRange" class="instrument-section">
+                            <label for="qrangeMinimumQ">Minimum Q (&#8491;<sup>-1</sup>):</label>
+                            <input type="number" id="qrangeMinimumQ" class="fixed-width-input" />
+                            <label for="qrangeMaximumQ">Maximum Q (&#8491;<sup>-1</sup>):</label>
+                            <input type="number" id="qrangeMaximumQ" class="fixed-width-input" />
+                            <label for="qrangeMaximumVerticalQ">Maximum Vertical Q (&#8491;<sup>-1</sup>):</label>
+                            <input type="number" id="qrangeMaximumVerticalQ" class="fixed-width-input" />
+                            <label for="qrangeMaximumHorizontalQ">Maximum Horizontal Q (&#8491;<sup>-1</sup>):</label>
+                            <input type="number" id="qrangeMaximumHorizontalQ" class="fixed-width-input" />
                         </div>
                     </div>
 
