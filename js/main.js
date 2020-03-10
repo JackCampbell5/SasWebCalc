@@ -823,8 +823,6 @@ function updateInstrument(instrument, runSASCALC=true) {
         averagingType.style.display = "inline-block";
         var averagingTypeLabel = document.getElementById("averagingTypeLabel");
         averagingTypeLabel.style.display = "inline-block";
-        var averagingAndModelHeadingNode = document.getElementById("averagingAndModelHeading");
-        averagingAndModelHeadingNode.style.display = "block";
         selectAveragingMethod(averagingType.value, false);
         try {
             populatePageDynamically(instrument);
