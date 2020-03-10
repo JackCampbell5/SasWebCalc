@@ -1,7 +1,7 @@
 ﻿/*
  * General NICE connection scheme using a callback function
  */
-async function connectToNice(callback = null, persistConnection = false) {
+async function connectToNice(callback = null, server="", persistConnection = false) {
     var router_spec = "NiceGlacier2/router:ws -p <port> -h <host>";
     try {
         var nice_connection = new NiceConnection();
@@ -9,7 +9,11 @@ async function connectToNice(callback = null, persistConnection = false) {
         console.error(error);
         return null;
     }
-    let hostname = document.getElementById("serverName").value;
+    if (server == "") {
+        let hostname = document.getElementById("serverName").value;
+    } else {
+        let hostname = server;
+    }
     let username = "user";
     let password = "";
     let port = "9999";
