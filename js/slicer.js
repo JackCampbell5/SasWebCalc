@@ -80,10 +80,11 @@ class Slicer {
                         for (var l = 1; l <= numDimensions; l++) {
                             var correctedDy = yDistance + (l - center) * this.pixelSize / numDimensions;
                             var iRadius = this.getIRadius(correctedDx, correctedDy);
+                            var irMinus1 = iRadius - 1;
                             nq = (iRadius > nq) ? iRadius : nq;
-                            window.aveIntensity[iRadius] = (window.aveIntensity[iRadius] === undefined) ? dataPixel / numDSquared : window.aveIntensity[iRadius] + dataPixel / numDSquared;
-                            window.dSQ[iRadius] = (window.dSQ[iRadius] === undefined) ? dataPixel * dataPixel / numDSquared : window.dSQ[iRadius] + dataPixel * dataPixel / numDSquared;
-                            window.nCells[iRadius] = (window.nCells[iRadius] === undefined) ? 1 / numDSquared : window.nCells[iRadius] + 1 / numDSquared;
+                            window.aveIntensity[irMinus1] = (window.aveIntensity[irMinus1] === undefined) ? dataPixel / numDSquared : window.aveIntensity[irMinus1] + dataPixel / numDSquared;
+                            window.dSQ[irMinus1] = (window.dSQ[irMinus1] === undefined) ? dataPixel * dataPixel / numDSquared : window.dSQ[irMinus1] + dataPixel * dataPixel / numDSquared;
+                            window.nCells[irMinus1] = (window.nCells[irMinus1] === undefined) ? 1 / numDSquared : window.nCells[irMinus1] + 1 / numDSquared;
                         }
                     }
                 }
