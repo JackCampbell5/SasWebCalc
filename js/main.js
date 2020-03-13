@@ -220,14 +220,14 @@ function calculateQRangeSlicer(instrument) {
     var yPixels = parseInt(window[instrument + "Constants"]["yPixels"]);
     var xCenter = calculateXBeamCenter(instrument);
     var yCenter = yPixels / 2 + 0.5;
-    var pixelSize = parseFloat(window[instrument + "Constants"]["aPixel"]);
+    var pixelSize = window[instrument + "Constants"]["aPixel"];
     var coeff = parseFloat(window[instrument + "Constants"]["coeff"]);
     var averageType = document.getElementById("averagingType").value;
     var lambda = getWavelength(instrument);
     var apertureOffset = parseFloat(window[instrument + "Constants"]["ApertureOffset"]);
 
     // Detector values pixel size in mm
-    var detectorDistance = parseFloat(document.getElementById(instrument + "SDDInputBox").value) * 10;
+    var detectorDistance = parseFloat(document.getElementById(instrument + "SDDInputBox").value);
     window.intensity2D = generateOnesData(instrument);
     window.mask = generateStandardMask(instrument);
 
@@ -245,23 +245,23 @@ function calculateQRangeSlicer(instrument) {
 
     var averagingParams = getAveragingParams();
     var params = {};
-    params['phi'] = (Math.PI / 180) * averagingParams[0];
-    params['dPhi'] = (Math.PI / 180) * averagingParams[1];
+    params['phi'] = math.unit((Math.PI / 180) * averagingParams[0], 'rad');
+    params['dPhi'] = math.unit((Math.PI / 180) * averagingParams[1], 'rad');
     params['detectorSections'] = averagingParams[2];
     params['qCenter'] = averagingParams[3];
     params['qWidth'] = averagingParams[4];
     params['aspectRatio'] = averagingParams[5];
-    params['lambda'] = lambda;
+    params['lambda'] = math.unit(lambda, 'angstrom');
     params['xBeamCenter'] = xCenter;
     params['yBeamCenter'] = yCenter;
-    params['pixelSize'] = parseFloat(window[instrument + "Constants"]["aPixel"]);
+    params['pixelSize'] = math.unit(parseFloat(window[instrument + "Constants"]["aPixel"]), 'mm');
     params['coeff'] = parseFloat(window[instrument + "Constants"]["coeff"]);
     params['lambdaWidth'] = getWavelengthSpread(instrument);
     params['guides'] = document.getElementById(instrument + "GuideConfig").value;
     params['sourceAperture'] = getSourceAperture(instrument) * 0.5;
     params['sampleAperture'] = getSampleApertureSize(instrument) * 0.5;
-    params['apertureOffset'] = apertureOffset;
-    params['beamStopSize'] = calculateBeamStopDiameter(instrument) * 2.54;
+    params['apertureOffset'] = math.unit(apertureOffset, 'cm');
+    params['beamStopSize'] = calculateBeamStopDiameter(instrument);
     params['SSD'] = calculateSourceToSampleApertureDistance(instrument);
     params['SDD'] = calculateSampleToDetectorDistance(instrument);
 
@@ -599,7 +599,7 @@ function calculateBeamStopDiameter(instrument) {
         bsDiam = 1;
     }
     beamStopDiamNode.value = bsDiam;
-    return bsDiam; // Return value is in inches
+    return math.unit(bsDiam, 'inch'); // Return value is in inches
 }
 
 /*
@@ -969,7 +969,7 @@ function selectAveragingMethod(averagingMethod, runSASCALC = true) {
  */
 function getWavelength(instrument) {
     var lambda = parseFloat(document.getElementById(instrument + "WavelengthInput").value);
-    return lambda;
+    return math.unit(lambda, 'angstrom');
 }
 function getWavelengthSpread(instrument) {
     var wavelengthSpread = parseFloat(document.getElementById(instrument + "WavelengthSpread").value);
@@ -981,7 +981,7 @@ function getAttenuators(instrument) {
 }
 function getSourceAperture(instrument) {
     var sourceAperture = parseFloat(document.getElementById(instrument + "SourceAperture").value);
-    return sourceAperture;
+    return math.unit(sourceAperture, 'cm');
 }
 function getSampleApertureSize(instrument) {
     var sampleApertureRawValue = document.getElementById(instrument + 'SampleAperture').value;
@@ -992,7 +992,7 @@ function getSampleApertureSize(instrument) {
         // Default values in inches - convert to cm for calculations 
         sampleApertureCalculations = parseFloat(sampleApertureRawValue) * 2.54;
     }
-    return sampleApertureCalculations;
+    return math.unit(sampleApertureCalculations, 'cm');
 }
 function getNumberOfGuides(instrument) {
     var guides = document.getElementById(instrument + 'GuideConfig').value;
