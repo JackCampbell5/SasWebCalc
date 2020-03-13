@@ -10,9 +10,9 @@ async function connectToNice(callback = null, server="", persistConnection = fal
         return null;
     }
     if (server == "") {
-        let hostname = document.getElementById("serverName").value;
+        var hostname = document.getElementById("serverName").value;
     } else {
-        let hostname = server;
+        var hostname = server;
     }
     let username = "user";
     let password = "";
