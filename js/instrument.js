@@ -1,23 +1,37 @@
 ﻿const MAX_RPM = 5600;
 
+function loadInstrumentClass() {
+    var instrumentNode = document.getElementById('instrumentSelector');
+    instrumentNode.onchange = function () {
+        loadInstrument(this.value);
+    }
+}
+
+function loadInstrument(instrument) {
+    switch (instrument) {
+        case 'ng7':
+            window.currentInstrument = new NG7SANS();
+            break;
+    };
+}
+
 
 /*
  * Base pseudo-abstract class all instruments should derive from
  */
 class Instrument {
-    // Name of the instrument
-    static instrumentName = "";
     // IP or name of the server for NICE API connections
     static hostname = "";
     // Is the instrument a real peice of hardware?
     static isReal = false;
     // Unit of percent - used in wavelength spread values
-    static percent = math.createUnit('percent', { definition: 1e-02, aliases: ['%', 'pct'] });
+    static percent = math.createUnit('percent', { definition: 1e-02, aliases: ['pct'] });
 
-    constructor() {
+    constructor(instrumentName = "") {
         // DeviceNodeMaps as returned from the instrument - default to null
         this.staticDeviceNodeMap = null;
         this.mutableDeviceNodeMap = null;
+        this.instrumentName = instrumentName;
         // Initialize instrument object
         this.loadDefaults();
         this.createPageNodeMap();
@@ -104,6 +118,12 @@ class Instrument {
         } catch (err) {
             console.warn('Unable to connect to remote server: {$this.hostname}');
         }
+        for (nodeName in this.staticDeviceNodeMap) {
+            console.log(nodeName + ": " + this.staticDeviceNodeMap[nodeName]);
+        }
+        for (nodeName in this.mutableDeviceNodeMap) {
+            console.log(nodeName + ": " + this.mutableDeviceNodeMap[nodeName]);
+        }
     }
 }
 
@@ -112,13 +132,17 @@ class NG7SANS extends Instrument {
     static instrumentName = "ng7";
     static hostname = "ng7sans.ncnr.nist.gov";
     static isReal = true;
+
+    constructor() {
+        super(NG7SANS.instrumentName);
+    }
     
     loadDefaults() {
         // Sample space
         this.sampleTableDefault = "Chamber";
         this.sampleTableOptions = {
-            "Chamber": { offset: math.unit(0, 'cm') },
-            "Huber": { offset: math.unit(54.8, 'cm') }
+            "Chamber": { offset: math.unit(0, 'cm'), apertureOffset: math.unit(5.0, 'cm'), },
+            "Huber": { offset: math.unit(54.8, 'cm'), apertureOffset: math.unit(5.0, 'cm'), },
         };
         // Wavelength
         this.wavelengthOptions = {
@@ -130,45 +154,50 @@ class NG7SANS extends Instrument {
             spreads: {
                 '9.7': {
                     constants: [13000, 0.560],
-                    value: math.unit(9.7, '%'),
+                    value: math.unit(9.7, 'pct'),
                     range: [],
                 },
                 '13.9': {
                     constants: [16000, 0.950],
-                    value: math.unit(13.9, '%'),
+                    value: math.unit(13.9, 'pct'),
                     range: [],
                     defaultTilt: true,
                 },
                 '15.0': {
                     constants: [19000, 0.950],
-                    value: math.unit(15.0, '%'),
+                    value: math.unit(15.0, 'pct'),
                     range: [],
                 },
                 '25.7': {
                     constants: [25000, 1.6],
-                    value: math.unit(25.7, '%'),
+                    value: math.unit(25.7, 'pct'),
                     range: [],
                 },
             },
-        }
+        };
         // Neutron Optics
-        // TODO: Larger dictionary including guide lengths, etc.
-        this.guideOptions = { '0': '0 Guides', '1': '1 Guide', '2': '2 Guides', '3': '3 Guides', '4': '4 Guides', '5': '5 Guides', '6': '6 Guides', '7': '7 Guides', '8': '8 Guides', 'LENS': 'LENS'};
-        this.guideOptionsDefault = '0';
-        this.sourceApertureOptions = { '1.43': math.unit(1.43, 'cm'), '2.54': math.unit(2.54, 'cm'), '3.81': math.unit(3.81, 'cm'), '5.08': math.unit(5.08, 'cm') };
-        this.sourceApertureDefault = '5.08';
-        this.guideToSourceApertureMap = {
-            '0': ['1.43', '2.54', '3.81'],
-            '1': ['5.08'],
-            '2': ['5.08'],
-            '3': ['5.08'],
-            '4': ['5.08'],
-            '5': ['5.08'],
-            '6': ['5.08'],
-            '7': ['5.08'],
-            '8': ['5.08'],
-            'LENS': ['1.43'],
-        }
+        this.collimation = {
+            lengthMaximum: math.unit(1632, 'cm'),
+            lengthPerUnit: math.unit(155, 'cm'),
+            transmissionPerUnit: 0.974,
+            width: math.unit(5.00, 'cm'),
+            height: math.unit(5.00, 'cm'),
+            gapAtStart: math.unit(188, 'cm'),
+            options: {
+                default: '0',
+                apertureDefault: math.unit(1.43, 'cm'),
+                '0': { name: '0 Guides', apertureOptions: [math.unit(1.43, 'cm'), math.unit(2.54, 'cm'), math.unit(3.81, 'cm')], },
+                '1': { name: '1 Guide', apertureOptions: [math.unit(5.08, 'cm')], },
+                '2': { name: '2 Guides', apertureOptions: [math.unit(5.08, 'cm')], },
+                '3': { name: '3 Guides', apertureOptions: [math.unit(5.08, 'cm')], },
+                '4': { name: '4 Guides', apertureOptions: [math.unit(5.08, 'cm')], },
+                '5': { name: '5 Guides', apertureOptions: [math.unit(5.08, 'cm')], },
+                '6': { name: '6 Guides', apertureOptions: [math.unit(5.08, 'cm')], },
+                '7': { name: '7 Guides', apertureOptions: [math.unit(5.08, 'cm')], },
+                '8': { name: '8 Guides', apertureOptions: [math.unit(5.08, 'cm')], },
+                'LENS': { name: 'LENS', apertureOptions: [math.unit(1.43, 'cm')], },
+            },
+        };
         // Detectors
         this.detector = {
             "Ordela2D": {
@@ -182,58 +211,75 @@ class NG7SANS extends Instrument {
                 offsetRange: [math.unit(0, 'cm'), math.unit(25, 'cm')],
                 offsetDefault: math.unit(0, 'cm'),
             }
-        }
-
-        // TODO: Beamstops, flux, attenuators
-
-        // TODO: Finish...
+        };
+        // Beam stops
+        this.beamstop = {
+            1: { size: math.unit(1.0, 'inch'), distanceFromDetector: math.unit(0.0, 'cm'), },
+            2: { size: math.unit(2.0, 'inch'), distanceFromDetector: math.unit(0.0, 'cm'), },
+            3: { size: math.unit(3.0, 'inch'), distanceFromDetector: math.unit(0.0, 'cm'), },
+            4: { size: math.unit(4.0, 'inch'), distanceFromDetector: math.unit(0.0, 'cm'), },
+        };
+        this.bsFactor = 1.05;
+        // Flux constants
+        this.flux = {
+            perPixelMax: math.unit(100, 'Hz'),
+            trans1: 0.63,
+            trans2: 0.70,
+            trans3: 0.75,
+            b: 0.0395,
+            c: 0.0442,
+            peakFlux: math.unit(2.55e15, 'Hz'),
+            peakWavelength: math.unit(5.0, 'angstrom'),
+        };
+        this.attenuation = {
+            thickness: [math.unit(0.125, 'inch'), math.unit(0.250, 'inch'), math.unit(0.375, 'inch'), math.unit(0.500, 'inch'), math.unit(0.625, 'inch'), math.unit(0.750, 'inch'), math.unit(1.00, 'inch'), math.unit(1.25, 'inch'), math.unit(1.50, 'inch'), math.unit(1.75, 'inch')],
+            factors: [0.498, 0.0792, 1.66e-3],
+        };
     }
 
-    async populatePageDynamically() {
-        var nodeMaps = this.getDeviceNodeMaps();
-        var staticNodeMap = nodeMaps[0];
-        var deviceMap = nodeMaps[1];
-
+    populatePageDynamically() {
         // Available wavelength spreads
-        var wavelengthSpreads = staticNodeMap['wavelengthSpread.wavelengthSpread']['permittedValues'];
-        if (wavelengthSpreads != null && typeof wavelengthSpreads[Symbol.iterator] === 'function') {
-            while (this.wavelengthSpreadNode.lastChild) {
-                this.wavelengthSpreadNode.removeChild(this.wavelengthSpreadNode.lastChild);
+        if (this.staticDeviceNodeMap != null) {
+            var wavelengthSpreads = this.staticDeviceNodeMap['wavelengthSpread.wavelengthSpread']['permittedValues'];
+            if (wavelengthSpreads != null && typeof wavelengthSpreads[Symbol.iterator] === 'function') {
+                while (this.wavelengthSpreadNode.lastChild) {
+                    this.wavelengthSpreadNode.removeChild(this.wavelengthSpreadNode.lastChild);
+                }
+                for (var wavelengthSpread in wavelengthSpreads) {
+                    var spread = wavelengthSpreads[wavelengthSpread];
+                    var option = document.createElement("OPTION");
+                    var val = Math.round(1000 * parseFloat(spread.val)) / 10;
+                    option.value = val;
+                    option.appendChild(document.createTextNode(val));
+                    this.wavelengthSpreadNode.appendChild(option);
+                }
             }
-            for (var wavelengthSpread in wavelengthSpreads) {
-                var spread = wavelengthSpreads[wavelengthSpread];
-                var option = document.createElement("OPTION");
-                var val = Math.round(1000 * parseFloat(spread.val)) / 10;
-                option.value = val;
-                option.appendChild(document.createTextNode(val));
-                this.wavelengthSpreadNode.appendChild(option);
+            // TODO: Populate GUIDES, SOURCE APERTURES, and DETECTOR LIMITS
+            var sourceApertures = this.staticDeviceNodeMap['guide.sourceAperture']['permittedValues'];
+            if (length(sourceApertures) > 0) {
+                // Clear the options for source apertures
+                this.sourceApertureOptions = {};
             }
+            for (var aperture in sourceApertures) {
+                var sourceAp = sourceApertures[aperture];
+                this.sourceApertureOptions[sourceAp] = sourceAp + " cm";
+            }
+            var sourceAperturesGuide01 = this.staticDeviceNodeMap['guide01.key']['permittedValues'];
+            var sourceAperturesGuide02 = this.staticDeviceNodeMap['guide02.key']['permittedValues'];
+            var sourceAperturesGuide03 = this.staticDeviceNodeMap['guide03.key']['permittedValues'];
+            var sourceAperturesGuide04 = this.staticDeviceNodeMap['guide04.key']['permittedValues'];
+            var sourceAperturesGuide05 = this.staticDeviceNodeMap['guide05.key']['permittedValues'];
+            var sourceAperturesGuide06 = this.staticDeviceNodeMap['guide06.key']['permittedValues'];
+            var sourceAperturesGuide07 = this.staticDeviceNodeMap['guide07.key']['permittedValues'];
+            var sourceAperturesGuide08 = this.staticDeviceNodeMap['guide08.key']['permittedValues'];
+            var sourceAperturesGuide09 = this.staticDeviceNodeMap['guide09.key']['permittedValues'];
+            var sourceAperturesGuide10 = this.staticDeviceNodeMap['guide10.key']['permittedValues'];
         }
         for (spread in this.wavelengthOptions.spreads) {
-            var constants = spread.constants;
+            var constants = this.wavelengthOptions.spreads[spread].constants;
             var min = (constants[1] + constants[0] / this.wavelengthOptions.max_rpm < this.wavelengthOptions.minimum) ? this.wavelengthOptions.minimum : math.unit(constants[1] + constants[0] / this.wavelengthOptions.max_rpm, 'angstrom');
-            this.wavelengthOptions[spread].constants = [min, this.wavelengthMax];
+            this.wavelengthOptions.spreads[spread].constants = [min, this.wavelengthOptions.maximum];
         }
 
-        // TODO: Populate GUIDES, SOURCE APERTURES, and DETECTOR LIMITS (and wavelength limits?)
-        var sourceApertures = staticNodeMap['guide.sourceAperture']['permittedValues'];
-        if (length(sourceApertures) > 0) {
-            // Clear the options for source apertures
-            this.sourceApertureOptions = {};
-        }
-        for (var aperture in sourceApertures) {
-            var sourceAp = sourceApertures[aperture];
-            this.sourceApertureOptions[sourceAp] = sourceAp + " cm";
-        }
-        var sourceAperturesGuide01 = staticNodeMap['guide01.key']['permittedValues'];
-        var sourceAperturesGuide02 = staticNodeMap['guide02.key']['permittedValues'];
-        var sourceAperturesGuide03 = staticNodeMap['guide03.key']['permittedValues'];
-        var sourceAperturesGuide04 = staticNodeMap['guide04.key']['permittedValues'];
-        var sourceAperturesGuide05 = staticNodeMap['guide05.key']['permittedValues'];
-        var sourceAperturesGuide06 = staticNodeMap['guide06.key']['permittedValues'];
-        var sourceAperturesGuide07 = staticNodeMap['guide07.key']['permittedValues'];
-        var sourceAperturesGuide08 = staticNodeMap['guide08.key']['permittedValues'];
-        var sourceAperturesGuide09 = staticNodeMap['guide09.key']['permittedValues'];
-        var sourceAperturesGuide10 = staticNodeMap['guide10.key']['permittedValues'];
     }
 }
