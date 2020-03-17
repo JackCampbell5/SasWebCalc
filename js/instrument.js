@@ -5,15 +5,31 @@
  * Base pseudo-abstract class all instruments should derive from
  */
 class Instrument {
+    // Name of the instrument
     static instrumentName = "";
+    // IP or name of the server for NICE API connections
     static hostname = "";
+    // Is the instrument a real peice of hardware?
     static isReal = false;
+    // Unit of percent - used in wavelength spread values
     static percent = math.createUnit('percent', { definition: 1e-02, aliases: ['%', 'pct'] });
 
     constructor() {
+        // DeviceNodeMaps as returned from the instrument - default to null
+        this.staticDeviceNodeMap = null;
+        this.mutableDeviceNodeMap = null;
+        // Initialize instrument object
         this.loadDefaults();
-        this.createNodeMap();
+        this.createPageNodeMap();
+        this.getDeviceNodeMaps();
         this.populatePageDynamically();
+    }
+
+    /*
+     * Psuedo-abstract method to initialize constants associated with an instrument
+     */
+    loadDefaults() {
+        throw new TypeError('The abstract loadDefaults() method must be implemented by Instrument sub-classes.');
     }
 
     /*
@@ -24,18 +40,11 @@ class Instrument {
     }
 
     /*
-     * Psuedo-abstract method to create constants associated with the instrument
-     */
-    loadDefaults() {
-        throw new TypeError('The abstract loadDefaults() method must be implemented by Instrument sub-classes.');
-    }
-
-    /*
      * Generic method to point to all nodes on the page associated with the instrument
      * 
-     * Standard SANS instruments (both 30m and 10m) should use this method. 
+     * Standard SANS instruments (both 30m and 10m) should use this method.
      */
-    createNodeMap() {
+    createPageNodeMap() {
         this.instrumentContainer = document.getElementById(this.instrumentName);
         if (this.instrumentContainer != null) {
             this.sampleTableContainer = document.getElementById(this.instrumentName + 'Sample');
@@ -54,9 +63,9 @@ class Instrument {
             this.collimationContainer = document.getElementById(this.instrumentName + 'Collimation');
             if (this.collimationContainer != null) {
                 this.guideConfigNode = document.getElementById(this.instrumentName + 'GuideConfig');
-                this.sourceApNode = document.getElementById(this.instrumentName + 'SourceAperture');
-                this.sampleApNode = document.getElementById(this.instrumentName + 'SampleAperture');
-                this.customApNode = document.getElementById(this.instrumentName + 'CustomAperture');
+                this.sourceApertureNode = document.getElementById(this.instrumentName + 'SourceAperture');
+                this.sampleApertureNode = document.getElementById(this.instrumentName + 'SampleAperture');
+                this.customApertureNode = document.getElementById(this.instrumentName + 'CustomAperture');
                 this.ssdNode = document.getElementById(this.instrumentName + 'SSD');
             }
             this.detectorContainer = document.getElementById(this.instrumentName + 'Detector');
@@ -75,8 +84,8 @@ class Instrument {
             if (this.qRangeContainer != null) {
                 this.qMinNode = document.getElementById(this.instrumentName + 'MinimumQ');
                 this.qMaxNode = document.getElementById(this.instrumentName + 'MaximumQ');
-                this.qMaxVNode = document.getElementById(this.instrumentName + 'MaximumVerticalQ');
-                this.qMaxHNode = document.getElementById(this.instrumentName + 'MaximumHorizontalQ');
+                this.qMaxVerticalNode = document.getElementById(this.instrumentName + 'MaximumVerticalQ');
+                this.qMaxHorizontalNode = document.getElementById(this.instrumentName + 'MaximumHorizontalQ');
             }
         } else {
             throw new TypeError(`Unknown instrument name: {$this.instrumentName}`);
@@ -87,13 +96,14 @@ class Instrument {
      * Get the static and active device node maps from the instrument computer
      */
     async getDeviceNodeMaps() {
-        var staticDeviceNodeMap = null;
-        var mutableDeviceNodeMap = null;
-        if (this.isReal && this.hostname != '') {
-            staticDeviceNodeMap = await connectToNice(callback = getStaticNodeMap, server = this.hostname);
-            mutableDeviceNodeMap = await connectToNice(callback = getDevicesMap, server = this.hostname);
+        try {
+            if (this.isReal && this.hostname != '') {
+                this.staticDeviceNodeMap = await connectToNice(callback = getStaticNodeMap, server = this.hostname);
+                this.mutableDeviceNodeMap = await connectToNice(callback = getDevicesMap, server = this.hostname);
+            }
+        } catch (err) {
+            console.warn('Unable to connect to remote server: {$this.hostname}');
         }
-        return [staticDeviceNodeMap, mutableDeviceNodeMap];
     }
 }
 
@@ -106,26 +116,47 @@ class NG7SANS extends Instrument {
     loadDefaults() {
         // Sample space
         this.sampleTableDefault = "Chamber";
-        this.sampleTableOptions = ["Chamber", "Huber"];
-        this.sampleToSDDOffsets = [math.unit(0, 'cm'), math.unit(54.8, 'cm')];
-
-        this.wavelengthMin = math.unit(4.0, 'angstrom');
-        this.wavelengthMax = math.unit(20.0, 'angstrom');
-        this.wavelengthDefault = math.unit(6.0, 'angstrom');
-        this.wavelengthSpreadOptions = [math.unit(9.7, '%'), math.unit(11.5, '%'), math.unit(13.9, '%'), math.unit(22.1, '%')];
-        this.wavelengthSpreadDefault = math.unit(13.9, '%');
-        this.wavelengthConstants = { '9.7': [13000, 0.560] }; // TODO: finish...
-        this.wavelengthRange = {};
-        for (spread in this.wavelengthSpreadOptions) {
-            var constants = this.wavelengthConstants.spread;
-            var min = (constants[1] + constants[0] / MAX_RPM < 4.0) ? this.wavelengthMin : math.unit(constants[1] + constants[0] / MAX_RPM, 'angstrom');
-            this.wavelengthRange[spread] = [min, this.wavelengthMax];
+        this.sampleTableOptions = {
+            "Chamber": { offset: math.unit(0, 'cm') },
+            "Huber": { offset: math.unit(54.8, 'cm') }
+        };
+        // Wavelength
+        this.wavelengthOptions = {
+            name: "",
+            default: math.unit(6.0, 'angstrom'),
+            minimum: math.unit(4.0, 'angstrom'),
+            maximum: math.unit(20.0, 'angstrom'),
+            max_rpm: 5600,
+            spreads: {
+                '9.7': {
+                    constants: [13000, 0.560],
+                    value: math.unit(9.7, '%'),
+                    range: [],
+                },
+                '13.9': {
+                    constants: [16000, 0.950],
+                    value: math.unit(13.9, '%'),
+                    range: [],
+                    defaultTilt: true,
+                },
+                '15.0': {
+                    constants: [19000, 0.950],
+                    value: math.unit(15.0, '%'),
+                    range: [],
+                },
+                '25.7': {
+                    constants: [25000, 1.6],
+                    value: math.unit(25.7, '%'),
+                    range: [],
+                },
+            },
         }
-
+        // Neutron Optics
+        // TODO: Larger dictionary including guide lengths, etc.
         this.guideOptions = { '0': '0 Guides', '1': '1 Guide', '2': '2 Guides', '3': '3 Guides', '4': '4 Guides', '5': '5 Guides', '6': '6 Guides', '7': '7 Guides', '8': '8 Guides', 'LENS': 'LENS'};
         this.guideOptionsDefault = '0';
-        this.sourceApertureOptions = { '1.43': '1.43 cm', '2.54': '2.54 cm', '3.81': '3.81 cm', '5.08': '5.08 cm' }; // TODO: Units...
-        this.sourceAprtureDefault = '5.08';
+        this.sourceApertureOptions = { '1.43': math.unit(1.43, 'cm'), '2.54': math.unit(2.54, 'cm'), '3.81': math.unit(3.81, 'cm'), '5.08': math.unit(5.08, 'cm') };
+        this.sourceApertureDefault = '5.08';
         this.guideToSourceApertureMap = {
             '0': ['1.43', '2.54', '3.81'],
             '1': ['5.08'],
@@ -138,10 +169,23 @@ class NG7SANS extends Instrument {
             '8': ['5.08'],
             'LENS': ['1.43'],
         }
+        // Detectors
+        this.detector = {
+            "Ordela2D": {
+                pixels: {
+                    xSize: math.unit(5.08, 'mm'),
+                    ySize: math.unit(5.08, 'mm'),
+                    dimensions: [128, 128],
+                },
+                range: [math.unit(91, 'cm'), math.unit(1531, 'cm')],
+                default: math.unit(100, 'cm'),
+                offsetRange: [math.unit(0, 'cm'), math.unit(25, 'cm')],
+                offsetDefault: math.unit(0, 'cm'),
+            }
+        }
 
-        this.sddMin = math.unit(91, 'cm');
-        this.sddMax = math.unit(1531, 'cm');
-        this.sddDefault = math.unit(100, 'cm');
+        // TODO: Beamstops, flux, attenuators
+
         // TODO: Finish...
     }
 
@@ -164,6 +208,11 @@ class NG7SANS extends Instrument {
                 option.appendChild(document.createTextNode(val));
                 this.wavelengthSpreadNode.appendChild(option);
             }
+        }
+        for (spread in this.wavelengthOptions.spreads) {
+            var constants = spread.constants;
+            var min = (constants[1] + constants[0] / this.wavelengthOptions.max_rpm < this.wavelengthOptions.minimum) ? this.wavelengthOptions.minimum : math.unit(constants[1] + constants[0] / this.wavelengthOptions.max_rpm, 'angstrom');
+            this.wavelengthOptions[spread].constants = [min, this.wavelengthMax];
         }
 
         // TODO: Populate GUIDES, SOURCE APERTURES, and DETECTOR LIMITS (and wavelength limits?)
