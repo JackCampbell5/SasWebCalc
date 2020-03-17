@@ -251,7 +251,7 @@ function calculateQRangeSlicer(instrument) {
     params['qCenter'] = averagingParams[3];
     params['qWidth'] = averagingParams[4];
     params['aspectRatio'] = averagingParams[5];
-    params['lambda'] = math.unit(lambda, 'angstrom');
+    params['lambda'] = math.unit(parseFloat(lambda), 'angstrom');
     params['xBeamCenter'] = xCenter;
     params['yBeamCenter'] = yCenter;
     params['pixelSize'] = math.unit(parseFloat(window[instrument + "Constants"]["aPixel"]), 'mm');
