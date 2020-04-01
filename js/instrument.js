@@ -1,6 +1,4 @@
-﻿const MAX_RPM = 5600;
-
-function loadInstrumentClass() {
+﻿function loadInstrumentClass() {
     var instrumentNode = document.getElementById('instrumentSelector');
     instrumentNode.onchange = function () {
         loadInstrument(this.value);
@@ -53,12 +51,18 @@ function setAttributes(el, attrs) {
     }
 }
 
-function createChildElement(parent, child, childType, childAttrs, childInnerHTML) {
-    child = document.createElement(childType);
+function createChildElement(parent, childType, childAttrs, childInnerHTML) {
+    var child = document.createElement(childType);
     setAttributes(child, childAttrs);
     child.innerHTML = childInnerHTML;
     parent.appendChild(child);
-    return parent;
+    return child;
+}
+
+function createChildElementWithLabel(parent, childType, childAttrs, childInnerHTML, labelInnerHTML) {
+    createChildElement(parent, 'label', { 'for': childAttrs['id'] }, labelInnerHTML);
+    child = createChildElement(parent, childType, childAttrs, childInnerHTML);
+    return child;
 }
 
 
@@ -110,7 +114,7 @@ class Instrument {
      * Standard SANS instruments (both 30m and 10m) should use this method.
      */
     populatePageDynamically() {
-        // TODO: Rewrite this into a page generation function - Continue to point at nodes
+        // TODO: Add minimums and maximums
         this.instrumentContainer = document.getElementById('instrument');
         if (this.instrumentContainer) {
             this.instrumentContainer.style.display = "block";
@@ -119,84 +123,112 @@ class Instrument {
                 this.instrumentContainer.removeChild(this.instrumentContainer.lastChild);
             }
             // Create a sample table node if sample spaces are an option
-            this.sampleTableContainer = null;
-            this.sampleTableNode = null;
             if (this.sampleTableOptions) {
-                var header, label;
-                createChildElement(this.instrumentContainer, this.sampleTableContainer, 'div', { 'id': 'Sample' }, '');
-                createChildElement(this.sampleTableContainer, header, 'h3', {}, 'Sample Space:');
-                createChildElement(this.sampleTableContainer, label, 'label', { 'for': 'SampleTable' }, 'Sample Table: ');
-                createChildElement(this.sampleTableContainer, this.sampleTableNode, 'select', { 'id': 'SampleTable' })
-                for (sampleTable in Object.keys(this.sampleTableOptions)) {
-                    var option;
-                    createChildElement(this.sampleTableNode, option, 'option', { 'value': sampleTable }, sampleTable);
+                this.sampleTableContainer = createChildElement(this.instrumentContainer, 'div', { 'id': 'Sample', 'class': "slidecontainer instrument-section" }, '');
+                createChildElement(this.sampleTableContainer, 'h3', {}, 'Sample Space:');
+                this.sampleTableNode = createChildElementWithLabel(this.sampleTableContainer, 'select', { 'id': 'SampleTable' }, '', 'Sample Table: ')
+                for (var sampleTable in this.sampleTableOptions) {
+                    var option = createChildElement(this.sampleTableNode, 'option', { 'value': sampleTable }, sampleTable);
                     if (this.sampleTableDefault == sampleTable) {
                         option.selected = true;
                     }
                 }
             }
             // Create a wavelength node if wavelength is an option
-            this.wavelengthContainer = null;
-            this.wavelengthNode = null;
-            this.wavelengthSpreadNode = null;
             if (this.wavelengthOptions) {
-                var header, label;
-                createChildElement(this.instrumentNode, this.wavelengthContainer, 'div', { 'id': 'Wavelength' }, '');
-                createChildElement(this.wavelengthContainer, header, 'h3', {}, 'Neutron Wavelength:');
-                createChildElement(this.wavelengthContainer, label, 'label', { 'for': 'WavelengthInput' }, '&lambda; (&#8491;): ');
-                // TODO: add limits based on selected wavelength spread - will need to do this after creating wavelength spread node
-                createChildElement(this.wavelengthContainer, this.wavelengthNode, 'input', { 'type': 'number', 'value': this.wavelengthOptions.default, 'id': 'WavelengthInput' });
-                var label;
-                createChildElement(this.wavelengthContainer, label, 'label', { 'for': 'WavelengthSpread' }, '&Delta;&lambda;/&lambda; (%): ');
-                createChildElement(this.wavelengthContainer, this.wavelengthSpreadNode, 'select', { 'id': 'WavelengthSpread' }, '');
-                for (spreadValue in Object.keys(this.wavelengthOptions.spreads)) {
-                    var option;
-                    var spreadOptions = this.wavelengthOptions.spreads[spreadValue];
-                    createChildElement(this.wavelengthSpreadNode, option, 'option', { 'value': str(spreadValue) }, spreadValue);
+                this.wavelengthContainer = createChildElement(this.instrumentContainer, 'div', { 'id': 'Wavelength', 'class': "slidecontainer instrument-section" }, '');
+                createChildElement(this.wavelengthContainer, 'h3', {}, 'Neutron Wavelength:');
+                this.wavelengthNode = createChildElementWithLabel(this.wavelengthContainer, 'input', { 'type': 'number', 'id': 'WavelengthInput' }, this.wavelengthOptions.default.toNumber(), '&lambda; (&#8491;): ');
+                this.wavelengthSpreadNode = createChildElementWithLabel(this.wavelengthContainer, 'select', { 'id': 'WavelengthSpread' }, '', '&Delta;&lambda;/&lambda; (%): ');
+                for (var spreadValue in this.wavelengthOptions.spreads) {
+                    createChildElement(this.wavelengthSpreadNode, 'option', { 'value': spreadValue.toString() }, spreadValue);
                 }
+                // TODO: add wavelength limits based on selected wavelength spread - will need to do this after creating wavelength spread node
+                var spreadOptions = this.wavelengthOptions.spreads[spreadValue];
 
-                this.beamfluxNode = document.getElementById(this.instrumentName + 'BeamFlux');
-                this.figureOfMeritNode = document.getElementById(this.instrumentName + 'FigureOfMerit');
-                this.attenuatorNode = document.getElementById(this.instrumentName + 'Attenuators');
-                this.attenuationFactorNode = document.getElementById(this.instrumentName + 'AttenuationFactor');
-            } else {
-                createChildElement(this.instrumentNode, this.wavelengthContainer, 'div', { 'id': 'Wavelength' }, '');
+                this.beamfluxNode = createChildElementWithLabel(this.wavelengthContainer, 'input', { 'type': 'number', 'id': 'BeamFlux' }, '', 'Beam Flux (n-cm<sup>-1</sup>-sec<sup>-1</sup>): ');
+                this.beamfluxNode.disabled = true;
+                this.figureOfMeritNode = createChildElementWithLabel(this.wavelengthContainer, 'input', { 'type': 'number', 'id': 'FigureOfMerit' }, '', 'Figure of Merit: ');
+                this.figureOfMeritNode.disabled = true;
+                this.attenuatorNode = createChildElementWithLabel(this.wavelengthContainer, 'input', { 'type': 'number', 'id': 'Attenuators' }, '', 'Attenuators: ');
+                this.attenuatorNode.disabled = true;
+                this.attenuationFactorNode = createChildElementWithLabel(this.wavelengthContainer, 'input', { 'type': 'number', 'id': 'AttenuationFactor' }, '', 'AttenuationFactor: ');
+                this.attenuationFactorNode.disabled = true;
             }
-            this.wavelengthContainer = document.getElementById(this.instrumentName + 'Wavelength');
-            if (this.wavelengthContainer != null) {
-                this.wavelengthNode = document.getElementById(this.instrumentName + 'WavelengthInput');
-                this.wavelengthSpreadNode = document.getElementById(this.instrumentName + 'WavelengthSpread');
-                this.beamfluxNode = document.getElementById(this.instrumentName + 'BeamFlux');
-                this.figureOfMeritNode = document.getElementById(this.instrumentName + 'FigureOfMerit');
-                this.attenuatorNode = document.getElementById(this.instrumentName + 'Attenuators');
-                this.attenuationFactorNode = document.getElementById(this.instrumentName + 'AttenuationFactor');
+            // Create a collimationOptions node if collimationOptions is an option
+            if (this.collimationOptions) {
+                var apertureDict = [];
+                this.collimationContainer = createChildElement(this.instrumentContainer, 'div', { 'id': 'Collimation', 'class': "slidecontainer instrument-section"}, '');
+                createChildElement(this.collimationContainer, 'h3', { 'id': 'Collimation'}, 'Collimation Settings:');
+                this.guideConfigNode = createChildElementWithLabel(this.collimationContainer, 'select', { 'id': 'GuideConfig' }, '', 'Guides: ');
+                for (var guideOption in this.collimationOptions.options) {
+                    var optionDict = this.collimationOptions.options[guideOption];
+                    for (var aperture in optionDict.apertureOptions) {
+                        var value = optionDict.apertureOptions[aperture];
+                        if (!apertureDict.includes(value)) {
+                            apertureDict.push(value);
+                        }
+                    }
+                    var option = createChildElement(this.guideConfigNode, 'option', { 'value': guideOption }, optionDict.name);
+                    if (guideOption == this.collimationOptions.guideDefault) {
+                        option.selected = true;
+                    }
+                }
+                this.sourceApertureNode = createChildElementWithLabel(this.collimationContainer, 'select', { 'id': 'SourceAperture' }, '', 'Source Aperture: ');
+                for (var key in apertureDict) {
+                    var aperture = apertureDict[key];
+                    var option = createChildElement(this.sourceApertureNode, 'option', { 'value': aperture.toNumber() }, aperture.toString());
+                    if (aperture == this.collimationOptions.apertureDefault) {
+                        option.selected = true;
+                    }
+                }
+                this.sampleApertureNode = createChildElementWithLabel(this.collimationContainer, 'input', { 'type': 'number', 'value': '12.7', 'id': 'SampleAperture' }, '', 'Sample Aperture (cm): ');
+                this.ssdNode = createChildElementWithLabel(this.collimationContainer, 'input', { 'type': 'number', 'id': 'SSD' }, '', 'Source-to-Sample Distance (cm): ');
+                this.ssdNode.disabled = true;
             }
-            this.collimationContainer = document.getElementById(this.instrumentName + 'Collimation');
-            if (this.collimationContainer != null) {
-                this.guideConfigNode = document.getElementById(this.instrumentName + 'GuideConfig');
-                this.sourceApertureNode = document.getElementById(this.instrumentName + 'SourceAperture');
-                this.sampleApertureNode = document.getElementById(this.instrumentName + 'SampleAperture');
-                this.customApertureNode = document.getElementById(this.instrumentName + 'CustomAperture');
-                this.ssdNode = document.getElementById(this.instrumentName + 'SSD');
+            if (this.detectorOptions) {
+                this.sddInputNodes = [];
+                this.sddSliderNodes = [];
+                this.offsetInputNodes = [];
+                this.offsetSliderNodes = [];
+                this.sddNodes = [];
+                this.beamSizeNodes = [];
+                this.beamStopSizeNodes = [];
+                this.detectorContainer = createChildElement(this.instrumentContainer, 'div', { 'id': 'Detector', 'class': "slidecontainer instrument-section" }, '');
+                createChildElement(this.detectorContainer, 'h3', {}, 'Detector Settings:');
+                for (var i in this.detectorOptions) {
+                    // Differentiate multiple detectors, but only if multiple exist
+                    if (this.detectorOptions.length > 1) {
+                        createChildElement(this.detectorContainer, 'h4', {}, 'Detector #' + i);
+                    }
+                    var index = this.detectorOptions.length > 1 ? i : '';
+                    var detector = this.detectorOptions[i];
+                    this.sddInputNodes.push(createChildElementWithLabel(this.detectorContainer, 'input', { 'id': 'SDDInputBox' + index, 'type': 'number' }, '', 'Detector'.concat(index, ' Distance (cm): ')));
+                    this.sddSliderNodes.push(createChildElement(this.detectorContainer, 'range', { 'id': 'SDDSliderBar' + index, 'class': 'slider', 'list': 'SDDdefaults' + index }, ''));
+                    // TODO: Populate range sliders defaults
+                    createChildElement(this.detectorContainer, 'defaults', { 'id': 'SDDdefaults' + index }, '');
+                    this.offsetInputNodes.push(createChildElementWithLabel(this.detectorContainer, 'input', { 'id': 'OffsetInputBox' + index, 'type': 'number' }, '', 'Detector'.concat(index, ' Offset (cm): ')));
+                    this.offsetSliderNodes.push(createChildElement(this.detectorContainer, 'range', { 'id': 'OffsetSliderBar' + index, 'class': 'slider', 'list': 'OffsetDefaults' + index  }, ''));
+                    createChildElement(this.detectorContainer, 'defaults', { 'id': 'OffsetDefaults' + index }, '');
+                    this.sddNodes.push(createChildElementWithLabel(this.detectorContainer, 'input', { 'id': 'SDD' + index }, '', 'Sample-To-Detector'.concat(index, ' Distance (cm): ')));
+                    this.sddNodes[i].disabled = true;
+                    this.beamSizeNodes.push(createChildElementWithLabel(this.detectorContainer, 'input', { 'id': 'BeamSize' + index, 'type': 'number' }, '', 'Beam Diameter (cm): '));
+                    this.beamSizeNodes[i].disabled = true;
+                    this.beamStopSizeNodes.push(createChildElementWithLabel(this.detectorContainer, 'input', { 'id': 'BeamStopSize' + index, 'type': 'number' }, '', 'Beam Stop Size (cm): '));
+                    this.beamStopSizeNodes[i].disabled = true;
+                }
             }
-            this.detectorContainer = document.getElementById(this.instrumentName + 'Detector');
-            if (this.detectorContainer != null) {
-                this.sddInputNode = document.getElementById(this.instrumentName + 'SDDInputBox');
-                this.sddSliderNode = document.getElementById(this.instrumentName + 'SDDSliderBar');
-                this.sddDefaultsNode = document.getElementById(this.instrumentName + 'SDDDefaults');
-                this.offsetInputNode = document.getElementById(this.instrumentName + 'OffsetInputBox');
-                this.offsetSliderNode = document.getElementById(this.instrumentName + 'OffsetSliderBar');
-                this.offsetDefaultsNode = document.getElementById(this.instrumentName + 'OffsetDefaults');
-                this.sddNode = document.getElementById(this.instrumentName + 'SDD');
-                this.beamSizeNode = document.getElementById(this.instrumentName + 'BeamSize');
-                this.beamStopSizeNode = document.getElementById(this.instrumentName + 'BeamStopSize');
-            }
-            this.qRangeContainer = document.getElementById(this.instrumentName + 'QRange');
-            if (this.qRangeContainer != null) {
-                this.qMinNode = document.getElementById(this.instrumentName + 'MinimumQ');
-                this.qMaxNode = document.getElementById(this.instrumentName + 'MaximumQ');
-                this.qMaxVerticalNode = document.getElementById(this.instrumentName + 'MaximumVerticalQ');
-                this.qMaxHorizontalNode = document.getElementById(this.instrumentName + 'MaximumHorizontalQ');
+            this.qRangeContainer = createChildElement(this.instrumentContainer, 'div', { 'id': 'QRange', 'class': "slidecontainer instrument-section" }, '');
+            createChildElement(this.qRangeContainer, 'h3', {}, 'Q Range:');
+            this.qMinNode = createChildElementWithLabel(this.qRangeContainer, 'input', { 'id': 'MinimumQ', 'type': 'number' }, '', 'Minimum Q (&#8491;<sup>-1</sup>): ');
+            this.qMaxNode = createChildElementWithLabel(this.qRangeContainer, 'input', { 'id': 'MaximumQ', 'type': 'number' }, '', 'Maximum Q (&#8491;<sup>-1</sup>): ');
+            this.qMaxVerticalNode = createChildElementWithLabel(this.qRangeContainer, 'input', { 'id': 'MaximumVerticalQ', 'type': 'number' }, '', 'Maximum Vertical Q (&#8491;<sup>-1</sup>): ');
+            this.qMaxHorizontalNode = createChildElementWithLabel(this.qRangeContainer, 'input', { 'id': 'MaximumhorizontalQ', 'type': 'number' }, '', 'Maximum Horizontal Q (&#8491;<sup>-1</sup>): ');
+            if (!this.qIsInput) {
+                this.qMinNode.disabled = true;
+                this.qMaxNode.disabled = true;
+                this.qMaxVerticalNode.disabled = true;
+                this.qMaxHorizontalNode.disabled = true;
             }
         } else {
             throw new TypeError(`Unknown instrument name: {$this.instrumentName}`);
@@ -205,24 +237,23 @@ class Instrument {
 
     setEventHandlers() {
         // Initialize oninput and onchange events for the given instrument
-        // TODO: Move many of these functions inside the Instrument class
         this.sampleTableNode.onchange = function () { SASCALC(instrument); }
         this.wavelengthNode.onchange = function () { updateWavelength(instrument); }
         this.wavelengthSpreadNode.onchange = function () { updateWavelength(instrument); }
         this.guideConfigNode.onchange = function () { updateGuides(instrument, this.value); }
         this.sourceApertureNode.onchange = function () { SASCALC(instrument); }
         this.sampleApertureNode.onchange = function () { this.customApertureNode.value = this.value; updateAperture(instrument); }
-        this.customApertureNode.onchange = function () { updateAperture(instrument); }
-        this.sddSliderNode.onchange = function () { this.sddInputNode.value = this.value; SASCALC(instrument); }
-        this.sddInputNode.oninput = function () { detectorSlider.value = this.value; SASCALC(instrument); }
-        this.offsetSliderNode.onchange = function () { this.offsetInputNode.value = this.value; SASCALC(instrument); }
-        this.offsetInputNode.oninput = function () { this.offsetSliderNode.value = this.value; SASCALC(instrument); }
+        for (var index in this.detectorOptions) {
+            this.sddSliderNodes[index].onchange = function () { this.sddInputNodes[index].value = this.value; SASCALC(instrument); }
+            this.sddInputNodes[index].oninput = function () { this.sddSliderNodes[index].value = this.value; SASCALC(instrument); }
+            this.offsetSliderNodes[index].onchange = function () { this.offsetInputNodes[index].value = this.value; SASCALC(instrument); }
+            this.offsetInputNodes[index].oninput = function () { this.offsetSliderNodes[index].value = this.value; SASCALC(instrument); }
+        }
         // Initialize onclick events for freezing and clearing calculations
         var freezeButton = document.getElementById("freezeButton");
         freezeButton.onclick = function () { freezeSASCALC(); }
         var clearFrozenButton = document.getElementById("clearFrozenButton");
         clearFrozenButton.onclick = function () { clearFrozen(); }
-
         // Initialize routine when button is displayed:
         var send_button = document.getElementById('sendToNICE');
         send_button.onclick = async function () { connectToNice(sendConfigsToNice); }
@@ -326,16 +357,16 @@ class NG7SANS extends Instrument {
             },
         };
         // Neutron Optics
-        this.collimation = {
+        this.collimationOptions = {
             lengthMaximum: math.unit(1632, 'cm'),
             lengthPerUnit: math.unit(155, 'cm'),
             transmissionPerUnit: 0.974,
             width: math.unit(5.00, 'cm'),
             height: math.unit(5.00, 'cm'),
             gapAtStart: math.unit(188, 'cm'),
+            guideDefault: '0',
+            apertureDefault: math.unit(1.43, 'cm'),
             options: {
-                default: '0',
-                apertureDefault: math.unit(1.43, 'cm'),
                 '0': { name: '0 Guides', apertureOptions: [math.unit(1.43, 'cm'), math.unit(2.54, 'cm'), math.unit(3.81, 'cm')], },
                 '1': { name: '1 Guide', apertureOptions: [math.unit(5.08, 'cm')], },
                 '2': { name: '2 Guides', apertureOptions: [math.unit(5.08, 'cm')], },
@@ -349,8 +380,9 @@ class NG7SANS extends Instrument {
             },
         };
         // Detectors
-        this.detector = {
-            "Ordela2D": {
+        this.detectorOptions = [
+            {
+                name: "Ordela2D",
                 pixels: {
                     xSize: math.unit(5.08, 'mm'),
                     ySize: math.unit(5.08, 'mm'),
@@ -360,8 +392,8 @@ class NG7SANS extends Instrument {
                 default: math.unit(100, 'cm'),
                 offsetRange: [math.unit(0, 'cm'), math.unit(25, 'cm')],
                 offsetDefault: math.unit(0, 'cm'),
-            }
-        };
+            },
+        ];
         // Beam stops
         this.beamstop = {
             1: { size: math.unit(1.0, 'inch'), distanceFromDetector: math.unit(0.0, 'cm'), },
@@ -385,6 +417,7 @@ class NG7SANS extends Instrument {
             thickness: [math.unit(0.125, 'inch'), math.unit(0.250, 'inch'), math.unit(0.375, 'inch'), math.unit(0.500, 'inch'), math.unit(0.625, 'inch'), math.unit(0.750, 'inch'), math.unit(1.00, 'inch'), math.unit(1.25, 'inch'), math.unit(1.50, 'inch'), math.unit(1.75, 'inch')],
             factors: [0.498, 0.0792, 1.66e-3],
         };
+        this.qIsInput = false;
     }
 
     useRealInstrumentValues() {
@@ -426,20 +459,6 @@ class NG7SANS extends Instrument {
         }
         if (this.mutableDeviceNodeMap) {
             // TODO: Use mutable values to populate page
-        }
-    }
-
-    populatePageDynamically() {
-        while (this.wavelengthSpreadNode.lastChild) {
-            this.wavelengthSpreadNode.removeChild(this.wavelengthSpreadNode.lastChild);
-        }
-        for (var wavelengthSpread in wavelengthSpreads) {
-            var spread = wavelengthSpreads[wavelengthSpread];
-            var option = document.createElement("OPTION");
-            var val = Math.round(1000 * parseFloat(spread.val)) / 10;
-            option.value = val;
-            option.appendChild(document.createTextNode(val));
-            this.wavelengthSpreadNode.appendChild(option);
         }
     }
 }

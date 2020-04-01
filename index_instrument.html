@@ -15,24 +15,24 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ice/3.7.1/Glacier2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ice/3.7.1/IceStorm.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ice/3.7.1/IceGrid.min.js"></script>
-    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/data.js"></script>
-    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/file.js"></script>
-    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/system.js"></script>
-    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/devices.js"></script>
-    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/console.js"></script>
-    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/dryrun.js"></script>
-    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/exceptions.js"></script>
-    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/nice.js"></script>
-    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/events.js"></script>
-    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/experiment.js"></script>
-    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/queue.js"></script>
-    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/sampleAlignment.js"></script>
-    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/clientapi.js"></script>
-    <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/async_connect_zeroc.js"></script>
     <!--
+        <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/data.js"></script>
+        <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/file.js"></script>
+        <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/system.js"></script>
+        <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/devices.js"></script>
+        <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/console.js"></script>
+        <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/dryrun.js"></script>
+        <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/exceptions.js"></script>
+        <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/nice.js"></script>
+        <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/events.js"></script>
+        <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/experiment.js"></script>
+        <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/queue.js"></script>
+        <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/sampleAlignment.js"></script>
+        <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/generated/clientapi.js"></script>
+        <script src="http://nicedata.ncnr.nist.gov/niceweb/nicejs/async_connect_zeroc.js"></script>
         <script src="js/gamma_incomplete.js"></script>
+        <script src="js/nice_connection.js"></script>
     -->
-    <script src="js/nice_connection.js"></script>
     <script src="js/constants.js"></script>
     <script src="js/persistant_state.js"></script>
     <script src="js/plotting.js"></script>
@@ -117,113 +117,6 @@
 
                     <!-- Generic SANS Instrument -->
                     <div id="instrument" style="display: none">
-                        <div id="Sample" class="instrument-section" title="Sample location: Choose chamber for standard setups and Huber for larger equipment">
-                            <h3>Sample Space:</h3>
-                            <label for="SampleTable">Sample Table</label>
-                            <select id="SampleTable">
-                                <option selected value="Chamber">Chamber</option>
-                                <option value="Huber">Huber</option>
-                            </select>
-                        </div>
-                        <div id="Wavelength" class="instrument-section">
-                            <h3>Neutron Wavelength:</h3>
-                            <label for="WavelengthInput">&lambda; (&#8491;): </label>
-                            <input type="number" min="4" max="20" value="6" id="WavelengthInput" title="" />
-                            <label for="WavelengthSpread">&Delta;&lambda;/&lambda; (%)</label>
-                            <select id="WavelengthSpread">
-                                <option value="9.7">9.7</option>
-                                <option selected value="11.5">11.5</option>
-                                <option value="13.9">13.9</option>
-                                <option value="22.1">22.1</option>
-                            </select>
-                            <label for="BeamFlux">Beam Flux (n-cm<sup>-1</sup>-sec<sup>-1</sup>):</label>
-                            <input type="number" id="BeamFlux" class="fixed-width-input" disabled />
-                            <label for="FigureOfMerit">Figure of Merit:</label>
-                            <input type="number" id="FigureOfMerit" class="fixed-width-input" disabled />
-                            <label for="Attenuators">Attenuators:</label>
-                            <input type="number" id="Attenuators" class="fixed-width-input" disabled />
-                            <label for="AttenuationFactor">Attenuation Factor:</label>
-                            <input type="number" id="AttenuationFactor" class="fixed-width-input" disabled />
-                        </div>
-                        <div id="Collimation" class="instrument-section">
-                            <h3>Collimation:</h3>
-                            <label for="GuideConfig">Guides: </label>
-                            <select id="GuideConfig">
-                                <option selected value="0">0 Guides</option>
-                                <option value="1">1 Guide</option>
-                                <option value="2">2 Guides</option>
-                                <option value="3">3 Guides</option>
-                                <option value="4">4 Guides</option>
-                                <option value="5">5 Guides</option>
-                                <option value="6">6 Guides</option>
-                                <option value="7">7 Guides</option>
-                                <option value="8">8 Guides</option>
-                                <option value="LENS">LENS</option>
-                            </select>
-                            <label for="SourceAperture">Source Aperture: </label>
-                            <select id="SourceAperture">
-                                <option value="1.43">1.43 cm</option>
-                                <option value="2.54">2.54 cm</option>
-                                <option value="3.81">3.81 cm</option>
-                                <option disabled hidden value="5.08">5.08 cm</option>
-                            </select>
-                            <label for="SampleAperture">Sample Aperture: </label>
-                            <select id="SampleAperture">
-                                <option value="0.125">0.125"</option>
-                                <option value="0.25">0.25"</option>
-                                <option value="0.375">0.375"</option>
-                                <option selected value="0.5">0.5"</option>
-                                <option value="0.625">0.625"</option>
-                                <option value="0.75">0.75"</option>
-                                <option value="0.875">0.875"</option>
-                                <option value="1.00">1.00"</option>
-                                <option value="Custom">Custom</option>
-                            </select>
-                            <label for="CustomAperture" id="CustomApertureLabel" style="display:none">Aperture Diameter (cm): </label>
-                            <input type="number" min="0" max="25.4" id="CustomAperture" style="display:none" />
-                            <label for="SSD">Source-to-Sample Distance (cm): </label>
-                            <input type="number" id="SSD" class="fixed-width-input" disabled />
-                        </div>
-                        <div id="Detector" class="slidecontainer instrument-section">
-                            <h3>Detector Settings:</h3>
-                            <label for="SDDInputBox">Detector Distance (cm):</label>
-                            <input type="number" min="90" max="1530" value="100" id="SDDInputBox" />
-                            <input type="range" min="90" max="1530" value="100" class="slider" list="SDDDefaults" id="SDDSliderBar" />
-                            <datalist id="SDDDefaults">
-                                <option value="100" label="100"></option>
-                                <option value="400" label="400"></option>
-                                <option value="1300" label="1300"></option>
-                                <option value="1530" label="1530"></option>
-                            </datalist>
-                            <label for="OffsetInputBox">Detector Offset (cm):</label>
-                            <input type="number" min="0" max="25" value="0" id="OffsetInputBox" />
-                            <input type="range" min="0" max="25" value="0" class="slider" list="OffsetDefaults" id="OffsetSliderBar" />
-                            <datalist id="OffsetDefaults">
-                                <option value="0" label="0"></option>
-                                <option value="5" label="5"></option>
-                                <option value="10" label="10"></option>
-                                <option value="15" label="15"></option>
-                                <option value="20" label="20"></option>
-                                <option value="25" label="25"></option>
-                            </datalist>
-                            <label for="SDD">Sample-to-Detector Distance (cm): </label>
-                            <input type="number" id="SDD" class="fixed-width-input" disabled />
-                            <label for="BeamSize">Beam Diameter (cm): </label>
-                            <input type="number" id="BeamSize" class="fixed-width-input" disabled />
-                            <label for="BeamStopSize">Beam Stop Diameter (inch): </label>
-                            <input type="number" id="BeamStopSize" class="fixed-width-input" disabled />
-                        </div>
-                        <div id="QRange" class="instrument-section">
-                            <h3>Q Range:</h3>
-                            <label for="MinimumQ">Minimum Q (&#8491;<sup>-1</sup>):</label>
-                            <input type="number" id="MinimumQ" class="fixed-width-input" disabled />
-                            <label for="MaximumQ">Maximum Q (&#8491;<sup>-1</sup>):</label>
-                            <input type="number" id="MaximumQ" class="fixed-width-input" disabled />
-                            <label for="MaximumVerticalQ">Maximum Vertical Q (&#8491;<sup>-1</sup>):</label>
-                            <input type="number" id="MaximumVerticalQ" class="fixed-width-input" disabled />
-                            <label for="MaximumHorizontalQ">Maximum Horizontal Q (&#8491;<sup>-1</sup>):</label>
-                            <input type="number" id="MaximumHorizontalQ" class="fixed-width-input" disabled />
-                        </div>
                     </div>
 
                     <!-- Freeze and send to instrument -->
