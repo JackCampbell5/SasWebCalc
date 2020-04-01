@@ -12,7 +12,53 @@ function loadInstrument(instrument) {
         case 'ng7':
             window.currentInstrument = new NG7SANS();
             break;
-    };
+        default:
+            window.currentInstrument = null;
+            break;
+    }
+    if (window.currentInstrument != null) {
+        displayGeneralItems(instrument);
+    }
+}
+
+function displayGeneralItems(instrument='', runSASCALC=false) {
+    if (instrument) {
+        var serverNameNode = document.getElementById('serverName');
+        serverNameNode.value = window[instrument + "Constants"]['serverName'];
+        var buttons = document.getElementById('buttons');
+        buttons.style.display = "inline-block";
+        var model = document.getElementById("model");
+        model.style.display = "inline-block";
+        selectModel(model.value, false);
+        var modelLabel = document.getElementById("modelLabel");
+        modelLabel.style.display = "inline-block";
+        var modelParams = document.getElementById("modelParams");
+        modelParams.style.display = "inline-block";
+        var averagingType = document.getElementById("averagingType");
+        averagingType.style.display = "inline-block";
+        var averagingTypeLabel = document.getElementById("averagingTypeLabel");
+        averagingTypeLabel.style.display = "inline-block";
+        selectAveragingMethod(averagingType.value, false);
+        setEventHandlers(instrument);
+        // Run SASCALC
+        if (runSASCALC) {
+            window.currentInstrument.SASCALC();
+        }
+    }
+}
+
+function setAttributes(el, attrs) {
+    for (var key in attrs) {
+        el.setAttribute(key, attrs[key]);
+    }
+}
+
+function createChildElement(parent, child, childType, childAttrs, childInnerHTML) {
+    child = document.createElement(childType);
+    setAttributes(child, childAttrs);
+    child.innerHTML = childInnerHTML;
+    parent.appendChild(child);
+    return parent;
 }
 
 
@@ -32,11 +78,16 @@ class Instrument {
         this.staticDeviceNodeMap = null;
         this.mutableDeviceNodeMap = null;
         this.instrumentName = instrumentName;
-        // Initialize instrument object
+        // Initialize instrument object with default values
         this.loadDefaults();
-        this.createPageNodeMap();
+        // Try to get values from the actual instrument
         this.getDeviceNodeMaps();
+        // Use any values taken from the instrument
+        this.useRealInstrumentValues();
+        // Populate page using known values
         this.populatePageDynamically();
+        // Create event handlers when changes are made
+        this.setEventHandlers();
     }
 
     /*
@@ -49,8 +100,8 @@ class Instrument {
     /*
     * Pseudo-abstract method that populates the information on the page based off of information from the server
     */
-    populatePageDynamically() {
-        throw new TypeError('The abstract populatePageDynamically() method must be implemented by Instrument sub-classes.');
+    useRealInstrumentValues() {
+        throw new TypeError('The abstract useRealInstrumentValues() method must be implemented by Instrument sub-classes.');
     }
 
     /*
@@ -58,12 +109,58 @@ class Instrument {
      * 
      * Standard SANS instruments (both 30m and 10m) should use this method.
      */
-    createPageNodeMap() {
-        this.instrumentContainer = document.getElementById(this.instrumentName);
-        if (this.instrumentContainer != null) {
-            this.sampleTableContainer = document.getElementById(this.instrumentName + 'Sample');
-            if (this.sampleTableContainer != null) {
-                this.sampleTableNode = document.getElementById(this.instrumentName + 'SampleTable');
+    populatePageDynamically() {
+        // TODO: Rewrite this into a page generation function - Continue to point at nodes
+        this.instrumentContainer = document.getElementById('instrument');
+        if (this.instrumentContainer) {
+            this.instrumentContainer.style.display = "block";
+            // Remove all children before populating
+            while (this.instrumentContainer.firstChild) {
+                this.instrumentContainer.removeChild(this.instrumentContainer.lastChild);
+            }
+            // Create a sample table node if sample spaces are an option
+            this.sampleTableContainer = null;
+            this.sampleTableNode = null;
+            if (this.sampleTableOptions) {
+                var header, label;
+                createChildElement(this.instrumentContainer, this.sampleTableContainer, 'div', { 'id': 'Sample' }, '');
+                createChildElement(this.sampleTableContainer, header, 'h3', {}, 'Sample Space:');
+                createChildElement(this.sampleTableContainer, label, 'label', { 'for': 'SampleTable' }, 'Sample Table: ');
+                createChildElement(this.sampleTableContainer, this.sampleTableNode, 'select', { 'id': 'SampleTable' })
+                for (sampleTable in Object.keys(this.sampleTableOptions)) {
+                    var option;
+                    createChildElement(this.sampleTableNode, option, 'option', { 'value': sampleTable }, sampleTable);
+                    if (this.sampleTableDefault == sampleTable) {
+                        option.selected = true;
+                    }
+                }
+            }
+            // Create a wavelength node if wavelength is an option
+            this.wavelengthContainer = null;
+            this.wavelengthNode = null;
+            this.wavelengthSpreadNode = null;
+            if (this.wavelengthOptions) {
+                var header, label;
+                createChildElement(this.instrumentNode, this.wavelengthContainer, 'div', { 'id': 'Wavelength' }, '');
+                createChildElement(this.wavelengthContainer, header, 'h3', {}, 'Neutron Wavelength:');
+                createChildElement(this.wavelengthContainer, label, 'label', { 'for': 'WavelengthInput' }, '&lambda; (&#8491;): ');
+                // TODO: add limits based on selected wavelength spread - will need to do this after creating wavelength spread node
+                createChildElement(this.wavelengthContainer, this.wavelengthNode, 'input', { 'type': 'number', 'value': this.wavelengthOptions.default, 'id': 'WavelengthInput' });
+                var label;
+                createChildElement(this.wavelengthContainer, label, 'label', { 'for': 'WavelengthSpread' }, '&Delta;&lambda;/&lambda; (%): ');
+                createChildElement(this.wavelengthContainer, this.wavelengthSpreadNode, 'select', { 'id': 'WavelengthSpread' }, '');
+                for (spreadValue in Object.keys(this.wavelengthOptions.spreads)) {
+                    var option;
+                    var spreadOptions = this.wavelengthOptions.spreads[spreadValue];
+                    createChildElement(this.wavelengthSpreadNode, option, 'option', { 'value': str(spreadValue) }, spreadValue);
+                }
+
+                this.beamfluxNode = document.getElementById(this.instrumentName + 'BeamFlux');
+                this.figureOfMeritNode = document.getElementById(this.instrumentName + 'FigureOfMerit');
+                this.attenuatorNode = document.getElementById(this.instrumentName + 'Attenuators');
+                this.attenuationFactorNode = document.getElementById(this.instrumentName + 'AttenuationFactor');
+            } else {
+                createChildElement(this.instrumentNode, this.wavelengthContainer, 'div', { 'id': 'Wavelength' }, '');
             }
             this.wavelengthContainer = document.getElementById(this.instrumentName + 'Wavelength');
             if (this.wavelengthContainer != null) {
@@ -106,6 +203,31 @@ class Instrument {
         }
     }
 
+    setEventHandlers() {
+        // Initialize oninput and onchange events for the given instrument
+        // TODO: Move many of these functions inside the Instrument class
+        this.sampleTableNode.onchange = function () { SASCALC(instrument); }
+        this.wavelengthNode.onchange = function () { updateWavelength(instrument); }
+        this.wavelengthSpreadNode.onchange = function () { updateWavelength(instrument); }
+        this.guideConfigNode.onchange = function () { updateGuides(instrument, this.value); }
+        this.sourceApertureNode.onchange = function () { SASCALC(instrument); }
+        this.sampleApertureNode.onchange = function () { this.customApertureNode.value = this.value; updateAperture(instrument); }
+        this.customApertureNode.onchange = function () { updateAperture(instrument); }
+        this.sddSliderNode.onchange = function () { this.sddInputNode.value = this.value; SASCALC(instrument); }
+        this.sddInputNode.oninput = function () { detectorSlider.value = this.value; SASCALC(instrument); }
+        this.offsetSliderNode.onchange = function () { this.offsetInputNode.value = this.value; SASCALC(instrument); }
+        this.offsetInputNode.oninput = function () { this.offsetSliderNode.value = this.value; SASCALC(instrument); }
+        // Initialize onclick events for freezing and clearing calculations
+        var freezeButton = document.getElementById("freezeButton");
+        freezeButton.onclick = function () { freezeSASCALC(); }
+        var clearFrozenButton = document.getElementById("clearFrozenButton");
+        clearFrozenButton.onclick = function () { clearFrozen(); }
+
+        // Initialize routine when button is displayed:
+        var send_button = document.getElementById('sendToNICE');
+        send_button.onclick = async function () { connectToNice(sendConfigsToNice); }
+    }
+
     /*
      * Get the static and active device node maps from the instrument computer
      */
@@ -115,15 +237,43 @@ class Instrument {
                 this.staticDeviceNodeMap = await connectToNice(callback = getStaticNodeMap, server = this.hostname);
                 this.mutableDeviceNodeMap = await connectToNice(callback = getDevicesMap, server = this.hostname);
             }
+            // TODO: Remove console output once node names are known and obvious
+            for (nodeName in this.staticDeviceNodeMap) {
+                console.log(nodeName + ": " + this.staticDeviceNodeMap[nodeName]);
+            }
+            for (nodeName in this.mutableDeviceNodeMap) {
+                console.log(nodeName + ": " + this.mutableDeviceNodeMap[nodeName]);
+            }
         } catch (err) {
             console.warn('Unable to connect to remote server: {$this.hostname}');
         }
-        for (nodeName in this.staticDeviceNodeMap) {
-            console.log(nodeName + ": " + this.staticDeviceNodeMap[nodeName]);
-        }
-        for (nodeName in this.mutableDeviceNodeMap) {
-            console.log(nodeName + ": " + this.mutableDeviceNodeMap[nodeName]);
-        }
+    }
+
+    SASCALC() {
+        this.calculateInstrumentParameters()
+        // Do Circular Average of an array of 1s
+        calculateModel();
+        // Update the charts
+        update1DChart();
+        update2DChart();
+        // Set current configuration
+        setCurrentConfig(this.instrumentName);
+        // Store persistant state
+        storePersistantState(this.instrumentName);
+    }
+
+    calculateInstrumentParameters() {
+        // Calculate the beam stop diameter
+        calculateBeamStopDiameter(this.instrumentName);
+        // Calculate the estimated beam flux
+        calculateBeamFlux(this.instrumentName);
+        // Calculate the figure of merit
+        calculateFigureOfMerit(this.instrumentName);
+        // Calculate the number of attenuators
+        calculateNumberOfAttenuators(this.instrumentName);
+        // Do Circular Average of an array of 1s
+        calculateQRangeSlicer(this.instrumentName);
+        calculateMinimumAndMaximumQ(this.instrumentName);
     }
 }
 
@@ -237,21 +387,20 @@ class NG7SANS extends Instrument {
         };
     }
 
-    populatePageDynamically() {
-        // Available wavelength spreads
-        if (this.staticDeviceNodeMap != null) {
+    useRealInstrumentValues() {
+        if (this.staticDeviceNodeMap) {
             var wavelengthSpreads = this.staticDeviceNodeMap['wavelengthSpread.wavelengthSpread']['permittedValues'];
-            if (wavelengthSpreads != null && typeof wavelengthSpreads[Symbol.iterator] === 'function') {
-                while (this.wavelengthSpreadNode.lastChild) {
-                    this.wavelengthSpreadNode.removeChild(this.wavelengthSpreadNode.lastChild);
-                }
+            if (wavelengthSpreads && typeof wavelengthSpreads[Symbol.iterator] === 'function') {
+                this.wavelengthOptions.spreads = {}
                 for (var wavelengthSpread in wavelengthSpreads) {
                     var spread = wavelengthSpreads[wavelengthSpread];
-                    var option = document.createElement("OPTION");
-                    var val = Math.round(1000 * parseFloat(spread.val)) / 10;
-                    option.value = val;
-                    option.appendChild(document.createTextNode(val));
-                    this.wavelengthSpreadNode.appendChild(option);
+                    var input = {
+                        spread: {
+                            // FIXME: Get real wavelength constants
+                            constants: this.wavelengthOptions.spreads.spread.constants,
+                            value: math.unit(float(spread), 'pct'),
+                            range: [],}}
+                    this.wavelengthOptions.spreads.push(input);
                 }
             }
             // TODO: Populate GUIDES, SOURCE APERTURES, and DETECTOR LIMITS
@@ -275,11 +424,22 @@ class NG7SANS extends Instrument {
             var sourceAperturesGuide09 = this.staticDeviceNodeMap['guide09.key']['permittedValues'];
             var sourceAperturesGuide10 = this.staticDeviceNodeMap['guide10.key']['permittedValues'];
         }
-        for (spread in this.wavelengthOptions.spreads) {
-            var constants = this.wavelengthOptions.spreads[spread].constants;
-            var min = (constants[1] + constants[0] / this.wavelengthOptions.max_rpm < this.wavelengthOptions.minimum) ? this.wavelengthOptions.minimum : math.unit(constants[1] + constants[0] / this.wavelengthOptions.max_rpm, 'angstrom');
-            this.wavelengthOptions.spreads[spread].constants = [min, this.wavelengthOptions.maximum];
+        if (this.mutableDeviceNodeMap) {
+            // TODO: Use mutable values to populate page
         }
+    }
 
+    populatePageDynamically() {
+        while (this.wavelengthSpreadNode.lastChild) {
+            this.wavelengthSpreadNode.removeChild(this.wavelengthSpreadNode.lastChild);
+        }
+        for (var wavelengthSpread in wavelengthSpreads) {
+            var spread = wavelengthSpreads[wavelengthSpread];
+            var option = document.createElement("OPTION");
+            var val = Math.round(1000 * parseFloat(spread.val)) / 10;
+            option.value = val;
+            option.appendChild(document.createTextNode(val));
+            this.wavelengthSpreadNode.appendChild(option);
+        }
     }
 }
