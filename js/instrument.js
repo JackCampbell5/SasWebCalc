@@ -90,6 +90,12 @@ class Instrument {
         this.useRealInstrumentValues();
         // Populate page using known values
         this.populatePageDynamically();
+        // Model() object
+        this.modelNode = document.getElementById('model');
+        this.setModel();
+        // Slicer() object
+        this.slicerNode = document.getElementById('averagingType');
+        this.setSlicer();
         // Create event handlers when changes are made
         this.setEventHandlers();
     }
@@ -237,26 +243,47 @@ class Instrument {
 
     setEventHandlers() {
         // Initialize oninput and onchange events for the given instrument
-        this.sampleTableNode.onchange = function () { SASCALC(instrument); }
-        this.wavelengthNode.onchange = function () { updateWavelength(instrument); }
-        this.wavelengthSpreadNode.onchange = function () { updateWavelength(instrument); }
-        this.guideConfigNode.onchange = function () { updateGuides(instrument, this.value); }
-        this.sourceApertureNode.onchange = function () { SASCALC(instrument); }
-        this.sampleApertureNode.onchange = function () { this.customApertureNode.value = this.value; updateAperture(instrument); }
-        for (var index in this.detectorOptions) {
-            this.sddSliderNodes[index].onchange = function () { this.sddInputNodes[index].value = this.value; SASCALC(instrument); }
-            this.sddInputNodes[index].oninput = function () { this.sddSliderNodes[index].value = this.value; SASCALC(instrument); }
-            this.offsetSliderNodes[index].onchange = function () { this.offsetInputNodes[index].value = this.value; SASCALC(instrument); }
-            this.offsetInputNodes[index].oninput = function () { this.offsetSliderNodes[index].value = this.value; SASCALC(instrument); }
+        if (this.sampleTableNode) {
+            this.sampleTableNode.onchange = function () { this.SASCALC(); }
+        }
+        if (this.wavelengthContainer) {
+            this.wavelengthNode.onchange = function () { updateWavelength(instrument); }
+            this.wavelengthSpreadNode.onchange = function () { updateWavelength(instrument); }
+        }
+        if (this.guideConfigNode) {
+            this.guideConfigNode.onchange = function () { updateGuides(instrument, this.value); }
+        }
+        if (this.sourceApertureNode) {
+            this.sourceApertureNode.onchange = function () { this.SASCALC(); }
+        }
+        if (this.sampleApertureNode) {
+            this.sampleApertureNode.onchange = function () { this.customApertureNode.value = this.value; updateAperture(instrument); }
+        }
+        if (this.detectorContainer) {
+            for (var index in this.detectorOptions) {
+                this.sddSliderNodes[index].onchange = function () { this.sddInputNodes[index].value = this.value; this.SASCALC(); }
+                this.sddInputNodes[index].oninput = function () { this.sddSliderNodes[index].value = this.value; this.SASCALC(); }
+                this.offsetSliderNodes[index].onchange = function () { this.offsetInputNodes[index].value = this.value; this.SASCALC(); }
+                this.offsetInputNodes[index].oninput = function () { this.offsetSliderNodes[index].value = this.value; this.SASCALC(); }
+            }
+        }
+        if (this.qIsInput) {
+            this.qMinNode.onchange = function () { this.SASCALC() }
+            this.qMaxNode.onchange = function () { this.SASCALC() }
+            this.qMaxHorizontalNode.onchange = function () { this.SASCALC() }
+            this.qMaxVerticalNode.onchange = function () { this.SASCALC() }
         }
         // Initialize onclick events for freezing and clearing calculations
-        var freezeButton = document.getElementById("freezeButton");
-        freezeButton.onclick = function () { freezeSASCALC(); }
-        var clearFrozenButton = document.getElementById("clearFrozenButton");
-        clearFrozenButton.onclick = function () { clearFrozen(); }
+        this.freezeButton = document.getElementById("freezeButton");
+        this.freezeButton.onclick = function () { freezeSASCALC(); }
+        this.clearFrozenButton = document.getElementById("clearFrozenButton");
+        this.clearFrozenButton.onclick = function () { clearFrozen(); }
         // Initialize routine when button is displayed:
-        var send_button = document.getElementById('sendToNICE');
-        send_button.onclick = async function () { connectToNice(sendConfigsToNice); }
+        this.send_button = document.getElementById('sendToNICE');
+        this.send_button.onclick = async function () { connectToNice(sendConfigsToNice); }
+        // Update model and slicer when changed
+        this.modelNode.onchange = function () { this.setModel(); selectModel(this.model); }
+        this.slicerNode.onchange = function () { this.setSlicer(); calculateQRangeSlicer(); }
     }
 
     /*
@@ -280,7 +307,30 @@ class Instrument {
         }
     }
 
+    setModel() {
+        this.model = this.modelNode.value;
+    }
+
+    setSlicer() {
+        this.slicerName = this.slicerNode.value;
+        switch (this.slicerName) {
+            case 'circular':
+                this.slicer = new Circular({}, this);
+            case 'sector':
+                this.slicer = new Sector({}, this);
+            case 'rectangular':
+                this.slicer = new Rectangular({}, this);
+            case 'annular':
+                this.slicer = new Annular({}, this);
+            case 'elliptical':
+                this.slicer = new Elliptical({}, this);
+        }
+    }
+
+    // TODO: Move all of these into the class
     SASCALC() {
+        // Calculate any instrument parameters
+        // Keep as a separate function so Q-range entries can ignore this
         this.calculateInstrumentParameters()
         // Do Circular Average of an array of 1s
         calculateModel();
@@ -410,6 +460,7 @@ class NG7SANS extends Instrument {
             trans3: 0.75,
             b: 0.0395,
             c: 0.0442,
+            coeff: 10000,
             peakFlux: math.unit(2.55e15, 'Hz'),
             peakWavelength: math.unit(5.0, 'angstrom'),
         };

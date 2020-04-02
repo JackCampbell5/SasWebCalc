@@ -2,37 +2,61 @@
  * Base class for all slicers - Uses circular averaging methods
  */
 class Slicer {
-    constructor(params = {}) {
+    constructor(params = {}, instrument = null) {
         // Q and Intensity Values
         this.qxVals = window.qxValues;
         this.qyVals = window.qyValues;
         this.rawIntensity = window.intensity2D;
-        // Min/max Q values
-        this.maxQx = (Math.max(...this.qxVals) === undefined) ? 0.3 : Math.max(...this.qxVals);
-        this.maxQy = (Math.max(...this.qyVals) === undefined) ? 0.3 : Math.max(...this.qyVals);
-        this.minQx = (Math.min(...this.qxVals) === undefined) ? 0.0 : Math.min(...this.qxVals);
-        this.minQy = (Math.min(...this.qyVals) === undefined) ? 0.0 : Math.min(...this.qyVals);
-        // Averaging Parameters
-        this.detectorSections = (params['detectorSections'] === undefined) ? 'both' : params['detectorSections'];
-        this.phi = (params['phi'] === undefined) ? 0.0 : parseFloat(params['phi']);
-        this.dPhi = (params['dPhi'] === undefined) ? Math.PI / 2 : parseFloat(params['dPhi']);
-        this.qCenter = (params['qCenter'] === undefined) ? 0.0 : parseFloat(params['qCenter']);
-        this.qWidth = (params['qWidth'] === undefined) ? 0.3 : parseFloat(params['qWidth']);
-        this.aspectRatio = (params['aspectRatio'] === undefined) ? 1.0 : parseFloat(params['aspectRatio']);
-        // Instrumental Parameters
-        this.lambda = (params['lambda'] === undefined) ? 6.0 : parseFloat(params['lambda']);
-        this.lambdaWidth = (params['lambdaWidth'] === undefined) ? 0.14 : parseFloat(params['lambdaWidth']);
-        this.guides = (params['guides'] === undefined) ? 0.0 : parseFloat(params['guides']);
-        this.sourceAperture = (params['sourceAperture'] === undefined) ? 25.4 : parseFloat(params['sourceAperture']);
-        this.sampleAperture = (params['sampleAperture'] === undefined) ? 6.35 : parseFloat(params['sampleAperture']);
-        this.apertureOffset = (params['apertureOffset'] === undefined) ? 5.00 : parseFloat(params['apertureOffset']);
-        this.beamStopSize = (params['beamStopSize'] === undefined) ? 5.08 : parseFloat(params['beamStopSize']);
-        this.SSD = (params['SSD'] === undefined) ? 1627 : parseFloat(params['SSD']);
-        this.SDD = (params['SDD'] === undefined) ? 1530 : parseFloat(params['SDD']);
-        this.pixelSize = (params['pixelSize'] === undefined) ? 5.08 : parseFloat(params['pixelSize']);
-        this.coeff = (params['coeff'] === undefined) ? 10000 : parseFloat(params['coeff']);
-        this.xBeamCenter = (params['xBeamCenter'] === undefined) ? 64.5 : parseFloat(params['xBeamCenter']);
-        this.yBeamCenter = (params['yBeamCenter'] === undefined) ? 64.5 : parseFloat(params['yBeamCenter']);
+        if (instrument) {
+            this.instrument = instrument;
+            this.lambda = this.instrument.wavelengthNode.value;
+            this.lambdaWidth = this.instrument.wavelengthSpreadNode.value;
+            this.guides = this.instrument.guideConfigNode.value;
+            this.sourceAperture = this.instrument.sourceApertureNode.value;
+            this.sampleAperture = this.instrument.sampleApertureNode.value;
+            this.apertureOffset = this.instrument.sampleTableOptions[this.instrument.sampleTableNode.value]['apertureOffset'];
+            this.SSD = this.instrument.ssdNode.value;
+            this.SDD = [];
+            this.pixelSize = [];
+            this.xBeamCenter = [];
+            this.yBeamCenter = [];
+            this.beamStopSize = [];
+            for (var index in this.instrument.detectorOptions) {
+                this.SDD.push(this.instrument.sddInputNodes[index].value);
+                this.pixelSize.push(this.instrument.detectorOptions[index]['pixels']['xSize']);
+                this.xBeamCenter.push((this.instrument.detectorOptions[index]['pixels']['dimensions'][0] + 1) / 2);
+                this.yBeamCenter.push((this.instrument.detectorOptions[index]['pixels']['dimensions'][1] + 1) / 2);
+                this.beamStopSize.push(this.instrument.beamStopSizeNodes[index].value);
+            }
+            this.coeff = this.instrument.flux['coeff'];
+        } else {
+            // Min/max Q values
+            this.maxQx = (Math.max(...this.qxVals) === undefined) ? 0.3 : Math.max(...this.qxVals);
+            this.maxQy = (Math.max(...this.qyVals) === undefined) ? 0.3 : Math.max(...this.qyVals);
+            this.minQx = (Math.min(...this.qxVals) === undefined) ? 0.0 : Math.min(...this.qxVals);
+            this.minQy = (Math.min(...this.qyVals) === undefined) ? 0.0 : Math.min(...this.qyVals);
+            // Averaging Parameters
+            this.detectorSections = (params['detectorSections'] === undefined) ? 'both' : params['detectorSections'];
+            this.phi = (params['phi'] === undefined) ? 0.0 : parseFloat(params['phi']);
+            this.dPhi = (params['dPhi'] === undefined) ? Math.PI / 2 : parseFloat(params['dPhi']);
+            this.qCenter = (params['qCenter'] === undefined) ? 0.0 : parseFloat(params['qCenter']);
+            this.qWidth = (params['qWidth'] === undefined) ? 0.3 : parseFloat(params['qWidth']);
+            this.aspectRatio = (params['aspectRatio'] === undefined) ? 1.0 : parseFloat(params['aspectRatio']);
+            // Instrumental Parameters
+            this.lambda = (params['lambda'] === undefined) ? 6.0 : parseFloat(params['lambda']);
+            this.lambdaWidth = (params['lambdaWidth'] === undefined) ? 0.14 : parseFloat(params['lambdaWidth']);
+            this.guides = (params['guides'] === undefined) ? 0.0 : parseFloat(params['guides']);
+            this.sourceAperture = (params['sourceAperture'] === undefined) ? 25.4 : parseFloat(params['sourceAperture']);
+            this.sampleAperture = (params['sampleAperture'] === undefined) ? 6.35 : parseFloat(params['sampleAperture']);
+            this.apertureOffset = (params['apertureOffset'] === undefined) ? 5.00 : parseFloat(params['apertureOffset']);
+            this.beamStopSize = (params['beamStopSize'] === undefined) ? 5.08 : parseFloat(params['beamStopSize']);
+            this.SSD = (params['SSD'] === undefined) ? 1627 : parseFloat(params['SSD']);
+            this.SDD = (params['SDD'] === undefined) ? 1530 : parseFloat(params['SDD']);
+            this.pixelSize = (params['pixelSize'] === undefined) ? 5.08 : parseFloat(params['pixelSize']);
+            this.coeff = (params['coeff'] === undefined) ? 10000 : parseFloat(params['coeff']);
+            this.xBeamCenter = (params['xBeamCenter'] === undefined) ? 64.5 : parseFloat(params['xBeamCenter']);
+            this.yBeamCenter = (params['yBeamCenter'] === undefined) ? 64.5 : parseFloat(params['yBeamCenter']);
+        }
         // Calculated parameters
         this.phiUpper = this.phi + this.dPhi;
         this.phiLower = this.phi - this.dPhi;
