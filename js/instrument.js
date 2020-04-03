@@ -19,15 +19,16 @@ function loadInstrument(instrument) {
     }
 }
 
-function displayGeneralItems(instrument='', runSASCALC=false) {
+function displayGeneralItems(instrument = null) {
     if (instrument) {
-        var serverNameNode = document.getElementById('serverName');
-        serverNameNode.value = window[instrument + "Constants"]['serverName'];
+        if (instrument.isReal) {
+            var serverNameNode = document.getElementById('serverName');
+            serverNameNode.value = window.currentInstrument.hostname;
+        }
         var buttons = document.getElementById('buttons');
         buttons.style.display = "inline-block";
         var model = document.getElementById("model");
         model.style.display = "inline-block";
-        selectModel(model.value, false);
         var modelLabel = document.getElementById("modelLabel");
         modelLabel.style.display = "inline-block";
         var modelParams = document.getElementById("modelParams");
@@ -36,12 +37,6 @@ function displayGeneralItems(instrument='', runSASCALC=false) {
         averagingType.style.display = "inline-block";
         var averagingTypeLabel = document.getElementById("averagingTypeLabel");
         averagingTypeLabel.style.display = "inline-block";
-        selectAveragingMethod(averagingType.value, false);
-        setEventHandlers(instrument);
-        // Run SASCALC
-        if (runSASCALC) {
-            window.currentInstrument.SASCALC();
-        }
     }
 }
 
@@ -244,34 +239,49 @@ class Instrument {
     setEventHandlers() {
         // Initialize oninput and onchange events for the given instrument
         if (this.sampleTableNode) {
-            this.sampleTableNode.onchange = function () { this.SASCALC(); }
+            this.sampleTableNode.onchange = function () { window.currentInstrument.SASCALC(); }
         }
         if (this.wavelengthContainer) {
-            this.wavelengthNode.onchange = function () { updateWavelength(instrument); }
-            this.wavelengthSpreadNode.onchange = function () { updateWavelength(instrument); }
+            this.wavelengthNode.onchange = function () { window.currentInstrument.updateWavelength(instrument); }
+            this.wavelengthSpreadNode.onchange = function () { window.currentInstrument.updateWavelength(instrument); }
         }
         if (this.guideConfigNode) {
-            this.guideConfigNode.onchange = function () { updateGuides(instrument, this.value); }
+            this.guideConfigNode.onchange = function () { window.currentInstrument.updateGuides(instrument, this.value); }
         }
         if (this.sourceApertureNode) {
-            this.sourceApertureNode.onchange = function () { this.SASCALC(); }
+            this.sourceApertureNode.onchange = function () { window.currentInstrument.SASCALC(); }
         }
         if (this.sampleApertureNode) {
-            this.sampleApertureNode.onchange = function () { this.customApertureNode.value = this.value; updateAperture(instrument); }
+            this.sampleApertureNode.onchange = function () {
+                window.currentInstrument.customApertureNode.value = this.value;
+                window.currentInstrument.SASCALC();
+            }
         }
         if (this.detectorContainer) {
             for (var index in this.detectorOptions) {
-                this.sddSliderNodes[index].onchange = function () { this.sddInputNodes[index].value = this.value; this.SASCALC(); }
-                this.sddInputNodes[index].oninput = function () { this.sddSliderNodes[index].value = this.value; this.SASCALC(); }
-                this.offsetSliderNodes[index].onchange = function () { this.offsetInputNodes[index].value = this.value; this.SASCALC(); }
-                this.offsetInputNodes[index].oninput = function () { this.offsetSliderNodes[index].value = this.value; this.SASCALC(); }
+                this.sddSliderNodes[index].onchange = function () {
+                    window.currentInstrument.sddInputNodes[index].value = this.value;
+                    window.currentInstrument.SASCALC();
+                }
+                this.sddInputNodes[index].oninput = function () {
+                    window.currentInstrument.sddSliderNodes[index].value = this.value;
+                    window.currentInstrument.SASCALC();
+                }
+                this.offsetSliderNodes[index].onchange = function () {
+                    window.currentInstrument.offsetInputNodes[index].value = this.value;
+                    window.currentInstrument.SASCALC();
+                }
+                this.offsetInputNodes[index].oninput = function () {
+                    window.currentInstrument.offsetSliderNodes[index].value = this.value;
+                    window.currentInstrument.SASCALC();
+                }
             }
         }
         if (this.qIsInput) {
-            this.qMinNode.onchange = function () { this.SASCALC() }
-            this.qMaxNode.onchange = function () { this.SASCALC() }
-            this.qMaxHorizontalNode.onchange = function () { this.SASCALC() }
-            this.qMaxVerticalNode.onchange = function () { this.SASCALC() }
+            this.qMinNode.onchange = function () { window.currentInstrument.SASCALC() }
+            this.qMaxNode.onchange = function () { window.currentInstrument.SASCALC() }
+            this.qMaxHorizontalNode.onchange = function () { window.currentInstrument.SASCALC() }
+            this.qMaxVerticalNode.onchange = function () { window.currentInstrument.SASCALC() }
         }
         // Initialize onclick events for freezing and clearing calculations
         this.freezeButton = document.getElementById("freezeButton");
@@ -279,11 +289,13 @@ class Instrument {
         this.clearFrozenButton = document.getElementById("clearFrozenButton");
         this.clearFrozenButton.onclick = function () { clearFrozen(); }
         // Initialize routine when button is displayed:
-        this.send_button = document.getElementById('sendToNICE');
-        this.send_button.onclick = async function () { connectToNice(sendConfigsToNice); }
+        if (this.isReal) {
+            this.send_button = document.getElementById('sendToNICE');
+            this.send_button.onclick = async function () { connectToNice(sendConfigsToNice); }
+        }
         // Update model and slicer when changed
-        this.modelNode.onchange = function () { this.setModel(); selectModel(this.model); }
-        this.slicerNode.onchange = function () { this.setSlicer(); calculateQRangeSlicer(); }
+        this.modelNode.onchange = function () { window.currentInstrument.setModel(); selectModel(this.model); }
+        this.slicerNode.onchange = function () { window.currentInstrument.setSlicer(); calculateQRangeSlicer(); }
     }
 
     /*
@@ -314,25 +326,30 @@ class Instrument {
     setSlicer() {
         this.slicerName = this.slicerNode.value;
         switch (this.slicerName) {
+            default:
             case 'circular':
                 this.slicer = new Circular({}, this);
+                break;
             case 'sector':
                 this.slicer = new Sector({}, this);
+                break;
             case 'rectangular':
                 this.slicer = new Rectangular({}, this);
+                break;
             case 'annular':
                 this.slicer = new Annular({}, this);
+                break;
             case 'elliptical':
                 this.slicer = new Elliptical({}, this);
+                break;
         }
     }
 
-    // TODO: Move all of these into the class
     SASCALC() {
         // Calculate any instrument parameters
         // Keep as a separate function so Q-range entries can ignore this
         this.calculateInstrumentParameters()
-        // Do Circular Average of an array of 1s
+        // Do average of an array of 1s
         calculateModel();
         // Update the charts
         update1DChart();
@@ -343,9 +360,10 @@ class Instrument {
         storePersistantState(this.instrumentName);
     }
 
+    // TODO: Move all of these into the class
     calculateInstrumentParameters() {
         // Calculate the beam stop diameter
-        calculateBeamStopDiameter(this.instrumentName);
+        this.calculateBeamStopDiameter();
         // Calculate the estimated beam flux
         calculateBeamFlux(this.instrumentName);
         // Calculate the figure of merit
@@ -355,6 +373,161 @@ class Instrument {
         // Do Circular Average of an array of 1s
         calculateQRangeSlicer(this.instrumentName);
         calculateMinimumAndMaximumQ(this.instrumentName);
+    }
+
+    calculateBeamDiameter(index = 0, direction = 'maximum') {
+        // Update all instrument calculations needed for beam diameter
+        this.calculateSourceToSampleApertureDistance();
+        this.calculateSampleToDetectorDistance(index);
+        // Get instrumental values
+        var sampleAperture = this.getSampleApertureSize();
+        var SSD = this.getSourceToSampleDistance();
+        var SDD = this.getSampleToDetectorDistance(index);
+        var wavelength = this.getWavelength();
+        var wavelengthSpread = this.getWavelengthSpread();
+        if (this.guideConfigNode.value === 'LENS') {
+            // If LENS configuration, the beam size is the source aperture size
+            return sampleAperture;
+        }
+        // Calculate beam width on the detector
+        var beamWidth = sampleAperture * SDD / SSD + sampleAperture * (SSD + SDD) / SSD;
+        // Beam height due to gravity
+        var bv = beamWidth + 1.25e-8 * (SSD + SDD) * SDD * wavelength * wavelength * wavelengthSpread;
+        // Larger of the width*safetyFactor and height
+        var bm_bs = this.bsFactor * beamWidth;
+        let bm = (bm_bs > bv) ? bm_bs : bv;
+        switch (direction) {
+            case 'vertical':
+                return bv;
+                break;
+            case 'horizontal':
+                return bh;
+                break;
+            case 'maximum':
+            default:
+                return bm;
+        }
+    }
+
+    calculateBeamStopDiameter(index = 0) {
+        var beamDiam = this.calculateBeamDiameter(index, 'maximum');
+        this.beamSizeNodes[index].value = beamDiam;
+        for (var i in this.beamstop) {
+            let beamStopIDict = this.beamstop[i];
+            if (beamStopIDict.size > beamDiam) {
+                this.beamStopSizeNodes[index].value = beamStopIDict.size;
+                return;
+            }
+        }
+        // If this is reached, that means the beam diameter is larger than the largest known beamstop
+        this.beamStopSizeNodes[index].value = beamStopIDict.size;
+        this.beamStopSizeNodes[index].setAttribute('style', 'color=red')
+    }
+
+    calculateSourceToSampleApertureDistance() {
+        // Calculate the source to sample distance
+        // TODO: Remove the switch and add the number of guides check to the NGB10mSANS class
+        switch (this.instrumentName) {
+            case 'ng7':
+            case 'ngb30':
+                this.ssdNode.value = this.collimationOptions.lengthMaximum
+                    - this.collimationOptions.lengthPerUnit * this.getNumberOfGuides()
+                    - this.sampleTableOptions[this.sampleTableNode.value].offset
+                    - this.sampleTableOptions[this.sampleTableNode.value].apertureOffset;
+                break;
+            case 'ngb10':
+                ssd = this.collimationOptions.lengthMaximum - this.sampleTableOptions[this.sampleTableNode.value].offset;
+                if (nGds != 0) {
+                    ssd -= math.unit(61.9, 'cm');
+                    ssd -= this.collimationOptions.lengthPerUnit * this.getNumberOfGuides();
+                }
+                this.ssdNode.value -= this.sampleTableOptions[this.sampleTableNode.value].apertureOffset;
+                break;
+            default:
+                this.ssdNode.value = 0.0;
+        }
+    }
+
+    calculateSampleToDetectorDistance(index = 0) {
+        var sdd = this.getSampleToDetectorDistance(index);
+        var sampleSpace = this.sampleTableNode.value;
+        var sddOffset = this.sampleTableOptions[sampleSpace].offset;
+        var value = sdd + sddOffset;
+        this.sddInputNodes[index].value = value.toString();
+    }
+
+    // Various class updaters
+    updateWavelength(runSASCALC = true) {
+        var wavelengthSpread = this.getWavelengthSpread();
+        var wavelengthRange = this.wavelengthOptions.spreads[wavelengthSpread.toString()]['range'];
+        try {
+            this.wavelengthNode.setAttribute('min', wavelengthRange[0]);
+            this.wavelengthNode.setAttribute('max', wavelengthRange[1]);
+        } catch (err) {
+            this.wavelengthNode.setAttribute('min', math.unit(4.0, 'angstrom'));
+            this.wavelengthNode.setAttribute('max', math.unit(20.0, 'angstrom'));
+        }
+        if (runSASCALC) {
+            SASCALC(instrument);
+        }
+    }
+    updateGuides(runSASCALC = true) {
+        // Get guide nodes for the specific instrument
+        var allApertureOptions = Object.values(this.sourceApertureNode.options);
+        var guideApertureOptions = this.collimationOptions.options[this.guideConfigNode].apertureOptions;
+        // Show only source apertures allowed for the current guide configuration
+        for (aperture in allApertureOptions) {
+            var apertureValue = math.unit(allApertureOptions[aperture].value, 'cm');
+            if (guideApertureOptions.includes(apertureValue)) {
+                allApertureOptions[aperture].disabled = false;
+                allApertureOptions[aperture].hidden = false;
+                allApertureOptions[aperture].selected = true;
+            } else {
+                allApertureOptions[aperture].disabled = true;
+                allApertureOptions[aperture].hidden = true;
+            }
+        }
+        if (runSASCALC) {
+            SASCALC(instrument);
+        }
+    }
+
+    // Various class getter functions
+    // Use these to be sure units are correct
+    getNumberOfGuides() {
+        var guides = parseInt(this.guideConfigNode.value);
+        if (guides == NaN) {
+            guides = 0;
+        }
+        return guides;
+    }
+    getSampleApertureSize() {
+        return math.unit(this.sampleApertureNode.value, 'cm');
+    }
+    getSourceApertureSize() {
+        return math.unit(this.sourceApertureNode.value, 'cm');
+    }
+    getSampleApertureToDetectorDistance(index = 0) {
+        var table = this.sampleTableNode.value;
+        var offsets = this.sampleTableOptions[table];
+        return math.unit(this.sddInputNodes[index].value, 'cm') + offsets.offset + offsets.apertureOffset;
+    }
+    getSampleToDetectorDistance(index = 0) {
+        var tableOffset = this.sampleTableOptions[this.sampleTableNode.value].offset;
+        return math.unit(this.sddInputNodes[index].value, 'cm') + tableOffset;
+    }
+    getSourceToSampleDistance() {
+        return math.unit(this.ssdNode.value, 'cm');
+    }
+    getSourceToSampleApertureDistance() {
+        var apertureOffset = this.sampleTableOptions[this.sampleTableNode.value].apertureOffset;
+        return math.unit(this.ssdNode.value, 'cm') - apertureOffset;
+    }
+    getWavelength() {
+        return math.unit(this.wavelengthNode.value, 'angstrom');
+    }
+    getWavelengthSpread() {
+        return math.unit(this.wavelengthSpreadNode.value, 'percent');
     }
 }
 

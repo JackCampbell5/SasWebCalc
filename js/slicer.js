@@ -274,9 +274,6 @@ class Sector extends Slicer {
  * averaging class
  */
 class Rectangular extends Slicer {
-    constructor(params) {
-        super(params);
-    }
 
     calculateQ(theta) {
         return super.calculateQ(theta);
@@ -327,9 +324,6 @@ class Rectangular extends Slicer {
  * Circular averaging class
  */
 class Elliptical extends Circular {
-    constructor(params) {
-        super(params);
-    }
 
     calculateQ(theta) {
         // FIXME: This needs to know the pixel position
