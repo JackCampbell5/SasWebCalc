@@ -139,7 +139,7 @@ class Instrument {
             if (this.wavelengthOptions) {
                 this.wavelengthContainer = createChildElement(this.instrumentContainer, 'div', { 'id': 'Wavelength', 'class': "slidecontainer instrument-section" }, '');
                 createChildElement(this.wavelengthContainer, 'h3', {}, 'Neutron Wavelength:');
-                this.wavelengthNode = createChildElementWithLabel(this.wavelengthContainer, 'input', { 'type': 'number', 'id': 'WavelengthInput' }, this.wavelengthOptions.default.toNumber(), '&lambda; (&#8491;): ');
+                this.wavelengthNode = createChildElementWithLabel(this.wavelengthContainer, 'input', { 'type': 'number', 'id': 'WavelengthInput', 'value': this.wavelengthOptions.default.toNumeric() }, '', '&lambda; (&#8491;): ');
                 this.wavelengthSpreadNode = createChildElementWithLabel(this.wavelengthContainer, 'select', { 'id': 'WavelengthSpread' }, '', '&Delta;&lambda;/&lambda; (%): ');
                 for (var spreadValue in this.wavelengthOptions.spreads) {
                     createChildElement(this.wavelengthSpreadNode, 'option', { 'value': spreadValue.toString() }, spreadValue);
@@ -204,12 +204,12 @@ class Instrument {
                     }
                     var index = this.detectorOptions.length > 1 ? i : '';
                     var detector = this.detectorOptions[i];
-                    this.sddInputNodes.push(createChildElementWithLabel(this.detectorContainer, 'input', { 'id': 'SDDInputBox' + index, 'type': 'number' }, '', 'Detector'.concat(index, ' Distance (cm): ')));
-                    this.sddSliderNodes.push(createChildElement(this.detectorContainer, 'range', { 'id': 'SDDSliderBar' + index, 'class': 'slider', 'list': 'SDDdefaults' + index }, ''));
+                    this.sddInputNodes.push(createChildElementWithLabel(this.detectorContainer, 'input', { 'id': 'SDDInputBox' + index, 'type': 'number', 'min': detector.range[0].toNumeric(), 'max': detector.range[1].toNumeric(), 'value': detector.default.toNumeric() }, '', 'Detector'.concat(index, ' Distance (cm): ')));
+                    this.sddSliderNodes.push(createChildElement(this.detectorContainer, 'input', { 'id': 'SDDSliderBar' + index, 'type': 'range', 'class': 'slider', 'list': 'SDDdefaults' + index, 'min': detector.range[0].toNumeric(), 'max': detector.range[1].toNumeric(), 'value': detector.default.toNumeric() }, ''));
                     // TODO: Populate range sliders defaults
                     createChildElement(this.detectorContainer, 'defaults', { 'id': 'SDDdefaults' + index }, '');
-                    this.offsetInputNodes.push(createChildElementWithLabel(this.detectorContainer, 'input', { 'id': 'OffsetInputBox' + index, 'type': 'number' }, '', 'Detector'.concat(index, ' Offset (cm): ')));
-                    this.offsetSliderNodes.push(createChildElement(this.detectorContainer, 'range', { 'id': 'OffsetSliderBar' + index, 'class': 'slider', 'list': 'OffsetDefaults' + index  }, ''));
+                    this.offsetInputNodes.push(createChildElementWithLabel(this.detectorContainer, 'input', { 'id': 'OffsetInputBox' + index, 'type': 'number', 'min': detector.offsetRange[0].toNumeric(), 'max': detector.offsetRange[1].toNumeric(), 'value': detector.offsetDefault.toNumeric() }, '', 'Detector'.concat(index, ' Offset (cm): ')));
+                    this.offsetSliderNodes.push(createChildElement(this.detectorContainer, 'input', { 'id': 'OffsetSliderBar' + index, 'type': 'range', 'class': 'slider', 'list': 'OffsetDefaults' + index, 'min': detector.offsetRange[0].toNumeric(), 'max': detector.offsetRange[1].toNumeric(), 'value': detector.offsetDefault.toNumeric() }, ''));
                     createChildElement(this.detectorContainer, 'defaults', { 'id': 'OffsetDefaults' + index }, '');
                     this.sddNodes.push(createChildElementWithLabel(this.detectorContainer, 'input', { 'id': 'SDD' + index }, '', 'Sample-To-Detector'.concat(index, ' Distance (cm): ')));
                     this.sddNodes[i].disabled = true;
@@ -260,19 +260,19 @@ class Instrument {
         if (this.detectorContainer) {
             for (var index in this.detectorOptions) {
                 this.sddSliderNodes[index].onchange = function () {
-                    window.currentInstrument.sddInputNodes[index].value = this.value;
+                    window.currentInstrument.sddInputNodes[index].value = window.currentInstrument.sddSliderNodes[index].value;
                     window.currentInstrument.SASCALC();
                 }
                 this.sddInputNodes[index].oninput = function () {
-                    window.currentInstrument.sddSliderNodes[index].value = this.value;
+                    window.currentInstrument.sddSliderNodes[index].value = window.currentInstrument.sddInputNodes[index].value;
                     window.currentInstrument.SASCALC();
                 }
                 this.offsetSliderNodes[index].onchange = function () {
-                    window.currentInstrument.offsetInputNodes[index].value = this.value;
+                    window.currentInstrument.offsetInputNodes[index].value = window.currentInstrument.offsetSliderNodes[index].value;
                     window.currentInstrument.SASCALC();
                 }
                 this.offsetInputNodes[index].oninput = function () {
-                    window.currentInstrument.offsetSliderNodes[index].value = this.value;
+                    window.currentInstrument.offsetSliderNodes[index].value = window.currentInstrument.offsetInputNodes[index].value;
                     window.currentInstrument.SASCALC();
                 }
             }
@@ -365,14 +365,15 @@ class Instrument {
         // Calculate the beam stop diameter
         this.calculateBeamStopDiameter();
         // Calculate the estimated beam flux
-        calculateBeamFlux(this.instrumentName);
+        // TODO: Move these into the instrument class
+        calculateBeamFlux('');
         // Calculate the figure of merit
-        calculateFigureOfMerit(this.instrumentName);
+        calculateFigureOfMerit('');
         // Calculate the number of attenuators
-        calculateNumberOfAttenuators(this.instrumentName);
+        calculateNumberOfAttenuators('');
         // Do Circular Average of an array of 1s
-        calculateQRangeSlicer(this.instrumentName);
-        calculateMinimumAndMaximumQ(this.instrumentName);
+        calculateQRangeSlicer('');
+        calculateMinimumAndMaximumQ('');
     }
 
     calculateBeamDiameter(index = 0, direction = 'maximum') {
@@ -390,11 +391,16 @@ class Instrument {
             return sampleAperture;
         }
         // Calculate beam width on the detector
-        var beamWidth = sampleAperture * SDD / SSD + sampleAperture * (SSD + SDD) / SSD;
+        var beamWidth = math.add(math.multiply(sampleAperture, math.divide(SDD, SSD)),
+            math.divide(math.multiply(sampleAperture, math.add(SSD, SDD)), SSD));
         // Beam height due to gravity
-        var bv = beamWidth + 1.25e-8 * (SSD + SDD) * SDD * wavelength * wavelength * wavelengthSpread;
+        var bv1 = math.add(SSD, SDD);
+        var bv2 = math.multiply(bv1, SDD);
+        var bv3 = math.multiply(bv2, math.pow(wavelength, 2));
+        var bv4 = math.multiply(bv3, wavelengthSpread);
+        var bv = math.add(beamWidth, math.multiply(math.unit(0.0000000125, 'percent^-1*cm^-3'), bv4));
         // Larger of the width*safetyFactor and height
-        var bm_bs = this.bsFactor * beamWidth;
+        var bm_bs = math.multiply(this.bsFactor, beamWidth);
         let bm = (bm_bs > bv) ? bm_bs : bv;
         switch (direction) {
             case 'vertical':
@@ -411,11 +417,11 @@ class Instrument {
 
     calculateBeamStopDiameter(index = 0) {
         var beamDiam = this.calculateBeamDiameter(index, 'maximum');
-        this.beamSizeNodes[index].value = beamDiam;
+        this.beamSizeNodes[index].value = beamDiam.toNumeric();
         for (var i in this.beamstop) {
             let beamStopIDict = this.beamstop[i];
             if (beamStopIDict.size > beamDiam) {
-                this.beamStopSizeNodes[index].value = beamStopIDict.size;
+                this.beamStopSizeNodes[index].value = beamStopIDict.size.toNumeric();
                 return;
             }
         }
@@ -430,18 +436,17 @@ class Instrument {
         switch (this.instrumentName) {
             case 'ng7':
             case 'ngb30':
-                this.ssdNode.value = this.collimationOptions.lengthMaximum
-                    - this.collimationOptions.lengthPerUnit * this.getNumberOfGuides()
-                    - this.sampleTableOptions[this.sampleTableNode.value].offset
-                    - this.sampleTableOptions[this.sampleTableNode.value].apertureOffset;
+                this.ssdNode.value = math.subtract(this.collimationOptions.lengthMaximum,
+                    math.subtract(math.subtract(math.multiply(this.collimationOptions.lengthPerUnit, this.getNumberOfGuides()),
+                    this.sampleTableOptions[this.sampleTableNode.value].offset),
+                    this.sampleTableOptions[this.sampleTableNode.value].apertureOffset)).toNumeric();
                 break;
             case 'ngb10':
-                ssd = this.collimationOptions.lengthMaximum - this.sampleTableOptions[this.sampleTableNode.value].offset;
+                ssd = math.subtract(this.collimationOptions.lengthMaximum, this.sampleTableOptions[this.sampleTableNode.value].offset);
                 if (nGds != 0) {
-                    ssd -= math.unit(61.9, 'cm');
-                    ssd -= this.collimationOptions.lengthPerUnit * this.getNumberOfGuides();
+                    ssd = math.subtract(ssd, math.subtract(math.unit(61.9, 'cm'), math.multiply(this.collimationOptions.lengthPerUnit, this.getNumberOfGuides())));
                 }
-                this.ssdNode.value -= this.sampleTableOptions[this.sampleTableNode.value].apertureOffset;
+                this.ssdNode.value = math.subtract(ssd, this.sampleTableOptions[this.sampleTableNode.value].apertureOffset);
                 break;
             default:
                 this.ssdNode.value = 0.0;
@@ -449,17 +454,15 @@ class Instrument {
     }
 
     calculateSampleToDetectorDistance(index = 0) {
-        var sdd = this.getSampleToDetectorDistance(index);
-        var sampleSpace = this.sampleTableNode.value;
-        var sddOffset = this.sampleTableOptions[sampleSpace].offset;
-        var value = sdd + sddOffset;
-        this.sddInputNodes[index].value = value.toString();
+        var value = this.getSampleToDetectorDistance(index);
+        this.sddNodes[index].value = value.toNumeric();
     }
 
     // Various class updaters
     updateWavelength(runSASCALC = true) {
         var wavelengthSpread = this.getWavelengthSpread();
-        var wavelengthRange = this.wavelengthOptions.spreads[wavelengthSpread.toString()]['range'];
+        var wavelengthSpreadString = wavelengthSpread.toNumeric('percent');
+        var wavelengthRange = this.wavelengthOptions.spreads[wavelengthSpreadString.toString()].range;
         try {
             this.wavelengthNode.setAttribute('min', wavelengthRange[0]);
             this.wavelengthNode.setAttribute('max', wavelengthRange[1]);
@@ -468,15 +471,16 @@ class Instrument {
             this.wavelengthNode.setAttribute('max', math.unit(20.0, 'angstrom'));
         }
         if (runSASCALC) {
-            SASCALC(instrument);
+            this.SASCALC();
         }
     }
     updateGuides(runSASCALC = true) {
         // Get guide nodes for the specific instrument
         var allApertureOptions = Object.values(this.sourceApertureNode.options);
-        var guideApertureOptions = this.collimationOptions.options[this.guideConfigNode].apertureOptions;
+        var guideApertureOptions = this.collimationOptions.options[this.guideConfigNode.value].apertureOptions;
         // Show only source apertures allowed for the current guide configuration
-        for (aperture in allApertureOptions) {
+        // FIXME: Issue with aperture selection box - need to fix total list and selected list
+        for (var aperture in allApertureOptions) {
             var apertureValue = math.unit(allApertureOptions[aperture].value, 'cm');
             if (guideApertureOptions.includes(apertureValue)) {
                 allApertureOptions[aperture].disabled = false;
@@ -488,7 +492,7 @@ class Instrument {
             }
         }
         if (runSASCALC) {
-            SASCALC(instrument);
+            this.SASCALC();
         }
     }
 
@@ -510,18 +514,23 @@ class Instrument {
     getSampleApertureToDetectorDistance(index = 0) {
         var table = this.sampleTableNode.value;
         var offsets = this.sampleTableOptions[table];
-        return math.unit(this.sddInputNodes[index].value, 'cm') + offsets.offset + offsets.apertureOffset;
+        return math.add(math.unit(this.sddInputNodes[index].value, 'cm'), math.add(offsets.offset, offsets.apertureOffset));
     }
     getSampleToDetectorDistance(index = 0) {
         var tableOffset = this.sampleTableOptions[this.sampleTableNode.value].offset;
-        return math.unit(this.sddInputNodes[index].value, 'cm') + tableOffset;
+        var sdd = math.unit(this.sddInputNodes[index].value, 'cm');
+        return math.add(sdd, tableOffset);
+    }
+    getDetectorOffset(index = 0) {
+        var detOffset = this.offsetInputNodes[index].value;
+        return math.unit(detOffset, 'cm');
     }
     getSourceToSampleDistance() {
         return math.unit(this.ssdNode.value, 'cm');
     }
     getSourceToSampleApertureDistance() {
         var apertureOffset = this.sampleTableOptions[this.sampleTableNode.value].apertureOffset;
-        return math.unit(this.ssdNode.value, 'cm') - apertureOffset;
+        return math.subtract(math.unit(this.ssdNode.value, 'cm'), apertureOffset);
     }
     getWavelength() {
         return math.unit(this.wavelengthNode.value, 'angstrom');
