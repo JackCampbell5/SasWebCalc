@@ -16,6 +16,7 @@ function loadInstrument(instrument) {
     }
     if (window.currentInstrument != null) {
         displayGeneralItems(instrument);
+        window.currentInstrument.SASCALC();
     }
 }
 
@@ -359,16 +360,14 @@ class Instrument {
         // Store persistant state
         storePersistantState(this.instrumentName);
     }
-
     // TODO: Move all of these into the class
     calculateInstrumentParameters() {
         // Calculate the beam stop diameter
         this.calculateBeamStopDiameter();
         // Calculate the estimated beam flux
-        // TODO: Move these into the instrument class
-        calculateBeamFlux('');
+        this.calculateBeamFlux();
         // Calculate the figure of merit
-        calculateFigureOfMerit('');
+        this.calculateFigureOfMerit();
         // Calculate the number of attenuators
         calculateNumberOfAttenuators('');
         // Do Circular Average of an array of 1s
@@ -402,24 +401,25 @@ class Instrument {
         // Larger of the width*safetyFactor and height
         var bm_bs = math.multiply(this.bsFactor, beamWidth);
         let bm = (bm_bs > bv) ? bm_bs : bv;
+        var beamDiam;
         switch (direction) {
             case 'vertical':
-                return bv;
+                beamDiam = bv;
                 break;
             case 'horizontal':
-                return bh;
+                beamDiam = bh;
                 break;
             case 'maximum':
             default:
-                return bm;
+                beamDiam = bm;
         }
+        this.beamSizeNodes[index].value = beamDiam.toNumeric('cm');
     }
-
     calculateBeamStopDiameter(index = 0) {
-        var beamDiam = this.calculateBeamDiameter(index, 'maximum');
-        this.beamSizeNodes[index].value = beamDiam.toNumeric();
+        this.calculateBeamDiameter(index, 'maximum');
+        var beamDiam = this.getBeamDiameter(index);
         for (var i in this.beamstop) {
-            let beamStopIDict = this.beamstop[i];
+            var beamStopIDict = this.beamstop[i];
             if (beamStopIDict.size > beamDiam) {
                 this.beamStopSizeNodes[index].value = beamStopIDict.size.toNumeric();
                 return;
@@ -429,7 +429,42 @@ class Instrument {
         this.beamStopSizeNodes[index].value = beamStopIDict.size;
         this.beamStopSizeNodes[index].setAttribute('style', 'color=red')
     }
+    calculateBeamFlux() {
+        // Get constants
+        var peakLambda = this.flux.peakWavelength;
+        var peakFlux = this.flux.peakFlux;
+        var guideGap = this.collimationOptions.gapAtStart;
+        var guideLoss = this.collimationOptions.transmissionPerUnit;
+        var guideWidth = this.collimationOptions.width;
+        var trans1 = this.flux.trans1;
+        var trans2 = this.flux.trans2;
+        var trans3 = this.flux.trans3;
+        var b = this.flux.b;
+        var c = this.flux.c;
 
+        // Run calculations
+        var alpha = math.divide(math.add(this.getSourceApertureSize(), this.getSampleApertureSize()), math.multiply(2, this.getSourceToSampleDistance()));
+        var f1 = math.multiply(guideGap, alpha)
+        var f2 = math.multiply(2, guideWidth);
+        var f = math.divide(f1, f2);
+        var trans4 = math.pow(math.subtract(1, f), 2);
+        var trans5 = math.exp(math.multiply(this.getNumberOfGuides(), math.log(guideLoss)));
+        var trans6 = math.subtract(1, math.multiply(this.getWavelength(), math.subtract(b, math.multiply(math.divide(this.getNumberOfGuides(), 8), math.subtract(b, c)))));
+        var totalTrans = math.multiply(trans1, math.multiply(trans2, math.multiply(trans3, math.multiply(trans4, math.multiply(trans5, trans6)))));
+
+        var area = math.divide(math.multiply(math.PI, math.pow(this.getSampleApertureSize(), 2)), 4);
+        var d2_phi = math.divide(peakFlux, math.multiply(2, Math.PI));
+        d2_phi = math.multiply(d2_phi, math.exp(math.multiply(4, math.log(math.divide(peakLambda, this.getWavelength())))));
+        d2_phi = math.multiply(d2_phi, math.exp(math.multiply(-1, (math.pow(math.divide(peakLambda, this.getWavelength()), 2)))));
+        var solid_angle = math.multiply(math.divide(math.PI, 4), math.pow(math.divide(this.getSampleApertureSize(), this.getSourceToSampleApertureDistance()), 2));
+        var beamFlux = math.multiply(area, math.multiply(d2_phi, math.multiply(this.getWavelengthSpread(), math.multiply(solid_angle, totalTrans))));
+
+        this.beamfluxNode.value = beamFlux.toNumeric();
+    }
+    calculateFigureOfMerit() {
+        var figureOfMerit = math.multiply(math.pow(this.getWavelength(), 2), this.getBeamFlux())
+        this.figureOfMeritNode.value = figureOfMerit.toNumeric();
+    }
     calculateSourceToSampleApertureDistance() {
         // Calculate the source to sample distance
         // TODO: Remove the switch and add the number of guides check to the NGB10mSANS class
@@ -498,6 +533,15 @@ class Instrument {
 
     // Various class getter functions
     // Use these to be sure units are correct
+    getBeamFlux() {
+        return math.unit(this.beamfluxNode.value, 'cm^-1s^-1')
+    }
+    getBeamDiameter(index) {
+        return math.unit(this.beamSizeNodes[index].value, 'cm');
+    }
+    getBeamStopDiameter(index) {
+        return math.unit(this.beamStopSizeNodes[index].value, 'inch');
+    }
     getNumberOfGuides() {
         var guides = parseInt(this.guideConfigNode.value);
         if (guides == NaN) {
@@ -640,8 +684,8 @@ class NG7SANS extends Instrument {
             trans1: 0.63,
             trans2: 0.70,
             trans3: 0.75,
-            b: 0.0395,
-            c: 0.0442,
+            b: math.unit(0.0395, 'angstrom^-1'),
+            c: math.unit(0.0442, 'angstrom^-1'),
             coeff: 10000,
             peakFlux: math.unit(2.55e15, 'Hz'),
             peakWavelength: math.unit(5.0, 'angstrom'),
