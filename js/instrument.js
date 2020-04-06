@@ -369,20 +369,41 @@ class Instrument {
         // Calculate the figure of merit
         this.calculateFigureOfMerit();
         // Calculate the number of attenuators
-        calculateNumberOfAttenuators('');
+        this.calculateAttenuators();
         // Do Circular Average of an array of 1s
         calculateQRangeSlicer('');
         calculateMinimumAndMaximumQ('');
     }
 
+    calculateAttenuationFactor(index = 0) {
+        var a2 = this.getSampleApertureSize();
+        var beamDiam = this.getBeamDiameter(index);
+        var aPixel = this.detectorOptions[index].pixels.xSize;
+        var iPixelMax = this.flux.perPixelMax;
+        var num_pixels = math.multiply(math.divide(math.PI, 4), math.pow(math.divide(math.multiply(0.5, math.add(a2, beamDiam)), aPixel), 2));
+        var iPixel = math.divide(this.getBeamFlux(), num_pixels);
+        var atten = (iPixel < iPixelMax) ? 1.0 : math.divide(iPixelMax, iPixel);
+        this.attenuationFactorNode.value = atten.toNumeric();
+    }
+    calculateAttenuators() {
+        this.calculateAttenuationFactor();
+        var atten = this.getAttenuationFactor();
+        var af = math.add(0.498, math.subtract(math.multiply(math.unit(0.0792, 'angstrom^-1'), this.getWavelength()), math.multiply(math.unit(1.66e-3, 'angstrom^-2'), math.pow(this.getWavelength(), 2))));
+        var nf = math.multiply(-1, math.divide(math.log(atten), af));
+        var numAtten = math.ceil(nf);
+        if (numAtten > 6) {
+            numAtten = 7 + Math.floor((numAtten - 6) / 2);
+        }
+        this.attenuatorNode.value = numAtten;
+    }
     calculateBeamDiameter(index = 0, direction = 'maximum') {
         // Update all instrument calculations needed for beam diameter
         this.calculateSourceToSampleApertureDistance();
         this.calculateSampleToDetectorDistance(index);
         // Get instrumental values
         var sampleAperture = this.getSampleApertureSize();
-        var SSD = this.getSourceToSampleDistance();
-        var SDD = this.getSampleToDetectorDistance(index);
+        var SSD = this.getSourceToSampleApertureDistance();
+        var SDD = this.getSampleApertureToDetectorDistance(index);
         var wavelength = this.getWavelength();
         var wavelengthSpread = this.getWavelengthSpread();
         if (this.guideConfigNode.value === 'LENS') {
@@ -393,11 +414,9 @@ class Instrument {
         var beamWidth = math.add(math.multiply(sampleAperture, math.divide(SDD, SSD)),
             math.divide(math.multiply(sampleAperture, math.add(SSD, SDD)), SSD));
         // Beam height due to gravity
-        var bv1 = math.add(SSD, SDD);
-        var bv2 = math.multiply(bv1, SDD);
-        var bv3 = math.multiply(bv2, math.pow(wavelength, 2));
+        var bv3 = math.multiply(math.multiply(math.add(SSD, SDD), SDD), math.pow(wavelength, 2));
         var bv4 = math.multiply(bv3, wavelengthSpread);
-        var bv = math.add(beamWidth, math.multiply(math.unit(0.0000000125, 'percent^-1*cm^-3'), bv4));
+        var bv = math.add(beamWidth, math.multiply(math.unit(0.0000125, 'percent^-1cm^-3'), bv4));
         // Larger of the width*safetyFactor and height
         var bm_bs = math.multiply(this.bsFactor, beamWidth);
         let bm = (bm_bs > bv) ? bm_bs : bv;
@@ -413,7 +432,7 @@ class Instrument {
             default:
                 beamDiam = bm;
         }
-        this.beamSizeNodes[index].value = beamDiam.toNumeric('cm');
+        this.beamSizeNodes[index].value = beamDiam.toNumeric();
     }
     calculateBeamStopDiameter(index = 0) {
         this.calculateBeamDiameter(index, 'maximum');
@@ -430,6 +449,7 @@ class Instrument {
         this.beamStopSizeNodes[index].setAttribute('style', 'color=red')
     }
     calculateBeamFlux() {
+        // FIXME: Flux calculation is wrong (by a few orders of magnitude)
         // Get constants
         var peakLambda = this.flux.peakWavelength;
         var peakFlux = this.flux.peakFlux;
@@ -443,19 +463,19 @@ class Instrument {
         var c = this.flux.c;
 
         // Run calculations
-        var alpha = math.divide(math.add(this.getSourceApertureSize(), this.getSampleApertureSize()), math.multiply(2, this.getSourceToSampleDistance()));
+        var alpha = math.divide(math.add(this.getSourceApertureSize(), this.getSampleApertureSize()), math.multiply(2, this.getSourceToSampleApertureDistance()));
         var f1 = math.multiply(guideGap, alpha)
         var f2 = math.multiply(2, guideWidth);
         var f = math.divide(f1, f2);
         var trans4 = math.pow(math.subtract(1, f), 2);
         var trans5 = math.exp(math.multiply(this.getNumberOfGuides(), math.log(guideLoss)));
         var trans6 = math.subtract(1, math.multiply(this.getWavelength(), math.subtract(b, math.multiply(math.divide(this.getNumberOfGuides(), 8), math.subtract(b, c)))));
-        var totalTrans = math.multiply(trans1, math.multiply(trans2, math.multiply(trans3, math.multiply(trans4, math.multiply(trans5, trans6)))));
+        var totalTrans = math.chain(trans1).multiply(trans2).multiply(trans3).multiply(trans4).multiply(trans5).multiply(trans6).done();
 
         var area = math.divide(math.multiply(math.PI, math.pow(this.getSampleApertureSize(), 2)), 4);
         var d2_phi = math.divide(peakFlux, math.multiply(2, Math.PI));
         d2_phi = math.multiply(d2_phi, math.exp(math.multiply(4, math.log(math.divide(peakLambda, this.getWavelength())))));
-        d2_phi = math.multiply(d2_phi, math.exp(math.multiply(-1, (math.pow(math.divide(peakLambda, this.getWavelength()), 2)))));
+        d2_phi = math.multiply(d2_phi, math.exp(math.multiply(-1, math.pow(math.divide(peakLambda, this.getWavelength()), 2))));
         var solid_angle = math.multiply(math.divide(math.PI, 4), math.pow(math.divide(this.getSampleApertureSize(), this.getSourceToSampleApertureDistance()), 2));
         var beamFlux = math.multiply(area, math.multiply(d2_phi, math.multiply(this.getWavelengthSpread(), math.multiply(solid_angle, totalTrans))));
 
@@ -466,28 +486,11 @@ class Instrument {
         this.figureOfMeritNode.value = figureOfMerit.toNumeric();
     }
     calculateSourceToSampleApertureDistance() {
-        // Calculate the source to sample distance
-        // TODO: Remove the switch and add the number of guides check to the NGB10mSANS class
-        switch (this.instrumentName) {
-            case 'ng7':
-            case 'ngb30':
-                this.ssdNode.value = math.subtract(this.collimationOptions.lengthMaximum,
-                    math.subtract(math.subtract(math.multiply(this.collimationOptions.lengthPerUnit, this.getNumberOfGuides()),
-                    this.sampleTableOptions[this.sampleTableNode.value].offset),
-                    this.sampleTableOptions[this.sampleTableNode.value].apertureOffset)).toNumeric();
-                break;
-            case 'ngb10':
-                ssd = math.subtract(this.collimationOptions.lengthMaximum, this.sampleTableOptions[this.sampleTableNode.value].offset);
-                if (nGds != 0) {
-                    ssd = math.subtract(ssd, math.subtract(math.unit(61.9, 'cm'), math.multiply(this.collimationOptions.lengthPerUnit, this.getNumberOfGuides())));
-                }
-                this.ssdNode.value = math.subtract(ssd, this.sampleTableOptions[this.sampleTableNode.value].apertureOffset);
-                break;
-            default:
-                this.ssdNode.value = 0.0;
-        }
+        this.ssdNode.value = math.subtract(this.collimationOptions.lengthMaximum,
+            math.subtract(math.subtract(math.multiply(this.collimationOptions.lengthPerUnit, this.getNumberOfGuides()),
+            this.sampleTableOptions[this.sampleTableNode.value].offset),
+            this.sampleTableOptions[this.sampleTableNode.value].apertureOffset)).toNumeric();
     }
-
     calculateSampleToDetectorDistance(index = 0) {
         var value = this.getSampleToDetectorDistance(index);
         this.sddNodes[index].value = value.toNumeric();
@@ -533,13 +536,19 @@ class Instrument {
 
     // Various class getter functions
     // Use these to be sure units are correct
+    getAttenuationFactor() {
+        return this.attenuationFactorNode.value;
+    }
+    getAttenuators() {
+        return this.attenuatorNode.value;
+    }
     getBeamFlux() {
         return math.unit(this.beamfluxNode.value, 'cm^-1s^-1')
     }
-    getBeamDiameter(index) {
+    getBeamDiameter(index = 0) {
         return math.unit(this.beamSizeNodes[index].value, 'cm');
     }
-    getBeamStopDiameter(index) {
+    getBeamStopDiameter(index = 0) {
         return math.unit(this.beamStopSizeNodes[index].value, 'inch');
     }
     getNumberOfGuides() {
@@ -609,25 +618,25 @@ class NG7SANS extends Instrument {
             maximum: math.unit(20.0, 'angstrom'),
             max_rpm: 5600,
             spreads: {
-                '9.7': {
-                    constants: [13000, 0.560],
-                    value: math.unit(9.7, 'pct'),
+                '10.1': {
+                    constants: [math.unit(0.1686, 'angstrom'), math.unit(36510, 'min')],
+                    value: math.unit(10.1, 'pct'),
                     range: [],
                 },
-                '13.9': {
-                    constants: [16000, 0.950],
-                    value: math.unit(13.9, 'pct'),
+                '13.6': {
+                    constants: [math.unit(0.0563, 'angstrom'), math.unit(25572, 'min')],
+                    value: math.unit(13.6, 'pct'),
                     range: [],
                     defaultTilt: true,
                 },
                 '15.0': {
-                    constants: [19000, 0.950],
+                    constants: [math.unit(0.950, 'angstrom'), math.unit(19000, 'min')],
                     value: math.unit(15.0, 'pct'),
                     range: [],
                 },
-                '25.7': {
-                    constants: [25000, 1.6],
-                    value: math.unit(25.7, 'pct'),
+                '27.5': {
+                    constants: [math.unit(0.0861, 'angstrom'), math.unit(12093, 'min')],
+                    value: math.unit(27.5, 'pct'),
                     range: [],
                 },
             },
@@ -687,8 +696,8 @@ class NG7SANS extends Instrument {
             b: math.unit(0.0395, 'angstrom^-1'),
             c: math.unit(0.0442, 'angstrom^-1'),
             coeff: 10000,
-            peakFlux: math.unit(2.55e15, 'Hz'),
-            peakWavelength: math.unit(5.0, 'angstrom'),
+            peakFlux: math.unit(2.55e13, 'Hz'),
+            peakWavelength: math.unit(5.5, 'angstrom'),
         };
         this.attenuation = {
             thickness: [math.unit(0.125, 'inch'), math.unit(0.250, 'inch'), math.unit(0.375, 'inch'), math.unit(0.500, 'inch'), math.unit(0.625, 'inch'), math.unit(0.750, 'inch'), math.unit(1.00, 'inch'), math.unit(1.25, 'inch'), math.unit(1.50, 'inch'), math.unit(1.75, 'inch')],
@@ -737,5 +746,25 @@ class NG7SANS extends Instrument {
         if (this.mutableDeviceNodeMap) {
             // TODO: Use mutable values to populate page
         }
+    }
+}
+
+class NGB10m extends Instrument {
+    static instrumentName = "ngb10";
+    static hostname = "ngbsans.ncnr.nist.gov";
+    static isReal = true;
+
+    constructor() {
+        super(NGB10m.instrumentName);
+    }
+
+    //TODO: Finish populating constants
+
+    calculateSourceToSampleApertureDistance() {
+        ssd = math.subtract(this.collimationOptions.lengthMaximum, this.sampleTableOptions[this.sampleTableNode.value].offset);
+        if (nGds != 0) {
+            ssd = math.subtract(ssd, math.subtract(math.unit(61.9, 'cm'), math.multiply(this.collimationOptions.lengthPerUnit, this.getNumberOfGuides())));
+        }
+        this.ssdNode.value = math.subtract(ssd, this.sampleTableOptions[this.sampleTableNode.value].apertureOffset);
     }
 }
