@@ -154,7 +154,6 @@ class Instrument {
      * Standard SANS instruments (both 30m and 10m) should use this method. VSANS Might be able to as well.
      */
     populatePageDynamically() {
-        // TODO: Add minimums and maximums
         this.instrumentContainer = document.getElementById('instrument');
         if (this.instrumentContainer) {
             this.instrumentContainer.style.display = "block";
@@ -183,8 +182,7 @@ class Instrument {
                 for (var spreadValue in this.wavelengthOptions.spreads) {
                     createChildElement(this.wavelengthSpreadNode, 'option', { 'value': spreadValue.toString() }, spreadValue);
                 }
-                // TODO: add wavelength limits based on selected wavelength spread - will need to do this after creating wavelength spread node
-                var spreadOptions = this.wavelengthOptions.spreads[spreadValue];
+                this.calculateWavelengthRange();
 
                 this.beamfluxNode = createChildElementWithLabel(this.wavelengthContainer, 'input', { 'type': 'number', 'id': 'BeamFlux' }, '', 'Beam Flux (n-cm<sup>-1</sup>-sec<sup>-1</sup>): ');
                 this.beamfluxNode.disabled = true;
@@ -205,7 +203,7 @@ class Instrument {
                     var optionDict = this.collimationOptions.options[guideOption];
                     for (var aperture in optionDict.apertureOptions) {
                         var value = optionDict.apertureOptions[aperture];
-                        if (!apertureDict.includes(value)) {
+                        if (!math.compare(value, apertureDict).includes(0)) {
                             apertureDict.push(value);
                         }
                     }
@@ -244,12 +242,19 @@ class Instrument {
                     var index = this.detectorOptions.length > 1 ? i : '';
                     var detector = this.detectorOptions[i];
                     this.sddInputNodes.push(createChildElementWithLabel(this.detectorContainer, 'input', { 'id': 'SDDInputBox' + index, 'type': 'number', 'min': detector.range[0].toNumeric(), 'max': detector.range[1].toNumeric(), 'value': detector.default.toNumeric() }, '', 'Detector'.concat(index, ' Distance (cm): ')));
-                    this.sddSliderNodes.push(createChildElement(this.detectorContainer, 'input', { 'id': 'SDDSliderBar' + index, 'type': 'range', 'class': 'slider', 'list': 'SDDdefaults' + index, 'min': detector.range[0].toNumeric(), 'max': detector.range[1].toNumeric(), 'value': detector.default.toNumeric() }, ''));
-                    // TODO: Populate range sliders defaults
-                    createChildElement(this.detectorContainer, 'defaults', { 'id': 'SDDdefaults' + index }, '');
+                    this.sddSliderNodes.push(createChildElement(this.detectorContainer, 'input', { 'id': 'SDDSliderBar' + index, 'type': 'range', 'class': 'slider', 'list': 'sddDefaults' + index, 'min': detector.range[0].toNumeric(), 'max': detector.range[1].toNumeric(), 'value': detector.default.toNumeric() }, ''));
+                    let datalist = createChildElement(this.detectorContainer, 'datalist', { 'id': 'sddDefaults' + index }, '');
+                    for (var sliderIndex in detector.sliderDefaults) {
+                        let item = detector.sliderDefaults[sliderIndex];
+                        createChildElement(datalist, 'option', { 'value': item.toNumeric(), 'label': item.toNumeric() }, '');
+                    }
                     this.offsetInputNodes.push(createChildElementWithLabel(this.detectorContainer, 'input', { 'id': 'OffsetInputBox' + index, 'type': 'number', 'min': detector.offsetRange[0].toNumeric(), 'max': detector.offsetRange[1].toNumeric(), 'value': detector.offsetDefault.toNumeric() }, '', 'Detector'.concat(index, ' Offset (cm): ')));
-                    this.offsetSliderNodes.push(createChildElement(this.detectorContainer, 'input', { 'id': 'OffsetSliderBar' + index, 'type': 'range', 'class': 'slider', 'list': 'OffsetDefaults' + index, 'min': detector.offsetRange[0].toNumeric(), 'max': detector.offsetRange[1].toNumeric(), 'value': detector.offsetDefault.toNumeric() }, ''));
-                    createChildElement(this.detectorContainer, 'defaults', { 'id': 'OffsetDefaults' + index }, '');
+                    this.offsetSliderNodes.push(createChildElement(this.detectorContainer, 'input', { 'id': 'OffsetSliderBar' + index, 'type': 'range', 'class': 'slider', 'list': 'offsetDefaults' + index, 'min': detector.offsetRange[0].toNumeric(), 'max': detector.offsetRange[1].toNumeric(), 'value': detector.offsetDefault.toNumeric() }, ''));
+                    let datalistOffset = createChildElement(this.detectorContainer, 'datalist', { 'id': 'offsetDefaults' + index }, '');
+                    for (var sliderIndex in detector.offsetSliderDefaults) {
+                        let item = detector.offsetSliderDefaults[sliderIndex];
+                        createChildElement(datalistOffset, 'option', { 'value': item.toNumeric(), 'label': item.toNumeric() }, '');
+                    }
                     this.sddNodes.push(createChildElementWithLabel(this.detectorContainer, 'input', { 'id': 'SDD' + index }, '', 'Sample-To-Detector'.concat(index, ' Distance (cm): ')));
                     this.sddNodes[i].disabled = true;
                     this.beamSizeNodes.push(createChildElementWithLabel(this.detectorContainer, 'input', { 'id': 'BeamSize' + index, 'type': 'number' }, '', 'Beam Diameter (cm): '));
@@ -475,8 +480,8 @@ class Instrument {
             }
         }
         // If this is reached, that means the beam diameter is larger than the largest known beamstop
-        this.beamStopSizeNodes[index].value = beamStopIDict.size;
-        this.beamStopSizeNodes[index].setAttribute('style', 'color=red')
+        this.beamStopSizeNodes[index].value = beamStopIDict.size.toNumeric();
+        this.beamStopSizeNodes[index].setAttribute('style', 'color:red')
     }
     calculateBeamStopProjection() {
         var bsDiam = this.getBeamStopDiameter();
@@ -510,11 +515,11 @@ class Instrument {
         var totalTrans = math.chain(trans1).multiply(trans2).multiply(trans3).multiply(trans4).multiply(trans5).multiply(trans6).done();
 
         var area = math.divide(math.multiply(math.PI, math.pow(this.getSampleApertureSize(), 2)), 4);
-        var d2_phi = math.divide(peakFlux, math.multiply(2, Math.PI));
+        var d2_phi = math.divide(peakFlux, math.multiply(2, math.PI));
         d2_phi = math.multiply(d2_phi, math.exp(math.multiply(4, math.log(math.divide(peakLambda, this.getWavelength())))));
         d2_phi = math.multiply(d2_phi, math.exp(math.multiply(-1, math.pow(math.divide(peakLambda, this.getWavelength()), 2))));
         var solid_angle = math.multiply(math.divide(math.PI, 4), math.pow(math.divide(this.getSampleApertureSize(), this.getSourceToSampleApertureDistance()), 2));
-        var beamFlux = math.multiply(area, math.multiply(d2_phi, math.multiply(this.getWavelengthSpread(), math.multiply(solid_angle, totalTrans))));
+        var beamFlux = math.chain(area).multiply(d2_phi).multiply(this.getWavelengthSpread()).multiply(solid_angle).multiply(totalTrans).done();
 
         this.beamfluxNode.value = beamFlux.toNumeric();
     }
@@ -555,19 +560,21 @@ class Instrument {
         var value = this.getSampleToDetectorDistance(index);
         this.sddNodes[index].value = value.toNumeric();
     }
+    calculateWavelengthRange() {
+        var currentSpread = this.wavelengthSpreadNode.value;
+        var constants = this.wavelengthOptions.spreads[currentSpread].constants;
+        var calculatedMinimum = math.add(constants[0], math.divide(constants[1], this.wavelengthOptions.max_rpm));
+        var minimum = (calculatedMinimum > this.wavelengthOptions.minimum) ? calculatedMinimum : this.wavelengthOptions.minimum;
+        this.wavelengthOptions.spreads[currentSpread].range = [minimum, this.wavelengthOptions.maximum]
+        setAttributes(this.wavelengthNode, { 'min': minimum.toNumeric(), 'max': this.wavelengthOptions.maximum.toNumeric() });
+        if (this.getWavelength() < minimum) {
+            this.wavelengthNode.value = minimum.toNumeric();
+        }
+    }
 
     // Various class updaters
     updateWavelength(runSASCALC = true) {
-        var wavelengthSpread = this.getWavelengthSpread();
-        var wavelengthSpreadString = wavelengthSpread.toNumeric('percent');
-        var wavelengthRange = this.wavelengthOptions.spreads[wavelengthSpreadString.toString()].range;
-        try {
-            this.wavelengthNode.setAttribute('min', wavelengthRange[0]);
-            this.wavelengthNode.setAttribute('max', wavelengthRange[1]);
-        } catch (err) {
-            this.wavelengthNode.setAttribute('min', math.unit(4.0, 'angstrom'));
-            this.wavelengthNode.setAttribute('max', math.unit(20.0, 'angstrom'));
-        }
+        this.calculateWavelengthRange();
         if (runSASCALC) {
             this.SASCALC();
         }
@@ -577,10 +584,9 @@ class Instrument {
         var allApertureOptions = Object.values(this.sourceApertureNode.options);
         var guideApertureOptions = this.collimationOptions.options[this.guideConfigNode.value].apertureOptions;
         // Show only source apertures allowed for the current guide configuration
-        // FIXME: Issue with aperture selection box - need to fix total list and selected list
         for (var aperture in allApertureOptions) {
             var apertureValue = math.unit(allApertureOptions[aperture].value, 'cm');
-            if (guideApertureOptions.includes(apertureValue)) {
+            if (math.compare(apertureValue, guideApertureOptions).includes(0)) {
                 allApertureOptions[aperture].disabled = false;
                 allApertureOptions[aperture].hidden = false;
                 allApertureOptions[aperture].selected = true;
@@ -603,7 +609,7 @@ class Instrument {
         return this.attenuatorNode.value;
     }
     getBeamFlux() {
-        return math.unit(this.beamfluxNode.value, 'cm^-1s^-1')
+        return math.unit(this.beamfluxNode.value, 'cm^-2s^-1')
     }
     getBeamDiameter(index = 0) {
         return math.unit(this.beamSizeNodes[index].value, 'cm');
@@ -676,26 +682,26 @@ class NG7SANS extends Instrument {
             default: math.unit(6.0, 'angstrom'),
             minimum: math.unit(4.0, 'angstrom'),
             maximum: math.unit(20.0, 'angstrom'),
-            max_rpm: 5600,
+            max_rpm: math.unit(5600, 'min^-1'),
             spreads: {
                 '10.1': {
-                    constants: [math.unit(0.1686, 'angstrom'), math.unit(36510, 'min')],
+                    constants: [math.unit(0.1686, 'angstrom'), math.unit(36510, 'angstrom min^-1')],
                     value: math.unit(10.1, 'pct'),
                     range: [],
                 },
                 '13.6': {
-                    constants: [math.unit(0.0563, 'angstrom'), math.unit(25572, 'min')],
+                    constants: [math.unit(0.0563, 'angstrom'), math.unit(25572, 'angstrom min^-1')],
                     value: math.unit(13.6, 'pct'),
                     range: [],
                     defaultTilt: true,
                 },
                 '15.0': {
-                    constants: [math.unit(0.950, 'angstrom'), math.unit(19000, 'min')],
+                    constants: [math.unit(0.950, 'angstrom'), math.unit(19000, 'angstrom min^-1')],
                     value: math.unit(15.0, 'pct'),
                     range: [],
                 },
                 '27.5': {
-                    constants: [math.unit(0.0861, 'angstrom'), math.unit(12093, 'min')],
+                    constants: [math.unit(0.0861, 'angstrom'), math.unit(12093, 'angstrom min^-1')],
                     value: math.unit(27.5, 'pct'),
                     range: [],
                 },
@@ -735,8 +741,10 @@ class NG7SANS extends Instrument {
                 },
                 range: [math.unit(91, 'cm'), math.unit(1531, 'cm')],
                 default: math.unit(100, 'cm'),
+                sliderDefaults: [math.unit(100, 'cm'), math.unit(400, 'cm'), math.unit(1300, 'cm'), math.unit(1530, 'cm')],
                 offsetRange: [math.unit(0, 'cm'), math.unit(25, 'cm')],
                 offsetDefault: math.unit(0, 'cm'),
+                offsetSliderDefaults: [math.unit(0, 'cm'), math.unit(25, 'cm')]
             },
         ];
         // Beam stops
@@ -809,13 +817,13 @@ class NG7SANS extends Instrument {
     }
 }
 
-class NGB10m extends Instrument {
+class NGB10 extends Instrument {
     static instrumentName = "ngb10";
     static hostname = "ngbsans.ncnr.nist.gov";
     static isReal = true;
 
     constructor() {
-        super(NGB10m.instrumentName);
+        super(NGB10.instrumentName);
     }
 
     //TODO: Finish populating constants
