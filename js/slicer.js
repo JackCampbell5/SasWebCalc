@@ -1,4 +1,21 @@
-﻿/*
+﻿function slicerSelection(slicer) {
+    switch (slicer) {
+        default:
+        case 'circular':
+            return new Circular({}, window.currentInstrument);
+        case 'sector':
+            return new Sector({}, window.currentInstrument);
+        case 'rectangular':
+            return new Rectangular({}, window.currentInstrument);
+        case 'annular':
+            return new Annular({}, window.currentInstrument);
+        case 'elliptical':
+            return new Elliptical({}, window.currentInstrument);
+    }
+}
+
+
+/*
  * Base class for all slicers - Uses circular averaging methods
  */
 class Slicer {

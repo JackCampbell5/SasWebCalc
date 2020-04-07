@@ -15,6 +15,10 @@ function loadInstrument(instrument) {
             break;
     }
     if (window.currentInstrument != null) {
+        // Set Model() object
+        window.currentInstrument.setModel();
+        // Set Slicer() object
+        window.currentInstrument.setSlicer();
         displayGeneralItems(instrument);
         window.currentInstrument.SASCALC();
     }
@@ -61,6 +65,43 @@ function createChildElementWithLabel(parent, childType, childAttrs, childInnerHT
     return child;
 }
 
+function generateOnesData(index = 0) {
+    var xPixels = parseInt(window.currentInstrument.detectorOptions[index].pixels.dimensions[0]);
+    var yPixels = parseInt(window.currentInstrument.detectorOptions[index].pixels.dimensions[1]);
+    var data = new Array();
+    var dataY = new Array();
+    for (var i = 0; i < xPixels; i++) {
+        for (var j = 0; j < yPixels; j++) {
+            dataY[j] = 1;
+        }
+        data[i] = dataY;
+    }
+    return data;
+}
+
+function generateStandardMask(index = 0) {
+    var xPixels = parseInt(window.currentInstrument.detectorOptions[index].pixels.dimensions[0]);
+    var yPixels = parseInt(window.currentInstrument.detectorOptions[index].pixels.dimensions[1]);
+    var mask = new Array();
+    for (var i = 0; i < xPixels; i++) {
+        var maskInset = new Array();
+        for (var j = 0; j < yPixels; j++) {
+            if (i <= 1 || i >= xPixels - 2) {
+                // Top and bottom two pixels should be masked
+                maskInset[j] = 1;
+            } else if (j <= 1 || j >= yPixels - 2) {
+                // Left and right two pixels should be masked
+                maskInset[j] = 1;
+            } else {
+                // Remainder should not be masked
+                maskInset[j] = 0;
+            }
+        }
+        mask[i] = maskInset;
+    }
+    return mask;
+}
+
 
 /*
  * Base pseudo-abstract class all instruments should derive from
@@ -86,12 +127,9 @@ class Instrument {
         this.useRealInstrumentValues();
         // Populate page using known values
         this.populatePageDynamically();
-        // Model() object
-        this.modelNode = document.getElementById('model');
-        this.setModel();
-        // Slicer() object
-        this.slicerNode = document.getElementById('averagingType');
-        this.setSlicer();
+        // Point to slicer and model nodes
+        this.setSlicerName();
+        this.setModelName();
         // Create event handlers when changes are made
         this.setEventHandlers();
     }
@@ -113,7 +151,7 @@ class Instrument {
     /*
      * Generic method to point to all nodes on the page associated with the instrument
      * 
-     * Standard SANS instruments (both 30m and 10m) should use this method.
+     * Standard SANS instruments (both 30m and 10m) should use this method. VSANS Might be able to as well.
      */
     populatePageDynamically() {
         // TODO: Add minimums and maximums
@@ -243,11 +281,11 @@ class Instrument {
             this.sampleTableNode.onchange = function () { window.currentInstrument.SASCALC(); }
         }
         if (this.wavelengthContainer) {
-            this.wavelengthNode.onchange = function () { window.currentInstrument.updateWavelength(instrument); }
-            this.wavelengthSpreadNode.onchange = function () { window.currentInstrument.updateWavelength(instrument); }
+            this.wavelengthNode.onchange = function () { window.currentInstrument.updateWavelength(); }
+            this.wavelengthSpreadNode.onchange = function () { window.currentInstrument.updateWavelength(); }
         }
         if (this.guideConfigNode) {
-            this.guideConfigNode.onchange = function () { window.currentInstrument.updateGuides(instrument, this.value); }
+            this.guideConfigNode.onchange = function () { window.currentInstrument.updateGuides(); }
         }
         if (this.sourceApertureNode) {
             this.sourceApertureNode.onchange = function () { window.currentInstrument.SASCALC(); }
@@ -295,8 +333,8 @@ class Instrument {
             this.send_button.onclick = async function () { connectToNice(sendConfigsToNice); }
         }
         // Update model and slicer when changed
-        this.modelNode.onchange = function () { window.currentInstrument.setModel(); selectModel(this.model); }
-        this.slicerNode.onchange = function () { window.currentInstrument.setSlicer(); calculateQRangeSlicer(); }
+        this.modelNode.onchange = function () { window.currentInstrument.setModel(); selectModel(window.currentInstrument.model); }
+        this.slicerNode.onchange = function () { window.currentInstrument.setSlicer(); window.currentInstrument.calculateQRangeSlicer(); }
     }
 
     /*
@@ -320,36 +358,31 @@ class Instrument {
         }
     }
 
-    setModel() {
+    setModelName() {
+        this.modelNode = document.getElementById('model');
         this.model = this.modelNode.value;
     }
-
-    setSlicer() {
+    setModel() {
+        this.setModelName()
+        // TODO: Change this once the tie-in to sasmodels is working
+    }
+    setSlicerName() {
+        this.slicerNode = document.getElementById('averagingType');
         this.slicerName = this.slicerNode.value;
-        switch (this.slicerName) {
-            default:
-            case 'circular':
-                this.slicer = new Circular({}, this);
-                break;
-            case 'sector':
-                this.slicer = new Sector({}, this);
-                break;
-            case 'rectangular':
-                this.slicer = new Rectangular({}, this);
-                break;
-            case 'annular':
-                this.slicer = new Annular({}, this);
-                break;
-            case 'elliptical':
-                this.slicer = new Elliptical({}, this);
-                break;
-        }
+    }
+    setSlicer() {
+        this.setSlicerName();
+        slicerSelection(this.slicerName);
     }
 
+    // TODO: Move many of these into the class
     SASCALC() {
         // Calculate any instrument parameters
         // Keep as a separate function so Q-range entries can ignore this
-        this.calculateInstrumentParameters()
+        this.calculateInstrumentParameters();
+        // Do Circular Average of an array of 1s
+        this.calculateMinimumAndMaximumQ();
+        calculateQRangeSlicer('');
         // Do average of an array of 1s
         calculateModel();
         // Update the charts
@@ -360,7 +393,6 @@ class Instrument {
         // Store persistant state
         storePersistantState(this.instrumentName);
     }
-    // TODO: Move all of these into the class
     calculateInstrumentParameters() {
         // Calculate the beam stop diameter
         this.calculateBeamStopDiameter();
@@ -370,9 +402,6 @@ class Instrument {
         this.calculateFigureOfMerit();
         // Calculate the number of attenuators
         this.calculateAttenuators();
-        // Do Circular Average of an array of 1s
-        calculateQRangeSlicer('');
-        calculateMinimumAndMaximumQ('');
     }
 
     calculateAttenuationFactor(index = 0) {
@@ -383,7 +412,7 @@ class Instrument {
         var num_pixels = math.multiply(math.divide(math.PI, 4), math.pow(math.divide(math.multiply(0.5, math.add(a2, beamDiam)), aPixel), 2));
         var iPixel = math.divide(this.getBeamFlux(), num_pixels);
         var atten = (iPixel < iPixelMax) ? 1.0 : math.divide(iPixelMax, iPixel);
-        this.attenuationFactorNode.value = atten.toNumeric();
+        this.attenuationFactorNode.value = (atten == 1.0) ? atten: atten.toNumeric();
     }
     calculateAttenuators() {
         this.calculateAttenuationFactor();
@@ -397,6 +426,7 @@ class Instrument {
         this.attenuatorNode.value = numAtten;
     }
     calculateBeamDiameter(index = 0, direction = 'maximum') {
+        // FIXME: Beam diameter is 10x too large
         // Update all instrument calculations needed for beam diameter
         this.calculateSourceToSampleApertureDistance();
         this.calculateSampleToDetectorDistance(index);
@@ -448,6 +478,13 @@ class Instrument {
         this.beamStopSizeNodes[index].value = beamStopIDict.size;
         this.beamStopSizeNodes[index].setAttribute('style', 'color=red')
     }
+    calculateBeamStopProjection() {
+        var bsDiam = this.getBeamStopDiameter();
+        var sampleAperture = this.getSampleApertureSize();
+        var L2 = this.getSampleApertureToDetectorDistance();
+        var LBeamstop = math.add(math.unit(20.1, 'cm'), math.multiply(1.61, this.getBeamStopDiameter())); //distance in cm from beamstop to anode plane (empirical)
+        return math.add(bsDiam, math.multiply(math.add(bsDiam, sampleAperture), math.divide(LBeamstop, math.subtract(L2, LBeamstop)))); // Return value is in cm
+    }
     calculateBeamFlux() {
         // FIXME: Flux calculation is wrong (by a few orders of magnitude)
         // Get constants
@@ -484,6 +521,29 @@ class Instrument {
     calculateFigureOfMerit() {
         var figureOfMerit = math.multiply(math.pow(this.getWavelength(), 2), this.getBeamFlux())
         this.figureOfMeritNode.value = figureOfMerit.toNumeric();
+    }
+    calculateMinimumAndMaximumQ(index = 0) {
+        var SDD = this.getSampleToDetectorDistance();
+        var offset = this.getDetectorOffset();
+        var lambda = this.getWavelength();
+        var pixelSize = this.detectorOptions[index].pixels.xSize;
+        var detWidth = math.multiply(pixelSize, this.detectorOptions[index].pixels.dimensions[0]);
+        var bsProjection = this.calculateBeamStopProjection();
+        // Calculate Q-maximum and populate the page
+        var radial = math.sqrt(math.add(math.pow(math.multiply(0.5, detWidth), 2), math.pow(math.add(math.multiply(0.5, detWidth), offset), 2)));
+        var qMaximum = math.multiply(4, math.multiply(math.divide(Math.PI, lambda), math.sin(math.multiply(0.5, math.atan(math.divide(radial, SDD))))));
+        this.qMaxNode.value = qMaximum.toNumeric();
+        // Calculate Q-minimum and populate the page
+        var qMinimum = math.multiply(math.divide(math.PI, lambda), math.divide(math.chain(bsProjection).add(pixelSize).add(pixelSize).done(), SDD));
+        this.qMinNode.value = qMinimum.toNumeric();
+        // Calculate Q-maximum and populate the page
+        var theta = math.atan(math.divide(math.add(math.divide(detWidth, 2.0), offset), SDD));
+        var qMaxHorizon = math.chain(4).multiply(math.divide(math.PI, lambda)).multiply(Math.sin(math.multiply(0.5, theta))).done();
+        this.qMaxHorizontalNode.value = qMaxHorizon.toNumeric();
+        // Calculate Q-maximum and populate the page
+        var theta = math.atan(math.divide(math.divide(detWidth, 2.0), SDD));
+        var qMaxVert = math.chain(4).multiply(math.divide(math.PI, lambda)).multiply(math.sin(math.multiply(0.5, theta))).done();
+        this.qMaxVerticalNode.value = qMaxVert.toNumeric();
     }
     calculateSourceToSampleApertureDistance() {
         this.ssdNode.value = math.subtract(this.collimationOptions.lengthMaximum,

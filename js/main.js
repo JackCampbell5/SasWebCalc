@@ -934,7 +934,11 @@ function selectModel(model, runSASCALC = true) {
         modelParams.appendChild(input);
     }
     if (runSASCALC) {
-        SASCALC(instrument);
+        if (window.currentInstrument != null) {
+            window.currentInstrument.SASCALC()
+        } else {
+            SASCALC(instrument);
+        }
     }
 }
 
