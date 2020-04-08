@@ -19,6 +19,10 @@ function loadInstrument(instrument) {
         window.currentInstrument.setModel();
         // Set Slicer() object
         window.currentInstrument.setSlicer();
+        window.qxValues = [];
+        window.qyValues = [];
+        window.intensity2D = [];
+        window.mask = [];
         displayGeneralItems(instrument);
         window.currentInstrument.SASCALC();
     }
@@ -65,7 +69,7 @@ function createChildElementWithLabel(parent, childType, childAttrs, childInnerHT
     return child;
 }
 
-function generateOnesData(index = 0) {
+function generateOnesArray(index = 0) {
     var xPixels = parseInt(window.currentInstrument.detectorOptions[index].pixels.dimensions[0]);
     var yPixels = parseInt(window.currentInstrument.detectorOptions[index].pixels.dimensions[1]);
     var data = new Array();
@@ -79,7 +83,7 @@ function generateOnesData(index = 0) {
     return data;
 }
 
-function generateStandardMask(index = 0) {
+function generateStandardMaskArray(index = 0) {
     var xPixels = parseInt(window.currentInstrument.detectorOptions[index].pixels.dimensions[0]);
     var yPixels = parseInt(window.currentInstrument.detectorOptions[index].pixels.dimensions[1]);
     var mask = new Array();
@@ -378,7 +382,7 @@ class Instrument {
     }
     setSlicer() {
         this.setSlicerName();
-        slicerSelection(this.slicerName);
+        window.slicer = slicerSelection(this.slicerName);
     }
 
     // TODO: Move many of these into the class
@@ -387,8 +391,10 @@ class Instrument {
         // Keep as a separate function so Q-range entries can ignore this
         this.calculateInstrumentParameters();
         // Do Circular Average of an array of 1s
-        this.calculateMinimumAndMaximumQ();
-        calculateQRangeSlicer('');
+        for (var index in this.detectorOptions) {
+            this.calculateMinimumAndMaximumQ(index);
+            this.calculateQRangeSlicer(index);
+        }
         // Do average of an array of 1s
         calculateModel();
         // Update the charts
@@ -430,6 +436,16 @@ class Instrument {
             numAtten = 7 + Math.floor((numAtten - 6) / 2);
         }
         this.attenuatorNode.value = numAtten;
+    }
+    calculateBeamCenterX(index = 0) {
+        // Find the number of x pixels in the detector
+        var xPixels = this.detectorOptions[index].pixels.dimensions[0];
+        // Get pixel size in mm and convert to cm
+        var dr = this.detectorOptions[index].pixels.xSize;
+        // Get detector offset in cm
+        var offset = this.getDetectorOffset();
+        var xCenter = math.add(math.divide(offset, dr), math.add(math.divide(xPixels, 2), 0.5));
+        return xCenter;
     }
     calculateBeamDiameter(index = 0, direction = 'maximum') {
         // Update all instrument calculations needed for beam diameter
@@ -509,25 +525,33 @@ class Instrument {
         var trans3 = this.flux.trans3;
         var b = this.flux.b;
         var c = this.flux.c;
+        var sourceAperture = this.getSourceApertureSize();
+        var sampleAperture = this.getSampleApertureSize();
+        var SDD = this.getSampleToDetectorDistance();
+        var lambda = this.getWavelength();
+        var lambdaSpread = this.getWavelengthSpread();
+        var guides = this.getNumberOfGuides();
 
         // Run calculations
-        var alpha = math.divide(math.add(this.getSourceApertureSize(), this.getSampleApertureSize()), math.multiply(2, this.getSourceToSampleApertureDistance()));
-        var f1 = math.multiply(guideGap, alpha)
-        var f2 = math.multiply(2, guideWidth);
-        var f = math.divide(f1, f2);
-        var trans4 = math.pow(math.subtract(1, f), 2);
-        var trans5 = math.exp(math.multiply(this.getNumberOfGuides(), math.log(guideLoss)));
-        var trans6 = math.subtract(1, math.multiply(this.getWavelength(), math.subtract(b, math.multiply(math.divide(this.getNumberOfGuides(), 8), math.subtract(b, c)))));
-        var totalTrans = math.chain(trans1).multiply(trans2).multiply(trans3).multiply(trans4).multiply(trans5).multiply(trans6).done();
+        var alpha = math.divide(math.add(sourceAperture, sampleAperture), math.multiply(2, SDD));
+        var f = math.divide(math.multiply(guideGap, alpha), math.multiply(2, guideWidth));
+        var trans4 = math.multiply(math.subtract(1, f), math.subtract(1, f));
+        var trans5 = math.exp(math.multiply(guides, Math.log(guideLoss)));
+        var trans6 = math.subtract(1, math.multiply(lambda, math.subtract(b, math.multiply(math.divide(guides, 8), math.subtract(b, c)))));
+        var totalTrans = math.multiply(trans1, trans2, trans3, trans4, trans5, trans6);
 
-        var area = math.divide(math.multiply(math.PI, math.pow(this.getSampleApertureSize(), 2)), 4);
+        var area = math.chain(math.PI).multiply(sampleAperture.toNumeric()).multiply(sampleAperture.toNumeric()).divide(4).done();
         var d2_phi = math.divide(peakFlux, math.multiply(2, math.PI));
-        d2_phi = math.multiply(d2_phi, math.exp(math.multiply(4, math.log(math.divide(peakLambda, this.getWavelength())))));
-        d2_phi = math.multiply(d2_phi, math.exp(math.multiply(-1, math.pow(math.divide(peakLambda, this.getWavelength()), 2))));
-        var solid_angle = math.multiply(math.divide(math.PI, 4), math.pow(math.divide(this.getSampleApertureSize(), this.getSourceToSampleApertureDistance()), 2));
-        var beamFlux = math.chain(area).multiply(d2_phi).multiply(this.getWavelengthSpread()).multiply(solid_angle).multiply(totalTrans).done();
+        d2_phi = math.multiply(d2_phi, math.exp(math.multiply(4, math.log(math.divide(peakLambda, lambda)))));
+        d2_phi = math.multiply(d2_phi, math.exp(math.multiply(-1, math.pow(math.divide(peakLambda, lambda), 2))));
+        var solid_angle = math.multiply(math.divide(math.PI, 4), math.multiply(math.divide(sampleAperture, SDD), math.divide(sampleAperture, SDD)));
+        var beamFlux = math.multiply(area, d2_phi, lambdaSpread.toNumeric(), solid_angle, totalTrans);
 
         this.beamfluxNode.value = beamFlux.toNumeric();
+    }
+    calculateDistanceFromBeamCenter(pixelValue, pixelCenter, pixelSize, coeff) {
+        var rawValue = math.multiply(math.subtract(pixelValue, pixelCenter), pixelSize, math.unit(1, 'rad'));
+        return math.multiply(coeff, math.tan(math.divide(rawValue, coeff)));
     }
     calculateFigureOfMerit() {
         var figureOfMerit = math.multiply(math.pow(this.getWavelength(), 2), this.getBeamFlux())
@@ -555,6 +579,35 @@ class Instrument {
         var theta = math.atan(math.divide(math.divide(detWidth, 2.0), SDD));
         var qMaxVert = math.chain(4).multiply(math.divide(math.PI, lambda)).multiply(math.sin(math.multiply(0.5, theta))).done();
         this.qMaxVerticalNode.value = qMaxVert.toNumeric();
+    }
+    calculateQRangeSlicer(index = 0) {
+        var xPixels = this.detectorOptions[index].pixels.dimensions[0];
+        var yPixels = this.detectorOptions[index].pixels.dimensions[1];
+        var xCenter = this.calculateBeamCenterX(index);
+        var yCenter = yPixels / 2 + 0.5;
+        var pixelXSize = this.detectorOptions[index].pixels.xSize;
+        var pixelYSize = this.detectorOptions[index].pixels.ySize;
+        var coeff = this.flux.coeff;
+        var lambda = this.getWavelength();
+        
+        // Detector values pixel size in mm
+        var detectorDistance = this.getSampleToDetectorDistance();
+        window.intensity2D = generateOnesArray(index);
+        window.mask = generateStandardMaskArray(index);
+
+        // Calculate Qx and Qy values
+        for (var i = 0; i < xPixels; i++) {
+            var xDistance = this.calculateDistanceFromBeamCenter(i, xCenter, pixelXSize, coeff);
+            var thetaX = math.divide(math.atan(math.divide(xDistance, detectorDistance)), 2);
+            window.qxValues[i] = math.multiply(4, math.divide(Math.PI, lambda), math.sin(thetaX));
+        }
+        for (var i = 0; i < yPixels; i++) {
+            var yDistance = this.calculateDistanceFromBeamCenter(i, yCenter, pixelYSize, coeff);
+            var thetaY = math.divide(math.atan(math.divide(yDistance, detectorDistance)), 2);
+            window.qyValues[i] = math.multiply(4, math.divide(Math.PI, lambda), math.sin(thetaY));
+        }
+        this.setSlicer();
+        window.slicer.calculate();
     }
     calculateSourceToSampleApertureDistance() {
         this.ssdNode.value = math.subtract(this.collimationOptions.lengthMaximum,
@@ -771,7 +824,7 @@ class NG7SANS extends Instrument {
             trans3: 0.75,
             b: math.unit(0.0395, 'angstrom^-1'),
             c: math.unit(0.0442, 'angstrom^-1'),
-            coeff: 10000,
+            coeff: math.unit(10000, 'm'),
             peakFlux: math.unit(2.55e13, 'Hz'),
             peakWavelength: math.unit(5.5, 'angstrom'),
         };

@@ -1,16 +1,24 @@
 ﻿function slicerSelection(slicer) {
+    var averagingParams = getAveragingParams();
+    var params = {};
+    params['phi'] = math.unit((Math.PI / 180) * averagingParams[0], 'rad');
+    params['dPhi'] = math.unit((Math.PI / 180) * averagingParams[1], 'rad');
+    params['detectorSections'] = averagingParams[2];
+    params['qCenter'] = averagingParams[3];
+    params['qWidth'] = averagingParams[4];
+    params['aspectRatio'] = averagingParams[5];
     switch (slicer) {
         default:
         case 'circular':
-            return new Circular({}, window.currentInstrument);
+            return new Circular(params, window.currentInstrument);
         case 'sector':
-            return new Sector({}, window.currentInstrument);
+            return new Sector(params, window.currentInstrument);
         case 'rectangular':
-            return new Rectangular({}, window.currentInstrument);
+            return new Rectangular(params, window.currentInstrument);
         case 'annular':
-            return new Annular({}, window.currentInstrument);
+            return new Annular(params, window.currentInstrument);
         case 'elliptical':
-            return new Elliptical({}, window.currentInstrument);
+            return new Elliptical(params, window.currentInstrument);
     }
 }
 
@@ -24,6 +32,18 @@ class Slicer {
         this.qxVals = window.qxValues;
         this.qyVals = window.qyValues;
         this.rawIntensity = window.intensity2D;
+        // Min/max Q values
+        this.maxQx = (Math.max(...this.qxVals) === undefined) ? 0.3 : Math.max(...this.qxVals);
+        this.maxQy = (Math.max(...this.qyVals) === undefined) ? 0.3 : Math.max(...this.qyVals);
+        this.minQx = (Math.min(...this.qxVals) === undefined) ? 0.0 : Math.min(...this.qxVals);
+        this.minQy = (Math.min(...this.qyVals) === undefined) ? 0.0 : Math.min(...this.qyVals);
+        // Averaging Parameters
+        this.detectorSections = (params['detectorSections'] === undefined) ? 'both' : params['detectorSections'];
+        this.phi = (params['phi'] === undefined) ? 0.0 : parseFloat(params['phi']);
+        this.dPhi = (params['dPhi'] === undefined) ? Math.PI / 2 : parseFloat(params['dPhi']);
+        this.qCenter = (params['qCenter'] === undefined) ? 0.0 : parseFloat(params['qCenter']);
+        this.qWidth = (params['qWidth'] === undefined) ? 0.3 : parseFloat(params['qWidth']);
+        this.aspectRatio = (params['aspectRatio'] === undefined) ? 1.0 : parseFloat(params['aspectRatio']);
         if (instrument) {
             this.instrument = instrument;
             this.lambda = this.instrument.wavelengthNode.value;
@@ -47,18 +67,6 @@ class Slicer {
             }
             this.coeff = this.instrument.flux['coeff'];
         } else {
-            // Min/max Q values
-            this.maxQx = (Math.max(...this.qxVals) === undefined) ? 0.3 : Math.max(...this.qxVals);
-            this.maxQy = (Math.max(...this.qyVals) === undefined) ? 0.3 : Math.max(...this.qyVals);
-            this.minQx = (Math.min(...this.qxVals) === undefined) ? 0.0 : Math.min(...this.qxVals);
-            this.minQy = (Math.min(...this.qyVals) === undefined) ? 0.0 : Math.min(...this.qyVals);
-            // Averaging Parameters
-            this.detectorSections = (params['detectorSections'] === undefined) ? 'both' : params['detectorSections'];
-            this.phi = (params['phi'] === undefined) ? 0.0 : parseFloat(params['phi']);
-            this.dPhi = (params['dPhi'] === undefined) ? Math.PI / 2 : parseFloat(params['dPhi']);
-            this.qCenter = (params['qCenter'] === undefined) ? 0.0 : parseFloat(params['qCenter']);
-            this.qWidth = (params['qWidth'] === undefined) ? 0.3 : parseFloat(params['qWidth']);
-            this.aspectRatio = (params['aspectRatio'] === undefined) ? 1.0 : parseFloat(params['aspectRatio']);
             // Instrumental Parameters
             this.lambda = (params['lambda'] === undefined) ? 6.0 : parseFloat(params['lambda']);
             this.lambdaWidth = (params['lambdaWidth'] === undefined) ? 0.14 : parseFloat(params['lambdaWidth']);
