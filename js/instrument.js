@@ -184,7 +184,7 @@ class Instrument {
                 }
                 this.calculateWavelengthRange();
 
-                this.beamfluxNode = createChildElementWithLabel(this.wavelengthContainer, 'input', { 'type': 'number', 'id': 'BeamFlux' }, '', 'Beam Flux (n-cm<sup>-1</sup>-sec<sup>-1</sup>): ');
+                this.beamfluxNode = createChildElementWithLabel(this.wavelengthContainer, 'input', { 'type': 'number', 'id': 'BeamFlux' }, '', 'Beam Flux (n-cm<sup>-2</sup>-sec<sup>-1</sup>): ');
                 this.beamfluxNode.disabled = true;
                 this.figureOfMeritNode = createChildElementWithLabel(this.wavelengthContainer, 'input', { 'type': 'number', 'id': 'FigureOfMerit' }, '', 'Figure of Merit: ');
                 this.figureOfMeritNode.disabled = true;
@@ -220,9 +220,10 @@ class Instrument {
                         option.selected = true;
                     }
                 }
-                this.sampleApertureNode = createChildElementWithLabel(this.collimationContainer, 'input', { 'type': 'number', 'value': '12.7', 'id': 'SampleAperture' }, '', 'Sample Aperture (cm): ');
+                this.sampleApertureNode = createChildElementWithLabel(this.collimationContainer, 'input', { 'type': 'number', 'value': '1.27', 'id': 'SampleAperture' }, '', 'Sample Aperture (cm): ');
                 this.ssdNode = createChildElementWithLabel(this.collimationContainer, 'input', { 'type': 'number', 'id': 'SSD' }, '', 'Source-to-Sample Distance (cm): ');
                 this.ssdNode.disabled = true;
+                this.updateGuides(false);
             }
             if (this.detectorOptions) {
                 this.sddInputNodes = [];
@@ -297,7 +298,7 @@ class Instrument {
         }
         if (this.sampleApertureNode) {
             this.sampleApertureNode.onchange = function () {
-                window.currentInstrument.customApertureNode.value = this.value;
+                window.currentInstrument.sampleApertureNode.value = this.value;
                 window.currentInstrument.SASCALC();
             }
         }
@@ -431,11 +432,11 @@ class Instrument {
         this.attenuatorNode.value = numAtten;
     }
     calculateBeamDiameter(index = 0, direction = 'maximum') {
-        // FIXME: Beam diameter is 10x too large
         // Update all instrument calculations needed for beam diameter
         this.calculateSourceToSampleApertureDistance();
         this.calculateSampleToDetectorDistance(index);
         // Get instrumental values
+        var sourceAperture = this.getSourceApertureSize();
         var sampleAperture = this.getSampleApertureSize();
         var SSD = this.getSourceToSampleApertureDistance();
         var SDD = this.getSampleApertureToDetectorDistance(index);
@@ -443,10 +444,11 @@ class Instrument {
         var wavelengthSpread = this.getWavelengthSpread();
         if (this.guideConfigNode.value === 'LENS') {
             // If LENS configuration, the beam size is the source aperture size
-            return sampleAperture;
+            // FIXME: This is showing -58 cm... Why?!?!
+            this.beamSizeNodes[index].value = this.getSourceApertureSize().toNumeric();
         }
         // Calculate beam width on the detector
-        var beamWidth = math.add(math.multiply(sampleAperture, math.divide(SDD, SSD)),
+        var beamWidth = math.add(math.multiply(sourceAperture, math.divide(SDD, SSD)),
             math.divide(math.multiply(sampleAperture, math.add(SSD, SDD)), SSD));
         // Beam height due to gravity
         var bv3 = math.multiply(math.multiply(math.add(SSD, SDD), SDD), math.pow(wavelength, 2));
@@ -471,27 +473,31 @@ class Instrument {
     }
     calculateBeamStopDiameter(index = 0) {
         this.calculateBeamDiameter(index, 'maximum');
+        this.beamStopSizeNodes[index].setAttribute('style', '');
         var beamDiam = this.getBeamDiameter(index);
         for (var i in this.beamstop) {
             var beamStopIDict = this.beamstop[i];
-            if (beamStopIDict.size > beamDiam) {
+            if (math.compare(beamStopIDict.size, beamDiam) >= 0) {
                 this.beamStopSizeNodes[index].value = beamStopIDict.size.toNumeric();
                 return;
             }
         }
         // If this is reached, that means the beam diameter is larger than the largest known beamstop
         this.beamStopSizeNodes[index].value = beamStopIDict.size.toNumeric();
-        this.beamStopSizeNodes[index].setAttribute('style', 'color:red')
+        this.beamStopSizeNodes[index].setAttribute('style', 'color:red');
     }
-    calculateBeamStopProjection() {
-        var bsDiam = this.getBeamStopDiameter();
+    calculateBeamStopProjection(index = 0) {
+        this.calculateSampleToDetectorDistance(index);
+        this.calculateBeamDiameter(index);
+        this.calculateBeamStopDiameter(index);
+        var bsDiam = this.getBeamStopDiameter(index);
         var sampleAperture = this.getSampleApertureSize();
         var L2 = this.getSampleApertureToDetectorDistance();
         var LBeamstop = math.add(math.unit(20.1, 'cm'), math.multiply(1.61, this.getBeamStopDiameter())); //distance in cm from beamstop to anode plane (empirical)
         return math.add(bsDiam, math.multiply(math.add(bsDiam, sampleAperture), math.divide(LBeamstop, math.subtract(L2, LBeamstop)))); // Return value is in cm
     }
     calculateBeamFlux() {
-        // FIXME: Flux calculation is wrong (by a few orders of magnitude)
+        // FIXME: Flux calculation is about 7x too high
         // Get constants
         var peakLambda = this.flux.peakWavelength;
         var peakFlux = this.flux.peakFlux;
@@ -618,9 +624,11 @@ class Instrument {
         return math.unit(this.beamStopSizeNodes[index].value, 'inch');
     }
     getNumberOfGuides() {
-        var guides = parseInt(this.guideConfigNode.value);
-        if (guides == NaN) {
+        var guides = this.guideConfigNode.value;
+        if (guides == "LENS") {
             guides = 0;
+        } else {
+            guides = parseInt(guides);
         }
         return guides;
     }
