@@ -1,11 +1,27 @@
 ﻿function loadInstrumentClass() {
+    // Initialize data sets
+    initializeData();
     var instrumentNode = document.getElementById('instrumentSelector');
     instrumentNode.onchange = function () {
         loadInstrument(this.value);
     }
+    // Initialize onclick events for freezing and clearing calculations
+    var freezeButton = document.getElementById("freezeButton");
+    freezeButton.onclick = function () { freezeSASCALC(); }
+    var clearFrozenButton = document.getElementById("clearFrozenButton");
+    clearFrozenButton.onclick = function () { clearFrozen(); }
+    // Initialize routine when button is displayed:
+    var send_button = document.getElementById('sendToNICE');
+    send_button.onclick = async function () { connectToNice(sendConfigsToNice); }
+    // Update model and slicer when changed
+    var modelNode = document.getElementById('model');
+    modelNode.onchange = function () { window.currentInstrument.setModel(); selectModel(window.currentInstrument.model); }
+    var slicerNode = document.getElementById('averagingType');
+    slicerNode.onchange = function () { window.currentInstrument.setSlicer(); window.currentInstrument.calculateQRangeSlicer(); }
 }
 
 function loadInstrument(instrument) {
+    // TODO: Calculation metrics - figure out why everything takes 3-5 seconds
     switch (instrument) {
         case 'ng7':
             window.currentInstrument = new NG7SANS();
@@ -15,10 +31,6 @@ function loadInstrument(instrument) {
             break;
     }
     if (window.currentInstrument != null) {
-        // Set Model() object
-        window.currentInstrument.setModel();
-        // Set Slicer() object
-        window.currentInstrument.setSlicer();
         window.qxValues = [];
         window.qyValues = [];
         window.intensity2D = [];
@@ -46,6 +58,10 @@ function displayGeneralItems(instrument = null) {
         averagingType.style.display = "inline-block";
         var averagingTypeLabel = document.getElementById("averagingTypeLabel");
         averagingTypeLabel.style.display = "inline-block";
+        // Set Model() object
+        window.currentInstrument.setModel(false);
+        // Set Slicer() object
+        window.currentInstrument.setSlicer();
     }
 }
 
@@ -332,19 +348,6 @@ class Instrument {
             this.qMaxHorizontalNode.onchange = function () { window.currentInstrument.SASCALC() }
             this.qMaxVerticalNode.onchange = function () { window.currentInstrument.SASCALC() }
         }
-        // Initialize onclick events for freezing and clearing calculations
-        this.freezeButton = document.getElementById("freezeButton");
-        this.freezeButton.onclick = function () { freezeSASCALC(); }
-        this.clearFrozenButton = document.getElementById("clearFrozenButton");
-        this.clearFrozenButton.onclick = function () { clearFrozen(); }
-        // Initialize routine when button is displayed:
-        if (this.isReal) {
-            this.send_button = document.getElementById('sendToNICE');
-            this.send_button.onclick = async function () { connectToNice(sendConfigsToNice); }
-        }
-        // Update model and slicer when changed
-        this.modelNode.onchange = function () { window.currentInstrument.setModel(); selectModel(window.currentInstrument.model); }
-        this.slicerNode.onchange = function () { window.currentInstrument.setSlicer(); window.currentInstrument.calculateQRangeSlicer(); }
     }
 
     /*
@@ -372,9 +375,9 @@ class Instrument {
         this.modelNode = document.getElementById('model');
         this.model = this.modelNode.value;
     }
-    setModel() {
+    setModel(runSasCalc = true) {
         this.setModelName()
-        // TODO: Change this once the tie-in to sasmodels is working
+        selectModel(this.model, runSasCalc);
     }
     setSlicerName() {
         this.slicerNode = document.getElementById('averagingType');
@@ -382,19 +385,13 @@ class Instrument {
     }
     setSlicer() {
         this.setSlicerName();
-        window.slicer = slicerSelection(this.slicerName);
+        slicerSelection(this.slicerName);
     }
 
-    // TODO: Move many of these into the class
     SASCALC() {
         // Calculate any instrument parameters
         // Keep as a separate function so Q-range entries can ignore this
         this.calculateInstrumentParameters();
-        // Do Circular Average of an array of 1s
-        for (var index in this.detectorOptions) {
-            this.calculateMinimumAndMaximumQ(index);
-            this.calculateQRangeSlicer(index);
-        }
         // Do average of an array of 1s
         calculateModel();
         // Update the charts
@@ -414,6 +411,11 @@ class Instrument {
         this.calculateFigureOfMerit();
         // Calculate the number of attenuators
         this.calculateAttenuators();
+        // Do Circular Average of an array of 1s
+        for (var index in this.detectorOptions) {
+            this.calculateMinimumAndMaximumQ(index);
+            this.calculateQRangeSlicer(index);
+        }
     }
 
     calculateAttenuationFactor(index = 0) {
@@ -606,7 +608,6 @@ class Instrument {
             var thetaY = math.divide(math.atan(math.divide(yDistance, detectorDistance)), 2);
             window.qyValues[i] = math.multiply(4, math.divide(Math.PI, lambda), math.sin(thetaY));
         }
-        this.setSlicer();
         window.slicer.calculate();
     }
     calculateSourceToSampleApertureDistance() {

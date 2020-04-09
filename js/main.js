@@ -902,47 +902,6 @@ async function populatePageDynamically(instrument) {
 }
 
 /*
- * Update the page when a new model is selected
- */
-function selectModel(model, runSASCALC = true) {
-    var modelParams = document.getElementById("modelParams");
-    // Show the node
-    modelParams.style.display = "inline-block";
-    // Remove existing nodes
-    while (modelParams.lastChild) {
-        modelParams.removeChild(modelParams.lastChild);
-    }
-    var instrument = document.getElementById('instrumentSelector').value;
-    var params = window.modelList[model]["params"];
-    var paramNames = Object.keys(params);
-    var defaultValues = Object.values(params);
-    // Create new nodes for parameters
-    for (var i = 0; i < paramNames.length; i++) {
-        var id = model + "_" + paramNames[i];
-        var label = document.createElement("LABEL");
-        var for_att = document.createAttribute("for");
-        for_att.value = id;
-        label.setAttributeNode(for_att);
-        label.innerHTML = paramNames[i].charAt(0).toUpperCase() + paramNames[i].slice(1) + ": ";
-        var input = document.createElement("input");
-        var id_att = document.createAttribute("id");
-        id_att.value = id;
-        input.setAttributeNode(id_att);
-        input.value = defaultValues[i];
-        input.oninput = function () { SASCALC(instrument); }
-        modelParams.appendChild(label);
-        modelParams.appendChild(input);
-    }
-    if (runSASCALC) {
-        if (window.currentInstrument != null) {
-            window.currentInstrument.SASCALC()
-        } else {
-            SASCALC(instrument);
-        }
-    }
-}
-
-/*
  * Update the page when a new averaging method is selected
  */
 function selectAveragingMethod(averagingMethod, runSASCALC = true) {

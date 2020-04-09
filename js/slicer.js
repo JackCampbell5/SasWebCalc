@@ -10,15 +10,20 @@
     switch (slicer) {
         default:
         case 'circular':
-            return new Circular(params, window.currentInstrument);
+            window.slicer = new Circular(params, window.currentInstrument);
+            break;
         case 'sector':
-            return new Sector(params, window.currentInstrument);
+            window.slicer = new Sector(params, window.currentInstrument);
+            break;
         case 'rectangular':
-            return new Rectangular(params, window.currentInstrument);
+            window.slicer = new Rectangular(params, window.currentInstrument);
+            break;
         case 'annular':
-            return new Annular(params, window.currentInstrument);
+            window.slicer = new Annular(params, window.currentInstrument);
+            break;
         case 'elliptical':
-            return new Elliptical(params, window.currentInstrument);
+            window.slicer = new Elliptical(params, window.currentInstrument);
+            break;
     }
 }
 
