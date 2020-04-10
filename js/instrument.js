@@ -91,9 +91,7 @@ function generateOnesArray(index = 0) {
     var data = new Array();
     var dataY = new Array();
     for (var i = 0; i < xPixels; i++) {
-        for (var j = 0; j < yPixels; j++) {
-            dataY[j] = 1;
-        }
+        let dataY = new Array(yPixels).fill(1);
         data[i] = dataY;
     }
     return data;
@@ -104,17 +102,11 @@ function generateStandardMaskArray(index = 0) {
     var yPixels = parseInt(window.currentInstrument.detectorOptions[index].pixels.dimensions[1]);
     var mask = new Array();
     for (var i = 0; i < xPixels; i++) {
-        var maskInset = new Array();
+        var maskInset = new Array(yPixels).fill(0);
         for (var j = 0; j < yPixels; j++) {
-            if (i <= 1 || i >= xPixels - 2) {
-                // Top and bottom two pixels should be masked
-                maskInset[j] = 1;
-            } else if (j <= 1 || j >= yPixels - 2) {
+            if ((i <= 1 || i >= xPixels - 2) ||(j <= 1 || j >= yPixels - 2)) {
                 // Left and right two pixels should be masked
                 maskInset[j] = 1;
-            } else {
-                // Remainder should not be masked
-                maskInset[j] = 0;
             }
         }
         mask[i] = maskInset;
@@ -551,8 +543,9 @@ class Instrument {
 
         this.beamfluxNode.value = beamFlux.toNumeric();
     }
-    calculateDistanceFromBeamCenter(pixelValue, pixelCenter, pixelSize, coeff) {
-        var rawValue = math.multiply(math.subtract(pixelValue, pixelCenter), pixelSize, math.unit(1, 'rad'));
+    calculateDistanceFromBeamCenter(nPixels, pixelCenter, pixelSize, coeff) {
+        var pixelArray = [...Array(nPixels).keys()].map(i => i + 1);
+        var rawValue = math.multiply(math.subtract(pixelArray, pixelCenter), pixelSize, math.unit(1, 'rad'));
         return math.multiply(coeff, math.tan(math.divide(rawValue, coeff)));
     }
     calculateFigureOfMerit() {
@@ -598,16 +591,12 @@ class Instrument {
         window.mask = generateStandardMaskArray(index);
 
         // Calculate Qx and Qy values
-        for (var i = 0; i < xPixels; i++) {
-            var xDistance = this.calculateDistanceFromBeamCenter(i, xCenter, pixelXSize, coeff);
-            var thetaX = math.divide(math.atan(math.divide(xDistance, detectorDistance)), 2);
-            window.qxValues[i] = math.multiply(4, math.divide(Math.PI, lambda), math.sin(thetaX));
-        }
-        for (var i = 0; i < yPixels; i++) {
-            var yDistance = this.calculateDistanceFromBeamCenter(i, yCenter, pixelYSize, coeff);
-            var thetaY = math.divide(math.atan(math.divide(yDistance, detectorDistance)), 2);
-            window.qyValues[i] = math.multiply(4, math.divide(Math.PI, lambda), math.sin(thetaY));
-        }
+        var xDistance = this.calculateDistanceFromBeamCenter(xPixels, xCenter, pixelXSize, coeff);
+        var thetaX = math.divide(math.atan(math.divide(xDistance, detectorDistance)), 2);
+        window.qxValues = math.multiply(4, math.divide(Math.PI, lambda), math.sin(thetaX));
+        var yDistance = this.calculateDistanceFromBeamCenter(yPixels, yCenter, pixelYSize, coeff);
+        var thetaY = math.divide(math.atan(math.divide(yDistance, detectorDistance)), 2);
+        window.qyValues = math.multiply(4, math.divide(Math.PI, lambda), math.sin(thetaY));
         window.slicer.calculate();
     }
     calculateSourceToSampleApertureDistance() {

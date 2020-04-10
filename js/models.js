@@ -9,26 +9,29 @@ function selectModel(model, runSASCALC = true) {
     while (modelParams.lastChild) {
         modelParams.removeChild(modelParams.lastChild);
     }
-    var instrument = document.getElementById('instrumentSelector').value;
+    if (window.instrument != null) {
+        var instrument = window.instrument;
+    }
+    else {
+        var instrument = document.getElementById('instrumentSelector').value;
+    }
     var params = window.modelList[model]["params"];
-    var paramNames = Object.keys(params);
-    var defaultValues = Object.values(params);
+    var paramNames = params.map(({ name }) => name);
+    var defaultValues = params.map(({ value }) => value);
+    var units = params.map(({ unit }) => unit);
     // Create new nodes for parameters
     for (var i = 0; i < paramNames.length; i++) {
         var id = model + "_" + paramNames[i];
-        var label = document.createElement("LABEL");
-        var for_att = document.createAttribute("for");
-        for_att.value = id;
-        label.setAttributeNode(for_att);
-        label.innerHTML = paramNames[i].charAt(0).toUpperCase() + paramNames[i].slice(1) + ": ";
-        var input = document.createElement("input");
-        var id_att = document.createAttribute("id");
-        id_att.value = id;
-        input.setAttributeNode(id_att);
-        input.value = defaultValues[i];
-        input.oninput = function () { SASCALC(instrument); }
-        modelParams.appendChild(label);
-        modelParams.appendChild(input);
+        var value = (units[i] != "") ? math.unit(defaultValues[i], units[i]) : defaultValues[i];
+        
+        var input = createChildElementWithLabel(modelParams, 'input', { 'id': id, 'value': value }, '', paramNames[i].charAt(0).toUpperCase() + paramNames[i].slice(1) + ": ");
+        input.oninput = function () {
+            if (window.currentInstrument != null) {
+                window.currentInstrument.SASCALC()
+            } else {
+                SASCALC(instrument);
+            }
+        }
     }
     if (runSASCALC) {
         if (window.currentInstrument != null) {
@@ -44,36 +47,25 @@ function selectModel(model, runSASCALC = true) {
  */
 function calculateModel() {
     var model = document.getElementById("model").value;
-    defaultParams = Object.keys(window.modelList[model]['params']);
+    var paramList = window.modelList[model]["params"];
+    defaultParams = paramList.map(({ name }) => name);
     params = [];
     for (var i = 0; i < defaultParams.length; i++) {
         var paramName = model + "_" + defaultParams[i];
         params[i] = parseFloat(document.getElementById(paramName).value);
     }
     // 1D calculation
-    for (var i = 0; i < window.qValues.length; i++) {
-        params.push(window.qValues[i]);
-        window.aveIntensity[i] = window.fSubs[i] * window[model.toLowerCase()](params);
-        params.pop();
-    }
+    params.push(window.qValues);
+    window.aveIntensity = math.multiply(window.fSubs, window[model.toLowerCase()](params));
+    params.pop(window.qValues);
     // 2D calculation
     var q = q_closest = qx = qy = index = 0;
-    for (var j = 0; j < window.qxValues.length; j++) {
-        qx = window.qxValues[j];
-        var data_k = new Array(1).fill(0);
-        for (var k = 0; k < window.qyValues.length; k++) {
-            qy = window.qyValues[k];
-            q = Math.sqrt(qx * qx + qy * qy);
-            q_closest = window.qValues.reduce(function (prev, curr) {
-                return (Math.abs(curr - q) < Math.abs(prev - q) ? curr : prev);
-            });
-            index = window.qValues.indexOf(q_closest);
-            params.push(q);
-            data_k[k] = window.fSubs[index] * window[model.toLowerCase()](params);
-            params.pop();
-        }
-        window.intensity2D[j] = data_k;
-    }
+    qx = window.qxValues;
+    qy = window.qyValues;
+    q = math.sqrt(math.add(math.multiply(qx, qx), math.multiply(qy, qy)));
+    params.push(q);
+    window.intensity2D = math.multiply(window.fSubs, window[model.toLowerCase()](params));
+    params.pop(q);
     window.intensity2D = window.intensity2D[0].map((col, i) => window.intensity2D.map(row => row[i]));
 }
 
@@ -88,13 +80,17 @@ function debye(params) {
     var rg = params[1];
     var bkg = params[2];
     var q = params[3];
-    var qrSquared = (q * rg) * (q * rg);
-    var pOfQ = 2 * (Math.exp(-1 * qrSquared) - 1 + qrSquared) / Math.pow(qrSquared, 2);
+    // FIXME: array multiplication - work on
+    var qSquared = math.dotMultiply(q, q);
+    var rgSquared = math.pow(rg, 2);
+    var qrSquared = math.multiply(qSquared, rgSquared);
+    var qrSquaredNeg = math.multiply(qrSquared, -1);
+    var pOfQ = math.divide(math.multiply(2, math.add(math.exp(qrSquaredNeg), -1, qrSquared)), math.dotMultiply(qrSquared, qrSquared));
 
     //scale
-    pOfQ *= scale;
+    pOfQ = math.multiply(pOfQ, scale);
     // then add in the background
-    return (pOfQ + bkg);
+    return math.add(pOfQ, bkg);
 }
 
 /*
@@ -106,26 +102,47 @@ function sphere(params) {
     // calculates scale * f^2 / volume where f = volume * 3 * deltaRho * (sin(qr) - q*r*cos(qr)) / (q*r)^3
     var scale = params[0];
     var radius = params[1];
-    var sldSphere = params[2] * 10e-6;
-    var sldSolvent = params[3] * 10e-6;
+    var sldSphere = math.multiply(params[2], 10e-6);
+    var sldSolvent = math.multiply(params[3], 10e-6);
     var bkg = params[4];
     var q = params[5];
-    var deltaRho = sldSphere - sldSolvent;
+    var deltaRho = math.subtract(sldSphere, sldSolvent);
 
-    var radius_cubed = radius * radius * radius;
-    var q_rad = q * radius;
-    var deltaRhoSquared = deltaRho * deltaRho;
+    var radius_cubed = math.pow(radius, 3);
+    var q_rad = math.multiply(q, radius);
+    var deltaRhoSquared = math.pow(deltaRho, 2);
 
+    // FIXME: Need to do this in a linearized way
     if (q == 0) {
-        return (4 / 3) * Math.PI * radius_cubed * deltaRhoSquared * scale * 1e8 + bkg;
+        return math.add(math.multiply(math.divide(4, 3), math.PI, radius_cubed, deltaRhoSquared, scale, 1e8), bkg);
     }
 
-    var bessel = 3 * (Math.sin(q_rad) - q_rad * Math.cos(q_rad)) / (q_rad * q_rad * q_rad);
-    var volume = 4 * Math.PI * radius_cubed / 3;
-    var f = volume * bessel * deltaRho;
+    var bessel = math.divide(math.multiply(3, math.subtract(math.sin(q_rad), math.multiply(q_rad, math.cos(q_rad)))), math.pow(q_rad, 3));
+    var volume = math.divide(math.multiply(4, Math.PI, radius_cubed), 3);
+    var f = math.multiply(volume, bessel, deltaRho);
 
-    var f_squared = (f * f / volume) * 1e8;
+    var f_squared = math.divide(math.multiply(f, f, 1e8), volume);
 
     // then add in the background
-    return (f_squared * scale + bkg);
+    return math.add(math.multiply(f_squared, scale), bkg);
+}
+
+// Models
+window.modelList = {
+    "debye": {
+        "params": [
+            { 'name': "scale", "value": 1000, "unit": ''},
+            { 'name': "rg", "value": 100, "unit": 'angstrom' },
+            { 'name': "bkg", "value": 0.0, "unit": '' },
+        ],
+    },
+    "sphere": {
+        "params": [
+            { 'name': "scale", "value": 1, "unit": '' },
+            { 'name': "radius", "value": 1000, "unit": 'angstrom' },
+            { 'name': "sld_sphere", "value": 1.0, "unit": 'angstrom^-2' },
+            { 'name': "sld_solvent", "value": 6.3, "unit": 'angstrom^-2' },
+            { 'name': "bkg", "value": 0.1, "unit": '' },
+        ]
+    }
 }

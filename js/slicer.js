@@ -44,156 +44,158 @@ class Slicer {
         this.minQy = (Math.min(...this.qyVals) === undefined) ? 0.0 : Math.min(...this.qyVals);
         // Averaging Parameters
         this.detectorSections = (params['detectorSections'] === undefined) ? 'both' : params['detectorSections'];
-        this.phi = (params['phi'] === undefined) ? 0.0 : parseFloat(params['phi']);
-        this.dPhi = (params['dPhi'] === undefined) ? Math.PI / 2 : parseFloat(params['dPhi']);
-        this.qCenter = (params['qCenter'] === undefined) ? 0.0 : parseFloat(params['qCenter']);
-        this.qWidth = (params['qWidth'] === undefined) ? 0.3 : parseFloat(params['qWidth']);
+        this.phi = math.unit((params['phi'] === undefined) ? 0.0 : parseFloat(params['phi']), 'rad');
+        this.dPhi = math.unit((params['dPhi'] === undefined) ? math.divide(math.PI, 2) : parseFloat(params['dPhi']), 'rad');
+        this.qCenter = math.unit((params['qCenter'] === undefined) ? 0.0 : parseFloat(params['qCenter']), 'angstrom^-1');
+        this.qWidth = math.unit((params['qWidth'] === undefined) ? 0.3 : parseFloat(params['qWidth']), 'angstrom^-1');
         this.aspectRatio = (params['aspectRatio'] === undefined) ? 1.0 : parseFloat(params['aspectRatio']);
         if (instrument) {
             this.instrument = instrument;
-            this.lambda = this.instrument.wavelengthNode.value;
-            this.lambdaWidth = this.instrument.wavelengthSpreadNode.value;
+            this.lambda = this.instrument.getWavelength();
+            this.lambdaWidth = this.instrument.getWavelengthSpread();
             this.guides = this.instrument.guideConfigNode.value;
-            this.sourceAperture = this.instrument.sourceApertureNode.value;
-            this.sampleAperture = this.instrument.sampleApertureNode.value;
+            this.sourceAperture = this.instrument.getSourceApertureSize();
+            this.sampleAperture = this.instrument.getSampleApertureSize();
             this.apertureOffset = this.instrument.sampleTableOptions[this.instrument.sampleTableNode.value]['apertureOffset'];
-            this.SSD = this.instrument.ssdNode.value;
+            this.SSD = this.instrument.getSourceToSampleDistance();
             this.SDD = [];
             this.pixelSize = [];
             this.xBeamCenter = [];
             this.yBeamCenter = [];
             this.beamStopSize = [];
             for (var index in this.instrument.detectorOptions) {
-                this.SDD.push(this.instrument.sddInputNodes[index].value);
+                this.SDD.push(this.instrument.getSampleToDetectorDistance(index));
                 this.pixelSize.push(this.instrument.detectorOptions[index]['pixels']['xSize']);
-                this.xBeamCenter.push((this.instrument.detectorOptions[index]['pixels']['dimensions'][0] + 1) / 2);
-                this.yBeamCenter.push((this.instrument.detectorOptions[index]['pixels']['dimensions'][1] + 1) / 2);
-                this.beamStopSize.push(this.instrument.beamStopSizeNodes[index].value);
+                this.xBeamCenter.push(math.divide(math.add(this.instrument.detectorOptions[index]['pixels']['dimensions'][0], 1), 2));
+                this.yBeamCenter.push(math.divide(math.add(this.instrument.detectorOptions[index]['pixels']['dimensions'][1], 1), 2));
+                this.beamStopSize.push(this.instrument.getBeamStopDiameter(index));
             }
             this.coeff = this.instrument.flux['coeff'];
         } else {
             // Instrumental Parameters
-            this.lambda = (params['lambda'] === undefined) ? 6.0 : parseFloat(params['lambda']);
-            this.lambdaWidth = (params['lambdaWidth'] === undefined) ? 0.14 : parseFloat(params['lambdaWidth']);
+            this.lambda = math.unit((params['lambda'] === undefined) ? 6.0 : parseFloat(params['lambda']), 'angstrom');
+            this.lambdaWidth = math.unit((params['lambdaWidth'] === undefined) ? 0.14 : parseFloat(params['lambdaWidth']), 'angstrom');
             this.guides = (params['guides'] === undefined) ? 0.0 : parseFloat(params['guides']);
-            this.sourceAperture = (params['sourceAperture'] === undefined) ? 25.4 : parseFloat(params['sourceAperture']);
-            this.sampleAperture = (params['sampleAperture'] === undefined) ? 6.35 : parseFloat(params['sampleAperture']);
-            this.apertureOffset = (params['apertureOffset'] === undefined) ? 5.00 : parseFloat(params['apertureOffset']);
-            this.beamStopSize = (params['beamStopSize'] === undefined) ? 5.08 : parseFloat(params['beamStopSize']);
-            this.SSD = (params['SSD'] === undefined) ? 1627 : parseFloat(params['SSD']);
-            this.SDD = (params['SDD'] === undefined) ? 1530 : parseFloat(params['SDD']);
-            this.pixelSize = (params['pixelSize'] === undefined) ? 5.08 : parseFloat(params['pixelSize']);
+            this.sourceAperture = math.unit((params['sourceAperture'] === undefined) ? 25.4 : parseFloat(params['sourceAperture']), 'cm');
+            this.sampleAperture = math.unit((params['sampleAperture'] === undefined) ? 6.35 : parseFloat(params['sampleAperture']), 'cm');
+            this.apertureOffset = math.unit((params['apertureOffset'] === undefined) ? 5.00 : parseFloat(params['apertureOffset']), 'cm');
+            this.beamStopSize = [math.unit((params['beamStopSize'] === undefined) ? 5.08 : parseFloat(params['beamStopSize']), 'inch')];
+            this.SSD = [math.unit((params['SSD'] === undefined) ? 1627 : parseFloat(params['SSD']), 'cm')];
+            this.SDD = [math.unit((params['SDD'] === undefined) ? 1530 : parseFloat(params['SDD']), 'cm')];
+            this.pixelSize = [math.unit((params['pixelSize'] === undefined) ? 5.08 : parseFloat(params['pixelSize']), 'mm')];
             this.coeff = (params['coeff'] === undefined) ? 10000 : parseFloat(params['coeff']);
-            this.xBeamCenter = (params['xBeamCenter'] === undefined) ? 64.5 : parseFloat(params['xBeamCenter']);
-            this.yBeamCenter = (params['yBeamCenter'] === undefined) ? 64.5 : parseFloat(params['yBeamCenter']);
+            this.xBeamCenter = [(params['xBeamCenter'] === undefined) ? 64.5 : parseFloat(params['xBeamCenter'])];
+            this.yBeamCenter = [(params['yBeamCenter'] === undefined) ? 64.5 : parseFloat(params['yBeamCenter'])];
         }
         // Calculated parameters
-        this.phiUpper = this.phi + this.dPhi;
-        this.phiLower = this.phi - this.dPhi;
-        this.phiX = Math.cos(this.phi);
-        this.phiY = Math.sin(this.phi);
-        this.phiToURCorner = Math.atan(this.maxQy / this.maxQx);
-        this.phiToULCorner = Math.atan(this.maxQy / this.minQx) + Math.PI;
-        this.phiToLLCorner = Math.atan(this.minQy / this.minQx) + Math.PI;
-        this.phiToLRCorner = Math.atan(this.minQy / this.maxQx) + 2 * Math.PI;
+        this.phiUpper = math.add(this.phi, this.dPhi);
+        this.phiLower = math.subtract(this.phi, this.dPhi);
+        this.phiX = math.cos(this.phi);
+        this.phiY = math.sin(this.phi);
+        this.phiToURCorner = math.atan(math.divide(this.maxQy, this.maxQx));
+        this.phiToULCorner = math.add(math.atan(math.divide(this.maxQy, this.minQx)), math.PI);
+        this.phiToLLCorner = math.add(math.atan(math.divide(this.minQy, this.minQx)), math.PI);
+        this.phiToLRCorner = math.add(math.atan(math.divide(this.minQy, this.maxQx)), math.multiply(2, math.PI));
     }
 
     calculate() {
-        var nq = 0;
         var largeNumber = 1.0;
         var radiusCenter = 100;
         var data = window.intensity2D;
-        var dataI = new Array();
-        var maskI = new Array();
+        var nq = 0
         var numDimensions = 1;
         var center = 1;
-
-        for (var i = 0; i < this.qxVals.length; i++) {
-            var qxVal = this.qxVals[i];
-            var xDistance = this.calculateDistanceFromBeamCenter(i, "x");
-            maskI = window.mask[i];
-            dataI = data[i];
-            for (var j = 0; j < this.qyVals.length; j++) {
-                var qyVal = this.qyVals[j];
-                if (this.includePixel(qxVal, qyVal, maskI[j])) {
-                    var yDistance = this.calculateDistanceFromBeamCenter(j, "y");
-                    var dataPixel = dataI[j];
-                    var totalDistance = Math.sqrt(xDistance * xDistance + yDistance * yDistance);
-                    // Break pixels up into a 3x3 grid close to the beam center
-                    if (totalDistance > radiusCenter) {
-                        numDimensions = 1;
-                        center = 1;
-                    } else {
-                        numDimensions = 3;
-                        center = 2;
-                    }
-                   var numDSquared = numDimensions * numDimensions;
-                    // Loop over sliced pixels
-                    for (var k = 1; k <= numDimensions; k++) {
-                        var correctedDx = xDistance + (k - center) * this.pixelSize / numDimensions;
-                        for (var l = 1; l <= numDimensions; l++) {
-                            var correctedDy = yDistance + (l - center) * this.pixelSize / numDimensions;
-                            var iRadius = this.getIRadius(correctedDx, correctedDy);
-                            var irMinus1 = iRadius - 1;
-                            nq = (iRadius > nq) ? iRadius : nq;
-                            window.aveIntensity[irMinus1] = (window.aveIntensity[irMinus1] === undefined) ? dataPixel / numDSquared : window.aveIntensity[irMinus1] + dataPixel / numDSquared;
-                            window.dSQ[irMinus1] = (window.dSQ[irMinus1] === undefined) ? dataPixel * dataPixel / numDSquared : window.dSQ[irMinus1] + dataPixel * dataPixel / numDSquared;
-                            window.nCells[irMinus1] = (window.nCells[irMinus1] === undefined) ? 1 / numDSquared : window.nCells[irMinus1] + 1 / numDSquared;
+        this.qxVals = window.qxValues;
+        this.qyVals = window.qyValues;
+        for (var detectorIndex in this.SDD) {
+            for (var i = 0; i < this.qxVals.length; i++) {
+                var qxVal = this.qxVals[i];
+                var xDistance = this.calculateDistanceFromBeamCenter(i, "x", detectorIndex);
+                var maskI = window.mask[i];
+                var dataI = data[i];
+                for (var j = 0; j < this.qyVals.length; j++) {
+                    var qyVal = this.qyVals[j];
+                    if (this.includePixel(qxVal, qyVal, maskI[j])) {
+                        var yDistance = this.calculateDistanceFromBeamCenter(j, "y", detectorIndex);
+                        var dataPixel = dataI[j];
+                        var totalDistance = math.sqrt(math.add(math.multiply(xDistance, xDistance), math.multiply(yDistance, yDistance)));
+                        // Break pixels up into a 3x3 grid close to the beam center
+                        if (totalDistance.toNumeric() > radiusCenter) {
+                            numDimensions = 1;
+                            center = 1;
+                        } else {
+                            numDimensions = 3;
+                            center = 2;
+                        }
+                        var numDSquared = numDimensions * numDimensions;
+                        // Loop over sliced pixels
+                        for (var k = 1; k <= numDimensions; k++) {
+                            var correctedDx = math.add(xDistance, math.divide(math.multiply(math.subtract(k, center), this.pixelSize[detectorIndex]), numDimensions));
+                            for (var l = 1; l <= numDimensions; l++) {
+                                var correctedDy = math.add(yDistance, math.divide(math.multiply(math.subtract(l, center), this.pixelSize[detectorIndex]), numDimensions));
+                                var iRadius = this.getIRadius(correctedDx, correctedDy, detectorIndex);
+                                var irMinus1 = math.subtract(iRadius, 1);
+                                nq = (iRadius > nq) ? iRadius : nq;
+                                let pixI = math.divide(dataPixel, numDSquared);
+                                window.aveIntensity[irMinus1] = (window.aveIntensity[irMinus1] === undefined) ? pixI : math.add(window.aveIntensity[irMinus1], pixI);
+                                window.dSQ[irMinus1] = (window.dSQ[irMinus1] === undefined) ? math.multiply(dataPixel, pixI) : math.add(window.dSQ[irMinus1], math.multiply(dataPixel, pixI));
+                                window.nCells[irMinus1] = (window.nCells[irMinus1] === undefined) ? math.divide(1, numDSquared) : math.add(window.nCells[irMinus1], math.divide(1, numDSquared));
+                            }
                         }
                     }
                 }
             }
-        }
-        for (var i = 0; i < nq; i++) {
-            this.calculateQ(i);
-            if (window.nCells[i] <= 1) {
-                window.aveIntensity[i] = (window.nCells[i] == 0 || Number.isNaN(window.nCells[i])) ? 0 : window.aveIntensity[i] / window.nCells[i];
-                window.sigmaAve[i] = largeNumber;
-            } else {
-                window.aveIntensity[i] = isNaN(window.nCells[i]) ? window.aveIntensity[i] : window.aveIntensity[i] / window.nCells[i];
-                var aveSQ = window.aveIntensity[i] * window.aveIntensity[i];
-                var aveisq = isNaN(window.nCells[i]) ? window.dSQ[i] : window.dSQ[i] / window.nCells[i];
-                var diff = aveisq - aveSQ;
-                window.sigmaAve[i] = (diff < 0) ? largeNumber : Math.sqrt(diff / (window.nCells[i] - 1));
+            this.calculateQ(nq, detectorIndex);
+            for (var i = 0; i < nq; i++) {
+                if (window.nCells[i] <= 1) {
+                    window.aveIntensity[i] = (window.nCells[i] == 0 || Number.isNaN(window.nCells[i])) ? 0 : math.divide(window.aveIntensity[i], window.nCells[i]);
+                    window.sigmaAve[i] = largeNumber;
+                } else {
+                    window.aveIntensity[i] = isNaN(window.nCells[i]) ? window.aveIntensity[i] : math.divide(window.aveIntensity[i], window.nCells[i]);
+                    var aveSQ = math.multiply(window.aveIntensity[i], window.aveIntensity[i]);
+                    var aveisq = isNaN(window.nCells[i]) ? window.dSQ[i] : math.divide(window.dSQ[i], window.nCells[i]);
+                    var diff = math.subtract(aveisq, aveSQ);
+                    window.sigmaAve[i] = (diff < 0) ? largeNumber : math.sqrt(math.divide(diff, math.subtract(window.nCells[i], 1)));
+                }
+                if (window.qValues[i] > 0.0) {
+                    this.calculateResolution(i, detectorIndex);
+                }
             }
-            if (window.qValues[i] > 0.0) {
-                this.calculateResolution(i);
-            }
         }
     }
 
-    calculateQ(i) {
-        var radius = (2 * i) * this.pixelSize / 2;
-        var theta = Math.atan(radius / this.SDD) / 2;
-        window.qValues[i] = (4 * Math.PI / this.lambda) * Math.sin(theta);
+    calculateQ(nq, detectorIndex = 0) {
+        var q = [...Array(nq).keys()].map(i => i);
+        var radius = math.divide(math.multiply(2, q, this.pixelSize[detectorIndex]), 2);
+        var theta = math.divide(math.atan(math.divide(radius, this.SDD[detectorIndex])), 2);
+        window.qValues = math.multiply(4, math.divide(math.PI, this.lambda), math.sin(theta));
     }
 
-    getIRadius(xVal, yVal) {
-        return Math.floor(Math.sqrt(xVal * xVal + yVal * yVal) / this.pixelSize) + 1;
+    getIRadius(xVal, yVal, index = 0) {
+        return math.ceil(math.divide(math.sqrt(math.add(math.multiply(xVal, xVal), math.multiply(yVal, yVal))), this.pixelSize[index]));
     }
 
-    calculateResolution(i) {
+    calculateResolution(i, detectorIndex = 0) {
         // Define constants
         var velocityNeutron1A = 3.956e5;
         var gravityConstant = 981.0;
         var smallNumber = 1e-10;
         var isLenses = Boolean(this.guides === "LENS");
         var qValue = window.qValues[i];
-        var pixelSize = this.pixelSize * 0.1
         // Base calculations
-        var lp = 1 / (1 / this.SDD + 1 / this.SSD);
+        var lp = math.divide(1, math.add(math.divide(1, this.SDD[detectorIndex]), math.divide(1, this.SSD)));
         // Calculate variances
-        var varLambda = this.lambdaWidth * this.lambdaWidth / 6.0;
+        var varLambda = math.divide(math.multiply(this.lambdaWidth, this.lambdaWidth), 6.0);
         if (isLenses) {
-            var varBeam = 0.25 * Math.pow(this.sourceAperture * this.SDD / this.SSD, 2) + 0.25 * (2 / 3) * Math.pow(this.lambdaWidth / this.lambda, 2) * Math.pow(this.sampleAperture * this.SDD / lp, 2);
+            var varBeam = math.multiply(0.25, math.add(math.pow(math.divide(math.multiply(this.sourceAperture, this.SDD[detectorIndex]), this.SSD), 2), math.pow(math.divide(math.multiply(this.sampleAperture, this.SDD[detectorIndex], this.lambdaWidth, 2), math.multiply(3, this.lambda, lp)), 2)));
         } else {
-            var varBeam = 0.25 * Math.pow(this.sourceAperture * this.SDD / this.SSD, 2)  + 0.25 * Math.pow(this.sampleAperture * this.SDD / lp, 2);
+            var varBeam = math.multiply(0.25, math.add(math.pow(math.divide(math.multiply(this.sourceAperture, this.SDD[detectorIndex]), this.SSD), 2), math.pow(math.divide(math.multiply(this.sampleAperture, this.SDD[detectorIndex]), lp), 2)));
         }
-        var varDetector = Math.pow(pixelSize / 2.3548, 2) + (pixelSize * pixelSize) / 12;
-        var velocityNeutron = velocityNeutron1A / this.lambda;
-        var varGravity = 0.5 * gravityConstant * this.SDD * (this.SSD + this.SDD) / Math.pow(velocityNeutron, 2);
-        var rZero = this.SDD * Math.tan(2.0 * Math.asin(this.lambda * qValue / (4.0 * Math.PI)));
-        var delta = 0.5 * Math.pow(this.beamStopSize - rZero, 2) / varDetector;
+        var varDetector = math.add(math.pow(math.divide(this.pixelSize, 2.3548), 2), math.divide(math.multiply(pixelSize, pixelSize), 12));
+        var velocityNeutron = math.divide(velocityNeutron1A, this.lambda);
+        var varGravity = math.divide(math.multiply(0.5, gravityConstant, this.SDD[detectorIndex], math.add(this.SSD, this.SDD[detectorIndex])), math.pow(velocityNeutron, 2));
+        var rZero = math.multiply(this.SDD[detectorIndex], Math.tan(math.multiply(2.0, math.asin(math.divide(math.multiply(this.lambda, qValue), math.multiply(4.0, Math.PI))))));
+        var delta = math.divide(math.multiply(0.5, math.pow(math.subtract(this.beamStopSize, rZero), 2)), varDetector);
 
         // FIXME: Find usable incomplete gamma function in javascript (or php)
         var incGamma = smallNumber;
@@ -202,21 +204,21 @@ class Slicer {
         //} else {
         //    var incGamma = Math.exp(Math.log(math.gamma(1.5))) * (1 + window.gammainc(1.5, delta) / math.gamma(1.5));
         //}
-        var fSubS = 0.5 * (1.0 + math.erf((rZero - this.beamStopSize) / Math.sqrt(2.0 * varDetector)));
+        var fSubS = math.multiply(0.5, (math.add(1.0, math.erf(math.divide(math.subtract(rZero, this.beamStopSize[detectorIndex]), math.sqrt(math.multiply(2.0, varDetector)))))));
         if (fSubS < smallNumber) {
             fSubS = smallNumber;
         }
-        var fr = 1.0 + Math.sqrt(varDetector) * Math.exp(-1.0 * delta) / (rZero * fSubS * math.sqrt(2.0 * Math.PI));
-        var fv = incGamma / (fSubS * Math.sqrt(Math.PI)) - rZero * rZero * Math.pow(fr - 1.0, 2) / varDetector;
-        var rmd = fr + rZero;
-        var varR1 = varBeam + varDetector * fv + varGravity;
-        var rm = rmd + 0.5 * varR1 / rmd;
-        var varR = varR1 - 0.5 * (varR1 / rmd) * (varR1 / rmd);
+        var fr = math.add(1.0, math.divide(math.multiply(math.sqrt(varDetector), math.exp(math.multiply(- 1.0, delta))), math.multiply(rZero, fSubS, math.sqrt(math.multiply(2.0, Math.PI)))));
+        var fv = math.subtract(math.divide(incGamma, math.multiply(fSubS, math.sqrt(Math.PI))), math.divide(math.multiply(rZero, rZero, math.pow(math.subtract(fr - 1.0), 2)), varDetector));
+        var rmd = math.add(fr, rZero);
+        var varR1 = math.add(varBeam, math.multiply(varDetector, fv), varGravity);
+        var rm = math.add(rmd, math.divide(math.multiply(0.5, varR1), rmd));
+        var varR = math.subtract(varR1, math.multiply(0.5, math.pow(math.divide(varR1, rmd), 2)));
         if (varR < 0) {
             varR = 0.0;
         }
-        window.qAverage[i] = (4.0 * Math.Pi / this.lambda) * Math.sin(0.5 * Math.atan(rm / this.SDD));
-        window.sigmaQ[i] = window.qAverage[i] * Math.sqrt((varR / rmd) * (varR / rmd) + varLambda);
+        window.qAverage[i] = math.multiply(math.divide(math.multiply(4.0, Math.Pi), this.lambda), math.sin(math.multiply(0.5, math.atan(math.divide(rm, this.SDD[detectorIndex])))));
+        window.sigmaQ[i] = math.multiply(window.qAverage[i], math.sqrt(math.add(math.pow(math.divide(varR, rmd), 2), varLambda)));
         window.fSubs[i] = fSubS;
     }
 
@@ -228,13 +230,13 @@ class Slicer {
         return [];
     }
 
-    calculateDistanceFromBeamCenter(pixelValue, xOrY) {
+    calculateDistanceFromBeamCenter(i, xOrY, index = 0) {
         if (xOrY.toLowerCase() === "x")
-            var pixelCenter = this.xBeamCenter;
+            var pixelCenter = this.xBeamCenter[index];
         else {
-            var pixelCenter = this.yBeamCenter;
+            var pixelCenter = this.yBeamCenter[index];
         }
-        return this.coeff * Math.tan((pixelValue - pixelCenter) * this.pixelSize / this.coeff);
+        return math.multiply(this.coeff, math.tan(math.divide(math.multiply(math.subtract(i, pixelCenter), this.pixelSize[index]), this.coeff)));
     }
 }
 
@@ -323,24 +325,24 @@ class Rectangular extends Slicer {
 
     createPlot() {
         var shapes = super.createPlot();
-        var phiPi = this.phi + math.PI;
+        var phiPi = math.add(this.phi, math.PI);
         var deltax = isFinite(this.qWidth / (2 * Math.sin(this.phi))) ? this.qWidth / (2 * Math.sin(this.phi)) : 0;
         var deltay = isFinite(this.qWidth / (2 * Math.cos(this.phi))) ? this.qWidth / (2 * Math.cos(this.phi)) : 0;
         var mainInUpper = (this.phi > this.phiToURCorner && this.phi < this.phiToULCorner);
         var mainInLower = (phiPi > this.phiToLLCorner && phiPi < this.phiToLRCorner);
         var mainQxRight = mainInUpper ? this.maxQy / Math.tan(this.phi) : this.maxQx;
         var mainQxLeft = mainInLower ? this.minQy / Math.tan(this.phi) : this.minQx;
-        var mainQyRight = mainInUpper ? this.maxQy : this.maxQx * Math.tan(this.phi);
-        var mainQyLeft = mainInLower ? this.minQy : this.minQx * Math.tan(this.phi);
+        var mainQyRight = mainInUpper ? this.maxQy : math.multiply(this.maxQx, math.tan(this.phi));
+        var mainQyLeft = mainInLower ? this.minQy : math.multiply(this.minQx, math.tan(this.phi));
         if (this.detectorSections == "both" || this.detectorSections == "right") {
             // Center of rectangle
             shapes.push(makeShape('line', 0, 0, mainQxRight, mainQyRight));
             // Top of rectangle
-            shapes.push(makeShape('line', 0, deltay, (mainQyRight + deltay > this.maxQy) ? this.maxQx : mainQxRight + deltax,
-                (mainQxRight + deltax > this.maxQx) ? mainQyRight + deltay : this.maxQy, "orange"));
+            shapes.push(makeShape('line', 0, deltay, (math.add(mainQyRight, deltay) > this.maxQy) ? this.maxQx : math.add(mainQxRight, deltax),
+                (math.add(mainQxRight, deltax) > this.maxQx) ? math.add(mainQyRight, deltay) : this.maxQy, "orange"));
             // Bottom of rectangle
-            shapes.push(makeShape('line', 0, -1 * deltay, (mainQxRight + deltax > this.maxQx) ? this.maxQx : mainQxRight - deltax,
-                (mainQyRight - deltay > this.maxQy) ? this.maxQy : mainQyRight - deltay, "orange"));
+            shapes.push(makeShape('line', 0, -1 * deltay, (math.add(mainQxRight, deltax) > this.maxQx) ? this.maxQx : math.subtract(mainQxRight, deltax),
+                (math.subtract(mainQyRight, deltay) > this.maxQy) ? this.maxQy : math.subtract(mainQyRight, deltay), "orange"));
         }
         if (this.detectorSections == "both" || this.detectorSections == "left") {
             // Center of rectangle
@@ -362,7 +364,7 @@ class Elliptical extends Circular {
 
     calculateRadius(xVal, yVal) {
         var iCircular = super.calculateRadius(xVal, yVal);
-        var rho = Math.atan(xVal / yVal) - this.phi;
-        return Math.floor(iCircular * Math.sqrt(Math.cos(rho) * Math.cos(rho) + this.aspectRatio * this.aspectRatio * Math.sin(rho) * Math.sin(rho))) + 1;
+        var rho = math.subtract(math.atan(math.divide(xVal, yVal)), this.phi);
+        return math.ceil(math.add(math.multiply(iCircular, math.sqrt(math.multiply(math.cos(rho), math.cos(rho)))), math.multiply(this.aspectRatio, this.aspectRatio, math.sin(rho), math.sin(rho))));
     }
 }
