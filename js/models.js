@@ -61,10 +61,9 @@ function calculateModel() {
     window.aveIntensity = math.dotMultiply(window.fSubs, window[model.toLowerCase()](params));
     params.pop(window.qValues);
     // 2D calculation
-    var q = q_closest = qx = qy = index = 0;
-    qx = window.qxValues;
-    qy = window.qyValues;
-    q = math.sqrt(math.add(math.multiply(qx, qx), math.multiply(qy, qy)));
+    var qx = window.qxValues;
+    var qy = window.qyValues;
+    var q = math.sqrt(math.add(math.dotMultiply(qx, qx), math.dotMultiply(qy, qy)));
     params.push(q);
     window.intensity2D = math.dotMultiply(window.fSubs, window[model.toLowerCase()](params));
     params.pop(q);
@@ -86,11 +85,11 @@ function debye(params) {
     var qSquared = math.dotMultiply(q, q);
     var rgSquared = math.pow(rg, 2);
     var qrSquared = math.dotMultiply(qSquared, rgSquared);
-    var qrSquaredNeg = math.multiply(qrSquared, -1);
+    var qrSquaredNeg = math.dotMultiply(qrSquared, -1);
     var pOfQ = math.dotDivide(math.dotMultiply(2, math.add(math.exp(qrSquaredNeg), -1, qrSquared)), math.dotMultiply(qrSquared, qrSquared));
 
     //scale
-    pOfQ = math.multiply(pOfQ, scale);
+    pOfQ = math.dotMultiply(pOfQ, scale);
     // then add in the background
     return math.add(pOfQ, bkg);
 }
@@ -111,22 +110,22 @@ function sphere(params) {
     var deltaRho = math.subtract(sldSphere, sldSolvent);
 
     var radius_cubed = math.pow(radius, 3);
-    var q_rad = math.multiply(q, radius);
+    var q_rad = math.dotMultiply(q, radius);
     var deltaRhoSquared = math.pow(deltaRho, 2);
 
     // FIXME: Need to do this in a linearized way
     if (q == 0) {
-        return math.add(math.multiply(math.divide(4, 3), math.PI, radius_cubed, deltaRhoSquared, scale, 1e8), bkg);
+        return math.add(math.dotMultiply(math.divide(4, 3), math.PI, radius_cubed, deltaRhoSquared, scale, 1e8), bkg);
     }
 
-    var bessel = math.divide(math.multiply(3, math.subtract(math.sin(q_rad), math.multiply(q_rad, math.cos(q_rad)))), math.pow(q_rad, 3));
-    var volume = math.divide(math.multiply(4, Math.PI, radius_cubed), 3);
-    var f = math.multiply(volume, bessel, deltaRho);
+    var bessel = math.divide(math.dotMultiply(3, math.subtract(math.sin(q_rad), math.dotMultiply(q_rad, math.cos(q_rad)))), math.pow(q_rad, 3));
+    var volume = math.divide(math.dotMultiply(4, Math.PI, radius_cubed), 3);
+    var f = math.dotMultiply(volume, bessel, deltaRho);
 
-    var f_squared = math.divide(math.multiply(f, f, 1e8), volume);
+    var f_squared = math.dotDivide(math.multiply(f, f, 1e8), volume);
 
     // then add in the background
-    return math.add(math.multiply(f_squared, scale), bkg);
+    return math.add(math.dotMultiply(f_squared, scale), bkg);
 }
 
 // Models

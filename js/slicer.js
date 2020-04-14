@@ -108,6 +108,7 @@ class Slicer {
         this.qxVals = window.qxValues;
         this.qyVals = window.qyValues;
         for (var detectorIndex in this.SDD) {
+            // TODO: Linearize this
             for (var i = 0; i < this.qxVals.length; i++) {
                 var qxVal = this.qxVals[i];
                 var xDistance = this.calculateDistanceFromBeamCenter(i, "x", detectorIndex);
@@ -146,19 +147,16 @@ class Slicer {
                 }
             }
             this.calculateQ(nq, detectorIndex);
+            window.aveIntensity = math.dotDivide(window.aveIntensity, window.nCells);
+            var aveSQ = math.dotMultiply(window.aveIntensity, window.aveIntensity);
+            var aveisq = math.dotDivide(window.dSQ, window.nCells);
+            var diff = math.subtract(aveisq, aveSQ);
+            window.sigmaAve = math.sqrt(math.dotDivide(diff, math.subtract(window.nCells, 1)));
+            this.calculateResolution(detectorIndex);
             for (var i = 0; i < nq; i++) {
-                if (window.nCells[i] <= 1) {
+                if (window.nCells[i] <= 1 || window.nCells[i] == NaN || window.nCells[i] == null) {
                     window.aveIntensity[i] = (window.nCells[i] == 0 || Number.isNaN(window.nCells[i])) ? 0 : math.divide(window.aveIntensity[i], window.nCells[i]);
                     window.sigmaAve[i] = largeNumber;
-                } else {
-                    window.aveIntensity[i] = isNaN(window.nCells[i]) ? window.aveIntensity[i] : math.divide(window.aveIntensity[i], window.nCells[i]);
-                    var aveSQ = math.multiply(window.aveIntensity[i], window.aveIntensity[i]);
-                    var aveisq = isNaN(window.nCells[i]) ? window.dSQ[i] : math.divide(window.dSQ[i], window.nCells[i]);
-                    var diff = math.subtract(aveisq, aveSQ);
-                    window.sigmaAve[i] = (diff < 0) ? largeNumber : math.sqrt(math.divide(diff, math.subtract(window.nCells[i], 1)));
-                }
-                if (window.qValues[i] > 0.0) {
-                    this.calculateResolution(i, detectorIndex);
                 }
             }
         }
@@ -175,27 +173,26 @@ class Slicer {
         return math.ceil(math.divide(math.sqrt(math.add(math.multiply(xVal, xVal), math.multiply(yVal, yVal))), this.pixelSize[index]));
     }
 
-    calculateResolution(i, detectorIndex = 0) {
+    calculateResolution(detectorIndex = 0) {
         // Define constants
-        var velocityNeutron1A = 3.956e5;
-        var gravityConstant = 981.0;
+        var velocityNeutron1A = math.unit(3.956e5, 'cm sec^-1');
+        var gravityConstant = math.unit(981.0, 'cm sec^-2');
         var smallNumber = 1e-10;
-        var isLenses = Boolean(this.guides === "LENS");
-        var qValue = window.qValues[i];
         // Base calculations
         var lp = math.divide(1, math.add(math.divide(1, this.SDD[detectorIndex]), math.divide(1, this.SSD)));
         // Calculate variances
-        var varLambda = math.divide(math.multiply(this.lambdaWidth, this.lambdaWidth), 6.0);
-        if (isLenses) {
+        var varLambda = math.divide(math.multiply(this.lambdaWidth, this.lambdaWidth), this.lambda);
+        if (Boolean(this.guides === "LENS")) {
             var varBeam = math.multiply(0.25, math.add(math.pow(math.divide(math.multiply(this.sourceAperture, this.SDD[detectorIndex]), this.SSD), 2), math.pow(math.divide(math.multiply(this.sampleAperture, this.SDD[detectorIndex], this.lambdaWidth, 2), math.multiply(3, this.lambda, lp)), 2)));
         } else {
             var varBeam = math.multiply(0.25, math.add(math.pow(math.divide(math.multiply(this.sourceAperture, this.SDD[detectorIndex]), this.SSD), 2), math.pow(math.divide(math.multiply(this.sampleAperture, this.SDD[detectorIndex]), lp), 2)));
         }
-        var varDetector = math.add(math.pow(math.divide(this.pixelSize, 2.3548), 2), math.divide(math.multiply(pixelSize, pixelSize), 12));
+        var varDetector = math.add(math.dotMultiply(math.divide(this.pixelSize[detectorIndex], 2.3548), math.divide(this.pixelSize[detectorIndex], 2.3548)), math.divide(math.multiply(this.pixelSize[detectorIndex], this.pixelSize[detectorIndex]), 12));
         var velocityNeutron = math.divide(velocityNeutron1A, this.lambda);
         var varGravity = math.divide(math.multiply(0.5, gravityConstant, this.SDD[detectorIndex], math.add(this.SSD, this.SDD[detectorIndex])), math.pow(velocityNeutron, 2));
-        var rZero = math.multiply(this.SDD[detectorIndex], Math.tan(math.multiply(2.0, math.asin(math.divide(math.multiply(this.lambda, qValue), math.multiply(4.0, Math.PI))))));
-        var delta = math.divide(math.multiply(0.5, math.pow(math.subtract(this.beamStopSize, rZero), 2)), varDetector);
+        var rZero = math.dotMultiply(this.SDD[detectorIndex], math.tan(math.dotMultiply(2.0, math.asin(math.divide(math.dotMultiply(this.lambda, window.qValues), math.multiply(4.0, Math.PI))))));
+        var negRZero = math.dotMultiply(rZero, -1);
+        var delta = math.dotDivide(math.dotMultiply(0.5, math.dotMultiply(math.add(negRZero, this.beamStopSize[detectorIndex]), math.add(negRZero, this.beamStopSize[detectorIndex]))), varDetector);
 
         // FIXME: Find usable incomplete gamma function in javascript (or php)
         var incGamma = smallNumber;
@@ -204,22 +201,28 @@ class Slicer {
         //} else {
         //    var incGamma = Math.exp(Math.log(math.gamma(1.5))) * (1 + window.gammainc(1.5, delta) / math.gamma(1.5));
         //}
-        var fSubS = math.multiply(0.5, (math.add(1.0, math.erf(math.divide(math.subtract(rZero, this.beamStopSize[detectorIndex]), math.sqrt(math.multiply(2.0, varDetector)))))));
-        if (fSubS < smallNumber) {
-            fSubS = smallNumber;
+
+        var fSubS = math.dotMultiply(0.5, (math.add(1.0, math.erf(math.dotDivide(math.subtract(rZero, this.beamStopSize[detectorIndex]), math.sqrt(math.multiply(2.0, varDetector)))))));
+        for (var i in fSubS) {
+            if (fSubS[i] < smallNumber) {
+                fSubS[i] = smallNumber;
+            }
         }
-        var fr = math.add(1.0, math.divide(math.multiply(math.sqrt(varDetector), math.exp(math.multiply(- 1.0, delta))), math.multiply(rZero, fSubS, math.sqrt(math.multiply(2.0, Math.PI)))));
-        var fv = math.subtract(math.divide(incGamma, math.multiply(fSubS, math.sqrt(Math.PI))), math.divide(math.multiply(rZero, rZero, math.pow(math.subtract(fr - 1.0), 2)), varDetector));
+        var fr = math.add(1.0, math.dotDivide(math.dotMultiply(math.sqrt(varDetector), math.exp(math.multiply(- 1.0, delta))), math.dotMultiply(math.dotMultiply(rZero, fSubS), math.sqrt(math.multiply(2.0, Math.PI)))));
+        var fv = math.subtract(math.dotDivide(incGamma, math.dotMultiply(fSubS, math.sqrt(Math.PI))), math.dotDivide(math.dotMultiply(math.dotMultiply(math.dotMultiply(rZero, rZero), math.subtract(fr, 1.0)), math.subtract(fr, 1.0)), varDetector));
+        // FIXME: Units of fr and rZero should both be in length - fr unitless
         var rmd = math.add(fr, rZero);
-        var varR1 = math.add(varBeam, math.multiply(varDetector, fv), varGravity);
-        var rm = math.add(rmd, math.divide(math.multiply(0.5, varR1), rmd));
+        var varR1 = math.add(varBeam, math.dotMultiply(varDetector, fv), varGravity);
+        var rm = math.add(rmd, math.dotDivide(math.dotMultiply(0.5, varR1), rmd));
         var varR = math.subtract(varR1, math.multiply(0.5, math.pow(math.divide(varR1, rmd), 2)));
-        if (varR < 0) {
-            varR = 0.0;
+        for (var i in varR) {
+            if (varR[i] < 0.0) {
+                varR[i] = 0.0;
+            }
         }
-        window.qAverage[i] = math.multiply(math.divide(math.multiply(4.0, Math.Pi), this.lambda), math.sin(math.multiply(0.5, math.atan(math.divide(rm, this.SDD[detectorIndex])))));
-        window.sigmaQ[i] = math.multiply(window.qAverage[i], math.sqrt(math.add(math.pow(math.divide(varR, rmd), 2), varLambda)));
-        window.fSubs[i] = fSubS;
+        window.qAverage = math.dotMultiply(math.dotDivide(math.dotMultiply(4.0, Math.Pi), this.lambda), math.sin(math.dotMultiply(0.5, math.atan(math.dotDivide(rm, this.SDD[detectorIndex])))));
+        window.sigmaQ = math.dotMultiply(window.qAverage, math.sqrt(math.add(math.pow(math.dotDivide(varR, rmd), 2), varLambda)));
+        window.fSubs = fSubS;
     }
 
     includePixel(xVal, yVal, mask) {
