@@ -272,7 +272,7 @@ class Instrument {
                     this.sddNodes[i].disabled = true;
                     this.beamSizeNodes.push(createChildElementWithLabel(this.detectorContainer, 'input', { 'id': 'BeamSize' + index, 'type': 'number' }, '', 'Beam Diameter (cm): '));
                     this.beamSizeNodes[i].disabled = true;
-                    this.beamStopSizeNodes.push(createChildElementWithLabel(this.detectorContainer, 'input', { 'id': 'BeamStopSize' + index, 'type': 'number' }, '', 'Beam Stop Size (cm): '));
+                    this.beamStopSizeNodes.push(createChildElementWithLabel(this.detectorContainer, 'input', { 'id': 'BeamStopSize' + index, 'type': 'number' }, '', 'Beam Stop Size (inch): '));
                     this.beamStopSizeNodes[i].disabled = true;
                 }
             }

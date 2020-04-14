@@ -22,8 +22,7 @@ function selectModel(model, runSASCALC = true) {
     // Create new nodes for parameters
     for (var i = 0; i < paramNames.length; i++) {
         var id = model + "_" + paramNames[i];
-        var value = (units[i] != "") ? math.unit(defaultValues[i], units[i]) : defaultValues[i];
-        
+        var value = (units[i] != "") ? math.unit(defaultValues[i], units[i]).toNumeric() : defaultValues[i];
         var input = createChildElementWithLabel(modelParams, 'input', { 'id': id, 'value': value }, '', paramNames[i].charAt(0).toUpperCase() + paramNames[i].slice(1) + ": ");
         input.oninput = function () {
             if (window.currentInstrument != null) {
@@ -48,15 +47,18 @@ function selectModel(model, runSASCALC = true) {
 function calculateModel() {
     var model = document.getElementById("model").value;
     var paramList = window.modelList[model]["params"];
+    var units = paramList.map(({ unit }) => unit);
     defaultParams = paramList.map(({ name }) => name);
     params = [];
     for (var i = 0; i < defaultParams.length; i++) {
         var paramName = model + "_" + defaultParams[i];
-        params[i] = parseFloat(document.getElementById(paramName).value);
+        var unitless = parseFloat(document.getElementById(paramName).value);
+        var value = (units[i] != "" && units[i] != null) ? math.unit(unitless, units[i]) : unitless;
+        params[i] = value;
     }
     // 1D calculation
     params.push(window.qValues);
-    window.aveIntensity = math.multiply(window.fSubs, window[model.toLowerCase()](params));
+    window.aveIntensity = math.dotMultiply(window.fSubs, window[model.toLowerCase()](params));
     params.pop(window.qValues);
     // 2D calculation
     var q = q_closest = qx = qy = index = 0;
@@ -64,7 +66,7 @@ function calculateModel() {
     qy = window.qyValues;
     q = math.sqrt(math.add(math.multiply(qx, qx), math.multiply(qy, qy)));
     params.push(q);
-    window.intensity2D = math.multiply(window.fSubs, window[model.toLowerCase()](params));
+    window.intensity2D = math.dotMultiply(window.fSubs, window[model.toLowerCase()](params));
     params.pop(q);
     window.intensity2D = window.intensity2D[0].map((col, i) => window.intensity2D.map(row => row[i]));
 }
@@ -83,9 +85,9 @@ function debye(params) {
     // FIXME: array multiplication - work on
     var qSquared = math.dotMultiply(q, q);
     var rgSquared = math.pow(rg, 2);
-    var qrSquared = math.multiply(qSquared, rgSquared);
+    var qrSquared = math.dotMultiply(qSquared, rgSquared);
     var qrSquaredNeg = math.multiply(qrSquared, -1);
-    var pOfQ = math.divide(math.multiply(2, math.add(math.exp(qrSquaredNeg), -1, qrSquared)), math.dotMultiply(qrSquared, qrSquared));
+    var pOfQ = math.dotDivide(math.dotMultiply(2, math.add(math.exp(qrSquaredNeg), -1, qrSquared)), math.dotMultiply(qrSquared, qrSquared));
 
     //scale
     pOfQ = math.multiply(pOfQ, scale);
