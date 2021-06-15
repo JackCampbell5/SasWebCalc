@@ -5,8 +5,8 @@
     <title>SASCalc Web App</title>
     <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700" rel="stylesheet" />
     <link rel="shortcut icon" href="https://www.nist.gov/sites/all/themes/nist_style/favicon.ico" type="image/vnd.microsoft.icon" />
-    <link rel="stylesheet" href="css/drupal_header.css" />
-    <link rel="stylesheet" href="css/default.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/drupal_header.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/default.css') }}" />
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/brython/3.8.7/brython.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/6.2.2/math.js"></script>
@@ -31,14 +31,13 @@
     <!--
     <script src="js/gamma_incomplete.js"></script>
     -->
-    <script src="js/nice_connection.js"></script>
-    <script src="js/constants.js"></script>
-    <script src="js/persistant_state.js"></script>
-    <script src="js/plotting.js"></script>
-    <script src="js/slicer.js"></script>
-    <script src="js/models.js"></script>
-    <script src="js/main.js"></script>
-    <script src="python/link_to_sasmodels.py" type="text/python"></script>
+    <script src="{{ url_for('static', filename='js/nice_connection.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/constants.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/persistant_state.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/plotting.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/slicer.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/models.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </head>
 
 <!--

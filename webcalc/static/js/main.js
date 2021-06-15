@@ -1,6 +1,7 @@
 ﻿function loadpage() {
     // Initialize data sets
     initializeData();
+    clearFrozen(false);
     // Define base event handlers
     var instrumentNode = document.getElementById('instrumentSelector');
     instrumentNode.onchange = function () {
@@ -19,8 +20,6 @@
 };
 
 function initializeData() {
-    window.frozenCalculations = [];
-    window.frozenConfigs = {};
     window.configNames = [];
     window.slicer = null;
     window.currentConfig = window.defaultConfiguration;
@@ -1058,10 +1057,12 @@ function freezeSASCALC() {
 /*
  * Clear all frozen calculations
  */
-function clearFrozen() {
+function clearFrozen(update=true) {
     window.frozenCalculations = [];
     window.frozenConfigs = {};
-    update1DChart();
-    var instrument = document.getElementById('instrumentSelector').value;
-    storePersistantState(instrument);
+    if (update) {
+        update1DChart();
+        var instrument = document.getElementById('instrumentSelector').value;
+        storePersistantState(instrument);
+    }
 }
