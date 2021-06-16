@@ -1,22 +1,22 @@
-﻿import logging
-import pkg_resources
-import sys
-import traceback
+﻿import sys
 
-from flask import Flask, make_response, render_template
-import msgpack as msgpack_converter
-from werkzeug.exceptions import HTTPException
+from flask import Flask, render_template, request
 
 
 def create_app():
-
-    # FIXME: Find the proper location for js files
-
     app = Flask(__name__)
 
-    @app.route('/saswebcalc/')
+    @app.route('/saswebcalc/', methods=['GET', 'POST'])
     def root():
+        if request.method == 'POST':
+            # TODO: Write this
+            pass
+        elif request.method == 'GET':
+            # TODO: Write this
+            pass
         return render_template("index.html")
+
+    # TODO: Define GET/POST methods
 
     return app
 

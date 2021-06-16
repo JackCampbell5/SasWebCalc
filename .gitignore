@@ -8,3 +8,6 @@
 /package.appxmanifest
 /bld/Debug/winrtrefs
 /.vs/*
+/.idea/*
+
+*package-lock.json*

@@ -17,7 +17,7 @@
     }
     // Restore persistant state on refresh
     restorePersistantState();
-};
+}
 
 function initializeData() {
     window.configNames = [];
@@ -898,6 +898,14 @@ async function populatePageDynamically(instrument) {
     // TODO: Populate GUIDES, SOURCE APERTURES, and DETECTOR LIMITS (and wavelenth limits?)
     var sourceApertures = staticNodeMap['guide.sourceAperture']['permittedValues'];
     var sourceAperturesGuide1 = staticNodeMap['guide01.key']['permittedValues'];
+}
+
+/*
+ * Get a list of models directly from sasmodels
+ */
+async function getModels() {
+    let models = [];
+    // TODO: Create request to get list of models from sasmodels
 }
 
 /*
