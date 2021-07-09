@@ -6,7 +6,7 @@ from numpy import logspace
 from sasmodels.core import list_models, load_model
 from sasmodels.direct_model import call_kernel
 
-from helpers import encode_json
+from .helpers import encode_json
 
 
 def get_model_list(category=None):

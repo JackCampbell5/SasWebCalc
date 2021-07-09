@@ -2,10 +2,13 @@
 
 from flask import Flask, render_template, request
 
+from python.link_to_sasmodels import get_model_list, get_model
+
 
 def create_app():
     app = Flask(__name__)
 
+    @app.route('/', methods=['GET', 'POST'])
     @app.route('/saswebcalc/', methods=['GET', 'POST'])
     def root():
         if request.method == 'POST':
@@ -16,7 +19,9 @@ def create_app():
             pass
         return render_template("index.html")
 
-    # TODO: Define GET/POST methods
+    @app.route('/getmodels/', methods=['GET'])
+    def get_models():
+        return get_model_list()
 
     return app
 

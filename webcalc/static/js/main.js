@@ -8,6 +8,7 @@
         updateInstrumentNoInstrument();
     }
     var modelNode = document.getElementById('model');
+    populateModelSelector(modelNode);
     modelNode.onchange = function () {
         selectModel(this.value);
     }
@@ -869,16 +870,16 @@ function setEventHandlers(instrument) {
     clearFrozenButton.onclick = function () { clearFrozen(); }
 
     // Initialize routine when button is displayed:
-    var send_button = document.getElementById('sendToNICE');
-    send_button.onclick = async function () { connectToNice(sendConfigsToNice); }
+    //var send_button = document.getElementById('sendToNICE');
+    //send_button.onclick = async function () { connectToNice(sendConfigsToNice); }
 }
 /*
  * Attempt to populate the page using values taken directly from the instrument
  * Any failed connections will cause the page to use the default values for all inputs
  */
 async function populatePageDynamically(instrument) {
-    var staticNodeMap = await connectToNice(getStaticNodeMap);
-    var deviceMap = await connectToNice(getDevicesMap);
+    //var staticNodeMap = await connectToNice(getStaticNodeMap);
+    //var deviceMap = await connectToNice(getDevicesMap);
     // Available wavelength spreads
     var wavelengthSpreads = staticNodeMap['wavelengthSpread.wavelengthSpread']['permittedValues'];
     var wavelengthSpreadNode = document.getElementById(instrument + 'WavelengthSpread');
@@ -903,9 +904,17 @@ async function populatePageDynamically(instrument) {
 /*
  * Get a list of models directly from sasmodels
  */
-async function getModels() {
-    let models = [];
-    // TODO: Create request to get list of models from sasmodels
+async function populateModelSelector(modelInput) {
+    let route = '/getmodels/';
+    let rawData = await get_data(route);
+    modelInput.innerHTML = '';
+    let myArr = JSON.parse(rawData);
+    for (let index in myArr) {
+        var modelname = myArr[index];
+        let nextChild = document.createElement('option', {'value': modelname});
+        nextChild.innerHTML = modelname;
+        modelInput.appendChild(nextChild);
+    }
 }
 
 /*

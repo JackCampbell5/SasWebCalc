@@ -25,14 +25,20 @@ Return format -- A JSON encoded string "{route: route, data: data}"
  */
 async function get_data(route)
 {
-    let xmlhttp = new XMLHttpRequest();
-    xmlhttp.open('GET', '/json-handler');
-    xmlhttp.setRequestHeader('Content-Type', 'application/json');
-    xmlhttp.onreadystatechange = function() {
-        if (this.readyState == 4) {
-            let data = this.response;
-            return {route: route, data: JSON.parse(data)}
+    return new Promise(function (resolve, reject) {
+        let xmlhttp = new XMLHttpRequest();
+        xmlhttp.open('GET', route);
+        xmlhttp.setRequestHeader('Content-Type', 'application/json');
+        xmlhttp.onload = function() {
+            if (this.status >= 200 && this.status < 300) {
+                resolve(xmlhttp.response);
+            } else {
+                reject({
+                    status: this.status,
+                    statusText: xmlhttp.statusText
+                });
+            }
         }
-    }
-    xmlhttp.send();
+        xmlhttp.send();
+    });
 }
