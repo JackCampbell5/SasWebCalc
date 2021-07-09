@@ -20,8 +20,17 @@ def create_app():
         return render_template("index.html")
 
     @app.route('/getmodels/', methods=['GET'])
-    def get_models():
+    def get_all_models():
         return get_model_list()
+
+    @app.route('/calculatemodel/', methods=['GET'])
+    def get_model_by_name(name):
+        # TODO: This isn't correct...
+        return get_model(name)
+
+    @app.route('/getparams/', methods=['GET'])
+    def get_model_params(name):
+        return get_model_params(name)
 
     return app
 

@@ -10,7 +10,7 @@
     var modelNode = document.getElementById('model');
     populateModelSelector(modelNode);
     modelNode.onchange = function () {
-        selectModel(this.value);
+        populateModelParams(this.value);
     }
     var averagingNode = document.getElementById('averagingType');
     averagingNode.onchange = function () {
@@ -899,22 +899,6 @@ async function populatePageDynamically(instrument) {
     // TODO: Populate GUIDES, SOURCE APERTURES, and DETECTOR LIMITS (and wavelenth limits?)
     var sourceApertures = staticNodeMap['guide.sourceAperture']['permittedValues'];
     var sourceAperturesGuide1 = staticNodeMap['guide01.key']['permittedValues'];
-}
-
-/*
- * Get a list of models directly from sasmodels
- */
-async function populateModelSelector(modelInput) {
-    let route = '/getmodels/';
-    let rawData = await get_data(route);
-    modelInput.innerHTML = '';
-    let myArr = JSON.parse(rawData);
-    for (let index in myArr) {
-        var modelname = myArr[index];
-        let nextChild = document.createElement('option', {'value': modelname});
-        nextChild.innerHTML = modelname;
-        modelInput.appendChild(nextChild);
-    }
 }
 
 /*

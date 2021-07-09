@@ -1,4 +1,54 @@
 /*
+ * Get a list of models directly from sasmodels
+ */
+async function populateModelSelector(modelInput) {
+    let route = '/getmodels/';
+    let rawData = await get_data(route);
+    modelInput.innerHTML = '';
+    let myArr = JSON.parse(rawData);
+    for (let index in myArr) {
+        var modelname = myArr[index];
+        let nextChild = document.createElement('option', {'value': modelname});
+        nextChild.innerHTML = modelname;
+        modelInput.appendChild(nextChild);
+    }
+}
+
+/*
+ * Get model params from model name
+ */
+async function populateModelParams(modelName) {
+    let route = '/getparams/';
+    let rawData = await get_data(route, modelName);
+    let params = JSON.parse(rawData)
+    var modelParams = document.getElementById("modelParams");
+    // Show the node
+    modelParams.style.display = "inline-block";
+    // Remove existing nodes
+    while (modelParams.lastChild) {
+        modelParams.removeChild(modelParams.lastChild);
+    }
+    var paramNames = Object.keys(params);
+    var defaultValues = Object.values(params);
+    // Create new nodes for parameters
+    for (var i = 0; i < paramNames.length; i++) {
+        var id = model + "_" + paramNames[i];
+        var label = document.createElement("LABEL");
+        var for_att = document.createAttribute("for");
+        for_att.value = id;
+        label.setAttributeNode(for_att);
+        label.innerHTML = paramNames[i].charAt(0).toUpperCase() + paramNames[i].slice(1) + ": ";
+        var input = document.createElement("input");
+        var id_att = document.createAttribute("id");
+        id_att.value = id;
+        input.setAttributeNode(id_att);
+        input.value = defaultValues[i];
+        modelParams.appendChild(label);
+        modelParams.appendChild(input);
+    }
+}
+
+/*
  * Calculate the model function used to represent the data
  */
 function calculateModel() {

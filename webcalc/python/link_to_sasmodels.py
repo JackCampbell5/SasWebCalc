@@ -19,6 +19,14 @@ def get_model(model_string):
     return load_model(model_string)
 
 
+def get_model_params(model_string):
+    params = {}
+    if model_string:
+        model = get_model(model_string)
+        params = model.info.parameters
+    return encode_json(params)
+
+
 def calculate_model(model_string, q, params):
     pars = json.loads(params)
     kernel_model = get_model(model_string)
