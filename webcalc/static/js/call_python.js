@@ -3,16 +3,14 @@ A generic method to send data to the flask server that is then interpreted based
 
 Arguments:
 route -- A string describing where the data should go
-data -- A JSON encodable value (array, JSON, string, number, etc.)
+data -- A JSON encoded value (array, JSON, string, number, etc.)
 
 Send format -- {route: 'route', data: data}
  */
 async function post_data(route, data)
 {
-    let xmlhttp = new XMLHttpRequest();
-    xmlhttp.open('POST', '/json-handler');
-    xmlhttp.setRequestHeader('Content-Type', 'application/json');
-    xmlhttp.send(JSON.stringify({route: route, data: data}));
+    send_data = JSON.stringify(data);
+    return await send(route, 'POST', send_data);
 }
 
 /*
@@ -25,9 +23,14 @@ Return format -- A JSON encoded string "{route: route, data: data}"
  */
 async function get_data(route)
 {
+    return await send(route, 'GET');
+}
+
+async function send(route, method, data=null)
+{
     return new Promise(function (resolve, reject) {
         let xmlhttp = new XMLHttpRequest();
-        xmlhttp.open('GET', route);
+        xmlhttp.open(method, route);
         xmlhttp.setRequestHeader('Content-Type', 'application/json');
         xmlhttp.onload = function() {
             if (this.status >= 200 && this.status < 300) {
@@ -39,6 +42,6 @@ async function get_data(route)
                 });
             }
         }
-        xmlhttp.send();
+        xmlhttp.send(data);
     });
 }
