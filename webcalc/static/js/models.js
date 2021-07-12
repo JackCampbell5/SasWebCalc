@@ -18,9 +18,9 @@ async function populateModelSelector(modelInput) {
  * Get model params from model name
  */
 async function populateModelParams(modelName) {
-    let route = '/getparams/';
-    let rawData = await get_data(route, modelName);
-    let params = JSON.parse(rawData)
+    let route = '/getparams/' + modelName;
+    let rawData = await get_data(route);
+    let param_dict = JSON.parse(rawData)
     var modelParams = document.getElementById("modelParams");
     // Show the node
     modelParams.style.display = "inline-block";
@@ -28,21 +28,39 @@ async function populateModelParams(modelName) {
     while (modelParams.lastChild) {
         modelParams.removeChild(modelParams.lastChild);
     }
-    var paramNames = Object.keys(params);
-    var defaultValues = Object.values(params);
+    var paramNames = Object.keys(param_dict);
+    var paramValues = Object.values(param_dict);
     // Create new nodes for parameters
     for (var i = 0; i < paramNames.length; i++) {
-        var id = model + "_" + paramNames[i];
+        var id = modelName + "_" + paramNames[i];
         var label = document.createElement("LABEL");
         var for_att = document.createAttribute("for");
         for_att.value = id;
         label.setAttributeNode(for_att);
-        label.innerHTML = paramNames[i].charAt(0).toUpperCase() + paramNames[i].slice(1) + ": ";
+        var labelValue = "  " + paramNames[i].charAt(0).toUpperCase() + paramNames[i].slice(1);
+        if (paramValues[i]['units'] != "") {
+            labelValue = labelValue + " (" + paramValues[i]['units'] + ")";
+        }
+        labelValue = labelValue + ": ";
+        label.innerHTML = labelValue;
         var input = document.createElement("input");
         var id_att = document.createAttribute("id");
         id_att.value = id;
         input.setAttributeNode(id_att);
-        input.value = defaultValues[i];
+        var type_att = document.createAttribute("type");
+        type_att.value = 'number';
+        input.setAttributeNode(type_att);
+        if (paramValues[i]['lower_limit'] != '-inf') {
+            var low_lim = document.createAttribute("min");
+            low_lim.value = paramValues[i]['lower_limit'];
+            input.setAttributeNode(low_lim);
+        }
+        if (paramValues[i]['upper_limit'] != 'inf') {
+            var up_lim = document.createAttribute("max");
+            up_lim.value = paramValues[i]['upper_limit'];
+            input.setAttributeNode(up_lim);
+        }
+        input.value = paramValues[i]['default'];
         modelParams.appendChild(label);
         modelParams.appendChild(input);
     }

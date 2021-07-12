@@ -19,12 +19,19 @@ def get_model(model_string):
     return load_model(model_string)
 
 
-def get_model_params(model_string):
-    params = {}
+def get_params(model_string):
     if model_string:
         model = get_model(model_string)
-        params = model.info.parameters
-    return encode_json(params)
+        params = model.info.parameters.call_parameters
+        return_params = {}
+        param_dict = {}
+        for param in params:
+            param_dict['units'] = str(param.units)
+            param_dict['default'] = str(param.default)
+            param_dict['lower_limit'] = str(param.limits[0])
+            param_dict['upper_limit'] = str(param.limits[1])
+            return_params[param.name] = param_dict.copy()
+    return encode_json(return_params)
 
 
 def calculate_model(model_string, q, params):

@@ -10,7 +10,7 @@
     var modelNode = document.getElementById('model');
     populateModelSelector(modelNode);
     modelNode.onchange = function () {
-        populateModelParams(this.value);
+        selectModel(this.value);
     }
     var averagingNode = document.getElementById('averagingType');
     averagingNode.onchange = function () {
@@ -913,7 +913,7 @@ function selectModel(model, runSASCALC = true) {
         modelParams.removeChild(modelParams.lastChild);
     }
     var instrument = document.getElementById('instrumentSelector').value;
-    var params = window.modelList[model]["params"];
+    var params = populateModelParams(model);
     var paramNames = Object.keys(params);
     var defaultValues = Object.values(params);
     // Create new nodes for parameters

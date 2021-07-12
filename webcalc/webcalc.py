@@ -2,7 +2,7 @@
 
 from flask import Flask, render_template, request
 
-from python.link_to_sasmodels import get_model_list, get_model
+from python.link_to_sasmodels import get_model_list, get_model, get_params
 
 
 def create_app():
@@ -23,14 +23,13 @@ def create_app():
     def get_all_models():
         return get_model_list()
 
-    @app.route('/calculatemodel/', methods=['GET'])
-    def get_model_by_name(name):
-        # TODO: This isn't correct...
-        return get_model(name)
+    @app.route('/calculatemodel/<model_name>', methods=['GET'])
+    def get_model_by_name(model_name):
+        return get_model(model_name)
 
-    @app.route('/getparams/', methods=['GET'])
-    def get_model_params(name):
-        return get_model_params(name)
+    @app.route('/getparams/<model_name>', methods=['GET'])
+    def get_model_params(model_name):
+        return get_params(model_name)
 
     return app
 
