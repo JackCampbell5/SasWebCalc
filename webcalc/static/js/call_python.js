@@ -9,8 +9,7 @@ Send format -- {route: 'route', data: data}
  */
 async function post_data(route, data)
 {
-    send_data = JSON.stringify(data);
-    return await send(route, 'POST', send_data);
+    return await send(route, 'POST', JSON.stringify(data));
 }
 
 /*

@@ -91,39 +91,35 @@ async function populateModelParams(modelName) {
 /*
  * Calculate the model function used to represent the data
  */
-function calculateModel() {
+async function calculateModel() {
     var model = document.getElementById("model").value;
-    defaultParams = Object.keys(window.modelList[model]['params']);
-    params = [];
-    for (var i = 0; i < defaultParams.length; i++) {
-        var paramName = model + "_" + defaultParams[i];
-        params[i] = parseFloat(document.getElementById(paramName).value);
+    let params_route = '/getparams/' + model;
+    let calc_route = '/calculatemodel/' + model;
+    let rawData = await get_data(params_route);
+    let params = JSON.parse(rawData);
+    var paramNames = Object.keys(params);
+    var paramValues = [];
+    for (var i = 0; i < paramNames.length; i++) {
+        var paramName = model + "_" + paramNames[i];
+        paramValues[i] = parseFloat(document.getElementById(paramName).value);
     }
     // 1D calculation
-    for (var i = 0; i < window.qValues.length; i++) {
-        params.push(window.qValues[i]);
-        window.aveIntensity[i] = window.fSubs[i] * window[model.toLowerCase()](params);
-        params.pop();
-    }
+    var data1D = [];
+    data1D[0] = paramNames;
+    data1D[1] = paramValues;
+    data1D[2] = window.qValues;
+    var modelCalc1D = await post_data(calc_route, data1D);
+    console.log(modelCalc1D);
+    window.aveIntensity = JSON.parse(modelCalc1D);
     // 2D calculation
-    var q = q_closest = qx = qy = index = 0;
-    for (var j = 0; j < window.qxValues.length; j++) {
-        qx = window.qxValues[j];
-        var data_k = new Array(1).fill(0);
-        for (var k = 0; k < window.qyValues.length; k++) {
-            qy = window.qyValues[k];
-            q = Math.sqrt(qx * qx + qy * qy);
-            q_closest = window.qValues.reduce(function (prev, curr) {
-                return (Math.abs(curr - q) < Math.abs(prev - q) ? curr : prev);
-            });
-            index = window.qValues.indexOf(q_closest);
-            params.push(q);
-            data_k[k] = window.fSubs[index] * window[model.toLowerCase()](params);
-            params.pop();
-        }
-        window.intensity2D[j] = data_k;
-    }
-    window.intensity2D = window.intensity2D[0].map((col, i) => window.intensity2D.map(row => row[i]));
+    var data2D = [];
+    data2D[0] = paramNames;
+    data2D[1] = paramValues;
+    data2D[2] = window.qxValues;
+    data2D[3] = window.qyValues;
+    var modelCalc2D = await post_data(calc_route, data2D);
+    console.log(modelCalc2D);
+    window.intensity2D = JSON.parse(modelCalc2D);
 }
 
 /*

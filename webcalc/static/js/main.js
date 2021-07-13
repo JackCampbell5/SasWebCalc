@@ -17,7 +17,7 @@
         selectAveragingMethod(this.value);
     }
     // Restore persistant state on refresh
-    restorePersistantState();
+    // restorePersistantState();
 }
 
 function initializeData() {
@@ -40,7 +40,7 @@ function initializeData() {
 /*
  * Run SASCALC for the current instrument and model
  */
-function SASCALC(instrument) {
+async function SASCALC(instrument) {
     // Initialize data sets
     initializeData();
     if (instrument == 'qrange') {
@@ -59,7 +59,7 @@ function SASCALC(instrument) {
         calculateMinimumAndMaximumQ(instrument);
     }
     // Do Circular Average of an array of 1s
-    calculateModel();
+    await calculateModel();
     // Update the charts
     update1DChart();
     update2DChart();
