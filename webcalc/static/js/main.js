@@ -8,15 +8,16 @@
         updateInstrumentNoInstrument();
     }
     var modelNode = document.getElementById('model');
-    populateModelSelector(modelNode);
     modelNode.onchange = function () {
         selectModel(this.value);
     }
+    populateModelSelector(modelNode);
     var averagingNode = document.getElementById('averagingType');
     averagingNode.onchange = function () {
         selectAveragingMethod(this.value);
     }
     // Restore persistant state on refresh
+    // TODO: Restore this once working
     // restorePersistantState();
 }
 

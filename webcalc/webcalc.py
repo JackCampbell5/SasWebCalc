@@ -23,11 +23,11 @@ def create_app():
     @app.route('/calculatemodel/<model_name>', methods=['POST'])
     def calculate_model(model_name):
         data = decode_json(request.data)
-        q = np.array(data[0][2])
         param_names = data[0][0]
         param_values = data[0][1]
-        if len(data) > 3:
-            q = np.array([data[0][2], data[0][3]])
+        q = [np.array(data[0][2])]
+        if len(data[0]) > 3:
+            q.append(np.array(data[0][3]))
         params = {param_names[i]: param_values[i] for i in range(len(param_values))}
         return calculate(model_name, q, params)
 
