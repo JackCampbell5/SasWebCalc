@@ -1,4 +1,22 @@
 /*
+ * Update the page when a new model is selected
+ */
+function selectModel(model, runSASCALC = true) {
+    var modelParams = document.getElementById("modelParams");
+    // Show the node
+    modelParams.style.display = "inline-block";
+    // Remove existing nodes
+    while (modelParams.lastChild) {
+        modelParams.removeChild(modelParams.lastChild);
+    }
+    var instrument = document.getElementById('instrumentSelector').value;
+    populateModelParams(model);
+    if (runSASCALC) {
+        SASCALC(instrument);
+    }
+}
+
+/*
  * Get a list of models directly from sasmodels
  */
 async function populateModelSelector(modelInput) {
@@ -31,14 +49,16 @@ async function populateModelParams(modelName) {
     var paramNames = Object.keys(param_dict);
     var paramValues = Object.values(param_dict);
     // Create new nodes for parameters
+    var ul = document.createElement("ul");
     for (var i = 0; i < paramNames.length; i++) {
+        var li = document.createElement("li");
         var id = modelName + "_" + paramNames[i];
         var label = document.createElement("LABEL");
         var for_att = document.createAttribute("for");
         for_att.value = id;
         label.setAttributeNode(for_att);
         var labelValue = "  " + paramNames[i].charAt(0).toUpperCase() + paramNames[i].slice(1);
-        if (paramValues[i]['units'] != "") {
+        if (paramValues[i]['units'] !== "") {
             labelValue = labelValue + " (" + paramValues[i]['units'] + ")";
         }
         labelValue = labelValue + ": ";
@@ -50,20 +70,22 @@ async function populateModelParams(modelName) {
         var type_att = document.createAttribute("type");
         type_att.value = 'number';
         input.setAttributeNode(type_att);
-        if (paramValues[i]['lower_limit'] != '-inf') {
+        if (paramValues[i]['lower_limit'] !== '-inf') {
             var low_lim = document.createAttribute("min");
             low_lim.value = paramValues[i]['lower_limit'];
             input.setAttributeNode(low_lim);
         }
-        if (paramValues[i]['upper_limit'] != 'inf') {
+        if (paramValues[i]['upper_limit'] !== 'inf') {
             var up_lim = document.createAttribute("max");
             up_lim.value = paramValues[i]['upper_limit'];
             input.setAttributeNode(up_lim);
         }
         input.value = paramValues[i]['default'];
-        modelParams.appendChild(label);
-        modelParams.appendChild(input);
+        li.appendChild(label);
+        li.appendChild(input);
+        ul.appendChild(li);
     }
+    modelParams.appendChild(ul);
 }
 
 /*
