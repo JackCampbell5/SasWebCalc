@@ -50,7 +50,7 @@ def get_params(model_string, all=False):
 
 def calculate_model(model_string, q, params):
     kernel_model = get_model(model_string)
-    kernel = kernel_model.make_kernel([q])
+    kernel = kernel_model.make_kernel(q)
     Iq = call_kernel(kernel, params)
     return json.dumps(Iq.tolist())
 

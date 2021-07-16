@@ -17,8 +17,7 @@
         selectAveragingMethod(this.value);
     }
     // Restore persistant state on refresh
-    // TODO: Restore this once working
-    // restorePersistantState();
+    restorePersistantState();
 }
 
 function initializeData() {

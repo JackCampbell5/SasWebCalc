@@ -36,6 +36,7 @@ async function populateModelSelector(modelInput) {
  * Get model params from model name
  */
 async function populateModelParams(modelName) {
+    window.modelList[modelName] = {'params': {}}
     let route = '/getparams/' + modelName;
     let rawData = await get_data(route);
     let param_dict = JSON.parse(rawData)
@@ -84,6 +85,8 @@ async function populateModelParams(modelName) {
         li.appendChild(label);
         li.appendChild(input);
         ul.appendChild(li);
+        window.modelList[modelName]['params'][paramNames[i]] = paramValues[i];
+        window.modelList[modelName]['params'][paramNames[i]]['currentValue'] = paramValues[i]['default'];
     }
     modelParams.appendChild(ul);
 }
@@ -110,7 +113,7 @@ async function calculateModel() {
     data1D[2] = window.qValues;
     var modelCalc1D = await post_data(calc_route, data1D);
     console.log(modelCalc1D);
-    window.aveIntensity = JSON.parse(modelCalc1D);
+    window.aveIntensity = parseJSON(modelCalc1D);
     // 2D calculation
     var data2D = [];
     data2D[0] = paramNames;
@@ -120,4 +123,22 @@ async function calculateModel() {
     var modelCalc2D = await post_data(calc_route, data2D);
     console.log(modelCalc2D);
     window.intensity2D = JSON.parse(modelCalc2D);
+}
+
+function parseJSON(jsonString) {
+    var inf = 9999999;
+    var negInf = -9999999;
+    var nan = 8888888;
+    jsonString.replaceAll('Infinity', inf.toString());
+    jsonString.replaceAll('NaN', nan.toString());
+    var newArray = JSON.parse(jsonString);
+    // Replace all input values with real values
+    while (newArray.indexOf(inf) > 0) {
+        newArray[newArray.indexOf(inf)] = Infinity;
+    } while (newArray.indexOf(negInf) > 0) {
+        newArray[newArray.indexOf(negInf)] = -1*Infinity;
+    } while (newArray.indexOf(nan) > 0) {
+        newArray[newArray.indexOf(nan)] = NaN;
+    }
+    return newArray;
 }
