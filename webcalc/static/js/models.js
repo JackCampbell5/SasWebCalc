@@ -112,7 +112,6 @@ async function calculateModel() {
     data1D[1] = paramValues;
     data1D[2] = window.qValues;
     var modelCalc1D = await post_data(calc_route, data1D);
-    console.log(modelCalc1D);
     window.aveIntensity = parseJSON(modelCalc1D);
     // 2D calculation
     var data2D = [];
@@ -121,24 +120,29 @@ async function calculateModel() {
     data2D[2] = window.qxValues;
     data2D[3] = window.qyValues;
     var modelCalc2D = await post_data(calc_route, data2D);
-    console.log(modelCalc2D);
-    window.intensity2D = JSON.parse(modelCalc2D);
+    window.intensity2D = redimension2D(parseJSON(modelCalc2D));
 }
 
 function parseJSON(jsonString) {
     var inf = 9999999;
     var negInf = -9999999;
     var nan = 8888888;
-    jsonString.replaceAll('Infinity', inf.toString());
-    jsonString.replaceAll('NaN', nan.toString());
     var newArray = JSON.parse(jsonString);
     // Replace all input values with real values
-    while (newArray.indexOf(inf) > 0) {
+    while (newArray.indexOf(inf) >= 0) {
         newArray[newArray.indexOf(inf)] = Infinity;
-    } while (newArray.indexOf(negInf) > 0) {
+    } while (newArray.indexOf(negInf) >= 0) {
         newArray[newArray.indexOf(negInf)] = -1*Infinity;
-    } while (newArray.indexOf(nan) > 0) {
+    } while (newArray.indexOf(nan) >= 0) {
         newArray[newArray.indexOf(nan)] = NaN;
     }
     return newArray;
+}
+
+function redimension2D(array) {
+    var finalArray = [];
+    while(array.length > 0) {
+        finalArray.push(array.splice(0, window.qxValues.length));
+    }
+    return finalArray
 }

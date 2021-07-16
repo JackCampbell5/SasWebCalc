@@ -52,7 +52,8 @@ def calculate_model(model_string, q, params):
     kernel_model = get_model(model_string)
     kernel = kernel_model.make_kernel(q)
     Iq = call_kernel(kernel, params)
-    return json.dumps(Iq.tolist())
+    iq_string = json.dumps(Iq.tolist())
+    return iq_string.replace('Infinity', '9999999').replace('NaN', '8888888')
 
 
 if __name__ == '__main__':

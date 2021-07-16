@@ -25,9 +25,11 @@ def create_app():
         data = decode_json(request.data)
         param_names = data[0][0]
         param_values = data[0][1]
-        q = [np.array(data[0][2])]
         if len(data[0]) > 3:
-            q.append(np.array(data[0][3]))
+            q = [np.tile(data[0][2], (1, len(data[0][3]))), np.tile(data[0][3], (1, len(data[0][2])))]
+            print(q)
+        else:
+            q = [np.array(data[0][2])]
         params = {param_names[i]: param_values[i] for i in range(len(param_values))}
         return calculate(model_name, q, params)
 
