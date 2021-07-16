@@ -169,20 +169,4 @@ window.ngb10WavelengthRange = {
 
 // Models
 window.modelList = {
-    "debye": {
-        "params": {
-            "scale": 1000,
-            "rg": 100,
-            "bkg": 0.0
-        }
-    },
-    "sphere": {
-        "params": {
-            "scale": 1,
-            "radius": 1000,
-            "sld_sphere": 1.0,
-            "sld_solvent": 6.3,
-            "bkg": 0.1,
-        }
-    }
-}
+};
