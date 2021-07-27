@@ -26,8 +26,8 @@ def create_app():
         param_names = data[0][0]
         param_values = data[0][1]
         if len(data[0]) > 3:
-            q = [np.tile(data[0][2], (1, len(data[0][3]))), np.tile(data[0][3], (1, len(data[0][2])))]
-            print(q)
+            q = [np.array([np.tile(x, len(data[0][3])) for x in data[0][2]]).flatten(),
+                 np.array(np.tile(data[0][3], (1, len(data[0][2])))).flatten()]
         else:
             q = [np.array(data[0][2])]
         params = {param_names[i]: param_values[i] for i in range(len(param_values))}
