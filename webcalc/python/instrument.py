@@ -96,6 +96,42 @@ def set_params(instance, params):
             print(f"The parameter {key} is not a known Detector attribute. Unable to set it to {value}.")
 
 
+class Aperture:
+    def __init__(self, parent, params):
+        # type: (Instrument, dict) -> None
+        """
+        A class for storing and manipulating collimation related data.
+        Args:
+            parent: The Instrument instance this Detector is a part of
+            params: A dictionary mapping <param_name>: <value>
+        """
+        self.parent = parent
+        self.diameter = 0.0
+        self.diameter_unit = 'cm'
+        self.offset = 0.0
+        self.offset_unit = 'cm'
+        self.set_params(params)
+
+    def set_params(self, params=None):
+        # type: (dict) -> None
+        """
+        Set class attributes based on a dictionary of values using the generic set_params function.
+        Args:
+            params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
+        Returns: None
+        """
+        set_params(self, params)
+
+    def get_diameter(self):
+        return self.parent.d_converter(self.diameter, self.diameter_unit)
+
+    def get_radius(self):
+        return self.parent.d_converter(self.diameter / 2, self.diameter_unit)
+
+    def get_offset(self):
+        return self.parent.d_converter(self.offset, self.offset_unit)
+
+
 class Collimation:
     def __init__(self, parent, params):
         # type: (Instrument, dict) -> None
@@ -106,14 +142,13 @@ class Collimation:
             params: A dictionary mapping <param_name>: <value>
         """
         self.parent = parent
-        self.source_aperture = 0.0
-        self.source_aperture_unit = 'cm'
-        self.sample_aperture = 0.0
-        self.sample_aperture_unit = 'cm'
+        self.source_aperture = Aperture(parent, params.get('source_aperture', {}))
+        self.sample_aperture = Aperture(parent, params.get('sample_aperture', {}))
         self.ssd = 0.0
         self.ssd_unit = 'cm'
         self.ssad = 0.0
         self.ssad_unit = 'cm'
+        # TODO: Put into Guide instances
         self.guide_width = 0.0
         self.guide_width_unit = 'cm'
         self.transmission_per_guide = 1.0
@@ -136,18 +171,19 @@ class Collimation:
         Returns: None
         """
         set_params(self, params)
+        self.calculate_source_to_sample_aperture_distance()
 
     def get_source_aperture_radius(self):
-        return self.parent.d_converter(self.source_aperture / 2, self.source_aperture_unit)
+        return self.source_aperture.get_radius()
 
     def get_source_aperture_diameter(self):
-        return self.parent.d_converter(self.source_aperture, self.source_aperture_unit)
+        return self.source_aperture.get_diameter()
 
     def get_sample_aperture_radius(self):
-        return self.parent.d_converter(self.sample_aperture / 2, self.sample_aperture_unit)
+        return self.sample_aperture.get_radius()
 
     def get_sample_aperture_diameter(self):
-        return self.parent.d_converter(self.sample_aperture, self.sample_aperture_unit)
+        return self.sample_aperture.get_diameter()
 
     def get_ssd(self):
         return self.parent.d_converter(self.ssd, self.ssd_unit)
@@ -167,9 +203,12 @@ class Collimation:
     def get_maximum_length(self):
         return self.parent.d_converter(self.maximum_length, self.maximum_length_unit)
 
+    def get_sample_aperture_offset(self):
+        return self.sample_aperture.get_offset()
+
     def calculate_source_to_sample_aperture_distance(self):
         self.ssad = (self.get_maximum_length() - self.get_length_per_guide() * self.number_of_guides
-                     - self.parent.sample_offset - self.parent.aperture_offset)
+                     - self.get_sample_aperture_offset())
 
 
 class Detector:
@@ -268,6 +307,51 @@ class Detector:
         return coefficient * math.tan((raw_value / coefficient))
 
 
+class Wavelength:
+    def __init__(self, parent, params):
+        # type: (Instrument, dict) -> None
+        """
+        A class for storing and manipulating collimation related data.
+        Args:
+            parent: The Instrument instance this Detector is a part of
+            params: A dictionary mapping <param_name>: <value>
+        """
+        self.parent = parent
+        self.wavelength = 0.0
+        self.wavelength_min = 0.0
+        self.wavelength_max = np.inf
+        self.wavelength_unit = 'nm'
+        self.wavelength_spread = 0.0
+        self.wavelength_spread_unit = '%'
+        self.wavelength_constants = (0.0, 0.0)
+        self.rpm_range = (0.0, np.inf)
+        self.set_params(params)
+        self.d_converter = Converter(self.wavelength_unit)
+
+    def set_params(self, params=None):
+        # type: (dict) -> None
+        """
+        Set class attributes based on a dictionary of values using the generic set_params function.
+        Args:
+            params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
+        Returns: None
+        """
+        set_params(self, params)
+        self.calculate_wavelength_range()
+
+    def get_wavelength(self):
+        return self.parent.d_converter(self.wavelength, self.wavelength_unit)
+
+    def set_wavelength(self, value, units):
+        self.wavelength = self.d_converter(value, units)
+
+    def calculate_wavelength_range(self):
+        calculated_min = self.wavelength_constants[0] + (self.wavelength_constants[1] / self.rpm_range[1])
+        self.wavelength_min = calculated_min if calculated_min > self.wavelength_min else self.wavelength_min
+        calculated_max = self.wavelength_constants[0] + (self.wavelength_constants[1] / self.rpm_range[0])
+        self.wavelength_max = calculated_max if calculated_max < self.wavelength_max else self.wavelength_max
+
+
 class Instrument:
     isReal = False
 
@@ -282,28 +366,23 @@ class Instrument:
 
         }
         self.name = name
-        # TODO: Create Aperture and Wavelength Classes
+        # TODO: Create Guide Class
         # Current values
         self.sample_offset = 0.0
         self.sample_offset_unit = 'cm'
         self.sample_aperture_offset = 0.0
         self.sample_aperture_offset_unit = 'cm'
         # Wavelength dictionary values
-        self.wavelength = 0.0
-        self.wavelength_unit = 'cm'
-        self.wavelength_spread = 0.0
-        self.wavelength_spread_unit = '%'
-        self.attenuation_factor = 0.0
-        self.wavelength = {}
+
         self.flux = 0.0
         self.bs_factor = 0.0
         self.d_converter = Converter('cm')
         self.t_converter = Converter('s')
         self.load_params(params)
-        # Detector values
-        self.detectors = [Detector(detector_params) for detector_params in params.get('detector', {})]
-        # Collimation dictionary values
-        self.collimation = Collimation(params.get('collimation', {}))
+        # Define other classes
+        self.detectors = [Detector(self, detector_params) for detector_params in params.get('detector', {})]
+        self.collimation = Collimation(self, params.get('collimation', {}))
+        self.wavelength = Wavelength(self, params.get('wavelength', {}))
 
     """
         Pseudo-abstract method to initialize constants associated with an instrument
@@ -327,7 +406,7 @@ class Instrument:
         # Calculate the number of attenuators
         self.calculate_attenuators()
         # Do Circular Average of an array of 1s
-        for index in self.detectors:
+        for index in range(len(self.detectors) - 1):
             self.calculate_min_and_max_q(index)
             # TODO: This might not be needed here...
             self.calculate_q_range_slicer(index)
@@ -469,19 +548,9 @@ class Instrument:
         q_max_vert = 4 * (math.pi / wave) * math.sin(0.5 * theta)
         # TODO: Store q_max_vert and q_max_horizon in appropriate places
 
-    # TODO: Keep in the javascript?
-    def calculate_wavelength_range(self):
-        current_spread = self.wavelengthSpreadNode.value
-        constants = self.wavelengthOptions.spreads[current_spread].constants
-        calculated_minimum = constants[0] + (constants[1] / self.wavelengthOptions.max_rpm)
-        minimum = calculated_minimum if calculated_minimum > self.wavelengthOptions.minimum else self.wavelengthOptions.minimum
-        self.wavelengthOptions.spreads[current_spread].range = [minimum, self.wavelengthOptions.maximum]
-        if self.get_wavelength() < minimum:
-            self.wavelengthNode.value = minimum.toNumeric()
-
     # Various class updaters
     def update_wavelength(self, run_sas_calc=True):
-        self.calculate_wavelength_range()
+        self.wavelength.calculate_wavelength_range()
         if run_sas_calc:
             self.sas_calc()
 
@@ -567,11 +636,11 @@ class Instrument:
 
     def get_wavelength(self):
         # Wavelength in Angstroms
-        return self.wavelengthNode.value
+        return self.wavelength.get_wavelength()
 
     def get_wavelength_spread(self):
         # Wavelength spread in percent
-        return self.wavelengthSpreadNode.value
+        return self.wavelength.wavelength_spread
 
 
 class NG7SANS(Instrument):
