@@ -63,7 +63,7 @@ def calculate_instrument(instrument, params):
                 }
             }
 
-    Returns: [[1D resolutions], [2D resolutions]
+    Returns: [[1D resolutions], [2D resolutions]]
     """
     # TODO: Create classes for all instruments
     i_class = NG7SANS(instrument, params) if instrument == 'ng7' else Instrument(instrument, params)
@@ -129,6 +129,33 @@ class Aperture:
 
     def get_offset(self):
         return self.parent.d_converter(self.offset, self.offset_unit)
+
+
+class BeamStop:
+    def __init__(self, parent, params):
+        # type: (Instrument, dict) -> None
+        """
+        A class for storing and manipulating collimation related data.
+        Args:
+            parent: The Instrument instance this Detector is a part of
+            params: A dictionary mapping <param_name>: <value>
+        """
+        self.parent = parent
+        self.diameter = 0.0
+        self.diameter_unit = 'cm'
+        self.offset = 0.0
+        self.offset_unit = 'cm'
+        self.set_params(params)
+
+    def set_params(self, params=None):
+        # type: (dict) -> None
+        """
+        Set class attributes based on a dictionary of values using the generic set_params function.
+        Args:
+            params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
+        Returns: None
+        """
+        set_params(self, params)
 
 
 class Collimation:
@@ -244,7 +271,7 @@ class Detector:
         dr = self.get_pixel_size_x()
         # Get detector offset in cm
         offset = self.get_offset()
-        self.beam_center_x = offset / dr + x_pixels / 2 + 0.5
+        self.beam_center_x = x_pixels / 2 + 0.5 if dr == 0 else offset / dr + x_pixels / 2 + 0.5
 
     def calculate_beam_center_y(self):
         # Find the number of x pixels in the detector
@@ -369,9 +396,15 @@ class Wavelength:
         self.wavelength = self.d_converter(value, units)
 
     def calculate_wavelength_range(self):
-        calculated_min = self.wavelength_constants[0] + (self.wavelength_constants[1] / self.rpm_range[1])
+        try:
+            calculated_min = self.wavelength_constants[0] + (self.wavelength_constants[1] / self.rpm_range[1])
+        except ZeroDivisionError:
+            calculated_min = 0.0
         self.wavelength_min = calculated_min if calculated_min > self.wavelength_min else self.wavelength_min
-        calculated_max = self.wavelength_constants[0] + (self.wavelength_constants[1] / self.rpm_range[0])
+        try:
+            calculated_max = self.wavelength_constants[0] + (self.wavelength_constants[1] / self.rpm_range[0])
+        except ZeroDivisionError:
+            calculated_max = np.Inf
         self.wavelength_max = calculated_max if calculated_max < self.wavelength_max else self.wavelength_max
 
 
@@ -478,7 +511,9 @@ class Instrument:
         self.t_converter = Converter('s')
         self.load_params(params)
         # Define other classes
-        self.detectors = [Detector(self, detector_params) for detector_params in params.get('detector', {})]
+        # TODO: Define BeamStop class(?)
+        self.beam_stops = params.get('beam_stops', [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
+        self.detectors = [Detector(self, detector_params) for detector_params in params.get('detector', [{}])]
         self.collimation = Collimation(self, params.get('collimation', {}))
         self.wavelength = Wavelength(self, params.get('wavelength', {}))
         self.data = Data(self, params.get('wavelength', {}))
@@ -545,9 +580,12 @@ class Instrument:
         if self.collimation.guides.lenses:
             # If LENS configuration, the beam size is the source aperture size
             # FIXME: This is showing -58 cm... Why?!?!
-            self.beam_stops[index].value = self.get_source_aperture_size()
+            self.beam_stops[index].beam_stop_diameter = self.get_source_aperture_size()
         # Calculate beam width on the detector
-        beam_width = source_aperture * sdd/ssd + sample_aperture * (ssd + sdd) / ssd
+        try:
+            beam_width = source_aperture * sdd / ssd + sample_aperture * (ssd + sdd) / ssd
+        except ZeroDivisionError:
+            beam_width = 0.0
         # Beam height due to gravity
         bv3 = ((ssd + sdd) * sdd) * wavelength**2
         bv4 = bv3 * wavelength_spread
@@ -561,19 +599,19 @@ class Instrument:
             beam_diam = bm_bs
         else:
             beam_diam = bm
-        self.beam_stops[index].value = beam_diam
+        self.beam_stops[index].beam_diameter = beam_diam
 
     def calculate_beam_stop_diameter(self, index=0):
         self.calculate_beam_diameter(index, 'maximum')
         beam_diam = self.get_beam_diameter(index)
         for i in self.beam_stops.keys():
             beam_stop_dict = self.beam_stops[i]
-            if beam_stop_dict.size >= beam_diam:
-                self.beam_stops[index].value = beam_stop_dict.size
+            if beam_stop_dict.beam_stop_diameter >= beam_diam:
+                self.beam_stops[index].beam_stop_diameter = beam_stop_dict.beam_stop_diameter
                 return
         else:
             # If this is reached, that means the beam diameter is larger than the largest known beam stop
-            self.beam_stops[index].value = self.beam_stops[len(self.beam_stops) - 1].size
+            self.beam_stops[index].beam_stop_diameter = self.beam_stops[len(self.beam_stops) - 1].beam_stop_diameter
 
     def calculate_beam_stop_projection(self, index=0):
         self.get_sample_to_detector_distance(index)
@@ -611,12 +649,12 @@ class Instrument:
 
     def get_beam_diameter(self, index=0):
         # Beam diameter in centimeters
-        return self.beamSizeNodes[index].value
+        return self.beam_stops[index].beam_diameter
 
     def get_beam_stop_diameter(self, index=0):
         # Beam stop diameter in inches
         # TODO: Convert to centimeters
-        return self.beamStopSizeNodes[index].value
+        return self.beam_stops[index].beam_stop_diameter
 
     def get_number_of_guides(self):
         # Number of neutron guides in the beam

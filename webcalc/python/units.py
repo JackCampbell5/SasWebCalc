@@ -41,10 +41,8 @@ allow the application to set the dimension for the unit rather than
 inferring the dimension from an example unit.
 """
 
-from __future__ import division
 import math
 import re
-from pint import UnitRegistry
 
 
 __all__ = ['Converter']
