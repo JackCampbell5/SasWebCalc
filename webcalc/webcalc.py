@@ -1,4 +1,5 @@
-﻿import sys
+﻿# Decides what to do based on link given
+import sys
 
 import numpy as np
 from flask import Flask, render_template, request
@@ -12,10 +13,16 @@ from python.helpers import decode_json
 def create_app():
     app = Flask(__name__)
 
+    # Launches the main program based on a basic link
     @app.route('/', methods=['GET', 'POST'])
     @app.route('/saswebcalc/', methods=['GET', 'POST'])
     def root():
         return render_template("index.html")
+
+    # TODO remove below code as it is for testing purposes only
+    @app.route('/test/', methods=['GET', 'POST'])
+    def test():
+        return render_template("test.html")
 
     @app.route('/getmodels/', methods=['GET'])
     def get_all_models():

@@ -1,8 +1,11 @@
-﻿function loadpage() {
+﻿//Is the first file to run when the page is loaded
+function loadpage() {
     // Initialize data sets
     initializeData();
     clearFrozen(false);
     // Define base event handlers
+
+    //When page is loaded - checks if dropdown changes
     var instrumentNode = document.getElementById('instrumentSelector');
     instrumentNode.onchange = function () {
         updateInstrumentNoInstrument();
@@ -638,7 +641,7 @@ function updateInstrumentNoInstrument(runSASCALC = true) {
  * Change the instrument you want to calculate Q ranges for
  */
 function updateInstrument(instrument, runSASCALC=true) {
-    // Get instrument node and create an array of the options available
+    // Get instrument node and create an array of the options available from original dropdown
     var inst = document.getElementById('instrumentSelector');
     var instrumentOptions = [];
     for (var i = 0; i < inst.options.length; i++) {
@@ -661,18 +664,23 @@ function updateInstrument(instrument, runSASCALC=true) {
             instruments[key].style.display = "none";
         }
     }
+    //If the instrument exists populate fields
     if (instrument != '' && instrument != null) {
         var serverNameNode = document.getElementById('serverName');
         serverNameNode.value = window[instrument + "Constants"]['serverName'];
+        //Buttone above chats
         var buttons = document.getElementById('buttons');
         buttons.style.display = "inline-block";
+        //TODO- Figure out what all of this does
         var model = document.getElementById("model");
         model.style.display = "inline-block";
         selectModel(model.value, false);
+        //Define Model types and label and make visible
         var modelLabel = document.getElementById("modelLabel");
         modelLabel.style.display = "inline-block";
         var modelParams = document.getElementById("modelParams");
         modelParams.style.display = "inline-block";
+        //Define average method
         var averagingType = document.getElementById("averagingType");
         averagingType.style.display = "inline-block";
         var averagingTypeLabel = document.getElementById("averagingTypeLabel");
