@@ -62,6 +62,7 @@ async function SASCALC(instrument) {
         calculateMinimumAndMaximumQ(instrument);
     }
     // Do Circular Average of an array of 1s
+    //TODO QUESTION     Figure out what this does
     await calculateModel();
     // Update the charts
     update1DChart();
@@ -122,6 +123,7 @@ function calculateQRangeSlicer(instrument) {
     params['SSD'] = calculateSourceToSampleApertureDistance(instrument);
     params['SDD'] = calculateSampleToDetectorDistance(instrument);
 
+    //Im assuming this is creating a new object from the sas models library
     switch (averageType) {
         case "circular":
         default:
@@ -217,6 +219,7 @@ function calculateMinimumQ(instrument) {
     qMinNode.value = Math.round(qMinimum * 100000) / 100000;
 }
 
+//TODO QUESTION     Method not called, remove?
 /*
  * Calculate the number of q points, and sum the intensities, dsq, and number of cells.
  */
@@ -438,6 +441,7 @@ function calculateNumberOfAttenuators(instrument) {
         numAtten = 7 + Math.floor((numAtten - 6) / 2);
     }
     attenuatorNode.value = numAtten;
+    //TODO QUESTION     How can you have a return statement that does not equal anything
     getAttenuators(instrument);
 }
 
