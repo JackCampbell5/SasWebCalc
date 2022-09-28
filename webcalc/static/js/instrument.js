@@ -1,4 +1,4 @@
-//THIS FILES DOES NOT DO ANYTHING
+//THIS FILES IS DEPRECATED
 
 function loadInstrumentClass() {
     // Initialize data sets

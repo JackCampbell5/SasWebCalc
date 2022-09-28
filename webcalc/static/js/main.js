@@ -638,6 +638,7 @@ function updateWavelength(instrument, runSASCALC=true) {
  * Change the instrument you want to calculate Q ranges for
  */
 function updateInstrumentNoInstrument(runSASCALC = true) {
+    //TODO      Finds the instrument
     var instrument = document.getElementById('instrumentSelector').value;
     updateInstrument(instrument, runSASCALC);
 }
@@ -647,11 +648,11 @@ function updateInstrumentNoInstrument(runSASCALC = true) {
 function updateInstrument(instrument, runSASCALC=true) {
     // Get instrument node and create an array of the options available from original dropdown
     var inst = document.getElementById('instrumentSelector');
-    var instrumentOptions = [];
+    var instrumentOptions = []; //Array of names of all the instruments
     for (var i = 0; i < inst.options.length; i++) {
         instrumentOptions.push(inst.options[i].value);
     }
-    var instruments = {};
+    var instruments = {}; //Array for all of the instrument divs
     var instName = "";
     // Get the divs for all possible instruments
     for (var j in instrumentOptions) {

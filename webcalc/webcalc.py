@@ -4,6 +4,7 @@ import sys
 import numpy as np
 from flask import Flask, render_template, request
 
+# import specific methods from python files
 from python.link_to_sasmodels import get_model_list, get_params
 from python.link_to_sasmodels import calculate_model as calculate_m
 from python.instrument import calculate_instrument as calculate_i

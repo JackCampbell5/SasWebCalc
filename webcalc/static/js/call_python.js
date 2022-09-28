@@ -25,6 +25,8 @@ async function get_data(route)
     return await send(route, 'GET');
 }
 
+
+/* is the fucntion called by get and post data */
 async function send(route, method, data=null)
 {
     return new Promise(function (resolve, reject) {
