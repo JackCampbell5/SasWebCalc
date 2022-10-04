@@ -42,7 +42,8 @@ def create_app():
         params = {param_names[i]: param_values[i] for i in range(len(param_values))}
         return calculate_m(model_name, q, params)
 
-#TODO QUESTION: Why does this exist
+    # TODO Why does this exist?
+    # Answer it is going to be used soon
     @app.route('/calculateresolution/<instrument_name>', methods=['POST'])
     def calculate_instrument(instrument_name):
         data = decode_json(request.data)

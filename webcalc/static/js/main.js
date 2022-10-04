@@ -62,7 +62,6 @@ async function SASCALC(instrument) {
         calculateMinimumAndMaximumQ(instrument);
     }
     // Do Circular Average of an array of 1s
-    //TODO QUESTION     Figure out what this does
     await calculateModel();
     // Update the charts
     update1DChart();
@@ -219,7 +218,8 @@ function calculateMinimumQ(instrument) {
     qMinNode.value = Math.round(qMinimum * 100000) / 100000;
 }
 
-//TODO QUESTION     Method not called, remove?
+//TODO     Method not called, remove?
+//Method depreciated
 /*
  * Calculate the number of q points, and sum the intensities, dsq, and number of cells.
  */
