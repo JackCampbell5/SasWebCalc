@@ -2,6 +2,8 @@ import math
 import numpy as np
 
 from .units import Converter
+
+
 # TODO: Replace all nodes with Instrument parameters
 # TODO: Call slicer directly using known parameters
 
@@ -66,6 +68,8 @@ def calculate_instrument(instrument, params):
     Returns: [[1D resolutions], [2D resolutions]]
     """
     # TODO: Create classes for all instruments
+    # Creates NG7SANS object if instrument is ng7
+    # i_class is the python object for the interment
     i_class = NG7SANS(instrument, params) if instrument == 'ng7' else Instrument(instrument, params)
     return i_class.sas_calc()
 
@@ -521,6 +525,7 @@ class Instrument:
     """
         Pseudo-abstract method to initialize constants associated with an instrument
     """
+
     def load_params(self, params):
         raise NotImplementedError('The abstract load_params() method must be implemented by Instrument sub-classes.')
 
@@ -551,7 +556,7 @@ class Instrument:
         beam_diam = self.get_beam_diameter(index)
         a_pixel = self.detectors[index].get_pixel_size_x()
         i_pixel_max = self.detectors[index].per_pixel_max_flux
-        num_pixels = (math.pi/4) * (0.5 * (a2 + beam_diam)/a_pixel)**2
+        num_pixels = (math.pi / 4) * (0.5 * (a2 + beam_diam) / a_pixel) ** 2
         i_pixel = self.get_beam_flux() / num_pixels
         atten = 1.0 if i_pixel < i_pixel_max else i_pixel_max / i_pixel
         self.wavelength.attenuation_factor = atten if atten == 1.0 else atten.toNumeric()
@@ -559,8 +564,8 @@ class Instrument:
     def calculate_attenuators(self):
         self.calculate_attenuation_factor()
         atten = self.get_attenuation_factor()
-        af = 0.498 + 0.0792 * self.get_wavelength() - 1.66e-3 * self.get_wavelength()**2
-        nf = -1*math.log(atten)/af
+        af = 0.498 + 0.0792 * self.get_wavelength() - 1.66e-3 * self.get_wavelength() ** 2
+        nf = -1 * math.log(atten) / af
         num_atten = math.ceil(nf)
         if num_atten > 6:
             num_atten = 7 + math.floor((num_atten - 6) / 2)
@@ -587,7 +592,7 @@ class Instrument:
         except ZeroDivisionError:
             beam_width = 0.0
         # Beam height due to gravity
-        bv3 = ((ssd + sdd) * sdd) * wavelength**2
+        bv3 = ((ssd + sdd) * sdd) * wavelength ** 2
         bv4 = bv3 * wavelength_spread
         bv = beam_width + 0.0000125 * bv4
         # Larger of the width*safetyFactor and height
@@ -621,7 +626,7 @@ class Instrument:
         sample_aperture = self.get_sample_aperture_size()
         l2 = self.get_sample_aperture_to_detector_distance()
         l_beam_stop = 20.1 + 1.61 * self.get_beam_stop_diameter()  # distance in cm from beam stop to anode plane
-        return bs_diam + (bs_diam + sample_aperture) * l_beam_stop/(l2 - l_beam_stop)  # Return in cm
+        return bs_diam + (bs_diam + sample_aperture) * l_beam_stop / (l2 - l_beam_stop)  # Return in cm
 
     def calculate_figure_of_merit(self):
         figure_of_merit = math.pow(self.get_wavelength(), 2) * self.get_beam_flux()
@@ -718,6 +723,8 @@ class Instrument:
 
 
 class NG7SANS(Instrument):
+
+    # Constuctor for the NG7SANS instrument
     def __init__(self, name, params):
         super().__init__(name, params)
 

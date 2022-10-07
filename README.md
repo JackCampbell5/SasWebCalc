@@ -20,6 +20,8 @@ or [anaconda](https://www.anaconda.com/)::
        $ conda activate saswebcalc
        (saswebcalc) $ python /path/to/saswebcalc/webcalc.py <port>
 
+## References
+- [Flow diagram of code](https://mm.tt/map/2428513537)
 ## Feature Set, Current and Planned
 
 ### Current features:
