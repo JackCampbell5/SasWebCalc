@@ -724,8 +724,9 @@ class Instrument:
 
 class NG7SANS(Instrument):
 
-    # Constuctor for the NG7SANS instrument
+    # Constructor for the NG7SANS instrument
     def __init__(self, name, params):
+        # Super is the Instrument class
         super().__init__(name, params)
 
     def load_params(self, params):
