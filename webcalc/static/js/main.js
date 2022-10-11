@@ -46,6 +46,19 @@ function initializeData() {
 async function SASCALC(instrument) {
     // Initialize data sets
     initializeData();
+
+    // Get current configuration so python can read
+    getCurrentConfig(instrument);
+
+    // //START     Call python code
+    //    //Comment out this section and program will run as normal
+    //     //What method it is calling and the model needed
+    // let route = '/calculate_instrument/'+instrument;
+    //     //calling the method and assigning a value to the output
+    // var calculate_instument = await post_data(route, window.currentConfig);
+    // //END       Call python code
+
+
     if (instrument == 'qrange') {
         // TODO: generate 1D and 2D data for a given q-range
     } else {
@@ -66,8 +79,6 @@ async function SASCALC(instrument) {
     // Update the charts
     update1DChart();
     update2DChart();
-    // Set current configuration
-    setCurrentConfig(instrument);
     // Store persistant state
     storePersistantState(instrument);
 }
@@ -840,7 +851,7 @@ function getAveragingParams() {
     var params = [phi, dPhi, detectorHalves, qCenter, qWidth, aspectRatio];
     return params;
 }
-function setCurrentConfig(instrument) {
+function getCurrentConfig(instrument) {
     window.currentConfig["guide.guide"] = document.getElementById(instrument + 'GuideConfig').value;
     window.currentConfig["geometry.externalSampleAperture"] = getSampleApertureSize(instrument) * 10 + window.units["sampleAperture"];
     window.currentConfig["guide.sourceAperture"] = getSourceAperture(instrument);

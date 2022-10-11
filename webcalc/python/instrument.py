@@ -508,12 +508,20 @@ class Instrument:
     def __init__(self, name="", params=None):
         if not params:
             params = {}
-        # Only store values used for calculations in Instrument class
-        self.name = name
+            # Only store values used for calculations in Instrument class
+            self.name = name
+        self.load_params(params)
+
+    """
+        Pseudo-abstract method to initialize constants associated with an instrument
+    """
+
+    def load_params(self, params):
+        print("Default Load Params")
+        # TODO: confirm that this is all the params needed to add
         # Unit converters
         self.d_converter = Converter('cm')
         self.t_converter = Converter('s')
-        self.load_params(params)
         # Define other classes
         # TODO: Define BeamStop class(?)
         self.beam_stops = params.get('beam_stops', [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
@@ -522,17 +530,14 @@ class Instrument:
         self.wavelength = Wavelength(self, params.get('wavelength', {}))
         self.data = Data(self, params.get('wavelength', {}))
 
-    """
-        Pseudo-abstract method to initialize constants associated with an instrument
-    """
-
-    def load_params(self, params):
-        raise NotImplementedError('The abstract load_params() method must be implemented by Instrument sub-classes.')
-
     def sas_calc(self):
+        # MainFunction for this class
+
         # Calculate any instrument parameters
         # Keep as a separate function so Q-range entries can ignore this
         self.calculate_instrument_parameters()
+
+        # Final output returned to the JS
         # FIXME: What values need to be returned?
         return self.calculated_values
 
@@ -724,10 +729,11 @@ class Instrument:
 
 class NG7SANS(Instrument):
 
-    # Constuctor for the NG7SANS instrument
+    # Constructor for the NG7SANS instrument
     def __init__(self, name, params):
+        # Super is the Instrument class
         super().__init__(name, params)
 
     def load_params(self, params):
         # TODO: Take params and load them in
-        pass
+        print("NG7SANS Load Params")

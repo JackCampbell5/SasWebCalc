@@ -42,20 +42,27 @@ def create_app():
         params = {param_names[i]: param_values[i] for i in range(len(param_values))}
         return calculate_m(model_name, q, params)
 
-    # TODO Why does this exist?
-    # Answer it is going to be used soon
-    @app.route('/calculateresolution/<instrument_name>', methods=['POST'])
+
+    @app.route('/calculate_instrument/<instrument_name>', methods=['POST'])
     def calculate_instrument(instrument_name):
         data = decode_json(request.data)
-        param_names = data[0][0]
-        param_values = data[0][1]
-        if len(data[0]) > 3:
-            q = [np.array([np.tile(x, len(data[0][3])) for x in data[0][2]]).flatten(),
-                 np.array(np.tile(data[0][3], (1, len(data[0][2])))).flatten()]
-        else:
-            q = [np.array(data[0][2])]
-        params = {param_names[i]: param_values[i] for i in range(len(param_values))}
-        return calculate_i(instrument_name, params)
+
+    # Not Needed?
+        # print(data)
+        # param_names = data[0][0]
+        # param_values = data[0][1]
+        # if len(data[0]) > 3:
+        #     q = [np.array([np.tile(x, len(data[0][3])) for x in data[0][2]]).flatten(),
+        #          np.array(np.tile(data[0][3], (1, len(data[0][2])))).flatten()]
+        # else:
+        #     q = [np.array(data[0][2])]
+        # params = {param_names[i]: param_values[i] for i in range(len(param_values))}
+
+        # TODO Test CODE
+        # print(data)
+        # test = data["beamStop.beamStop"]
+        # print("Hi"+test)
+        return calculate_i(instrument_name, data)
 
     @app.route('/getparams/<model_name>', methods=['GET'])
     def get_model_params(model_name):

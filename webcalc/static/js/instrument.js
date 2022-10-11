@@ -394,7 +394,7 @@ class Instrument {
         update1DChart();
         update2DChart();
         // Set current configuration
-        setCurrentConfig(this.instrumentName);
+        getCurrentConfig(this.instrumentName);
         // Store persistant state
         storePersistantState(this.instrumentName);
     }
