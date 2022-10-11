@@ -62,6 +62,8 @@ async function SASCALC(instrument) {
     if (instrument == 'qrange') {
         // TODO: generate 1D and 2D data for a given q-range
     } else {
+        //calculateresolution will be called from here
+
         // Calculate the beam stop diameter
         calculateBeamStopDiameter(instrument);
         // Calculate the estimated beam flux
