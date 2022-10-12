@@ -56,7 +56,7 @@ const template = `
     </div>
   </div>
   <div class="instrument-section">
-    <component :is="instrument_components[active_instrument]" :title="instruments[active_instrument]" @change="onInstrumentParamChange" />
+    <component v-if="active_instrument != ''" :is="active_instrument" :title="instruments[active_instrument]" @change="onInstrumentParamChange" />
   </div>
 </div>
 </main>
@@ -74,7 +74,12 @@ const instrument_components = { qrange, ngb30, ng7, ngb10, vsans };
 
 export default {
   components: {
-    'averaging-params': AveragingParams
+    'averaging-params': AveragingParams,
+    qrange,
+    ngb30,
+    ng7,
+    ngb10,
+    vsans
   },
   data: () => ({
     active_instrument: "",
@@ -83,7 +88,6 @@ export default {
     model_names: [],
     model_params: {},
     instruments,
-    instrument_components
   }),
   methods: {
     async populateModelParams() {
