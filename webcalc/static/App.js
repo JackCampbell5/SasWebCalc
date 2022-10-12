@@ -70,8 +70,6 @@ const instruments = {
   "vsans": "VSANS",
 };
 
-const instrument_components = { qrange, ngb30, ng7, ngb10, vsans };
-
 export default {
   components: {
     'averaging-params': AveragingParams,
