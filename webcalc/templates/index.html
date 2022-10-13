@@ -35,7 +35,7 @@
     <!--
     <script src="js/gamma_incomplete.js"></script>
     -->
-    <!-- import javascript files -->
+    <!-- START     Import javascript files -->
     <script src="{{ url_for('static', filename='js/call_python.js') }}"></script>
     <script src="{{ url_for('static', filename='js/nice_connection.js') }}"></script>
     <script src="{{ url_for('static', filename='js/constants.js') }}"></script>
@@ -59,6 +59,13 @@
         <div class="section-header">
             <div class="section-header__main">
                 <h1 class="section-header__title"><a href="https://www.nist.gov/ncnr">NIST Center for Neutron Research</a></h1>
+
+<!--                &lt;!&ndash; START      Comment out before pushes: for debugging only&ndash;&gt;-->
+<!--                <label for="debug_text">Debug:</label>-->
+<!--                <p id="debug_text" style="display: inline"></p>-->
+<!--                &lt;!&ndash; Test code:         document.getElementById('debug_text').textContent += " TestCalcModel1"&ndash;&gt;-->
+<!--                &lt;!&ndash; END      Comment out before pushes: for debugging only&ndash;&gt;-->
+
             </div>
         </div>
     </header>
@@ -68,7 +75,7 @@
             <div id="SASWEBCALC">
                 <form target="#">
                     <div class="instrument-section" title="Choose the instrument you plan to use.">
-                        <label for="instrument">Instrument: </label>
+                        <label for="instrumentSelector">Instrument: </label>
                         <select id="instrumentSelector">
                             <option value="" selected disabled hidden>Choose your setting</option>
                             <option value="qrange">User-Defined Q-Range and Resolutions</option>
@@ -133,8 +140,7 @@
                             <input type="number" min="3" max="20" value="6" id="ngb30WavelengthInput" title="" />
                             <label for="ngb30WavelengthSpread">&Delta;&lambda;/&lambda; (%)</label>
                             <select id="ngb30WavelengthSpread">
-                                <!-- TODO QUESTION      why is these 2 options different -->
-                                <option value="10.9">9.7</option>
+                                <option value="9.7">9.7</option>
                                 <option value="12.1">12.1</option>
                                 <option value="13.8">13.8</option>
                                 <option value="16.8">16.8</option>

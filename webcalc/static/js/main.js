@@ -454,7 +454,7 @@ function calculateNumberOfAttenuators(instrument) {
         numAtten = 7 + Math.floor((numAtten - 6) / 2);
     }
     attenuatorNode.value = numAtten;
-    //TODO QUESTION     How can you have a return statement that does not equal anything
+    //TODO J     How can you have a return statement that does not equal anything
     getAttenuators(instrument);
 }
 
@@ -873,7 +873,7 @@ function getCurrentConfig(instrument) {
 function freezeSASCALC() {
     var frozen = new Array(1).fill(0);
 
-    //TODO Question: Why would we not want to freeze the actual calculation
+    //TODO J : Why would we not want to freeze the actual calculation
     // Offset intensities of frozen configs by a factor of 2
     var intensities = new Array(1).fill(0);
     var n = 2 * (window.frozenCalculations.length + 1);

@@ -20,7 +20,7 @@ def create_app():
     def root():
         return render_template("index.html")
 
-    # TODO remove below code as it is for testing purposes only
+    # TODO J remove below code as it is for testing purposes only
     @app.route('/test/', methods=['GET', 'POST'])
     def test():
         return render_template("test.html")
@@ -42,27 +42,14 @@ def create_app():
         params = {param_names[i]: param_values[i] for i in range(len(param_values))}
         return calculate_m(model_name, q, params)
 
-
     @app.route('/calculate_instrument/<instrument_name>', methods=['POST'])
     def calculate_instrument(instrument_name):
+        # Decodes the data received from javascript
         data = decode_json(request.data)
-
-    # Not Needed?
-        # print(data)
-        # param_names = data[0][0]
-        # param_values = data[0][1]
-        # if len(data[0]) > 3:
-        #     q = [np.array([np.tile(x, len(data[0][3])) for x in data[0][2]]).flatten(),
-        #          np.array(np.tile(data[0][3], (1, len(data[0][2])))).flatten()]
-        # else:
-        #     q = [np.array(data[0][2])]
-        # params = {param_names[i]: param_values[i] for i in range(len(param_values))}
-
-        # TODO Test CODE
-        # print(data)
-        # test = data["beamStop.beamStop"]
-        # print("Hi"+test)
-        return calculate_i(instrument_name, data)
+        # Turn from tuple into dictionary for accessing
+        params = data[0];
+        # Calculates all the values and returns them
+        return calculate_i(instrument_name, params)
 
     @app.route('/getparams/<model_name>', methods=['GET'])
     def get_model_params(model_name):

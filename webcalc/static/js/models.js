@@ -95,6 +95,7 @@ async function populateModelParams(modelName) {
  * Calculate the model function used to represent the data
  */
 async function calculateModel() {
+    //TODO FIX:  Function not running fully on page load
     var model = document.getElementById("model").value;
     let params_route = '/getparams/' + model;
     let calc_route = '/calculatemodel/' + model;

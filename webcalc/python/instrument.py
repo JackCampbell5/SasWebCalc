@@ -336,6 +336,10 @@ class Guide:
         self.gap_at_start_unit = 'cm'
         self.maximum_length = 0.0
         self.maximum_length_unit = 'cm'
+        # TODO QUESTION      What param is SourceAperture?
+        # Var imported from main
+        self.source_aperture = 0.0
+
         self.set_params(params)
 
     def set_params(self, params=None):
@@ -733,7 +737,18 @@ class NG7SANS(Instrument):
     def __init__(self, name, params):
         # Super is the Instrument class
         super().__init__(name, params)
+        self.guide = None
+        self.wavelength = None
 
     def load_params(self, params):
         # TODO: Take params and load them in
         print("NG7SANS Load Params")
+        self.guide = Guide(self, params)
+        self.guide.number_of_guides = params.get("guide.guide")
+        self.guide.source_aperture = params.get("SourceAperture")
+        # Confirm this is correct
+        # TODO J  - Split the sampleAperture into untis and other
+        # Start here 1/14
+        self.wavelength = Wavelength(self, params)
+        self.wavelength.wavelength = params.get("wavelength.wavelength")
+        self.wavelength.wavelength_spread = params.get("wavelengthSpread.wavelengthSpread")
