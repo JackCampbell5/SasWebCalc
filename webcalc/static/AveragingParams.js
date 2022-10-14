@@ -27,6 +27,10 @@ const template = `
          <label for="qWidth">Q Width (&#8491;<sup>-1</sup>): </label>
          <input v-model="averagingParams.qWidth" type="number" min="0.00" max="1.0" step="0.01" id="qWidth" title="" />
       </div>
+      <div v-if="visibleParams.includes('qHeight')">
+         <label for="qHeight">Q Height (&#8491;<sup>-1</sup>): </label>
+         <input v-model="averagingParams.qHeight" type="number" min="0.00" max="1.0" step="0.01" id="qHeight" title="" />
+      </div>
       <div v-if="visibleParams.includes('aspectRatio')">
          <label for="aspectRatio">Ellipse Aspect Ratio: </label>
          <input v-model="averagingParams.aspectRatio" type="number" min="0" max="1" step="0.1" id="aspectRatio"

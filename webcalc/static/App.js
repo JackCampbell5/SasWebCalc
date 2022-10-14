@@ -93,12 +93,14 @@ export default {
       this.model_params = await fetch_result.json();
     },
     onModelParamChange() {
+      // TODO: fetch results
       console.log(JSON.stringify(this.model_params, null, 2));
     },
     onInstrumentParamChange() {
-      // do stuff
+      // TODO: fetch calculations for instrument
     },
     onChange(p) {
+      // TODO: run calculations
       console.log('changed: ', p);
     }
   },
