@@ -50,6 +50,8 @@ async function SASCALC(instrument) {
     // Get current configuration so python can read
     getCurrentConfig(instrument);
 
+    //TODO c      Comment out before push
+
     // //START     Call python code
     //    //Comment out this section and program will run as normal
     //     //What method it is calling and the model needed

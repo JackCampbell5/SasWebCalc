@@ -533,6 +533,8 @@ class Instrument:
         self.collimation = Collimation(self, params.get('collimation', {}))
         self.wavelength = Wavelength(self, params.get('wavelength', {}))
         self.data = Data(self, params.get('wavelength', {}))
+        print("Origonal Value: " + str(params.get('wavelength.wavelength')))
+        print("Object value:" + str(self.wavelength.wavelength))
 
     def sas_calc(self):
         # MainFunction for this class
@@ -730,6 +732,18 @@ class Instrument:
         # Wavelength spread in percent
         return self.wavelength.wavelength_spread
 
+    def get_num_string(self, returnValue):
+        # get the number from a combined string
+        num = ""
+        for c in returnValue:
+            if c.isdigit():
+                num = num + c
+        return num
+
+    def get_unit_String(self, inputString):
+        # get the unit from a combined string
+        return inputString[(len(self.get_num_string(inputString))):]
+
 
 class NG7SANS(Instrument):
 
@@ -737,18 +751,26 @@ class NG7SANS(Instrument):
     def __init__(self, name, params):
         # Super is the Instrument class
         super().__init__(name, params)
-        self.guide = None
-        self.wavelength = None
 
     def load_params(self, params):
         # TODO: Take params and load them in
+
+        # This is a mess and is in the process of being cleaned
         print("NG7SANS Load Params")
-        self.guide = Guide(self, params)
-        self.guide.number_of_guides = params.get("guide.guide")
-        self.guide.source_aperture = params.get("SourceAperture")
-        # Confirm this is correct
-        # TODO J  - Split the sampleAperture into untis and other
-        # Start here 1/14
-        self.wavelength = Wavelength(self, params)
-        self.wavelength.wavelength = params.get("wavelength.wavelength")
-        self.wavelength.wavelength_spread = params.get("wavelengthSpread.wavelengthSpread")
+
+        self.d_converter = Converter('cm')
+        self.t_converter = Converter('s')
+        beamArray = 'beam_stops', [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}]
+
+        self.beam_stops = params.get('beam_stops', [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
+        self.detectors = [Detector(self, detector_params) for detector_params in params.get('detector', [{}])]
+
+        self.collimation = Collimation(self, params.get('collimation', {}))
+        self.wavelength = Wavelength(self, params.get('wavelength', {}))
+
+        self.wavelength.wavelength = super().get_num_string(params.get('wavelength.wavelength'))
+        self.wavelength.wavelength_unit = super().get_unit_String(params.get('wavelength.wavelength'))
+        self.wavelength.wavelength_spread = params.get('wavelengthSpread.wavelengthSpread')
+        print(self.wavelength.wavelength)
+        print(self.wavelength.wavelength_unit)
+        self.data = Data(self, params.get('wavelength', {}))
