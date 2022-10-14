@@ -70,6 +70,7 @@ def calculate_instrument(instrument, params):
     # TODO: Create classes for all instruments
     # Creates NG7SANS object if instrument is ng7
     # i_class is the python object for the interment
+    print(params)
     i_class = NG7SANS(instrument, params) if instrument == 'ng7' else Instrument(instrument, params)
     return i_class.sas_calc()
 
