@@ -2,7 +2,7 @@ import AveragingParams from './AveragingParams.js';
 import {default as ng7} from "./instruments/NG7SANS.js";
 import {default as ngb30} from "./instruments/NGB30SANS.js";
 import {default as vsans} from "./instruments/VSANS.js";
-import {default as qrange} from "./instruments/UserDefinedQRange.js";
+import {default as q_range} from "./instruments/UserDefinedQRange.js";
 import {default as ngb10} from "./instruments/NGB10SANS.js";
 
 const template = `
@@ -63,17 +63,17 @@ const template = `
 `;
 
 const instruments = {
-  "qrange": "User-Defined Q-Range and Resolutions",
-  "ngb30": "NGB 30m SANS",
-  "ng7": "NG7 SANS",
-  "ngb10": "NGB 10m SANS",
-  "vsans": "VSANS",
+  "q_range": "User-Defined Q-Range and Resolutions",
+  //"ngb30": "NGB 30m SANS",
+  //"ng7": "NG7 SANS",
+  //"ngb10": "NGB 10m SANS",
+  //"vsans": "VSANS",
 };
 
 export default {
   components: {
     'averaging-params': AveragingParams,
-    qrange,
+    q_range,
     ngb30,
     ng7,
     ngb10,
