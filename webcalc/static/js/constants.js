@@ -18,6 +18,8 @@ window.units = {
     "detectorOffset": "cm",
     "detectorDistance": "cm",
     "beamCenter": "cm",
+    "beamDiameter": "cm",
+    "beamStopDiameter":"inch"
 }
 
 // Inputs for averaging types

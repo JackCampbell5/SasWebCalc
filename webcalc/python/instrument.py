@@ -71,7 +71,14 @@ def calculate_instrument(instrument, params):
     # Creates NG7SANS object if instrument is ng7
     # i_class is the python object for the interment
     print(params)
-    i_class = NG7SANS(instrument, params) if instrument == 'ng7' else Instrument(instrument, params)
+    if instrument == 'ng7':
+        i_class = NG7SANS(instrument, params)
+    elif instrument == 'ngb30':
+        i_class = NGB30SANS(instrument, params)
+    elif instrument == 'ngb10':
+        i_class = NGB10SANS(instrument, params)
+    else:
+        i_class = Instrument(instrument, params)
     return i_class.sas_calc()
 
 
@@ -337,9 +344,6 @@ class Guide:
         self.gap_at_start_unit = 'cm'
         self.maximum_length = 0.0
         self.maximum_length_unit = 'cm'
-        # TODO QUESTION      What param is SourceAperture?
-        # Var imported from main
-        self.source_aperture = 0.0
 
         self.set_params(params)
 
@@ -511,6 +515,7 @@ class Instrument:
     isReal = False
 
     def __init__(self, name="", params=None):
+        print("test 2")
         if not params:
             params = {}
             # Only store values used for calculations in Instrument class
@@ -529,6 +534,7 @@ class Instrument:
         self.t_converter = Converter('s')
         # Define other classes
         # TODO: Define BeamStop class(?)
+        # TODO Question      Why would we import in this way?
         self.beam_stops = params.get('beam_stops', [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
         self.detectors = [Detector(self, detector_params) for detector_params in params.get('detector', [{}])]
         self.collimation = Collimation(self, params.get('collimation', {}))
@@ -733,45 +739,52 @@ class Instrument:
         # Wavelength spread in percent
         return self.wavelength.wavelength_spread
 
-    def get_num_string(self, returnValue):
-        # get the number from a combined string
-        num = ""
-        for c in returnValue:
-            if c.isdigit():
-                num = num + c
-        return num
 
-    def get_unit_String(self, inputString):
-        # get the unit from a combined string
-        return inputString[(len(self.get_num_string(inputString))):]
-
-
+# TODO QUESTION      Are we going to have object specific methods and that is why they are defined separately?
 class NG7SANS(Instrument):
 
     # Constructor for the NG7SANS instrument
     def __init__(self, name, params):
+        # TODO QUESTION - what is this needed for???
+        self.d_converter = Converter('cm')
+        self.t_converter = Converter('s')
         # Super is the Instrument class
         super().__init__(name, params)
 
     def load_params(self, params):
         # TODO: Take params and load them in
 
-        # This is a mess and is in the process of being cleaned
         print("NG7SANS Load Params")
 
-        self.d_converter = Converter('cm')
-        self.t_converter = Converter('s')
-        beamArray = 'beam_stops', [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}]
-
-        self.beam_stops = params.get('beam_stops', [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
+        print(params["beamStops"])
+        # TODO QUESTION      Do these need to be created in constructor?
+        self.beam_stops = params.get(self, params["beamStops"])
+        # TODO QUESTION      Why does this loop?
         self.detectors = [Detector(self, detector_params) for detector_params in params.get('detector', [{}])]
+        self.collimation = Collimation(self, params['collimation'])
+        self.wavelength = Wavelength(self, params['wavelength'])
+        self.data = Data(self, params['wavelength'])
 
-        self.collimation = Collimation(self, params.get('collimation', {}))
-        self.wavelength = Wavelength(self, params.get('wavelength', {}))
 
-        self.wavelength.wavelength = super().get_num_string(params.get('wavelength.wavelength'))
-        self.wavelength.wavelength_unit = super().get_unit_String(params.get('wavelength.wavelength'))
-        self.wavelength.wavelength_spread = params.get('wavelengthSpread.wavelengthSpread')
-        print(self.wavelength.wavelength)
-        print(self.wavelength.wavelength_unit)
-        self.data = Data(self, params.get('wavelength', {}))
+# Class for the NGB 30m SANS instrument
+class NGB30SANS(NG7SANS):
+    def __init__(self, name, params):
+        super().__init__(name, params)
+
+    def load_params(self, params):
+        print("NGB30SANS Load Params")
+        super().load_params(params)
+
+
+# Class for the NGB 10m SANS instrument
+class NGB10SANS(NG7SANS):
+    def __init__(self, name, params):
+        super().__init__(name, params)
+
+    def load_params(self, params):
+        print("NGB10SANS Load Params")
+        super().load_params(params)
+
+    def calculate_source_to_sample_aperture_distance(self):
+        super(NGB10SANS, self).calculate_source_to_sample_aperture_distance()
+        # TODO QUESTION     DO I need to implement this?

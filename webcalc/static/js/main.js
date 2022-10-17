@@ -50,16 +50,6 @@ async function SASCALC(instrument) {
     // Get current configuration so python can read
     getCurrentConfig(instrument);
 
-    //TODO c      Comment out before push
-
-    // //START     Call python code
-    //    //Comment out this section and program will run as normal
-    //     //What method it is calling and the model needed
-    // let route = '/calculate_instrument/'+instrument;
-    //     //calling the method and assigning a value to the output
-    // var calculate_instument = await post_data(route, window.currentConfig);
-    // //END       Call python code
-
 
     if (instrument == 'qrange') {
         // TODO: generate 1D and 2D data for a given q-range
@@ -876,6 +866,7 @@ function getCurrentConfig(instrument) {
 function sendToPythonInstrument(instrument)
 {
     // TODO: Gather all instrumental params here and pass them to the python (ignore return value for now)
+    document.getElementById('debug_text').textContent += " Test1"
     var json_object = {};
     json_object['instrument'] = instrument;
     json_object["wavelength"] = {}
@@ -893,6 +884,7 @@ function sendToPythonInstrument(instrument)
     json_object["collimation"]["ssad_unit"] = window.units["detectorDistance"];
     json_object["collimation"]["sample_aperture"] = getSampleApertureSize(instrument) * 10;
     json_object["collimation"]["sample_aperture_units"] = window.units["sampleAperture"];
+    //TODO QUESTION     Why is it under [0] is there going to be more values?
     json_object["detectors"] = [];
     json_object["detectors"][0] = {};
     json_object["detectors"][0]["sdd"] = document.getElementById(instrument + "SDDInputBox").value;
@@ -905,6 +897,12 @@ function sendToPythonInstrument(instrument)
     json_object["detectors"][0]["pixel_size_y_unit"] = 'mm';
     json_object["detectors"][0]["pixels_x"] = window[instrument + "Constants"]["xPixels"];
     json_object["detectors"][0]["pixels_y"] = window[instrument + "Constants"]["yPixels"];
+    json_object["beamStops"] = {}
+    json_object["beamStops"]["diameter"]= document.getElementById(instrument + "BeamSize").value;
+    json_object["beamStops"]["diameter_unit"] = window.units["beamDiameter"];
+    // TODO QUESTION     Different between offset and node
+    json_object["beamStops"]["offset"] = document.getElementById(instrument + "BeamStopSize").value;
+    json_object["beamStops"]["offset_unit"] = window.units["beamDiameter"];
 
     // TODO: This will eventually need to be an asynchronous method and this call will need to wait for and capture the return
     post_data(`/calculate_instrument/${instrument}`, json_object)

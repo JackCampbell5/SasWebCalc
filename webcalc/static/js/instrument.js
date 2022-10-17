@@ -717,6 +717,7 @@ class Instrument {
 
 class NG7SANS extends Instrument {
     static instrumentName = "ng7";
+    //Depreciated - in constants.java
     static hostname = "ng7sans.ncnr.nist.gov";
     static isReal = true;
 
