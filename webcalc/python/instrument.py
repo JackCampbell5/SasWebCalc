@@ -70,7 +70,6 @@ def calculate_instrument(instrument, params):
     # TODO: Create classes for all instruments
     # Creates NG7SANS object if instrument is ng7
     # i_class is the python object for the interment
-    print(params)
     if instrument == 'ng7':
         i_class = NG7SANS(instrument, params)
     elif instrument == 'ngb30':
@@ -180,8 +179,10 @@ class Collimation:
             params: A dictionary mapping <param_name>: <value>
         """
         self.parent = parent
-        self.source_aperture = Aperture(parent, params.get('source_aperture', {}))
-        self.sample_aperture = Aperture(parent, params.get('sample_aperture', {}))
+        self.source_aperture = Aperture(parent, params["source_aperture"])
+        self.sample_aperture = Aperture(parent, params["sample_aperture"])
+        # Sets the params array to main values without aperture array
+        params = params["0"]
         self.guides = Guide(parent, params.get('guides', {}))
         self.ssd = 0.0
         self.ssd_unit = 'cm'
@@ -286,7 +287,7 @@ class Detector:
         self.beam_center_x = x_pixels / 2 + 0.5 if dr == 0 else offset / dr + x_pixels / 2 + 0.5
 
     def calculate_beam_center_y(self):
-        # Find the number of x pixels in the detector
+        # Find the number of y pixels in the detector
         y_pixels = self.pixel_no_y
         # Get detector offset in cm
         self.beam_center_y = y_pixels / 2 + 0.5
@@ -515,7 +516,6 @@ class Instrument:
     isReal = False
 
     def __init__(self, name="", params=None):
-        print("test 2")
         if not params:
             params = {}
             # Only store values used for calculations in Instrument class
@@ -540,8 +540,6 @@ class Instrument:
         self.collimation = Collimation(self, params.get('collimation', {}))
         self.wavelength = Wavelength(self, params.get('wavelength', {}))
         self.data = Data(self, params.get('wavelength', {}))
-        print("Origonal Value: " + str(params.get('wavelength.wavelength')))
-        print("Object value:" + str(self.wavelength.wavelength))
 
     def sas_calc(self):
         # MainFunction for this class
@@ -755,12 +753,10 @@ class NG7SANS(Instrument):
         # TODO: Take params and load them in
 
         print("NG7SANS Load Params")
-
-        print(params["beamStops"])
         # TODO QUESTION      Do these need to be created in constructor?
         self.beam_stops = params.get(self, params["beamStops"])
         # TODO QUESTION      Why does this loop?
-        self.detectors = [Detector(self, detector_params) for detector_params in params.get('detector', [{}])]
+        self.detectors = Detector(self, params["detectors"][0])
         self.collimation = Collimation(self, params['collimation'])
         self.wavelength = Wavelength(self, params['wavelength'])
         self.data = Data(self, params['wavelength'])

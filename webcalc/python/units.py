@@ -44,7 +44,6 @@ inferring the dimension from an example unit.
 import math
 import re
 
-
 __all__ = ['Converter']
 DIMENSIONS = {}  # type: Dict[str, Dict[str, ConversionType]]
 AMBIGUITIES = {}  # type: Dict[str, str]
@@ -73,9 +72,9 @@ def _build_metric_units(unit, abbr):
     map = {abbr: 1}
     for name in [unit, unit.capitalize(), unit.lower(), abbr]:
         for items in [prefix, short_prefix]:
-            map.update({name: 1, name+'s': 1})
+            map.update({name: 1, name + 's': 1})
             map.update([(P + name, scale) for (P, scale) in items.items()])
-            map.update([(P + '*'+name, scale) for (P, scale) in items.items()])
+            map.update([(P + '*' + name, scale) for (P, scale) in items.items()])
             map.update([(P + name + 's', scale) for (P, scale) in items.items()])
     return map
 
@@ -133,7 +132,7 @@ def _build_inv_metric_units(unit, abbr):
     map = {}  # type: Dict[str, ConversionType]
     meter_map = _build_metric_units(unit, abbr)
     for s, c in meter_map.items():
-        conversion = 1/float(c)
+        conversion = 1 / float(c)
         map['1/' + s] = conversion
         map['inv' + s] = conversion
         map[s + '^-1'] = conversion
@@ -166,7 +165,7 @@ def _build_inv_n_metric_units(unit, abbr, n=2):
     meter_map = _build_metric_units(unit, abbr)
     n = int(n)
     for s, c in meter_map.items():
-        conversion = 1/(math.pow(float(c), n))
+        conversion = 1 / (math.pow(float(c), n))
         map[f'1/{s}^{n}'] = conversion
         map[f'inv{s}^{n}'] = conversion
         map[f'{s}^-{n}'] = conversion
@@ -206,7 +205,7 @@ def _build_all_units():
     distance = _build_metric_units('meter', 'm')
     distance.update(_build_metric_units('metre', 'm'))
     distance.update(_build_plural_units(micron=1e-6, Angstrom=1e-10))
-    distance.update({'Å': 1e-10, 'A': 1e-10, 'Ang': 1e-10,  'ang': 1e-10})
+    distance.update({'Å': 1e-10, 'A': 1e-10, 'Ang': 1e-10, 'ang': 1e-10})
     DIMENSIONS['distance'] = distance
 
     # Time measurements
@@ -301,7 +300,7 @@ def _build_all_units():
     # writing the units attributes.
     unknown = {}  # type: Dict[str, ConversionType]
     unknown.update(
-        {'None': 1, '???': 1, '': 1, 'A.U.': 1,  'a.u.': 1, 'arbitrary': 1, 'arbitrary units': 1,
+        {'None': 1, '???': 1, '': 1, 'A.U.': 1, 'a.u.': 1, 'arbitrary': 1, 'arbitrary units': 1,
          'Counts': 1, 'counts': 1, 'Cts': 1, 'cts': 1, 'unitless': 1, 'unknown': 1, 'Unknown': 1, 'Unk': 1}
     )
     DIMENSIONS['dimensionless'] = unknown
@@ -443,9 +442,10 @@ class Converter(object):
         units = standardize_units(units)
         if isinstance(value, list):
             return [self.scale_with_offset(units, i) for i in value]
-        inscale, inoffset = self.scalebase
-        outscale, outoffset = self.scalemap[units]
-        return (value + inoffset) * inscale / outscale - outoffset
+        inscale = inoffset = self.scalebase
+        outscale = outoffset = self.scalemap[units]
+        # TODO BUG      Devide by 0
+        return (float(value) + inoffset) * inscale / outscale - outoffset
 
     def get_compatible_units(self):
         unique_units = []

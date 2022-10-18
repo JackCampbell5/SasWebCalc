@@ -875,34 +875,38 @@ function sendToPythonInstrument(instrument)
     json_object["wavelength"]["d_lambda"] = getWavelengthSpread(instrument) / 100;
     json_object["wavelength"]["d_lambda_unit"] = "Percent";
     json_object["wavelength"]["attenuation_factor"] = getAttenuators(instrument);
-    json_object["collimation"] = {}
-    json_object["collimation"]["source_aperture"] = getSourceAperture(instrument);
-    json_object["collimation"]["source_aperture_unit"] = window.units["sampleAperture"];
-    json_object["collimation"]["ssd"] = document.getElementById(instrument + 'SDD').value;
-    json_object["collimation"]["ssd_unit"] = window.units["detectorDistance"];
-    json_object["collimation"]["ssad"] = document.getElementById(instrument + 'SDD').value - window[instrument + "Constants"]['ApertureOffset'];
-    json_object["collimation"]["ssad_unit"] = window.units["detectorDistance"];
-    json_object["collimation"]["sample_aperture"] = getSampleApertureSize(instrument) * 10;
-    json_object["collimation"]["sample_aperture_units"] = window.units["sampleAperture"];
+    //Makes 3 Python Dictionary as the collimation has 2 sub objects (source_aperture and sample_aperture) and a main object
+    json_object["collimation"] = {};
+    json_object["collimation"]["source_aperture"] = {};
+    json_object["collimation"]["source_aperture"]["diameter"] = getSourceAperture(instrument);
+    json_object["collimation"]["source_aperture"]["diameter_unit"] = window.units["sampleAperture"];
+    json_object["collimation"]["sample_aperture"] = {};
+    json_object["collimation"]["sample_aperture"]["diameter"] = getSampleApertureSize(instrument) * 10;
+    json_object["collimation"]["sample_aperture"]["diameter_unit"] = window.units["sampleAperture"];
+    json_object["collimation"][0] = {};
+    json_object["collimation"][0]["ssd"] = document.getElementById(instrument + 'SDD').value;
+    json_object["collimation"][0]["ssd_unit"] = window.units["detectorDistance"];
+    json_object["collimation"][0]["ssad"] = document.getElementById(instrument + 'SDD').value - window[instrument + "Constants"]['ApertureOffset'];
+    json_object["collimation"][0]["ssad_unit"] = window.units["detectorDistance"];
     //TODO QUESTION     Why is it under [0] is there going to be more values?
     json_object["detectors"] = [];
     json_object["detectors"][0] = {};
     json_object["detectors"][0]["sdd"] = document.getElementById(instrument + "SDDInputBox").value;
-    json_object["detectors"][0]["sdd_units"] = window.units["detectorDistance"];
+    json_object["detectors"][0]["sdd_unit"] = window.units["detectorDistance"];
     json_object["detectors"][0]["offset"] = document.getElementById(instrument + "OffsetInputBox").value;
     json_object["detectors"][0]["offset_unit"] = window.units["detectorOffset"];
     json_object["detectors"][0]["pixel_size_x"] = window[instrument + "Constants"]["aPixel"];
     json_object["detectors"][0]["pixel_size_x_unit"] = 'mm';
     json_object["detectors"][0]["pixel_size_y"] = window[instrument + "Constants"]["aPixel"];
     json_object["detectors"][0]["pixel_size_y_unit"] = 'mm';
-    json_object["detectors"][0]["pixels_x"] = window[instrument + "Constants"]["xPixels"];
-    json_object["detectors"][0]["pixels_y"] = window[instrument + "Constants"]["yPixels"];
-    json_object["beamStops"] = {}
+    json_object["detectors"][0]["pixel_no_x"] = window[instrument + "Constants"]["xPixels"];
+    json_object["detectors"][0]["pixel_no_y"] = window[instrument + "Constants"]["yPixels"];
+    json_object["beamStops"] = {};
     json_object["beamStops"]["diameter"]= document.getElementById(instrument + "BeamSize").value;
     json_object["beamStops"]["diameter_unit"] = window.units["beamDiameter"];
     // TODO QUESTION     Different between offset and node
     json_object["beamStops"]["offset"] = document.getElementById(instrument + "BeamStopSize").value;
-    json_object["beamStops"]["offset_unit"] = window.units["beamDiameter"];
+    json_object["beamStops"]["offset_unit"] = window.units["beamStopDiameter"];
 
     // TODO: This will eventually need to be an asynchronous method and this call will need to wait for and capture the return
     post_data(`/calculate_instrument/${instrument}`, json_object)
