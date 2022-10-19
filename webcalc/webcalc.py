@@ -20,11 +20,6 @@ def create_app():
     def root():
         return render_template("index.html")
 
-    # TODO J remove below code as it is for testing purposes only
-    @app.route('/test/', methods=['GET', 'POST'])
-    def test():
-        return render_template("test.html")
-
     @app.route('/getmodels/', methods=['GET'])
     def get_all_models():
         return get_model_list()

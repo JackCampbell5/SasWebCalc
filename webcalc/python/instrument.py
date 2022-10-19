@@ -157,6 +157,8 @@ class BeamStop:
         self.offset = 0.0
         self.offset_unit = 'cm'
         self.set_params(params)
+        self.stop_size = 0.0
+        self.stop_diameter = 0.0
 
     def set_params(self, params=None):
         # type: (dict) -> None
@@ -179,11 +181,11 @@ class Collimation:
             params: A dictionary mapping <param_name>: <value>
         """
         self.parent = parent
-        self.source_aperture = Aperture(parent, params["source_aperture"])
-        self.sample_aperture = Aperture(parent, params["sample_aperture"])
+        self.source_aperture = Aperture(parent,  params.get('source_aperture', {}))
+        self.sample_aperture = Aperture(parent,  params.get('sample_aperture', {}))
+        self.guides = Guide(parent, params.get('guides', {}))
         # Sets the params array to main values without aperture array
         params = params["0"]
-        self.guides = Guide(parent, params.get('guides', {}))
         self.ssd = 0.0
         self.ssd_unit = 'cm'
         self.ssad = 0.0
@@ -223,7 +225,7 @@ class Collimation:
         return self.sample_aperture.get_offset()
 
     def calculate_source_to_sample_aperture_distance(self):
-        self.ssad = (self.guides.get_maximum_length() - self.guides.get_length_per_guide()
+        self.ssad = (self.guides.get_maximum_length() -self.guides.get_maximum_length()
                      * self.guides.number_of_guides - self.get_sample_aperture_offset())
 
 
@@ -237,6 +239,7 @@ class Detector:
             parent: The Instrument instance this Detector is a part of
             params: A dictionary mapping <param_name>: <value>
         """
+        print(params)
         self.parent = parent
         self.sadd = 0.0
         self.sadd_unit = 'cm'
@@ -516,6 +519,13 @@ class Instrument:
     isReal = False
 
     def __init__(self, name="", params=None):
+        self.data = None
+        self.collimation = None
+        self.wavelength = None
+        self.detectors = None
+        self.beamStops = None
+        self.t_converter = None
+        self.d_converter = None
         if not params:
             params = {}
             # Only store values used for calculations in Instrument class
@@ -533,10 +543,8 @@ class Instrument:
         self.d_converter = Converter('cm')
         self.t_converter = Converter('s')
         # Define other classes
-        # TODO: Define BeamStop class(?)
-        # TODO Question      Why would we import in this way?
-        self.beam_stops = params.get('beam_stops', [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
-        self.detectors = [Detector(self, detector_params) for detector_params in params.get('detector', [{}])]
+        self.beamStops = params.get('beam_stops', [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
+        self.detectors = [Detector(self, detector_params) for detector_params in params.get('detectors', [{}])]
         self.collimation = Collimation(self, params.get('collimation', {}))
         self.wavelength = Wavelength(self, params.get('wavelength', {}))
         self.data = Data(self, params.get('wavelength', {}))
@@ -738,28 +746,16 @@ class Instrument:
         return self.wavelength.wavelength_spread
 
 
-# TODO QUESTION      Are we going to have object specific methods and that is why they are defined separately?
 class NG7SANS(Instrument):
 
     # Constructor for the NG7SANS instrument
     def __init__(self, name, params):
-        # TODO QUESTION - what is this needed for???
-        self.d_converter = Converter('cm')
-        self.t_converter = Converter('s')
         # Super is the Instrument class
         super().__init__(name, params)
 
     def load_params(self, params):
-        # TODO: Take params and load them in
-
         print("NG7SANS Load Params")
-        # TODO QUESTION      Do these need to be created in constructor?
-        self.beam_stops = params.get(self, params["beamStops"])
-        # TODO QUESTION      Why does this loop?
-        self.detectors = Detector(self, params["detectors"][0])
-        self.collimation = Collimation(self, params['collimation'])
-        self.wavelength = Wavelength(self, params['wavelength'])
-        self.data = Data(self, params['wavelength'])
+        super().load_params(params)
 
 
 # Class for the NGB 30m SANS instrument

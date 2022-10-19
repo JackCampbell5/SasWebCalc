@@ -800,6 +800,22 @@ function selectAveragingMethod(averagingMethod, runSASCALC = true) {
         SASCALC(instrument);
     }
 }
+/*
+   * Creates guide array for guide parameters
+ */
+    function getGuideArray(instrument){
+        var guideArray = {};
+        const temp = document.getElementById(instrument + 'GuideConfig').value;
+    if (temp === "LENS"){
+        document.getElementById('debug_text').textContent +=  "test";
+        guideArray["lenses"] = true;
+        guideArray["number_of_guides"] = 0;
+    }else {
+        guideArray["number_of_guides"] = parseInt(temp);
+    }
+    return guideArray;
+    }//End getGuideArray
+
 
 /*
  * Various getter functions - set current config on get
@@ -866,14 +882,13 @@ function getCurrentConfig(instrument) {
 function sendToPythonInstrument(instrument)
 {
     // TODO: Gather all instrumental params here and pass them to the python (ignore return value for now)
-    document.getElementById('debug_text').textContent += " Test1"
     var json_object = {};
     json_object['instrument'] = instrument;
     json_object["wavelength"] = {}
-    json_object["wavelength"]["lambda"] = getWavelength(instrument);
-    json_object['wavelength"]["lambda_unit'] = window.units["wavelength"];
-    json_object["wavelength"]["d_lambda"] = getWavelengthSpread(instrument) / 100;
-    json_object["wavelength"]["d_lambda_unit"] = "Percent";
+    json_object["wavelength"]["wavelength"] = getWavelength(instrument);
+    json_object['wavelength"]["wavelength_unit'] = window.units["wavelength"];
+    json_object["wavelength"]["wavelength_spread"] = getWavelengthSpread(instrument) / 100;
+    json_object["wavelength"]["wavelength_spread_unit"] = "Percent";
     json_object["wavelength"]["attenuation_factor"] = getAttenuators(instrument);
     //Makes 3 Python Dictionary as the collimation has 2 sub objects (source_aperture and sample_aperture) and a main object
     json_object["collimation"] = {};
@@ -888,7 +903,8 @@ function sendToPythonInstrument(instrument)
     json_object["collimation"][0]["ssd_unit"] = window.units["detectorDistance"];
     json_object["collimation"][0]["ssad"] = document.getElementById(instrument + 'SDD').value - window[instrument + "Constants"]['ApertureOffset'];
     json_object["collimation"][0]["ssad_unit"] = window.units["detectorDistance"];
-    //TODO QUESTION     Why is it under [0] is there going to be more values?
+    json_object["collimation"]["guides"] = getGuideArray(instrument);
+    //Some Instruments have more than one detector
     json_object["detectors"] = [];
     json_object["detectors"][0] = {};
     json_object["detectors"][0]["sdd"] = document.getElementById(instrument + "SDDInputBox").value;
@@ -899,14 +915,13 @@ function sendToPythonInstrument(instrument)
     json_object["detectors"][0]["pixel_size_x_unit"] = 'mm';
     json_object["detectors"][0]["pixel_size_y"] = window[instrument + "Constants"]["aPixel"];
     json_object["detectors"][0]["pixel_size_y_unit"] = 'mm';
-    json_object["detectors"][0]["pixel_no_x"] = window[instrument + "Constants"]["xPixels"];
-    json_object["detectors"][0]["pixel_no_y"] = window[instrument + "Constants"]["yPixels"];
+    json_object["detectors"][0]["pixel_no_x"] = window[instrument + "Constants"]["xPixels"].value;
+    json_object["detectors"][0]["pixel_no_y"] = window[instrument + "Constants"]["yPixels"].value;
     json_object["beamStops"] = {};
     json_object["beamStops"]["diameter"]= document.getElementById(instrument + "BeamSize").value;
     json_object["beamStops"]["diameter_unit"] = window.units["beamDiameter"];
-    // TODO QUESTION     Different between offset and node
-    json_object["beamStops"]["offset"] = document.getElementById(instrument + "BeamStopSize").value;
-    json_object["beamStops"]["offset_unit"] = window.units["beamStopDiameter"];
+    json_object["beamStops"]["stop_size"] = document.getElementById(instrument + "BeamStopSize").value;
+    json_object["beamStops"]["stop_diameter"] = window.units["beamStopDiameter"];
 
     // TODO: This will eventually need to be an asynchronous method and this call will need to wait for and capture the return
     post_data(`/calculate_instrument/${instrument}`, json_object)
