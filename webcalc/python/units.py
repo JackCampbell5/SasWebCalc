@@ -444,7 +444,7 @@ class Converter(object):
             return [self.scale_with_offset(units, i) for i in value]
         inscale = inoffset = self.scalebase
         outscale = outoffset = self.scalemap[units]
-        # TODO BUG      Devide by 0
+        # QUESTION      The below divides by 0
         return (float(value) + inoffset) * inscale / outscale - outoffset
 
     def get_compatible_units(self):

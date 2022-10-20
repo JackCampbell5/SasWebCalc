@@ -53,6 +53,7 @@ async function SASCALC(instrument) {
 
     if (instrument == 'qrange') {
         // TODO: generate 1D and 2D data for a given q-range
+        //QUESTION      How would the instrument ever equal qrange?
     } else {
         //calculateresolution will be called from here
 
@@ -226,7 +227,6 @@ function calculateMinimumQ(instrument) {
     qMinNode.value = Math.round(qMinimum * 100000) / 100000;
 }
 
-//TODO     Method not called, remove?
 //Method depreciated
 /*
  * Calculate the number of q points, and sum the intensities, dsq, and number of cells.
@@ -646,7 +646,7 @@ function updateWavelength(instrument, runSASCALC=true) {
  * Change the instrument you want to calculate Q ranges for
  */
 function updateInstrumentNoInstrument(runSASCALC = true) {
-    //TODO      Finds the instrument
+    //Finds the instrument
     var instrument = document.getElementById('instrumentSelector').value;
     updateInstrument(instrument, runSASCALC);
 }
@@ -684,7 +684,7 @@ function updateInstrument(instrument, runSASCALC=true) {
         //Buttone above chats
         var buttons = document.getElementById('buttons');
         buttons.style.display = "inline-block";
-        //TODO- Figure out what all of this does
+        //TODO J     Figure out what all of this does
         var model = document.getElementById("model");
         model.style.display = "inline-block";
         selectModel(model.value, false);
@@ -772,6 +772,7 @@ async function populatePageDynamically(instrument) {
         }
     }
     // TODO: Populate GUIDES, SOURCE APERTURES, and DETECTOR LIMITS (and wavelenth limits?)
+    //Question      Why is the below deprecated?
     var sourceApertures = staticNodeMap['guide.sourceAperture']['permittedValues'];
     var sourceAperturesGuide1 = staticNodeMap['guide01.key']['permittedValues'];
 }
@@ -933,7 +934,7 @@ function sendToPythonInstrument(instrument)
 function freezeSASCALC() {
     var frozen = new Array(1).fill(0);
 
-    //TODO J : Why would we not want to freeze the actual calculation
+    //QUESTION: Why would we not want to freeze the actual calculation
     // Offset intensities of frozen configs by a factor of 2
     var intensities = new Array(1).fill(0);
     var n = 2 * (window.frozenCalculations.length + 1);

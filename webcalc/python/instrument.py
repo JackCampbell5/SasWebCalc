@@ -68,13 +68,15 @@ def calculate_instrument(instrument, params):
     Returns: [[1D resolutions], [2D resolutions]]
     """
     # TODO: Create classes for all instruments
-    # Creates NG7SANS object if instrument is ng7
     # i_class is the python object for the interment
     if instrument == 'ng7':
+        # Creates NG7SANS object if instrument is ng7
         i_class = NG7SANS(instrument, params)
     elif instrument == 'ngb30':
+        # Creates NG7SANS object if instrument is ngb30
         i_class = NGB30SANS(instrument, params)
     elif instrument == 'ngb10':
+        # Creates NG7SANS object if instrument is ngb30
         i_class = NGB10SANS(instrument, params)
     else:
         i_class = Instrument(instrument, params)
@@ -156,9 +158,9 @@ class BeamStop:
         self.diameter_unit = 'cm'
         self.offset = 0.0
         self.offset_unit = 'cm'
-        self.set_params(params)
         self.stop_size = 0.0
         self.stop_diameter = 0.0
+        self.set_params(params)
 
     def set_params(self, params=None):
         # type: (dict) -> None
@@ -181,8 +183,8 @@ class Collimation:
             params: A dictionary mapping <param_name>: <value>
         """
         self.parent = parent
-        self.source_aperture = Aperture(parent,  params.get('source_aperture', {}))
-        self.sample_aperture = Aperture(parent,  params.get('sample_aperture', {}))
+        self.source_aperture = Aperture(parent, params.get('source_aperture', {}))
+        self.sample_aperture = Aperture(parent, params.get('sample_aperture', {}))
         self.guides = Guide(parent, params.get('guides', {}))
         # Sets the params array to main values without aperture array
         params = params["0"]
@@ -225,7 +227,7 @@ class Collimation:
         return self.sample_aperture.get_offset()
 
     def calculate_source_to_sample_aperture_distance(self):
-        self.ssad = (self.guides.get_maximum_length() -self.guides.get_maximum_length()
+        self.ssad = (self.guides.get_maximum_length() - self.guides.get_maximum_length()
                      * self.guides.number_of_guides - self.get_sample_aperture_offset())
 
 
@@ -394,6 +396,8 @@ class Wavelength:
         self.rpm_range = (0.0, np.inf)
         self.set_params(params)
         self.d_converter = Converter(self.wavelength_unit)
+        # TODO Create WavelengthCalculator class and implement object
+        # self.d_lambda_allowed = WavelengthCalculator...
 
     def set_params(self, params=None):
         # type: (dict) -> None
@@ -538,12 +542,12 @@ class Instrument:
 
     def load_params(self, params):
         print("Default Load Params")
-        # TODO: confirm that this is all the params needed to add
         # Unit converters
         self.d_converter = Converter('cm')
         self.t_converter = Converter('s')
         # Define other classes
         self.beamStops = params.get('beam_stops', [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
+        # TODO Implement current_beamstop object
         self.detectors = [Detector(self, detector_params) for detector_params in params.get('detectors', [{}])]
         self.collimation = Collimation(self, params.get('collimation', {}))
         self.wavelength = Wavelength(self, params.get('wavelength', {}))
@@ -758,8 +762,8 @@ class NG7SANS(Instrument):
         super().load_params(params)
 
 
-# Class for the NGB 30m SANS instrument
-class NGB30SANS(NG7SANS):
+class NGB30SANS(Instrument):
+    # Class for the NGB 30m SANS instrument
     def __init__(self, name, params):
         super().__init__(name, params)
 
@@ -768,8 +772,8 @@ class NGB30SANS(NG7SANS):
         super().load_params(params)
 
 
-# Class for the NGB 10m SANS instrument
-class NGB10SANS(NG7SANS):
+class NGB10SANS(Instrument):
+    # Class for the NGB 10m SANS instrument
     def __init__(self, name, params):
         super().__init__(name, params)
 
@@ -779,4 +783,13 @@ class NGB10SANS(NG7SANS):
 
     def calculate_source_to_sample_aperture_distance(self):
         super(NGB10SANS, self).calculate_source_to_sample_aperture_distance()
-        # TODO QUESTION     DO I need to implement this?
+        # TODO Implement object spesific function
+
+# class VSANS(Instrument):
+#     # Class for the VSANS instrument
+#     def __init__(self, name, params):
+#         super().__init__(name, params)
+#
+#     def load_params(self, params):
+#         print("VSANS Load Params")
+#         super().load_params(params)
