@@ -890,7 +890,8 @@ function sendToPythonInstrument(instrument)
     json_object['wavelength"]["wavelength_unit'] = window.units["wavelength"];
     json_object["wavelength"]["wavelength_spread"] = getWavelengthSpread(instrument) / 100;
     json_object["wavelength"]["wavelength_spread_unit"] = "Percent";
-    json_object["wavelength"]["attenuation_factor"] = getAttenuators(instrument);
+    json_object["wavelength"]["number_of_attenuators"] = getAttenuators(instrument);
+    json_object["wavelength"]["attenuation_factor"] = calculateAttenuationFactor(instrument);
     //Makes 3 Python Dictionary as the collimation has 2 sub objects (source_aperture and sample_aperture) and a main object
     json_object["collimation"] = {};
     json_object["collimation"]["source_aperture"] = {};

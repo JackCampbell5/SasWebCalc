@@ -105,7 +105,7 @@ def set_params(instance, params):
             setattr(instance, key, value)
         else:
             # Print unrecognized attributes to the console
-            print(f"The parameter {key} is not a known Detector attribute. Unable to set it to {value}.")
+            print(f"The parameter {key} is not a known {instance} attribute. Unable to set it to {value}.")
 
 
 class Aperture:
@@ -182,6 +182,7 @@ class Collimation:
             parent: The Instrument instance this Detector is a part of
             params: A dictionary mapping <param_name>: <value>
         """
+        print("Hi")
         self.parent = parent
         self.source_aperture = Aperture(parent, params.get('source_aperture', {}))
         self.sample_aperture = Aperture(parent, params.get('sample_aperture', {}))
@@ -273,6 +274,7 @@ class Detector:
             params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
         Returns: None
         """
+        print(params)
         set_params(self, params)
         # Calculate all beam centers using existing values
         self.calculate_all_beam_centers()
@@ -394,6 +396,8 @@ class Wavelength:
         self.wavelength_spread_unit = '%'
         self.wavelength_constants = (0.0, 0.0)
         self.rpm_range = (0.0, np.inf)
+        self.number_of_attenuators = 0
+        self.attenuation_factor = 0
         self.set_params(params)
         self.d_converter = Converter(self.wavelength_unit)
         # TODO Create WavelengthCalculator class and implement object
@@ -551,7 +555,8 @@ class Instrument:
         self.detectors = [Detector(self, detector_params) for detector_params in params.get('detectors', [{}])]
         self.collimation = Collimation(self, params.get('collimation', {}))
         self.wavelength = Wavelength(self, params.get('wavelength', {}))
-        self.data = Data(self, params.get('wavelength', {}))
+        # TODO   What class should be imported into data
+        self.data = Data(self, params.get('data',{}))
 
     def sas_calc(self):
         # MainFunction for this class
@@ -670,6 +675,7 @@ class Instrument:
     # Use these to be sure units are correct
     def get_attenuation_factor(self):
         # The attenuation factor value calculated based on the number of attenuators
+        # TODO Fix this is will just infinatly loop
         return self.get_attenuation_factor()
 
     def get_attenuators(self):
