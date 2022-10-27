@@ -531,7 +531,7 @@ class Instrument:
         self.collimation = None
         self.wavelength = None
         self.detectors = None
-        self.beamStops = None
+        self.beam_stops = None
         self.t_converter = None
         self.d_converter = None
         if not params:
@@ -550,7 +550,7 @@ class Instrument:
         self.d_converter = Converter('cm')
         self.t_converter = Converter('s')
         # Define other classes
-        self.beamStops = params.get('beam_stops', [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
+        self.beam_stops = params.get('beam_stops', [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
         # TODO Implement current_beamstop object
         self.detectors = [Detector(self, detector_params) for detector_params in params.get('detectors', [{}])]
         self.collimation = Collimation(self, params.get('collimation', {}))
@@ -618,7 +618,7 @@ class Instrument:
         if self.collimation.guides.lenses:
             # If LENS configuration, the beam size is the source aperture size
             # FIXME: This is showing -58 cm... Why?!?!
-            self.beam_stops[index].beam_stop_diameter = self.get_source_aperture_size()
+            self.beam_stops[index]["beam_stop_diameter"] = self.get_source_aperture_size()
         # Calculate beam width on the detector
         try:
             beam_width = source_aperture * sdd / ssd + sample_aperture * (ssd + sdd) / ssd
@@ -637,15 +637,16 @@ class Instrument:
             beam_diam = bm_bs
         else:
             beam_diam = bm
-        self.beam_stops[index].beam_diameter = beam_diam
-
+        self.beam_stops[index]["beam_diameter"] = beam_diam
     def calculate_beam_stop_diameter(self, index=0):
         self.calculate_beam_diameter(index, 'maximum')
         beam_diam = self.get_beam_diameter(index)
-        for i in self.beam_stops.keys():
-            beam_stop_dict = self.beam_stops[i]
-            if beam_stop_dict.beam_stop_diameter >= beam_diam:
-                self.beam_stops[index].beam_stop_diameter = beam_stop_dict.beam_stop_diameter
+        print(self.beam_stops)
+        print(type(self.beam_stops))
+        for i in self.beam_stops:
+            beam_stop_dict = i
+            if beam_stop_dict.get("beam_stop_diameter") >= beam_diam:
+                self.beam_stops[index]["beam_stop_diameter"] = beam_stop_dict["beam_stop_diameter"]
                 return
         else:
             # If this is reached, that means the beam diameter is larger than the largest known beam stop
@@ -688,7 +689,7 @@ class Instrument:
 
     def get_beam_diameter(self, index=0):
         # Beam diameter in centimeters
-        return self.beam_stops[index].beam_diameter
+        return self.beam_stops[index].get("beam_diameter")
 
     def get_beam_stop_diameter(self, index=0):
         # Beam stop diameter in inches
