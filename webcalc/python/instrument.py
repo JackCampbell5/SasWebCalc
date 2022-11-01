@@ -2,6 +2,7 @@ import math
 import numpy as np
 
 from .units import Converter
+from .constants import Constants
 
 
 # TODO: Replace all nodes with Instrument parameters
@@ -182,13 +183,12 @@ class Collimation:
             parent: The Instrument instance this Detector is a part of
             params: A dictionary mapping <param_name>: <value>
         """
-        print("Hi")
         self.parent = parent
         self.source_aperture = Aperture(parent, params.get('source_aperture', {}))
         self.sample_aperture = Aperture(parent, params.get('sample_aperture', {}))
         self.guides = Guide(parent, params.get('guides', {}))
         # Sets the params array to main values without aperture array
-        params = params["0"]
+        params = params['0']
         self.ssd = 0.0
         self.ssd_unit = 'cm'
         self.ssad = 0.0
@@ -242,7 +242,6 @@ class Detector:
             parent: The Instrument instance this Detector is a part of
             params: A dictionary mapping <param_name>: <value>
         """
-        print(params)
         self.parent = parent
         self.sadd = 0.0
         self.sadd_unit = 'cm'
@@ -250,7 +249,7 @@ class Detector:
         self.sdd_unit = 'cm'
         self.offset = 0.0
         self.offset_unit = 'cm'
-        self.pixel_size_x = 0.0
+        self.pixel_size_x = 0.0  # aPixel in constants.js
         self.pixel_size_x_unit = 'cm'
         self.pixel_size_y = 0.0
         self.pixel_size_y_unit = 'cm'
@@ -274,7 +273,6 @@ class Detector:
             params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
         Returns: None
         """
-        print(params)
         set_params(self, params)
         # Calculate all beam centers using existing values
         self.calculate_all_beam_centers()
@@ -340,15 +338,16 @@ class Guide:
             parent: The Instrument instance this Detector is a part of
             params: A dictionary mapping <param_name>: <value>
         """
+        # TODO  J   Import values for  guide_width, gap_at_start, and length_per_guide
         self.parent = parent
-        self.guide_width = 0.0
+        self.guide_width = 0.0  ##
         self.guide_width_unit = 'cm'
-        self.transmission_per_guide = 1.0
+        self.transmission_per_guide = 1.0  ## GuideLoss
         self.length_per_guide = 0.0
         self.length_per_guide_unit = 'cm'
-        self.number_of_guides = 0
-        self.lenses = False
-        self.gap_at_start = 0.0
+        self.number_of_guides = 0  #
+        self.lenses = False  #
+        self.gap_at_start = 0.0  ##
         self.gap_at_start_unit = 'cm'
         self.maximum_length = 0.0
         self.maximum_length_unit = 'cm'
@@ -443,14 +442,14 @@ class Data:
             params: A dictionary mapping <param_name>: <value>
         """
         self.parent = parent
-        self.peak_flux = np.inf
-        self.peak_wavelength = 0.0
-        self.bs_factor = 0.0
+        self.peak_flux = np.inf  # peakFlux in constants.js
+        self.peak_wavelength = 0.0  # peakLambda in constants.js
+        self.bs_factor = 0.0  # BSFactor in constants.js
         self.trans_1 = 0.0
         self.trans_2 = 0.0
         self.trans_3 = 0.0
-        self.beta = 0.0
-        self.charlie = 0.0
+        self.beta = 0.0  # b in constants
+        self.charlie = 0.0  # c in constants
         self.q_max = 6.0
         self.q_max_horizon = 6.0
         self.q_max_vert = 6.0
@@ -476,7 +475,7 @@ class Data:
 
     def calculate_beam_flux(self):
         # FIXME: Flux calculation is about 7x too high
-        guide_loss = self.parent.collimation.transmission_per_guide
+        guide_loss = self.parent.collimation.guides.transmission_per_guide
         sample_aperture = self.parent.get_sample_aperture_size()
         sdd = self.parent.get_sample_to_detector_distance()
         wave = self.parent.get_wavelength()
@@ -485,7 +484,8 @@ class Data:
 
         # Run calculations
         alpha = (self.parent.get_source_aperture_size() + sample_aperture) / (2 * sdd)
-        f = (self.parent.collimation.get_gap_at_start() * alpha) / (2 * self.parent.collimation.get_guide_width())
+        f = (self.parent.collimation.guides.get_gap_at_start() * alpha) / (
+                2 * self.parent.collimation.guides.get_guide_width())
         trans4 = (1 - f) * (1, f)
         trans5 = math.exp(guides * math.log(guide_loss))
         trans6 = 1 - wave * (self.beta - (guides / 8) * (self.beta - self.charlie))
@@ -527,6 +527,9 @@ class Instrument:
     isReal = False
 
     def __init__(self, name="", params=None):
+        # Unit converters
+        self.d_converter = Converter('cm')
+        self.t_converter = Converter('s')
         self.data = None
         self.collimation = None
         self.wavelength = None
@@ -538,6 +541,7 @@ class Instrument:
             params = {}
             # Only store values used for calculations in Instrument class
             self.name = name
+        self.constants = Constants()
         self.load_params(params)
 
     """
@@ -546,9 +550,6 @@ class Instrument:
 
     def load_params(self, params):
         print("Default Load Params")
-        # Unit converters
-        self.d_converter = Converter('cm')
-        self.t_converter = Converter('s')
         # Define other classes
         self.beam_stops = params.get('beam_stops', [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
         # TODO Implement current_beamstop object
@@ -556,7 +557,7 @@ class Instrument:
         self.collimation = Collimation(self, params.get('collimation', {}))
         self.wavelength = Wavelength(self, params.get('wavelength', {}))
         # TODO   What class should be imported into data
-        self.data = Data(self, params.get('data',{}))
+        self.data = Data(self, params.get('data', {}))
 
     def sas_calc(self):
         # MainFunction for this class
@@ -582,6 +583,7 @@ class Instrument:
         for index in range(len(self.detectors) - 1):
             self.data.calculate_min_and_max_q(index)
             # TODO: This might not be needed here...
+            # TODO J    This method does not exist
             self.calculate_q_range_slicer(index)
 
     def calculate_attenuation_factor(self, index=0):
@@ -638,11 +640,10 @@ class Instrument:
         else:
             beam_diam = bm
         self.beam_stops[index]["beam_diameter"] = beam_diam
+
     def calculate_beam_stop_diameter(self, index=0):
         self.calculate_beam_diameter(index, 'maximum')
         beam_diam = self.get_beam_diameter(index)
-        print(self.beam_stops)
-        print(type(self.beam_stops))
         for i in self.beam_stops:
             beam_stop_dict = i
             if beam_stop_dict.get("beam_stop_diameter") >= beam_diam:
@@ -658,7 +659,7 @@ class Instrument:
         self.calculate_beam_stop_diameter(index)
         bs_diam = self.get_beam_stop_diameter(index)
         sample_aperture = self.get_sample_aperture_size()
-        l2 = self.get_sample_aperture_to_detector_distance()
+        l2 = self.get_sample_aperture_to_detector_distance()  # Question why do we no longer need apature offset
         l_beam_stop = 20.1 + 1.61 * self.get_beam_stop_diameter()  # distance in cm from beam stop to anode plane
         return bs_diam + (bs_diam + sample_aperture) * l_beam_stop / (l2 - l_beam_stop)  # Return in cm
 
@@ -766,8 +767,19 @@ class NG7SANS(Instrument):
 
     def load_params(self, params):
         print("NG7SANS Load Params")
+        print(params)
+        params["collimation"]["guides"]["guideLoss"] = 0.974
+        params["data"] = {}
+        params["data"]["bs_factor"] = 1.05
+        params["detectors"]["iPixel"] = 100
+        params["data"]["peak_flux"] = 25500000000000
+        params["data"]["peak_wavelength"] = 5.5
+        params["data"]["beta"] = 0.0395
+        params["data"]["charlie"] = 0.0442
+        params["data"]["trans_1"] = 0.63
+        params["data"]["trans_2"] = 0.7
+        params["data"]["trans_3"] = 0.75
         super().load_params(params)
-
 
 class NGB30SANS(Instrument):
     # Class for the NGB 30m SANS instrument

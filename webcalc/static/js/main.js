@@ -804,17 +804,17 @@ function selectAveragingMethod(averagingMethod, runSASCALC = true) {
 /*
    * Creates guide array for guide parameters
  */
-    function getGuideArray(instrument){
-        var guideArray = {};
+    function getGuideArray(instrument,whatReturn){
+        var number_of_guides = 0;
+        var lenses = false;
         const temp = document.getElementById(instrument + 'GuideConfig').value;
     if (temp === "LENS"){
-        document.getElementById('debug_text').textContent +=  "test";
-        guideArray["lenses"] = true;
-        guideArray["number_of_guides"] = 0;
+        lenses = true;
+        number_of_guides = 0;
     }else {
-        guideArray["number_of_guides"] = parseInt(temp);
+        number_of_guides = parseInt(temp);
     }
-    return guideArray;
+    if(whatReturn){return number_of_guides} else{return  lenses}
     }//End getGuideArray
 
 
@@ -905,7 +905,9 @@ function sendToPythonInstrument(instrument)
     json_object["collimation"][0]["ssd_unit"] = window.units["detectorDistance"];
     json_object["collimation"][0]["ssad"] = document.getElementById(instrument + 'SDD').value - window[instrument + "Constants"]['ApertureOffset'];
     json_object["collimation"][0]["ssad_unit"] = window.units["detectorDistance"];
-    json_object["collimation"]["guides"] = getGuideArray(instrument);
+    json_object["collimation"]["guides"] = {};
+    json_object["collimation"]["guides"]["number_of_guides"] = getGuideArray(instrument,true);
+    json_object["collimation"]["guides"]["lenses"] = getGuideArray(instrument,false);
     //Some Instruments have more than one detector
     json_object["detectors"] = [];
     json_object["detectors"][0] = {};
@@ -924,6 +926,7 @@ function sendToPythonInstrument(instrument)
     json_object["beamStops"]["diameter_unit"] = window.units["beamDiameter"];
     json_object["beamStops"]["stop_size"] = document.getElementById(instrument + "BeamStopSize").value;
     json_object["beamStops"]["stop_diameter"] = window.units["beamStopDiameter"];
+
 
     // TODO: This will eventually need to be an asynchronous method and this call will need to wait for and capture the return
     post_data(`/calculate_instrument/${instrument}`, json_object)
