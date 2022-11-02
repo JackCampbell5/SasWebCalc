@@ -106,21 +106,22 @@ window.ng7SourceApertures = {
     'LENS': ['1.43'],
 };
 window.ng7Constants = {
+    'serverName': 'ng7sans.ncnr.nist.gov',
     //Not a use var
     'HuberOffset': '54.8',
-    'ChamberOffset': '0.0',
     //Aperture offset does not seem to be used
-    'ApertureOffset': '5.0',
-    //Data class
-    'BSFactor': '1.05', //bs_factor
-    //Detector class???
-    'iPixel': '100.0',
+    'ChamberOffset': '0.0',
     //Pramaters for calculateQRangeSlicer which does nto exist in python yet
-    'aPixel': '5.08', //pixel_size_x
+    'ApertureOffset': '5.0',
     'coeff': '10000',
     'xPixels': '128',
     'yPixels': '128',
+    //Detector class???
+    'aPixel': '5.08', //pixel_size_x
+    'iPixel': '100.0',
     //Data class
+    //Data class
+    'BSFactor': '1.05', //bs_factor
     'peakFlux': '2.55e13',//peak_flux
     'peakLambda': '5.5', //peak_wavelength
     'b': '0.0395',//beta
@@ -131,8 +132,7 @@ window.ng7Constants = {
     //Guide class constants needed
     'guideGap': '188', //gap_at_start
     'guideWidth': '5', //guide_width
-    'guideLoss': '0.974', //GuideLoss
-    'serverName': 'ng7sans.ncnr.nist.gov'
+    'guideLoss': '0.974' //GuideLoss
 };
 window.ng7WavelengthRange = {
     "9.7": ['6.5', '20.0'],

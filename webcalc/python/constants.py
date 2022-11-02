@@ -35,5 +35,5 @@ class Constants:
             }
         }  # End constant dictionary creation
 
-    def get_constant(self, typeParam, name):
-        return self.constants[typeParam][name]
+    def get_constant(self, type_param, name):
+        return self.constants[type_param][name]

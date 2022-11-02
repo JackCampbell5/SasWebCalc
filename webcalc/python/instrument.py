@@ -345,9 +345,9 @@ class Guide:
         self.transmission_per_guide = 1.0  ## GuideLoss
         self.length_per_guide = 0.0
         self.length_per_guide_unit = 'cm'
-        self.number_of_guides = 0  #
-        self.lenses = False  #
-        self.gap_at_start = 0.0  ##
+        self.number_of_guides = 0
+        self.lenses = False
+        self.gap_at_start = 0.0
         self.gap_at_start_unit = 'cm'
         self.maximum_length = 0.0
         self.maximum_length_unit = 'cm'
@@ -550,7 +550,13 @@ class Instrument:
 
     def load_params(self, params):
         print("Default Load Params")
-        # Define other classes
+        self.load_objects(params)
+        # default values for default instruments
+
+    def load_objects(self, params):
+        # Creates the objects with the param array
+        #       (This is not a part of load params so instrument can have default values if necessary)
+
         self.beam_stops = params.get('beam_stops', [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
         # TODO Implement current_beamstop object
         self.detectors = [Detector(self, detector_params) for detector_params in params.get('detectors', [{}])]
@@ -767,11 +773,10 @@ class NG7SANS(Instrument):
 
     def load_params(self, params):
         print("NG7SANS Load Params")
-        print(params)
         params["collimation"]["guides"]["guideLoss"] = 0.974
         params["data"] = {}
         params["data"]["bs_factor"] = 1.05
-        params["detectors"]["iPixel"] = 100
+        params["detectors"][0]["per_pixel_max_flux"] = 100
         params["data"]["peak_flux"] = 25500000000000
         params["data"]["peak_wavelength"] = 5.5
         params["data"]["beta"] = 0.0395
@@ -779,7 +784,20 @@ class NG7SANS(Instrument):
         params["data"]["trans_1"] = 0.63
         params["data"]["trans_2"] = 0.7
         params["data"]["trans_3"] = 0.75
-        super().load_params(params)
+        params["data"]["pixel_size_x"] = 5.08
+
+        # Temporary constants not in use any more
+        params["temp"] = {}
+        params["temp"]["serverName"] = "ng7sans.ncnr.nist.gov"
+        params["temp"]["HuberOffset"] = 54.8
+        params["temp"]["ChamberOffset"] = 0.0
+        params["temp"]["ApertureOffset"] = 5.0
+        params["temp"]["coeff"] = 10000
+        params["temp"]["xPixels"] = 128
+        params["temp"]["yPixels"] = 128
+
+        super().load_objects(params)
+
 
 class NGB30SANS(Instrument):
     # Class for the NGB 30m SANS instrument
@@ -788,7 +806,31 @@ class NGB30SANS(Instrument):
 
     def load_params(self, params):
         print("NGB30SANS Load Params")
-        super().load_params(params)
+        params["data"] = {}
+        params["data"]["bs_factor"] = 1.05
+        params["detectors"][0]["per_pixel_max_flux"] = 100.0
+        params["data"]["peak_flux"] = 2.42e13
+        params["data"]["peak_wavelength"] = 5.5
+        params["data"]["beta"] = 0.0
+        params["data"]["charlie"] = -0.0243
+        params["data"]["trans_1"] = 0.63
+        params["data"]["trans_2"] = 1.0
+        params["data"]["trans_3"] = 0.75
+        params["data"]["pixel_size_x"] = 5.08
+        params["collimation"]["guides"]["gap_at_start"] = 100
+        params["collimation"]["guides"]["guide_width"] = 6.0
+        params["collimation"]["guides"]["transmission_per_guide"] = 0.924
+        params["temp"]["yPixels"] = 128
+
+        # Temporary constants not in use any more
+        params["temp"] = {}
+        params["temp"]["serverName"] = "ngb30sans.ncnr.nist.gov"
+        params["temp"]["HuberOffset"] = 54.8
+        params["temp"]["ChamberOffset"] = 0.0
+        params["temp"]["ApertureOffset"] = 5.0
+        params["temp"]["coeff"] = 10000
+        params["temp"]["xPixels"] = 128
+        super().load_objects(params)
 
 
 class NGB10SANS(Instrument):
@@ -798,7 +840,31 @@ class NGB10SANS(Instrument):
 
     def load_params(self, params):
         print("NGB10SANS Load Params")
-        super().load_params(params)
+        params["data"] = {}
+        params["data"]["bs_factor"] = 1.05
+        params["detectors"][0]["per_pixel_max_flux"] = 100.0
+        params["data"]["peak_flux"] = 2.5e13
+        params["data"]["peak_wavelength"] = 5.5
+        params["data"]["beta"] = 0.03
+        params["data"]["charlie"] = 0.03
+        params["data"]["trans_1"] = 0.63
+        params["data"]["trans_2"] = 1.0
+        params["data"]["trans_3"] = 0.75
+        params["data"]["pixel_size_x"] = 5.08
+        params["collimation"]["guides"]["gap_at_start"] = 165
+        params["collimation"]["guides"]["guide_width"] = 5
+        params["collimation"]["guides"]["transmission_per_guide"] = 0.974
+        params["temp"]["yPixels"] = 128
+
+        # Temporary constants not in use anymore
+        params["temp"] = {}
+        params["temp"]["serverName"] = "ngbsans.ncnr.nist.gov"
+        params["temp"]["HuberOffset"] = 0.0
+        params["temp"]["ChamberOffset"] = 0.0
+        params["temp"]["ApertureOffset"] = 5.0
+        params["temp"]["coeff"] = 10000
+        params["temp"]["xPixels"] = 128
+        super().load_objects(params)
 
     def calculate_source_to_sample_aperture_distance(self):
         super(NGB10SANS, self).calculate_source_to_sample_aperture_distance()
@@ -811,4 +877,4 @@ class NGB10SANS(Instrument):
 #
 #     def load_params(self, params):
 #         print("VSANS Load Params")
-#         super().load_params(params)
+#         super().load_objects(params)
