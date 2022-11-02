@@ -397,10 +397,12 @@ class Wavelength:
         self.rpm_range = (0.0, np.inf)
         self.number_of_attenuators = 0
         self.attenuation_factor = 0
-        self.set_params(params)
         self.d_converter = Converter(self.wavelength_unit)
         # TODO Create WavelengthCalculator class and implement object
         # self.d_lambda_allowed = WavelengthCalculator...
+
+        self.set_params(params)
+
 
     def set_params(self, params=None):
         # type: (dict) -> None
@@ -486,7 +488,8 @@ class Data:
         alpha = (self.parent.get_source_aperture_size() + sample_aperture) / (2 * sdd)
         f = (self.parent.collimation.guides.get_gap_at_start() * alpha) / (
                 2 * self.parent.collimation.guides.get_guide_width())
-        trans4 = (1 - f) * (1, f)
+        print(type(f))
+        trans4 = (1 - f) * (1 - f)
         trans5 = math.exp(guides * math.log(guide_loss))
         trans6 = 1 - wave * (self.beta - (guides / 8) * (self.beta - self.charlie))
         total_trans = self.trans_1 * self.trans_2 * self.trans_3 * trans4 * trans5 * trans6
@@ -535,8 +538,6 @@ class Instrument:
         self.wavelength = None
         self.detectors = None
         self.beam_stops = None
-        self.t_converter = None
-        self.d_converter = None
         if not params:
             params = {}
             # Only store values used for calculations in Instrument class
@@ -600,7 +601,8 @@ class Instrument:
         num_pixels = (math.pi / 4) * (0.5 * (a2 + beam_diam) / a_pixel) ** 2
         i_pixel = self.get_beam_flux() / num_pixels
         atten = 1.0 if i_pixel < i_pixel_max else i_pixel_max / i_pixel
-        self.wavelength.attenuation_factor = atten if atten == 1.0 else atten.toNumeric()
+        # Question .toNumeric what???
+        self.wavelength.attenuation_factor = atten if atten == 1.0 else int(atten)
 
     def calculate_attenuators(self):
         self.calculate_attenuation_factor()
@@ -671,7 +673,8 @@ class Instrument:
 
     def calculate_figure_of_merit(self):
         figure_of_merit = math.pow(self.get_wavelength(), 2) * self.get_beam_flux()
-        return figure_of_merit.toNumeric()
+        # Question what is the .toNumeric Method?
+        return int(figure_of_merit)
 
     # Various class updaters
     def update_wavelength(self, run_sas_calc=True):
@@ -682,9 +685,9 @@ class Instrument:
     # Various class getter functions
     # Use these to be sure units are correct
     def get_attenuation_factor(self):
-        # The attenuation factor value calculated based on the number of attenuators
-        # TODO Fix this is will just infinatly loop
-        return self.get_attenuation_factor()
+        # TODO Fix The attenuation factor value calculated based on the number of attenuators
+        # Fixed ish this is will just infinatly loop
+        return self.wavelength.attenuation_factor
 
     def get_attenuators(self):
         # Number of attenuators in the beam
@@ -773,7 +776,9 @@ class NG7SANS(Instrument):
 
     def load_params(self, params):
         print("NG7SANS Load Params")
-        params["collimation"]["guides"]["guideLoss"] = 0.974
+        params["collimation"]["guides"]["gap_at_start"] = 188
+        params["collimation"]["guides"]["guide_width"] = 5
+        params["collimation"]["guides"]["transmission_per_guide"] = 0.974
         params["data"] = {}
         params["data"]["bs_factor"] = 1.05
         params["detectors"][0]["per_pixel_max_flux"] = 100
@@ -784,7 +789,7 @@ class NG7SANS(Instrument):
         params["data"]["trans_1"] = 0.63
         params["data"]["trans_2"] = 0.7
         params["data"]["trans_3"] = 0.75
-        params["data"]["pixel_size_x"] = 5.08
+        params["detectors"][0]["pixel_size_x"] = 5.08
 
         # Temporary constants not in use any more
         params["temp"] = {}
@@ -816,11 +821,10 @@ class NGB30SANS(Instrument):
         params["data"]["trans_1"] = 0.63
         params["data"]["trans_2"] = 1.0
         params["data"]["trans_3"] = 0.75
-        params["data"]["pixel_size_x"] = 5.08
+        params["detectors"][0]["pixel_size_x"] = 5.08
         params["collimation"]["guides"]["gap_at_start"] = 100
         params["collimation"]["guides"]["guide_width"] = 6.0
         params["collimation"]["guides"]["transmission_per_guide"] = 0.924
-        params["temp"]["yPixels"] = 128
 
         # Temporary constants not in use any more
         params["temp"] = {}
@@ -830,6 +834,7 @@ class NGB30SANS(Instrument):
         params["temp"]["ApertureOffset"] = 5.0
         params["temp"]["coeff"] = 10000
         params["temp"]["xPixels"] = 128
+        params["temp"]["yPixels"] = 128
         super().load_objects(params)
 
 
@@ -850,7 +855,7 @@ class NGB10SANS(Instrument):
         params["data"]["trans_1"] = 0.63
         params["data"]["trans_2"] = 1.0
         params["data"]["trans_3"] = 0.75
-        params["data"]["pixel_size_x"] = 5.08
+        params["detectors"][0]["pixel_size_x"] = 5.08
         params["collimation"]["guides"]["gap_at_start"] = 165
         params["collimation"]["guides"]["guide_width"] = 5
         params["collimation"]["guides"]["transmission_per_guide"] = 0.974
