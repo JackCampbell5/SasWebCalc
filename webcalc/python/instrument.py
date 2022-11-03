@@ -3,6 +3,10 @@ import numpy as np
 
 from .units import Converter
 from .constants import Constants
+from .slicers import Circular
+from .slicers import Sector
+from .slicers import Rectangular
+from .slicers import Elliptical
 
 
 # TODO: Replace all nodes with Instrument parameters
@@ -403,7 +407,6 @@ class Wavelength:
 
         self.set_params(params)
 
-
     def set_params(self, params=None):
         # type: (dict) -> None
         """
@@ -488,7 +491,6 @@ class Data:
         alpha = (self.parent.get_source_aperture_size() + sample_aperture) / (2 * sdd)
         f = (self.parent.collimation.guides.get_gap_at_start() * alpha) / (
                 2 * self.parent.collimation.guides.get_guide_width())
-        print(type(f))
         trans4 = (1 - f) * (1 - f)
         trans5 = math.exp(guides * math.log(guide_loss))
         trans6 = 1 - wave * (self.beta - (guides / 8) * (self.beta - self.charlie))
@@ -531,6 +533,7 @@ class Instrument:
 
     def __init__(self, name="", params=None):
         # Unit converters
+        self.slicer = None
         self.d_converter = Converter('cm')
         self.t_converter = Converter('s')
         self.data = None
@@ -566,6 +569,24 @@ class Instrument:
         # TODO   What class should be imported into data
         self.data = Data(self, params.get('data', {}))
 
+        # Gets final params for slicer object
+        params["slicer"]["x_center"] = self.detectors.calculate_beam_center_x
+        params["slicer"]["y_center"] = self.detectors.calculate_beam_center_y
+        params["slicer"]["pixel_size"] = self.detectors.pixel_size_x
+        params["slicer"]["lambda"] = self.wavelength.get_wavelength()
+        params["slicer"]["detector_distance"] = self.detectors.get_ssd();
+
+        # Imports and creates slicer objects
+        averaging_type = params.get("average_type", "ERROR")
+        if averaging_type == "sector":
+            self.slicer = Sector(params.get('slicer', {}))
+        elif averaging_type == "rectangular":
+            self.slicer = Rectangular(self, params.get('slicer', {}))
+        elif averaging_type == "elliptical":
+            self.slicer = Elliptical(self, params.get('slicer', {}))
+        else:
+            self.slicer = Circular(self, params.get('slicer', {}))
+
     def sas_calc(self):
         # MainFunction for this class
 
@@ -575,7 +596,8 @@ class Instrument:
 
         # Final output returned to the JS
         # FIXME: What values need to be returned?
-        return self.calculated_values
+        #TODO Return Values
+        return "Return Works"
 
     def calculate_instrument_parameters(self):
         # Calculate the beam stop diameter
@@ -591,7 +613,7 @@ class Instrument:
             self.data.calculate_min_and_max_q(index)
             # TODO: This might not be needed here...
             # TODO J    This method does not exist
-            self.calculate_q_range_slicer(index)
+            self.slicer.calculate_q_range_slicer(index)
 
     def calculate_attenuation_factor(self, index=0):
         a2 = self.get_sample_aperture_size()
@@ -790,16 +812,16 @@ class NG7SANS(Instrument):
         params["data"]["trans_2"] = 0.7
         params["data"]["trans_3"] = 0.75
         params["detectors"][0]["pixel_size_x"] = 5.08
+        params["slicer"]["aperture_offset"] = 5.0
+        params["slicer"]["coeff"] = 10000
+        params["slicer"]["x_pixels"] = 128
+        params["slicer"]["y_pixels"] = 128
 
         # Temporary constants not in use any more
         params["temp"] = {}
         params["temp"]["serverName"] = "ng7sans.ncnr.nist.gov"
         params["temp"]["HuberOffset"] = 54.8
         params["temp"]["ChamberOffset"] = 0.0
-        params["temp"]["ApertureOffset"] = 5.0
-        params["temp"]["coeff"] = 10000
-        params["temp"]["xPixels"] = 128
-        params["temp"]["yPixels"] = 128
 
         super().load_objects(params)
 
@@ -825,16 +847,17 @@ class NGB30SANS(Instrument):
         params["collimation"]["guides"]["gap_at_start"] = 100
         params["collimation"]["guides"]["guide_width"] = 6.0
         params["collimation"]["guides"]["transmission_per_guide"] = 0.924
+        params["slicer"]["aperture_offset"] = 5
+        params["slicer"]["coeff"] = 10000
+        params["slicer"]["x_pixels"] = 128
+        params["slicer"]["y_pixels"] = 128
 
         # Temporary constants not in use any more
         params["temp"] = {}
         params["temp"]["serverName"] = "ngb30sans.ncnr.nist.gov"
         params["temp"]["HuberOffset"] = 54.8
         params["temp"]["ChamberOffset"] = 0.0
-        params["temp"]["ApertureOffset"] = 5.0
-        params["temp"]["coeff"] = 10000
-        params["temp"]["xPixels"] = 128
-        params["temp"]["yPixels"] = 128
+
         super().load_objects(params)
 
 
@@ -859,16 +882,16 @@ class NGB10SANS(Instrument):
         params["collimation"]["guides"]["gap_at_start"] = 165
         params["collimation"]["guides"]["guide_width"] = 5
         params["collimation"]["guides"]["transmission_per_guide"] = 0.974
-        params["temp"]["yPixels"] = 128
+        params["slicer"]["aperture_offset"] = 5
+        params["slicer"]["coeff"] = 10000
+        params["slicer"]["x_pixels"] = 128
+        params["slicer"]["y_pixels"] = 128
 
         # Temporary constants not in use anymore
         params["temp"] = {}
         params["temp"]["serverName"] = "ngbsans.ncnr.nist.gov"
         params["temp"]["HuberOffset"] = 0.0
         params["temp"]["ChamberOffset"] = 0.0
-        params["temp"]["ApertureOffset"] = 5.0
-        params["temp"]["coeff"] = 10000
-        params["temp"]["xPixels"] = 128
         super().load_objects(params)
 
     def calculate_source_to_sample_aperture_distance(self):
