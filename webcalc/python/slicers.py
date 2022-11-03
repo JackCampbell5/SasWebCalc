@@ -1,6 +1,5 @@
 # TODO: Create slicer class and child slicers
 # QUESTION      Where is the object creation for this
-from .instrument import set_params
 
 
 class Slicer:
@@ -16,7 +15,8 @@ class Slicer:
         self.aperture_offset = 0.0
         self.detector_distance = 0.0
 
-        set_params(params)
+        # TODO   FIX
+        # set_params(params)
 
     def calculate_q_range_slicer(self, index):
         pass
