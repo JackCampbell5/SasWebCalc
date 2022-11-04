@@ -575,6 +575,14 @@ class Instrument:
         params["slicer"]["pixel_size"] = self.detectors.pixel_size_x
         params["slicer"]["lambda"] = self.wavelength.get_wavelength()
         params["slicer"]["detector_distance"] = self.detectors.get_ssd();
+        # params["slicer"]["lambdaWidth"] =
+        # params["slicer"]["guides"] =
+        # params["slicer"]["sourceAperture"] =
+        # params["slicer"]["sampleAperture"] =
+        # params["slicer"]["apertureOffset"] =
+        # params["slicer"]["beamStopSize"] =
+        # params["slicer"]["SSD"] =
+        # params["slicer"]["SDD"] =
 
         # Imports and creates slicer objects
         averaging_type = params.get("average_type", "ERROR")

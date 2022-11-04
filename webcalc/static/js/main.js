@@ -926,7 +926,7 @@ async function sendToPythonInstrument(instrument) {
     json_object["beamStops"]["stop_size"] = document.getElementById(instrument + "BeamStopSize").value;
     json_object["beamStops"]["stop_diameter"] = window.units["beamStopDiameter"];
     json_object["slicer"] = {};
-    json_object["slicer"]["hi"] = "hi"
+    json_object["slicer"]["averaging_params"] = getAveragingParams()
     json_object["average_type"] = document.getElementById("averagingType").value;
 
 
