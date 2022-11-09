@@ -927,12 +927,12 @@ async function sendToPythonInstrument(instrument) {
     json_object["beamStops"]["stop_diameter"] = window.units["beamStopDiameter"];
     json_object["slicer"] = {};
     json_object["slicer"]["averaging_params"] = getAveragingParams()
+    console.log(json_object["slicer"])
     json_object["average_type"] = document.getElementById("averagingType").value;
 
 
     // TODO: This will eventually need to be an asynchronous method and this call will need to wait for and capture the return
     const pythonData = await post_data(`/calculate_instrument/${instrument}`, json_object);
-    console.log(pythonData);
 }
 
 /*

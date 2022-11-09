@@ -163,8 +163,8 @@ class BeamStop:
         self.diameter_unit = 'cm'
         self.offset = 0.0
         self.offset_unit = 'cm'
-        self.stop_size = 0.0
-        self.stop_diameter = 0.0
+        self.beam_stop_size = 0.0
+        self.beam_stop_diameter = 0.0
         self.set_params(params)
 
     def set_params(self, params=None):
@@ -569,20 +569,7 @@ class Instrument:
         # TODO   What class should be imported into data
         self.data = Data(self, params.get('data', {}))
 
-        # Gets final params for slicer object
-        params["slicer"]["x_center"] = self.detectors.calculate_beam_center_x
-        params["slicer"]["y_center"] = self.detectors.calculate_beam_center_y
-        params["slicer"]["pixel_size"] = self.detectors.pixel_size_x
-        params["slicer"]["lambda"] = self.wavelength.get_wavelength()
-        params["slicer"]["detector_distance"] = self.detectors.get_ssd();
-        # params["slicer"]["lambdaWidth"] =
-        # params["slicer"]["guides"] =
-        # params["slicer"]["sourceAperture"] =
-        # params["slicer"]["sampleAperture"] =
-        # params["slicer"]["apertureOffset"] =
-        # params["slicer"]["beamStopSize"] =
-        # params["slicer"]["SSD"] =
-        # params["slicer"]["SDD"] =
+        params["slicer"] = self.get_slicer_params(params.get('slicer', {}))
 
         # Imports and creates slicer objects
         averaging_type = params.get("average_type", "ERROR")
@@ -595,6 +582,8 @@ class Instrument:
         else:
             self.slicer = Circular(self, params.get('slicer', {}))
 
+        self.slicer.calculate_q_range_slicer()
+
     def sas_calc(self):
         # MainFunction for this class
 
@@ -604,7 +593,7 @@ class Instrument:
 
         # Final output returned to the JS
         # FIXME: What values need to be returned?
-        #TODO Return Values
+        # TODO Return Values
         return "Return Works"
 
     def calculate_instrument_parameters(self):
@@ -714,6 +703,40 @@ class Instrument:
 
     # Various class getter functions
     # Use these to be sure units are correct
+
+    def get_slicer_params(self, slicer_params):
+        # Import averaging_params
+        averaging_params = slicer_params.get("averaging_params", [])
+        print(type(averaging_params))
+        print(slicer_params)
+        slicer_params["phi"] = (math.pi / 180) * averaging_params[0]
+        slicer_params["d_phi"] = (math.pi / 180) * averaging_params[1]
+        slicer_params["detector_sections"] = averaging_params[2]
+        slicer_params["q_center"] = averaging_params[3]
+        slicer_params["q_width"] = averaging_params[4]
+        slicer_params["aspect_ratio"] = averaging_params[5]
+
+        # Import params needed for calculateQRangeSlicer
+        #  aperture_offset, coeff, x_pixels, y_pixels imported in object creation
+
+        # QUESTION      [0] Do I need to run a loop here? how does this work with multiple detectors
+        slicer_params["x_center"] = self.detectors[0].calculate_beam_center_x()
+        slicer_params["y_center"] = self.detectors[0].calculate_beam_center_y()
+        slicer_params["pixel_size"] = self.detectors[0].pixel_size_x
+        slicer_params["lambda_val"] = self.wavelength.get_wavelength()
+        slicer_params["detector_distance"] = self.detectors[0].get_ssd()
+
+        slicer_params["lambda_width"] = self.wavelength.wavelength_spread
+        slicer_params["guides"] = self.collimation.guides.number_of_guides
+        # QUESTION      Is it get_source_aperture_size or get_source_aperture the javascript defines sourceAperture
+        # and sampleAperture differently
+        slicer_params["source_aperture"] = self.get_source_aperture_size()*0.5
+        slicer_params["sample_aperture"] = self.get_sample_aperture_size()*0.5
+        slicer_params["beam_stop_size"] = self.get_beam_stop_diameter()*2.54
+        slicer_params["SSD"] = 0.0
+        slicer_params["SDD"] = 0.0
+        return slicer_params
+
     def get_attenuation_factor(self):
         # TODO Fix The attenuation factor value calculated based on the number of attenuators
         # Fixed ish this is will just infinatly loop
@@ -734,7 +757,7 @@ class Instrument:
     def get_beam_stop_diameter(self, index=0):
         # Beam stop diameter in inches
         # TODO: Convert to centimeters
-        return self.beam_stops[index].beam_stop_diameter
+        return self.beam_stops[index]["beam_stop_diameter"]
 
     def get_number_of_guides(self):
         # Number of neutron guides in the beam

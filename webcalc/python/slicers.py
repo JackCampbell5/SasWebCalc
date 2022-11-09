@@ -12,28 +12,53 @@ class Slicer:
 
     def __init__(self, params):
 
-        # Import parameters needed for calculate Q range slicer
-        self.x_pixels = 0.0
-        self.y_Pixels = 0.0
+        # Import all parameters for slicer class
+        self.mask = 0.0
+        self.intencity_2D = 0.0
+        self.phi = 0.0
+        self.d_phi = 0.0
+        self.detector_sections = 0.0
+        self.q_center = 0.0
+        self.q_width = 0.0
+        self.aspect_ratio = 0.0
         self.x_center = 0.0
         self.y_center = 0.0
         self.pixel_size = 0.0
-        self.coeff = 0.0
-        self.lamda = 0.0
-        self.aperture_offset = 0.0
+        self.lambda_val= 0.0
         self.detector_distance = 0.0
+        self.lambda_width = 0.0
+        self.guides = 0.0
+        self.source_aperture = 0.0
+        self.sample_aperture = 0.0
+        self.beam_stop_size = 0.0
+        self.SSD = 0.0
+        self.SDD = 0.0
+        self.aperture_offset = 0.0
+        self.coeff = 0.0
+        self.x_pixels = 0.0
+        self.y_pixels = 0.0
         self.qx_values = []
         self.qy_values = []
-        self.averaging_params = []
-        # set params functions
-        # Run calculate Q range slicer
-        params = self.calculate_q_range_slicer()
-        # Constructor params from slicer class
+        # set params
+        self.set_params(params)
+        print("success")
 
-        # set params a second time
-
-        # TODO   FIX
-        # set_params(params)
+    def set_params(self, params):
+        # Sets params of function
+        if isinstance(params, (list, tuple)):
+            # If a list is passed, try using the first value in the list
+            params = params[0]
+        if not isinstance(params, dict):
+            # Retain existing attributes if params are not formatted properly
+            print(f"Parameters of type {type(params)} are not allowed when setting params. Please pass a dictionary.")
+            return
+        for key, value in params.items():
+            if hasattr(self, key):
+                # Set known attributes
+                setattr(self, key, value)
+            else:
+                # Print unrecognized attributes to the console
+                print(f"The parameter {key} is not a known {self} attribute. Unable to set it to {value}.")
 
     def calculate_q_range_slicer(self):
         # Detector values pixel size in mm
@@ -52,13 +77,12 @@ class Slicer:
 
         averaging_params = self.averaging_params
         updatedParams = {}
-        updatedParams["phi"] = (math.pi/180)*averaging_params[0]
-        updatedParams["dPhi"] = (math.pi/180)*averaging_params[1]
+        updatedParams["phi"] = (math.pi / 180) * averaging_params[0]
+        updatedParams["dPhi"] = (math.pi / 180) * averaging_params[1]
         updatedParams["detector_sections"] = averaging_params[2]
         updatedParams["q_center"] = averaging_params[3]
         updatedParams["q_width"] = averaging_params[4]
         updatedParams["aspectratio"] = averaging_params[5]
-
 
         #  Generate a data set of all ones for a given detector
         # create params array
@@ -93,22 +117,25 @@ class Slicer:
         return mask
 
 
-class Circular:
+class Circular(Slicer):
     def __init__(self, parent, params):
-        super().__init__(self, params)
+        super().__init__(params)
 
 
-class Sector:
+class Sector(Slicer):
     def __init__(self, parent, params):
+        super().__init__(params)
         print(self)
 
 
-class Rectangular:
+class Rectangular(Slicer):
     def __init__(self, parent, params):
+        super().__init__(params)
         print(self)
 
 
-class Elliptical:
+class Elliptical(Slicer):
     def __init__(self, parent, params):
         # TODO create elliptical object
+        super().__init__(params)
         print(self)
