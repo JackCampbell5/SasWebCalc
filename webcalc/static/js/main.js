@@ -920,6 +920,7 @@ async function sendToPythonInstrument(instrument) {
     json_object["detectors"][0]["pixel_size_y_unit"] = 'mm';
     json_object["detectors"][0]["pixel_no_x"] = window[instrument + "Constants"]["xPixels"].value;
     json_object["detectors"][0]["pixel_no_y"] = window[instrument + "Constants"]["yPixels"].value;
+    json_object["detectors"][0]["sample_space"] = document.getElementById(instrument + 'SampleTable').value;
     json_object["beamStops"] = {};
     json_object["beamStops"]["diameter"] = document.getElementById(instrument + "BeamSize").value;
     json_object["beamStops"]["diameter_unit"] = window.units["beamDiameter"];

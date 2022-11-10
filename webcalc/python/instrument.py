@@ -197,6 +197,8 @@ class Collimation:
         self.ssd_unit = 'cm'
         self.ssad = 0.0
         self.ssad_unit = 'cm'
+        self.sample_space = " "
+        self.aperture_offset = 0.0
         self.set_params(params)
 
     def set_params(self, params=None):
@@ -569,19 +571,21 @@ class Instrument:
         # TODO   What class should be imported into data
         self.data = Data(self, params.get('data', {}))
 
+        # gets the parmaters for slicer object and updates the parameters dictionary for that
         params["slicer"] = self.get_slicer_params(params.get('slicer', {}))
 
-        # Imports and creates slicer objects
+        # Creates slicer objects
         averaging_type = params.get("average_type", "ERROR")
         if averaging_type == "sector":
             self.slicer = Sector(params.get('slicer', {}))
         elif averaging_type == "rectangular":
-            self.slicer = Rectangular(self, params.get('slicer', {}))
+            self.slicer = Rectangular(params.get('slicer', {}))
         elif averaging_type == "elliptical":
-            self.slicer = Elliptical(self, params.get('slicer', {}))
+            self.slicer = Elliptical(params.get('slicer', {}))
         else:
-            self.slicer = Circular(self, params.get('slicer', {}))
+            self.slicer = Circular(params.get('slicer', {}))
 
+        # TODO move this function to sas_calc function
         self.slicer.calculate_q_range_slicer()
 
     def sas_calc(self):
@@ -606,11 +610,13 @@ class Instrument:
         # Calculate the number of attenuators
         self.calculate_attenuators()
         # Do Circular Average of an array of 1s
-        for index in range(len(self.detectors) - 1):
-            self.data.calculate_min_and_max_q(index)
-            # TODO: This might not be needed here...
-            # TODO J    This method does not exist
-            self.slicer.calculate_q_range_slicer(index)
+
+        # TODO Figure out point of this
+        # for index in range(len(self.detectors) - 1):
+        #     self.data.calculate_min_and_max_q(index)
+        #     # TODO: This might not be needed here...
+        #     # TODO J    This method does not exist
+        #     self.slicer.calculate_q_range_slicer(index)
 
     def calculate_attenuation_factor(self, index=0):
         a2 = self.get_sample_aperture_size()
@@ -695,6 +701,21 @@ class Instrument:
         # Question what is the .toNumeric Method?
         return int(figure_of_merit)
 
+    def calculate_source_to_sample_aperture_distance(self, index=0):
+        # Get the number of guides
+        nGds = self.collimation.guides.number_of_guides
+        # Get the source to sample distence node
+        SSD = self.collimation.ssd
+        # Get the sample location
+        sample_space = self.collimation.sample_space
+        ssd = 0.0
+        ssd_offset = 0  # Import constants
+        aperture_offset = self.collimation.aperture_offset
+        # TODO import constants for offset based on sample space
+
+    def calculate_sample_to_detector_distance(self):
+        pass
+
     # Various class updaters
     def update_wavelength(self, run_sas_calc=True):
         self.wavelength.calculate_wavelength_range()
@@ -704,11 +725,9 @@ class Instrument:
     # Various class getter functions
     # Use these to be sure units are correct
 
-    def get_slicer_params(self, slicer_params):
+    def get_slicer_params(self, slicer_params, index=0):
         # Import averaging_params
         averaging_params = slicer_params.get("averaging_params", [])
-        print(type(averaging_params))
-        print(slicer_params)
         slicer_params["phi"] = (math.pi / 180) * averaging_params[0]
         slicer_params["d_phi"] = (math.pi / 180) * averaging_params[1]
         slicer_params["detector_sections"] = averaging_params[2]
@@ -720,21 +739,24 @@ class Instrument:
         #  aperture_offset, coeff, x_pixels, y_pixels imported in object creation
 
         # QUESTION      [0] Do I need to run a loop here? how does this work with multiple detectors
-        slicer_params["x_center"] = self.detectors[0].calculate_beam_center_x()
-        slicer_params["y_center"] = self.detectors[0].calculate_beam_center_y()
-        slicer_params["pixel_size"] = self.detectors[0].pixel_size_x
+        self.detectors[index].calculate_beam_center_x()
+        self.detectors[index].calculate_beam_center_y()
+        slicer_params["x_center"] = self.detectors[index].beam_center_x
+        slicer_params["y_center"] = self.detectors[index].beam_center_y
+        slicer_params["pixel_size"] = self.detectors[index].pixel_size_x
         slicer_params["lambda_val"] = self.wavelength.get_wavelength()
-        slicer_params["detector_distance"] = self.detectors[0].get_ssd()
+        slicer_params["detector_distance"] = self.detectors[index].get_ssd()
 
         slicer_params["lambda_width"] = self.wavelength.wavelength_spread
         slicer_params["guides"] = self.collimation.guides.number_of_guides
         # QUESTION      Is it get_source_aperture_size or get_source_aperture the javascript defines sourceAperture
         # and sampleAperture differently
-        slicer_params["source_aperture"] = self.get_source_aperture_size()*0.5
-        slicer_params["sample_aperture"] = self.get_sample_aperture_size()*0.5
-        slicer_params["beam_stop_size"] = self.get_beam_stop_diameter()*2.54
-        slicer_params["SSD"] = 0.0
-        slicer_params["SDD"] = 0.0
+        slicer_params["source_aperture"] = self.get_source_aperture_size() * 0.5
+        slicer_params["sample_aperture"] = self.get_sample_aperture_size() * 0.5
+        slicer_params["beam_stop_size"] = self.get_beam_stop_diameter() * 2.54
+        slicer_params["SSD"] = self.calculate_source_to_sample_aperture_distance()
+        slicer_params["SDD"] = self.calculate_sample_to_detector_distance()
+        del slicer_params["averaging_params"]
         return slicer_params
 
     def get_attenuation_factor(self):

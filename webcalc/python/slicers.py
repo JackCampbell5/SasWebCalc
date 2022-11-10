@@ -8,6 +8,30 @@ def calculate_distance_from_beam_center(pixel_value, pixel_center, pixel_size, c
     return coeff * math.tan((pixel_value - pixel_center) * pixel_size / coeff)
 
 
+def set_params(instance, params):
+    """
+    Set class attributes based on a dictionary of values. The dict should map <param_name> -> <value>.
+    Args:
+        instance: An instance of any class type in this file that needs params set in bulk.
+        params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
+    Returns: None
+    """
+    if isinstance(params, (list, tuple)):
+        # If a list is passed, try using the first value in the list
+        params = params[0]
+    if not isinstance(params, dict):
+        # Retain existing attributes if params are not formatted properly
+        print(f"Parameters of type {type(params)} are not allowed when setting params. Please pass a dictionary.")
+        return
+    for key, value in params.items():
+        if hasattr(instance, key):
+            # Set known attributes
+            setattr(instance, key, value)
+        else:
+            # Print unrecognized attributes to the console
+            print(f"The parameter {key} is not a known {instance} attribute. Unable to set it to {value}.")
+
+
 class Slicer:
 
     def __init__(self, params):
@@ -24,7 +48,7 @@ class Slicer:
         self.x_center = 0.0
         self.y_center = 0.0
         self.pixel_size = 0.0
-        self.lambda_val= 0.0
+        self.lambda_val = 0.0
         self.detector_distance = 0.0
         self.lambda_width = 0.0
         self.guides = 0.0
@@ -40,102 +64,66 @@ class Slicer:
         self.qx_values = []
         self.qy_values = []
         # set params
-        self.set_params(params)
-        print("success")
-
-    def set_params(self, params):
-        # Sets params of function
-        if isinstance(params, (list, tuple)):
-            # If a list is passed, try using the first value in the list
-            params = params[0]
-        if not isinstance(params, dict):
-            # Retain existing attributes if params are not formatted properly
-            print(f"Parameters of type {type(params)} are not allowed when setting params. Please pass a dictionary.")
-            return
-        for key, value in params.items():
-            if hasattr(self, key):
-                # Set known attributes
-                setattr(self, key, value)
-            else:
-                # Print unrecognized attributes to the console
-                print(f"The parameter {key} is not a known {self} attribute. Unable to set it to {value}.")
+        set_params(self, params)
 
     def calculate_q_range_slicer(self):
         # Detector values pixel size in mm
         self.intencity_2D = self.generate_ones_data()
         self.mask = self.generate_standard_mask()
-
         # Calculate Qx and Qy values
-        for i in self.x_pixels:
+        for i in range(self.x_pixels):
             x_distance = calculate_distance_from_beam_center(i, self.x_center, self.pixel_size, self.coeff)
             thetaX = math.atan(x_distance / self.detector_distance) / 2
-            self.qx_values[i] = (4 * math.pi / self.lamda) * math.sin(thetaX)
-        for j in self.y_Pixels:
+            self.qx_values.append((4 * math.pi / self.lambda_val) * math.sin(thetaX))
+        for j in range(self.y_pixels):
             y_distence = calculate_distance_from_beam_center(i, self.y_center, self.pixel_size, self.coeff)
             thetaY = math.atan(y_distence / self.detector_distance) / 2
-            self.qy_values = (4 * math.pi / self.lamda) * math.sin(thetaY)
-
-        averaging_params = self.averaging_params
-        updatedParams = {}
-        updatedParams["phi"] = (math.pi / 180) * averaging_params[0]
-        updatedParams["dPhi"] = (math.pi / 180) * averaging_params[1]
-        updatedParams["detector_sections"] = averaging_params[2]
-        updatedParams["q_center"] = averaging_params[3]
-        updatedParams["q_width"] = averaging_params[4]
-        updatedParams["aspectratio"] = averaging_params[5]
-
-        #  Generate a data set of all ones for a given detector
-        # create params array
-        params = []
-        return params;
+            self.qy_values = (4 * math.pi / self.lambda_val) * math.sin(thetaY)
 
     def generate_ones_data(self):
         data = []
         dataY = []
-        for i in self.x_pixels:
-            for j in self.y_Pixels:
-                dataY[j] = 1
-            data[i] = dataY;
+        for i in range(self.x_pixels):
+            for j in range(self.y_pixels):
+                dataY.append(1)
+            data.append(dataY)
         return data
 
     # Generate a standard SANS mask with the outer 2 pixels masked
     def generate_standard_mask(self):
         mask = []
-        for i in self.x_pixels:
+        for i in range(self.x_pixels):
             mask_inset = []
-            for j in self.y_Pixels:
+            for j in range(self.y_pixels):
                 if i <= 1 or i >= self.x_pixels - 2:
                     # Top and bottom of the 2 pixels should be masked
-                    mask_inset[j] = 1
-                elif j <= 1 or j >= (self.y_Pixels - 2):
+                    mask_inset.append(1)
+                elif j <= 1 or j >= (self.y_pixels - 2):
                     # Left and right 2 pixels should be masked
-                    mask_inset[j] = 1
+                    mask_inset.append(1)
                 else:
                     # Remainder should not be masked
-                    mask_inset[j] = 0
-            mask[i] = mask_inset
+                    mask_inset.append(0)
+            mask.append(mask_inset)
         return mask
 
 
 class Circular(Slicer):
-    def __init__(self, parent, params):
+    def __init__(self, params):
         super().__init__(params)
 
 
 class Sector(Slicer):
-    def __init__(self, parent, params):
+    def __init__(self, params):
         super().__init__(params)
-        print(self)
 
 
 class Rectangular(Slicer):
-    def __init__(self, parent, params):
+    def __init__(self, params):
         super().__init__(params)
-        print(self)
 
 
 class Elliptical(Slicer):
-    def __init__(self, parent, params):
+    def __init__(self, params):
         # TODO create elliptical object
         super().__init__(params)
-        print(self)
