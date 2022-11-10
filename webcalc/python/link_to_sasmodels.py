@@ -39,6 +39,7 @@ def get_params(model_string, all=False):
     model = get_model(model_string) if model_string else None
     if all and model:
         model = get_model(model_string)
+        # Calls paramaters from sasmodels
         params = model.info.parameters.call_parameters
     elif model:
         params = model.info.parameters.common_parameters

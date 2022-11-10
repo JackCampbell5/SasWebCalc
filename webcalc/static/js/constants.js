@@ -18,6 +18,8 @@ window.units = {
     "detectorOffset": "cm",
     "detectorDistance": "cm",
     "beamCenter": "cm",
+    "beamDiameter": "cm",
+    "beamStopDiameter":"inch"
 }
 
 // Inputs for averaging types
@@ -104,26 +106,33 @@ window.ng7SourceApertures = {
     'LENS': ['1.43'],
 };
 window.ng7Constants = {
+    'serverName': 'ng7sans.ncnr.nist.gov',
+    //Not a use var
     'HuberOffset': '54.8',
+    //Aperture offset does not seem to be used
     'ChamberOffset': '0.0',
+    //Pramaters for calculateQRangeSlicer which does nto exist in python yet
     'ApertureOffset': '5.0',
-    'BSFactor': '1.05',
-    'iPixel': '100.0',
-    'aPixel': '5.08',
     'coeff': '10000',
     'xPixels': '128',
     'yPixels': '128',
-    'peakFlux': '2.55e13',
-    'peakLambda': '5.5',
-    'b': '0.0395',
-    'c': '0.0442',
-    'trans1': '0.63',
-    'trans2': '0.7',
-    'trans3': '0.75',
-    'guideGap': '188',
-    'guideWidth': '5',
-    'guideLoss': '0.974',
-    'serverName': 'ng7sans.ncnr.nist.gov'
+    //Detector class???
+    'aPixel': '5.08', //pixel_size_x
+    'iPixel': '100.0',
+    //Data class
+    //Data class
+    'BSFactor': '1.05', //bs_factor
+    'peakFlux': '2.55e13',//peak_flux
+    'peakLambda': '5.5', //peak_wavelength
+    'b': '0.0395',//beta
+    'c': '0.0442', //charlie
+    'trans1': '0.63', //trans_1
+    'trans2': '0.7', //trans_2
+    'trans3': '0.75',//trans_3
+    //Guide class constants needed
+    'guideGap': '188', //gap_at_start
+    'guideWidth': '5', //guide_width
+    'guideLoss': '0.974' //GuideLoss
 };
 window.ng7WavelengthRange = {
     "9.7": ['6.5', '20.0'],

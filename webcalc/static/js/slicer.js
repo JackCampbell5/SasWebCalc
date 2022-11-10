@@ -117,7 +117,7 @@ class Slicer {
         return Math.floor(Math.sqrt(xVal * xVal + yVal * yVal) / this.pixelSize) + 1;
     }
 
-    calculateResolution(i) {
+        calculateResolution(i) {
         // Define constants
         var velocityNeutron1A = 3.956e5;
         var gravityConstant = 981.0;

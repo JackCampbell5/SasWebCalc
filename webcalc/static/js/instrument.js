@@ -1,3 +1,5 @@
+//THIS FILES IS DEPRECATED
+
 function loadInstrumentClass() {
     // Initialize data sets
     initializeData();
@@ -46,14 +48,16 @@ function displayGeneralItems(instrument = null) {
             var serverNameNode = document.getElementById('serverName');
             serverNameNode.value = window.currentInstrument.hostname;
         }
+        //Chart Buttons
         var buttons = document.getElementById('buttons');
         buttons.style.display = "inline-block";
+
         var model = document.getElementById("model");
         model.style.display = "inline-block";
         var modelLabel = document.getElementById("modelLabel");
         modelLabel.style.display = "inline-block";
         var modelParams = document.getElementById("modelParams");
-        modelParams.style.display = "inline-block";
+       modelParams.style.display = "inline-block";
         var averagingType = document.getElementById("averagingType");
         averagingType.style.display = "inline-block";
         var averagingTypeLabel = document.getElementById("averagingTypeLabel");
@@ -162,7 +166,7 @@ class Instrument {
 
     /*
      * Generic method to point to all nodes on the page associated with the instrument
-     * 
+     *
      * Standard SANS instruments (both 30m and 10m) should use this method. VSANS Might be able to as well.
      */
     populatePageDynamically() {
@@ -390,7 +394,7 @@ class Instrument {
         update1DChart();
         update2DChart();
         // Set current configuration
-        setCurrentConfig(this.instrumentName);
+        getCurrentConfig(this.instrumentName);
         // Store persistant state
         storePersistantState(this.instrumentName);
     }
@@ -713,6 +717,7 @@ class Instrument {
 
 class NG7SANS extends Instrument {
     static instrumentName = "ng7";
+    //Depreciated - in constants.java
     static hostname = "ng7sans.ncnr.nist.gov";
     static isReal = true;
 

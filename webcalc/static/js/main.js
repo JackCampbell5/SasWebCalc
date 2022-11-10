@@ -1,8 +1,11 @@
-﻿function loadpage() {
+﻿//Is the first file to run when the page is loaded
+function loadpage() {
     // Initialize data sets
     initializeData();
     clearFrozen(false);
     // Define base event handlers
+
+    //When page is loaded - checks if dropdown changes
     var instrumentNode = document.getElementById('instrumentSelector');
     instrumentNode.onchange = function () {
         updateInstrumentNoInstrument();
@@ -43,9 +46,17 @@ function initializeData() {
 async function SASCALC(instrument) {
     // Initialize data sets
     initializeData();
+
+    // Get current configuration so python can read
+    getCurrentConfig(instrument);
+
+
     if (instrument == 'qrange') {
         // TODO: generate 1D and 2D data for a given q-range
+        //QUESTION      How would the instrument ever equal qrange?
     } else {
+        //calculateresolution will be called from here
+
         // Calculate the beam stop diameter
         calculateBeamStopDiameter(instrument);
         // Calculate the estimated beam flux
@@ -63,10 +74,11 @@ async function SASCALC(instrument) {
     // Update the charts
     update1DChart();
     update2DChart();
-    // Set current configuration
-    setCurrentConfig(instrument);
     // Store persistant state
     storePersistantState(instrument);
+
+    // TODO: Temporary function
+    sendToPythonInstrument(instrument);
 }
 
 function calculateQRangeSlicer(instrument) {
@@ -119,6 +131,7 @@ function calculateQRangeSlicer(instrument) {
     params['SSD'] = calculateSourceToSampleApertureDistance(instrument);
     params['SDD'] = calculateSampleToDetectorDistance(instrument);
 
+    //Im assuming this is creating a new object from the sas models library
     switch (averageType) {
         case "circular":
         default:
@@ -214,6 +227,7 @@ function calculateMinimumQ(instrument) {
     qMinNode.value = Math.round(qMinimum * 100000) / 100000;
 }
 
+//Method depreciated
 /*
  * Calculate the number of q points, and sum the intensities, dsq, and number of cells.
  */
@@ -435,6 +449,7 @@ function calculateNumberOfAttenuators(instrument) {
         numAtten = 7 + Math.floor((numAtten - 6) / 2);
     }
     attenuatorNode.value = numAtten;
+    //TODO J     How can you have a return statement that does not equal anything
     getAttenuators(instrument);
 }
 
@@ -631,6 +646,7 @@ function updateWavelength(instrument, runSASCALC=true) {
  * Change the instrument you want to calculate Q ranges for
  */
 function updateInstrumentNoInstrument(runSASCALC = true) {
+    //Finds the instrument
     var instrument = document.getElementById('instrumentSelector').value;
     updateInstrument(instrument, runSASCALC);
 }
@@ -638,13 +654,13 @@ function updateInstrumentNoInstrument(runSASCALC = true) {
  * Change the instrument you want to calculate Q ranges for
  */
 function updateInstrument(instrument, runSASCALC=true) {
-    // Get instrument node and create an array of the options available
+    // Get instrument node and create an array of the options available from original dropdown
     var inst = document.getElementById('instrumentSelector');
-    var instrumentOptions = [];
+    var instrumentOptions = []; //Array of names of all the instruments
     for (var i = 0; i < inst.options.length; i++) {
         instrumentOptions.push(inst.options[i].value);
     }
-    var instruments = {};
+    var instruments = {}; //Array for all of the instrument divs
     var instName = "";
     // Get the divs for all possible instruments
     for (var j in instrumentOptions) {
@@ -661,18 +677,23 @@ function updateInstrument(instrument, runSASCALC=true) {
             instruments[key].style.display = "none";
         }
     }
+    //If the instrument exists populate fields
     if (instrument != '' && instrument != null) {
         var serverNameNode = document.getElementById('serverName');
         serverNameNode.value = window[instrument + "Constants"]['serverName'];
+        //Buttone above chats
         var buttons = document.getElementById('buttons');
         buttons.style.display = "inline-block";
+        //TODO J     Figure out what all of this does
         var model = document.getElementById("model");
         model.style.display = "inline-block";
         selectModel(model.value, false);
+        //Define Model types and label and make visible
         var modelLabel = document.getElementById("modelLabel");
         modelLabel.style.display = "inline-block";
         var modelParams = document.getElementById("modelParams");
         modelParams.style.display = "inline-block";
+        //Define average method
         var averagingType = document.getElementById("averagingType");
         averagingType.style.display = "inline-block";
         var averagingTypeLabel = document.getElementById("averagingTypeLabel");
@@ -751,6 +772,7 @@ async function populatePageDynamically(instrument) {
         }
     }
     // TODO: Populate GUIDES, SOURCE APERTURES, and DETECTOR LIMITS (and wavelenth limits?)
+    //Question      Why is the below deprecated?
     var sourceApertures = staticNodeMap['guide.sourceAperture']['permittedValues'];
     var sourceAperturesGuide1 = staticNodeMap['guide01.key']['permittedValues'];
 }
@@ -779,6 +801,22 @@ function selectAveragingMethod(averagingMethod, runSASCALC = true) {
         SASCALC(instrument);
     }
 }
+/*
+   * Creates guide array for guide parameters
+ */
+    function getGuideArray(instrument,whatReturn){
+        var number_of_guides = 0;
+        var lenses = false;
+        const temp = document.getElementById(instrument + 'GuideConfig').value;
+    if (temp === "LENS"){
+        lenses = true;
+        number_of_guides = 0;
+    }else {
+        number_of_guides = parseInt(temp);
+    }
+    if(whatReturn){return number_of_guides} else{return  lenses}
+    }//End getGuideArray
+
 
 /*
  * Various getter functions - set current config on get
@@ -827,7 +865,8 @@ function getAveragingParams() {
     var params = [phi, dPhi, detectorHalves, qCenter, qWidth, aspectRatio];
     return params;
 }
-function setCurrentConfig(instrument) {
+
+function getCurrentConfig(instrument) {
     window.currentConfig["guide.guide"] = document.getElementById(instrument + 'GuideConfig').value;
     window.currentConfig["geometry.externalSampleAperture"] = getSampleApertureSize(instrument) * 10 + window.units["sampleAperture"];
     window.currentConfig["guide.sourceAperture"] = getSourceAperture(instrument);
@@ -841,11 +880,69 @@ function setCurrentConfig(instrument) {
     window.currentConfig["detectorOffset.softPosition"] = document.getElementById(instrument + "OffsetInputBox").value + window.units["detectorOffset"];
 }
 
+async function sendToPythonInstrument(instrument) {
+    // TODO: Gather all instrumental params here and pass them to the python (ignore return value for now)
+    var json_object = {};
+    json_object['instrument'] = instrument;
+    json_object["wavelength"] = {}
+    json_object["wavelength"]["wavelength"] = getWavelength(instrument);
+    json_object['wavelength"]["wavelength_unit'] = window.units["wavelength"];
+    json_object["wavelength"]["wavelength_spread"] = getWavelengthSpread(instrument) / 100;
+    json_object["wavelength"]["wavelength_spread_unit"] = "Percent";
+    json_object["wavelength"]["number_of_attenuators"] = getAttenuators(instrument);
+    json_object["wavelength"]["attenuation_factor"] = calculateAttenuationFactor(instrument);
+    //Makes 3 Python Dictionary as the collimation has 2 sub objects (source_aperture and sample_aperture) and a main object
+    json_object["collimation"] = {};
+    json_object["collimation"]["source_aperture"] = {};
+    json_object["collimation"]["source_aperture"]["diameter"] = getSourceAperture(instrument);
+    json_object["collimation"]["source_aperture"]["diameter_unit"] = window.units["sampleAperture"];
+    json_object["collimation"]["sample_aperture"] = {};
+    json_object["collimation"]["sample_aperture"]["diameter"] = getSampleApertureSize(instrument) * 10;
+    json_object["collimation"]["sample_aperture"]["diameter_unit"] = window.units["sampleAperture"];
+    json_object["collimation"][0] = {};
+    json_object["collimation"][0]["ssd"] = document.getElementById(instrument + 'SDD').value;
+    json_object["collimation"][0]["ssd_unit"] = window.units["detectorDistance"];
+    json_object["collimation"][0]["ssad"] = document.getElementById(instrument + 'SDD').value - window[instrument + "Constants"]['ApertureOffset'];
+    json_object["collimation"][0]["ssad_unit"] = window.units["detectorDistance"];
+    json_object["collimation"]["guides"] = {};
+    json_object["collimation"]["guides"]["number_of_guides"] = getGuideArray(instrument, true);
+    json_object["collimation"]["guides"]["lenses"] = getGuideArray(instrument, false);
+    //Some Instruments have more than one detector
+    json_object["detectors"] = [];
+    json_object["detectors"][0] = {};
+    json_object["detectors"][0]["sdd"] = document.getElementById(instrument + "SDDInputBox").value;
+    json_object["detectors"][0]["sdd_unit"] = window.units["detectorDistance"];
+    json_object["detectors"][0]["offset"] = document.getElementById(instrument + "OffsetInputBox").value;
+    json_object["detectors"][0]["offset_unit"] = window.units["detectorOffset"];
+    json_object["detectors"][0]["pixel_size_x"] = window[instrument + "Constants"]["aPixel"];
+    json_object["detectors"][0]["pixel_size_x_unit"] = 'mm';
+    json_object["detectors"][0]["pixel_size_y"] = window[instrument + "Constants"]["aPixel"];
+    json_object["detectors"][0]["pixel_size_y_unit"] = 'mm';
+    json_object["detectors"][0]["pixel_no_x"] = window[instrument + "Constants"]["xPixels"].value;
+    json_object["detectors"][0]["pixel_no_y"] = window[instrument + "Constants"]["yPixels"].value;
+    json_object["detectors"][0]["sample_space"] = document.getElementById(instrument + 'SampleTable').value;
+    json_object["beamStops"] = {};
+    json_object["beamStops"]["diameter"] = document.getElementById(instrument + "BeamSize").value;
+    json_object["beamStops"]["diameter_unit"] = window.units["beamDiameter"];
+    json_object["beamStops"]["stop_size"] = document.getElementById(instrument + "BeamStopSize").value;
+    json_object["beamStops"]["stop_diameter"] = window.units["beamStopDiameter"];
+    json_object["slicer"] = {};
+    json_object["slicer"]["averaging_params"] = getAveragingParams()
+    console.log(json_object["slicer"])
+    json_object["average_type"] = document.getElementById("averagingType").value;
+
+
+    // TODO: This will eventually need to be an asynchronous method and this call will need to wait for and capture the return
+    const pythonData = await post_data(`/calculate_instrument/${instrument}`, json_object);
+}
+
 /*
  * Freeze the current calculation
  */
 function freezeSASCALC() {
     var frozen = new Array(1).fill(0);
+
+    //QUESTION: Why would we not want to freeze the actual calculation
     // Offset intensities of frozen configs by a factor of 2
     var intensities = new Array(1).fill(0);
     var n = 2 * (window.frozenCalculations.length + 1);
