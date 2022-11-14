@@ -92,9 +92,20 @@ export default {
       const fetch_result = await fetch(`/getparams/${this.active_model}`);
       this.model_params = await fetch_result.json();
     },
-    onModelParamChange() {
+    async onModelParamChange() {
       // TODO: fetch results
-      console.log(JSON.stringify(this.model_params, null, 2));
+      const fetch_result = await fetch(
+          `/calculatemodel/${this.active_model}`,
+          {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json'
+            },
+            // TODO: Need to have 1D and 2D Q-range (or params to calculate),
+            body: JSON.stringify(this.model_params)
+      })
+      console.log(fetch_result.json());
     },
     onInstrumentParamChange() {
       // TODO: fetch calculations for instrument
