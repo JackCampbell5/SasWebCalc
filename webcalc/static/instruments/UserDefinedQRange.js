@@ -2,14 +2,14 @@ const template = `
 <div class="instrument_params">
   <h3>{{title}}</h3>
   <div>
-    <div :class="params" v-for="(param, param_name) in params" :key="param_name">
+    <div class="params" v-for="(param, param_name) in params" :key="param_name">
         <label :for="'q_range_' + param_name">{{param_name}}:</label>
         <select v-if="param.type == 'select'" v-model.number="param.default" :id="'q_range_' + param_name"
             :min="(param.lower_limit == '-inf') ? null : param.lower_limit"
             :max="(param.upper_limit == 'inf') ? null : param.upper_limit">
             <option v-for="option in param.options" :key="option" :value="option">{{option}}</option>
         </select>
-        <input v-else :id="'q_range_' + param_name" :class="fixed-width-input"
+        <input v-else :id="'q_range_' + param_name" class="fixed-width-input"
             :type="param.type" v-model.value="param.default" 
             :min="(param.lower_limit == '-inf') ? null : param.lower_limit"
             :max="(param.upper_limit == 'inf') ? null : param.upper_limit"
