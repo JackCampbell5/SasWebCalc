@@ -4,8 +4,8 @@
 class Slicer {
     constructor(params = {}) {
         // Q and Intensity Values
-        this.qxVals = window.qxValues;
-        this.qyVals = window.qyValues;
+        this.qxVals = window.qxValues; //Imported
+        this.qyVals = window.qyValues;  //Imported
         this.rawIntensity = window.intensity2D;
         // Min/max Q values
         this.maxQx = (Math.max(...this.qxVals) === undefined) ? 0.3 : Math.max(...this.qxVals);

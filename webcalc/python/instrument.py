@@ -199,6 +199,8 @@ class Collimation:
         self.ssad_unit = 'cm'
         self.sample_space = " "
         self.aperture_offset = 0.0
+        self.space_offset = 0.0
+        self.detector_distance = 0.0
         self.set_params(params)
 
     def set_params(self, params=None):
@@ -570,6 +572,7 @@ class Instrument:
         self.wavelength = Wavelength(self, params.get('wavelength', {}))
         # TODO   What class should be imported into data
         self.data = Data(self, params.get('data', {}))
+        self.calculate_sample_to_detector_distance()
 
         # gets the parmaters for slicer object and updates the parameters dictionary for that
         params["slicer"] = self.get_slicer_params(params.get('slicer', {}))
@@ -704,17 +707,30 @@ class Instrument:
     def calculate_source_to_sample_aperture_distance(self, index=0):
         # Get the number of guides
         nGds = self.collimation.guides.number_of_guides
-        # Get the source to sample distence node
+        # Get the source to sample distance node
         SSD = self.collimation.ssd
         # Get the sample location
-        sample_space = self.collimation.sample_space
         ssd = 0.0
-        ssd_offset = 0  # Import constants
+        ssd_offset = self.collimation.space_offset
         aperture_offset = self.collimation.aperture_offset
-        # TODO import constants for offset based on sample space
+        # Calculate the source to sample distance
+        instrument_name = self.name
+        if instrument_name == "ng7" or instrument_name == "ngb30":
+            ssd = 1632 - 155 * nGds - ssd_offset - aperture_offset
+        elif instrument_name == "ngb10":
+            ssd = 513 - ssd_offset
+            if nGds != 0:
+                ssd -= 61.9
+                ssd -= 150 * nGds
+            ssd -= aperture_offset
+        else:
+            ssd = 0.0
+        self.collimation.ssd = ssd
+        return ssd
 
     def calculate_sample_to_detector_distance(self):
-        pass
+        self.collimation.sdd = self.collimation.detector_distance + self.collimation.space_offset
+        return self.collimation.sdd
 
     # Various class updaters
     def update_wavelength(self, run_sas_calc=True):
@@ -846,6 +862,7 @@ class NG7SANS(Instrument):
 
     # Constructor for the NG7SANS instrument
     def __init__(self, name, params):
+        self.name = "ng7"
         # Super is the Instrument class
         super().__init__(name, params)
 
@@ -869,12 +886,13 @@ class NG7SANS(Instrument):
         params["slicer"]["coeff"] = 10000
         params["slicer"]["x_pixels"] = 128
         params["slicer"]["y_pixels"] = 128
-
+        if params.get("collimation").get("sample_space", "Huber") == "Huber":
+            params["collimation"]["space_offset"] = 54.8  # HuberOffset
+        else:
+            params["collimation"]["space_offset"] = 0.0  # ChamberOffset
         # Temporary constants not in use any more
         params["temp"] = {}
         params["temp"]["serverName"] = "ng7sans.ncnr.nist.gov"
-        params["temp"]["HuberOffset"] = 54.8
-        params["temp"]["ChamberOffset"] = 0.0
 
         super().load_objects(params)
 
@@ -882,6 +900,7 @@ class NG7SANS(Instrument):
 class NGB30SANS(Instrument):
     # Class for the NGB 30m SANS instrument
     def __init__(self, name, params):
+        self.name = "ngb30"
         super().__init__(name, params)
 
     def load_params(self, params):
@@ -904,12 +923,14 @@ class NGB30SANS(Instrument):
         params["slicer"]["coeff"] = 10000
         params["slicer"]["x_pixels"] = 128
         params["slicer"]["y_pixels"] = 128
+        if params.get("collimation").get("sample_space", "Huber") == "Huber":
+            params["collimation"]["space_offset"] = 54.8  # HuberOffset
+        else:
+            params["collimation"]["space_offset"] = 0  # ChamberOffset
 
         # Temporary constants not in use any more
         params["temp"] = {}
         params["temp"]["serverName"] = "ngb30sans.ncnr.nist.gov"
-        params["temp"]["HuberOffset"] = 54.8
-        params["temp"]["ChamberOffset"] = 0.0
 
         super().load_objects(params)
 
@@ -917,6 +938,7 @@ class NGB30SANS(Instrument):
 class NGB10SANS(Instrument):
     # Class for the NGB 10m SANS instrument
     def __init__(self, name, params):
+        self.name = "ngb10"
         super().__init__(name, params)
 
     def load_params(self, params):
@@ -939,12 +961,14 @@ class NGB10SANS(Instrument):
         params["slicer"]["coeff"] = 10000
         params["slicer"]["x_pixels"] = 128
         params["slicer"]["y_pixels"] = 128
+        if params.get("collimation").get("sample_space", "Huber") == "Huber":
+            params["collimation"]["space_offset"] = 0  # HuberOffset
+        else:
+            params["collimation"]["space_offset"] = 0  # ChamberOffset
 
         # Temporary constants not in use anymore
         params["temp"] = {}
         params["temp"]["serverName"] = "ngbsans.ncnr.nist.gov"
-        params["temp"]["HuberOffset"] = 0.0
-        params["temp"]["ChamberOffset"] = 0.0
         super().load_objects(params)
 
     def calculate_source_to_sample_aperture_distance(self):
