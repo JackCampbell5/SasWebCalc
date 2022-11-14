@@ -26,7 +26,17 @@ def create_app():
 
     @app.route('/calculatemodel/<model_name>', methods=['POST'])
     def calculate_model(model_name):
+        # TODO: Refactor this to accept JSON-like dictionary of params like:
+        #  {
+        #   'q': [],
+        #   'qx': [[]],
+        #   'qy': [[]],
+        #   'param_1': {'units': '', val: '', min: '', max: '', ...}
+        #   ...
+        #   'param_n': {}
+        #  }
         data = decode_json(request.data)
+        print(data)
         param_names = data[0][0]
         param_values = data[0][1]
         if len(data[0]) > 3:
