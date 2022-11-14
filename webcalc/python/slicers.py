@@ -88,10 +88,10 @@ class Slicer:
         # Sets the max and min q values and all the phi values
 
         # Min and max Q value
-        self.maxQx = 0.3 if max(self.qx_values) is None else max(self.qx_values)
-        self.maxQy = 0.3 if max(self.qy_values) is None else max(self.qy_values)
-        self.minQx = 0.0 if min(self.qx_values) is None else min(self.qx_values)
-        self.minQy = 0.0 if min(self.qy_values) is None else min(self.qy_values)
+        self.maxQx = 0.3 if len(self.qx_values) == 0 else max(self.qx_values)
+        self.maxQy = 0.3 if len(self.qy_values) == 0 else max(self.qy_values)
+        self.minQx = 0.0 if len(self.qx_values) == 0 else min(self.qx_values)
+        self.minQy = 0.0 if len(self.qy_values) == 0 else min(self.qy_values)
 
     def calculate_q_range_slicer(self):
         # Detector values pixel size in mm
