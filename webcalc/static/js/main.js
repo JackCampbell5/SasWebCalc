@@ -904,13 +904,15 @@ async function sendToPythonInstrument(instrument) {
     json_object["collimation"][0]["ssd_unit"] = window.units["detectorDistance"];
     json_object["collimation"][0]["ssad"] = document.getElementById(instrument + 'SDD').value - window[instrument + "Constants"]['ApertureOffset'];
     json_object["collimation"][0]["ssad_unit"] = window.units["detectorDistance"];
+    json_object["collimation"][0]["sample_space"] = document.getElementById(instrument + 'SampleTable').value;
+    json_object["collimation"][0]["detector_distance"] = parseFloat(document.getElementById(instrument + 'SDDInputBox').value);
     json_object["collimation"]["guides"] = {};
     json_object["collimation"]["guides"]["number_of_guides"] = getGuideArray(instrument, true);
     json_object["collimation"]["guides"]["lenses"] = getGuideArray(instrument, false);
     //Some Instruments have more than one detector
     json_object["detectors"] = [];
     json_object["detectors"][0] = {};
-    json_object["detectors"][0]["sdd"] = document.getElementById(instrument + "SDDInputBox").value;
+    json_object["detectors"][0]["sdd"]  = document.getElementById(instrument + 'SDD').value
     json_object["detectors"][0]["sdd_unit"] = window.units["detectorDistance"];
     json_object["detectors"][0]["offset"] = document.getElementById(instrument + "OffsetInputBox").value;
     json_object["detectors"][0]["offset_unit"] = window.units["detectorOffset"];
@@ -920,7 +922,6 @@ async function sendToPythonInstrument(instrument) {
     json_object["detectors"][0]["pixel_size_y_unit"] = 'mm';
     json_object["detectors"][0]["pixel_no_x"] = window[instrument + "Constants"]["xPixels"].value;
     json_object["detectors"][0]["pixel_no_y"] = window[instrument + "Constants"]["yPixels"].value;
-    json_object["detectors"][0]["sample_space"] = document.getElementById(instrument + 'SampleTable').value;
     json_object["beamStops"] = {};
     json_object["beamStops"]["diameter"] = document.getElementById(instrument + "BeamSize").value;
     json_object["beamStops"]["diameter_unit"] = window.units["beamDiameter"];
@@ -928,7 +929,6 @@ async function sendToPythonInstrument(instrument) {
     json_object["beamStops"]["stop_diameter"] = window.units["beamStopDiameter"];
     json_object["slicer"] = {};
     json_object["slicer"]["averaging_params"] = getAveragingParams()
-    console.log(json_object["slicer"])
     json_object["average_type"] = document.getElementById("averagingType").value;
 
 
