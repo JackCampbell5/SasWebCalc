@@ -37,34 +37,61 @@ class Slicer:
     def __init__(self, params):
 
         # Import all parameters for slicer class
+
+        # Params needed for calculate_q_range_slicer
         self.mask = 0.0
         self.intencity_2D = 0.0
-        self.phi = 0.0
-        self.d_phi = 0.0
-        self.detector_sections = 0.0
-        self.q_center = 0.0
-        self.q_width = 0.0
-        self.aspect_ratio = 0.0
-        self.x_center = 0.0
-        self.y_center = 0.0
-        self.pixel_size = 0.0
-        self.lambda_val = 0.0
         self.detector_distance = 0.0
-        self.lambda_width = 0.0
-        self.guides = 0.0
-        self.source_aperture = 0.0
-        self.sample_aperture = 0.0
-        self.beam_stop_size = 0.0
-        self.SSD = 0.0
-        self.SDD = 0.0
-        self.aperture_offset = 0.0
-        self.coeff = 0.0
         self.x_pixels = 0.0
         self.y_pixels = 0.0
+
+        # Values are the default values
+        # Q values
         self.qx_values = []
         self.qy_values = []
+        # Max and Min Q values
+        self.maxQx = 0.0
+        self.maxQy = 0.0
+        self.minQx = 0.0
+        self.minQy = 0.0
+
+        # Averaging Parameters
+        self.detector_sections = 'both'
+        self.phi = 0.0
+        self.d_phi = math.pi / 2
+        self.q_center = 0.0
+        self.q_width = 0.3
+        self.aspect_ratio = 1.0
+
+        # Instrumental Parameters
+        self.lambda_val = 6.0
+        self.lambda_width = 0.14
+        self.guides = 0.0
+        self.source_aperture = 25.4
+        self.sample_aperture = 6.35
+        self.aperture_offset = 5.00
+        self.beam_stop_size = 5.08
+        self.SSD = 1627
+        self.SDD = 1530
+        self.pixel_size = 5.08
+        self.coeff = 10000
+        self.x_center = 64.5
+        self.y_center = 64.5
+
+        # Calculate parameters
+
         # set params
         set_params(self, params)
+        self.set_values()
+
+    def set_values(self):
+        # Sets the max and min q values and all the phi values
+
+        # Min and max Q value
+        self.maxQx = 0.3 if max(self.qx_values) is None else max(self.qx_values)
+        self.maxQy = 0.3 if max(self.qy_values) is None else max(self.qy_values)
+        self.minQx = 0.0 if min(self.qx_values) is None else min(self.qx_values)
+        self.minQy = 0.0 if min(self.qy_values) is None else min(self.qy_values)
 
     def calculate_q_range_slicer(self):
         # Detector values pixel size in mm
