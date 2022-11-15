@@ -50,10 +50,10 @@ class Slicer:
         self.qx_values = []
         self.qy_values = []
         # Max and Min Q values
-        self.maxQx = 0.0
-        self.maxQy = 0.0
-        self.minQx = 0.0
-        self.minQy = 0.0
+        self.max_qx = 0.0
+        self.max_qy = 0.0
+        self.min_qx = 0.0
+        self.min_qy = 0.0
 
         # Averaging Parameters
         self.detector_sections = 'both'
@@ -79,20 +79,40 @@ class Slicer:
         self.y_center = 64.5
 
         # Calculate parameters
+        self.phi_upper = 0.0
+        self.phi_lower = 0.0
+        self.phi_x = 0.0
+        self.phi_y = 0.0
+        self.phi_to_ur_corner = 0.0
+        self.phi_to_ul_corner = 0.0
+        self.phi_to_ll_corner = 0.0
+        self.phi_to_lr_corner = 0.0
 
         # set params
         set_params(self, params)
+        self.calculate_q_range_slicer()
         self.set_values()
 
     def set_values(self):
         # Sets the max and min q values and all the phi values
 
         # Min and max Q value
-        self.maxQx = 0.3 if max(self.qx_values) is None else max(self.qx_values)
-        self.maxQy = 0.3 if max(self.qy_values) is None else max(self.qy_values)
-        self.minQx = 0.0 if min(self.qx_values) is None else min(self.qx_values)
-        self.minQy = 0.0 if min(self.qy_values) is None else min(self.qy_values)
+        self.max_qx = 0.3 if max(self.qx_values) == 0.0 else max(self.qx_values)
+        self.max_qy = 0.3 if max(self.qy_values) == 0.0 else max(self.qy_values)
+        self.min_qx = 0.0 if min(self.qx_values) == 0.0 else min(self.qx_values)
+        self.min_qy = 0.0 if min(self.qy_values) == 0.0 else min(self.qy_values)
 
+        # Calculated parameters
+        self.phi_upper = self.phi * self.d_phi
+        self.phi_lower = self.phi - self.d_phi
+        self.phi_x = math.cos(self.phi)
+        self.phi_y = math.sin(self.phi)
+        self.phi_to_ur_corner = math.atan(self.max_qy / self.max_qx)
+        self.phi_to_ul_corner = math.atan(self.max_qy / self.min_qx) + math.pi
+        self.phi_to_ll_corner = math.atan(self.min_qy / self.min_qx) + math.pi
+        self.phi_to_lr_corner = math.atan(self.min_qy / self.max_qx) + 2 * math.pi
+
+    # Calculate Q Range Slicer and its helper methods
     def calculate_q_range_slicer(self):
         # Detector values pixel size in mm
         self.intencity_2D = self.generate_ones_data()
@@ -105,7 +125,7 @@ class Slicer:
         for j in range(self.y_pixels):
             y_distence = calculate_distance_from_beam_center(i, self.y_center, self.pixel_size, self.coeff)
             thetaY = math.atan(y_distence / self.detector_distance) / 2
-            self.qy_values = (4 * math.pi / self.lambda_val) * math.sin(thetaY)
+            self.qy_values.append((4 * math.pi / self.lambda_val) * math.sin(thetaY))
 
     def generate_ones_data(self):
         data = []
