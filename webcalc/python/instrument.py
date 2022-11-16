@@ -765,6 +765,7 @@ class Instrument:
 
         slicer_params["lambda_width"] = self.wavelength.wavelength_spread
         slicer_params["guides"] = self.collimation.guides.number_of_guides
+        slicer_params["lens"] = self.collimation.guides.lenses
         # QUESTION      Is it get_source_aperture_size or get_source_aperture the javascript defines sourceAperture
         # and sampleAperture differently
         slicer_params["source_aperture"] = self.get_source_aperture_size() * 0.5
