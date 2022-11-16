@@ -1,3 +1,4 @@
+import json
 import math
 import numpy as np
 
@@ -72,19 +73,19 @@ def calculate_instrument(instrument, params):
 
     Returns: [[1D resolutions], [2D resolutions]]
     """
-    # TODO: Create classes for all instruments
     # i_class is the python object for the interment
     if instrument == 'ng7':
         # Creates NG7SANS object if instrument is ng7
         i_class = NG7SANS(instrument, params)
     elif instrument == 'ngb30':
-        # Creates NG7SANS object if instrument is ngb30
+        # Creates NGB30SANS object if instrument is ngb30
         i_class = NGB30SANS(instrument, params)
     elif instrument == 'ngb10':
-        # Creates NG7SANS object if instrument is ngb30
+        # Creates NG7B10SANS object if instrument is ngb10
         i_class = NGB10SANS(instrument, params)
     else:
-        i_class = Instrument(instrument, params)
+        # Create a user-defined Q-range instrument
+        i_class = NoInstrument(instrument, params)
     return i_class.sas_calc()
 
 
@@ -856,6 +857,24 @@ class Instrument:
     def get_wavelength_spread(self):
         # Wavelength spread in percent
         return self.wavelength.wavelength_spread
+
+class NoInstrument(Instrument):
+    # Constructor for the pseudo instrument with user-defined Q ranges and instrument resolutions
+    def __init__(self, name, params):
+        self.name = name if name else "Q Range"
+        super().__init__(name, params)
+        self.params = params
+
+    def load_params(self, params):
+        # TODO: load in all params and initialize them
+        # TODO: Generate q-range based off inputs (q-min, q-max, points, point spacing, etc.)
+        print("Q Range Load Params")
+        print(params)
+        self.data = Data(self, params.get('data', {}))
+
+    def sas_calc(self):
+        # TODO: Return real data
+        return json.dumps(self.params)
 
 
 class NG7SANS(Instrument):
