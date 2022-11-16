@@ -52,7 +52,7 @@ def create_app():
         # Decodes the data received from javascript
         data = decode_json(request.data)
         # Turn from tuple into dictionary for accessing
-        params = data[0];
+        params = data[0]
         # Calculates all the values and returns them
         return calculate_i(instrument_name, params)
 
