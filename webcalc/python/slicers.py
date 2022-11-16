@@ -1,11 +1,15 @@
 # TODO: Create slicer class and child slicers
-# QUESTION      Where is the object creation for this
+# built-in imports
 import math
+
+import numpy as np
 
 
 #  Calculate the x or y distance from the beam center of a given pixel
 def calculate_distance_from_beam_center(pixel_value, pixel_center, pixel_size, coeff):
-    return coeff * math.tan((pixel_value - pixel_center) * pixel_size / coeff)
+    if isinstance(pixel_value, np.ndarray):
+        pixel_center = np.full(pixel_value.shape, pixel_center)
+    return coeff * np.tan((pixel_value - pixel_center) * pixel_size / coeff)
 
 
 def set_params(instance, params):
@@ -48,11 +52,11 @@ class Slicer:
         # Import all parameters for slicer class
 
         # Params needed for calculate_q_range_slicer
-        self.mask = 0.0
-        self.intencity_2D = 0.0
-        self.detector_distance = 0.0
-        self.x_pixels = 0.0
-        self.y_pixels = 0.0
+        self.mask: np.array = np.zeros_like(0)
+        self.intensity_2D: np.array = np.zeros_like(0)
+        self.detector_distance: float = 0.0
+        self.x_pixels: int = 0
+        self.y_pixels: int = 0
 
         # Values are the default values
         # Q values
@@ -63,50 +67,50 @@ class Slicer:
         self.d_sq = [0]
         self.n_cells = [0]
         self.sigma_ave = [0]
-        self.q_average = [0]
-        self.sigma_q = [0]
-        self.f_subs = [0]
         # Max and Min Q values
-        self.max_qx = 0.0
-        self.max_qy = 0.0
-        self.min_qx = 0.0
-        self.min_qy = 0.0
+        self.max_qx: float = 0.0
+        self.max_qy: float = 0.0
+        self.min_qx: float = 0.0
+        self.min_qy: float = 0.0
 
         # Averaging Parameters
-        self.detector_sections = 'both'
-        self.phi = 0.0
-        self.d_phi = math.pi / 2
-        self.q_center = 0.0
-        self.q_width = 0.3
-        self.aspect_ratio = 1.0
+        self.detector_sections: str = 'both'
+        self.phi: float = 0.0
+        self.d_phi: float = math.pi / 2
+        self.q_center: float = 0.0
+        self.q_width: float = 0.3
+        self.aspect_ratio: float = 1.0
 
         # Instrumental Parameters
-        self.lambda_val = 6.0
-        self.lambda_width = 0.14
-        self.guides = 0.0
-        self.lens = False;
-        self.source_aperture = 25.4
-        self.sample_aperture = 6.35
-        self.aperture_offset = 5.00
-        self.beam_stop_size = 5.08
-        self.SSD = 1627
-        self.SDD = 1530
+        # TODO: Maybe pass the instrument class as a parameter...
+        self.lambda_val: float = 6.0
+        self.lambda_width: float = 0.14
+        self.guides: int = 0
+        self.lens = False
+        self.source_aperture: float = 25.4
+        self.sample_aperture: float = 6.35
+        self.aperture_offset: float = 5.00
+        self.beam_stop_size: float = 5.08
+        self.SSD: float = 1627
+        self.SDD: float = 1530
+        # TODO: not all pixels are square => differentiate pixel_size_x from pixel_size_y
         self.pixel_size = 5.08
-        self.coeff = 10000
-        self.x_center = 64.5
-        self.y_center = 64.5
+        self.coeff: float = 10000
+        self.x_center: float = 64.5
+        self.y_center: float = 64.5
 
         # Calculate parameters
-        self.phi_upper = 0.0
-        self.phi_lower = 0.0
-        self.phi_x = 0.0
-        self.phi_y = 0.0
-        self.phi_to_ur_corner = 0.0
-        self.phi_to_ul_corner = 0.0
-        self.phi_to_ll_corner = 0.0
-        self.phi_to_lr_corner = 0.0
+        self.phi_upper: float = 0.0
+        self.phi_lower: float = 0.0
+        self.phi_x: float = 0.0
+        self.phi_y: float = 0.0
+        self.phi_to_ur_corner: float = 0.0
+        self.phi_to_ul_corner: float = 0.0
+        self.phi_to_ll_corner: float = 0.0
+        self.phi_to_lr_corner: float = 0.0
 
         # set params
+        # TODO: set_params should be a class method
         set_params(self, params)
         self.calculate_q_range_slicer()
         self.set_values()
@@ -252,44 +256,26 @@ class Slicer:
     # Calculate Q Range Slicer and its helper methods
     def calculate_q_range_slicer(self):
         # Detector values pixel size in mm
-        self.intencity_2D = self.generate_ones_data()
+        self.intensity_2D = self.generate_ones_data()
         self.mask = self.generate_standard_mask()
         # Calculate Qx and Qy values
-        for i in range(self.x_pixels):
-            x_distance = calculate_distance_from_beam_center(i, self.x_center, self.pixel_size, self.coeff)
-            thetaX = math.atan(x_distance / self.detector_distance) / 2
-            self.qx_values.append((4 * math.pi / self.lambda_val) * math.sin(thetaX))
-        for j in range(self.y_pixels):
-            y_distence = calculate_distance_from_beam_center(i, self.y_center, self.pixel_size, self.coeff)
-            thetaY = math.atan(y_distence / self.detector_distance) / 2
-            self.qy_values.append((4 * math.pi / self.lambda_val) * math.sin(thetaY))
+        x_pixels = np.array([i for i in range(self.x_pixels)])
+        x_distances = calculate_distance_from_beam_center(x_pixels, self.x_center, self.pixel_size, self.coeff)
+        theta_x = np.arctan(x_distances / self.detector_distance) / 2
+        self.qx_values = (4 * math.pi / self.lambda_val) * np.sin(theta_x)
+        y_pixels = np.array([i for i in range(self.y_pixels)])
+        y_distances = calculate_distance_from_beam_center(y_pixels, self.y_center, self.pixel_size, self.coeff)
+        theta_y = np.arctan(y_distances / self.detector_distance) / 2
+        self.qy_values = (4 * math.pi / self.lambda_val) * np.sin(theta_y)
 
-    def generate_ones_data(self):
-        data = []
-        dataY = []
-        for i in range(self.x_pixels):
-            for j in range(self.y_pixels):
-                dataY.append(1)
-            data.append(dataY)
-        return data
+    def generate_ones_data(self) -> np.array:
+        return np.ones((self.x_pixels, self.y_pixels))
 
     # Generate a standard SANS mask with the outer 2 pixels masked
     def generate_standard_mask(self):
-        mask = []
-        for i in range(self.x_pixels):
-            mask_inset = []
-            for j in range(self.y_pixels):
-                if i <= 1 or i >= self.x_pixels - 2:
-                    # Top and bottom of the 2 pixels should be masked
-                    mask_inset.append(1)
-                elif j <= 1 or j >= (self.y_pixels - 2):
-                    # Left and right 2 pixels should be masked
-                    mask_inset.append(1)
-                else:
-                    # Remainder should not be masked
-                    mask_inset.append(0)
-            mask.append(mask_inset)
-        return mask
+        mask = [[1 if i <= 1 or i >= self.x_pixels - 2 or j <= 1 or j >= (self.y_pixels - 2) else 0
+                 for i in range(self.x_pixels)] for j in range(self.y_pixels)]
+        return np.asarray(mask)
 
 
 class Circular(Slicer):
@@ -311,3 +297,22 @@ class Elliptical(Slicer):
     def __init__(self, params):
         # TODO create elliptical object
         super().__init__(params)
+
+
+if __name__ == '__main__':
+    # Quick test to ensure
+    params = {
+        'x_pixels': 128,
+        'y_pixels': 128,
+        'detector_distance': 6.0,
+    }
+    slicer = Slicer(params)
+    mask = slicer.generate_standard_mask()
+    ones = slicer.generate_ones_data()
+    assert len(mask) == 128
+    assert mask.shape == (128, 128)
+    assert not np.all(mask == 1)
+    assert len(ones) == 128
+    assert ones.shape == (128, 128)
+    assert np.all(ones == 1)
+
