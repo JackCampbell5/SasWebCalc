@@ -73,11 +73,11 @@ const instruments = {
 export default {
   components: {
     'averaging-params': AveragingParams,
-    q_range,
-    ngb30,
-    ng7,
-    ngb10,
-    vsans
+    'q_range': q_range,
+    "ngb30": ngb30,
+    "ng7": ng7,
+    "ngb10": ngb10,
+    "vsans": vsans
   },
   data: () => ({
     active_instrument: "",
@@ -85,6 +85,7 @@ export default {
     active_model: "",
     model_names: [],
     model_params: {},
+    instrument_params: {},
     instruments,
   }),
   methods: {
@@ -93,26 +94,39 @@ export default {
       this.model_params = await fetch_result.json();
     },
     async onModelParamChange() {
-      // TODO: fetch results
+      let location = `/calculatemodel/${this.active_model}`;
+      let data = JSON.stringify(this.model_params);
+      let results = await this.fetch_with_data(location, data);
+      console.log(results);
+    },
+    async onInstrumentParamChange() {
+      let location = `/calculate_instrument/${this.active_instrument}`
+      let data = q_range.data().params;
+      if (this.active_instrument === 'q_range') {
+        let data = q_range.data();
+      } else {
+        let data = AveragingParams.data();
+      }
+      console.log(data);
+      let results = await this.fetch_with_data(location, data);
+      console.log(results);
+    },
+    onChange(p) {
+      // TODO: run calculations
+      console.log('changed: ', p);
+    },
+    async fetch_with_data(location, data) {
       const fetch_result = await fetch(
-          `/calculatemodel/${this.active_model}`,
+          location,
           {
             method: 'POST',
             headers: {
               'Accept': 'application/json',
               'Content-Type': 'application/json'
             },
-            // TODO: Need to have 1D and 2D Q-range (or params to calculate),
-            body: JSON.stringify(this.model_params)
+            body: JSON.stringify(data)
       })
-      console.log(fetch_result.json());
-    },
-    onInstrumentParamChange() {
-      // TODO: fetch calculations for instrument
-    },
-    onChange(p) {
-      // TODO: run calculations
-      console.log('changed: ', p);
+      return fetch_result.json();
     }
   },
   async mounted() {
