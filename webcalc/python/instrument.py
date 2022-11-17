@@ -869,8 +869,7 @@ class NoInstrument(Instrument):
         # TODO: load in all params and initialize them
         # TODO: Generate q-range based off inputs (q-min, q-max, points, point spacing, etc.)
         print("Q Range Load Params")
-        print(params)
-        self.data = Data(self, params.get('data', {}))
+        self.data = Data(self, params)
 
     def sas_calc(self):
         # TODO: Return real data

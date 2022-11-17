@@ -100,10 +100,11 @@ export default {
       console.log(results);
     },
     async onInstrumentParamChange() {
+      console.log(this.active_instrument)
       let location = `/calculate_instrument/${this.active_instrument}`
       let data = q_range.data().params;
-      if (this.active_instrument === 'q_range') {
-        let data = q_range.data();
+      if (this.active_instrument == 'q_range') {
+        let data = q_range.data().params;
       } else {
         let data = AveragingParams.data();
       }
