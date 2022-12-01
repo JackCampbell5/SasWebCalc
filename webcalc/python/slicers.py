@@ -3,6 +3,7 @@
 import math
 
 import numpy as np
+from scipy.special import gamma, gammainc
 
 
 #  Calculate the x or y distance from the beam center of a given pixel
@@ -64,10 +65,10 @@ class Slicer:
 
         # Values are the default values
         # Q values
-        self.qx_values = []
-        self.qy_values = []
-        self.q_values = [0]
-        self.ave_intensity = [0]
+        self.qx_values = None
+        self.qy_values = None
+        self.q_values = None
+        self.ave_intensity = None
         self.d_sq = [0]
         self.n_cells = [0]
         self.sigma_ave = [0]
@@ -148,6 +149,24 @@ class Slicer:
         mask_i = []
         num_dimensions = 1
         center = 1
+        x_indices = np.asarray(range(1, len(self.qx_values) + 1))
+        y_indices = np.asarray(range(1, len(self.qy_values) + 1))
+        x_distances = calculate_distance_from_beam_center(x_indices, self.x_center, self.pixel_size, self.coeff)
+        y_distances = calculate_distance_from_beam_center(y_indices, self.y_center, self.pixel_size, self.coeff)
+        total_distances = np.sqrt(x_distances * x_distances + y_distances * y_distances)
+        num_dimensions = np.asarray([1 if total_distance > radius_center else 3 for total_distance in total_distances])
+        center = np.asarray([1 if total_distance > radius_center else 2 for total_distance in total_distances])
+        num_d_squared = num_dimensions * num_dimensions
+        # FIXME: num_dimensions is an array...
+        corrected_dx = x_distances + (np.asarray(list(range(1, num_dimensions + 1))) - center) * self.pixel_size / num_dimensions
+        corrected_dy = y_distances + (
+                    np.asarray(list(range(1, num_dimensions + 1))) - center) * self.pixel_size / num_dimensions
+        i_radius = self.get_i_radius(corrected_dx, corrected_dy)
+        nq = max(i_radius) if len(i_radius) > 0 else 0
+        self.ave_intensity = np.zeros_like(list(np.asarray(range(nq))))
+        self.d_sq = np.zeros_like(list(np.asarray(range(nq))))
+        self.n_cells = np.zeros_like(list(np.asarray(range(nq))))
+        # FIXME:
         for i in range(len(self.qx_values)):
             qx_val = self.qx_values[i]
             x_distence = self.calculate_distance_from_beam_center(i, "x")
@@ -203,8 +222,7 @@ class Slicer:
                 ave_isq = self.d_sq[i] if math.isnan(self.n_cells[i]) else self.d_sq[i] / self.n_cells[i]
                 diff = ave_isq - ave_sq
                 self.sigma_ave[i] = large_number if diff < 0 else math.sqrt(diff / self.n_cells[i] - 1)
-            if self.q_values[i] > 0.0:
-                self.calculate_resolution(i)
+        self.calculate_resolution()
 
     def calculate_q(self, i):
         radius = (2 * i) * self.pixel_size / 2
@@ -212,14 +230,14 @@ class Slicer:
         self.q_values[i] = (4 * math.pi / self.lambda_val) * math.sin(theta)
 
     def get_i_radius(self, x_val, y_val):
-        return math.floor(math.sqrt(x_val * x_val + y_val * y_val) / self.pixel_size) + 1
+        return np.floor(np.sqrt(x_val * x_val + y_val * y_val) / self.pixel_size) + 1
 
-    def calculate_resolution(self, i):
+    def calculate_resolution(self):
         velocity_neutron_1a = 3.956e5
         gravity_constant = 981.0
         small_number = 1e-10
         is_lenses = self.lens
-        q_value = self.q_values[i]
+        # Pixel size in mm
         pixel_size = self.pixel_size * 0.1
         # Base calculations
         lp = 1 / (1 / self.SDD + 1 / self.SSD)
@@ -233,27 +251,29 @@ class Slicer:
                 self.sample_aperture * self.SDD / lp, 2)
         var_detector = math.pow(pixel_size / 2.3548, 2) + (pixel_size + pixel_size) / 12
         velocity_neutron = velocity_neutron_1a / self.lambda_val
-        var_gravity = 0.5 * gravity_constant * self.SDD * (self.SSD + self.SDD) / math.pow(velocity_neutron, 2)
-        r_zero = self.SDD * math.tan(2.0 * math.asin(self.lambda_val * q_value / (4.0 * math.pi)))
-        delta = 0.5 * math.pow(self.beam_stop_size - r_zero, 2) / var_detector
-        inc_gamma = small_number
-        # TODO find a gama function
+        var_gravity = 0.5 * gravity_constant * self.SDD*(self.SSD + self.SDD) / math.pow(velocity_neutron, 2)
+        r_zero = self.SDD * np.tan(2.0 * np.asin(self.lambda_val * np.asarray(self.q_values) / (4.0 * np.pi)))
+        delta = 0.5 * np.pow(self.beam_stop_size - r_zero, 2) / var_detector
+        if r_zero < self.beam_stop_size:
+            inc_gamma = np.exp(np.log(gamma(1.5))) * (1 - gammainc(1.5, delta) / gamma(1.5))
+        else:
+            inc_gamma = np.exp(np.log(gamma(1.5))) * (1 + gammainc(1.5, delta) / gamma(1.5))
 
-        f_sub_s = 0, 5 * (1.0 + math.erf((r_zero - self.beam_stop_size) / math.sqrt(2.0 * var_detector)))
+        f_sub_s = 0.5 * (1.0 + np.erf((r_zero - self.beam_stop_size) / math.sqrt(2.0 * var_detector)))
         if f_sub_s < small_number:
             f_sub_s = small_number
 
-        fr = 1.0 + math.sqrt(var_detector) * math.exp(-1.0 * delta) / r_zero * f_sub_s * math.sqrt(2.0 + math.pi)
-        fv = inc_gamma / (f_sub_s * math.sqrt(math.pi)) - r_zero * r_zero * math.pow(fr - 1.0, 2) / var_detector
+        fr = 1.0 + np.sqrt(var_detector) * np.exp(-1.0 * delta) / r_zero * f_sub_s * np.sqrt(2.0 + np.pi)
+        fv = inc_gamma / (f_sub_s * np.sqrt(math.pi)) - r_zero * r_zero * np.pow(fr - 1.0, 2) / var_detector
         rmd = fr + r_zero
         var_r1 = var_beam + var_detector * fv + var_gravity
         rm = rmd + 0.5 * var_r1 / rmd
         var_r = var_r1 - 0.5 * (var_r1 / rmd) * (var_r1 / rmd)
         if var_r < 0:
             var_r = 0.0
-        self.q_average[i] = (4.0 * math.pi / self.lambda_val) * math.sin(0.5 * math.atan(rm / self.SDD))
-        self.sigma_q[i] = self.q_average[i] * math.sqrt((var_r / rmd) * (var_r / rmd) + var_lambda)
-        self.f_subs[i] = f_sub_s
+        self.q_average = (4.0 * np.pi / self.lambda_val) * np.sin(0.5 * np.atan(rm / self.SDD))
+        self.sigma_q = self.q_average * np.sqrt((var_r / rmd) * (var_r / rmd) + var_lambda)
+        self.f_subs = f_sub_s
 
     def calculate_distance_from_beam_center(self, pixel_value, x_or_y):
         if x_or_y.lower() == "x":
