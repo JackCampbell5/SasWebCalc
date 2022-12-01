@@ -51,9 +51,10 @@ class Slicer {
         var data = window.intensity2D;
         var dataI = new Array();
         var maskI = new Array();
+         console.log("Length1:" + String(window.aveIntensity.length));
         var numDimensions = 1;
         var center = 1;
-
+        var jack = true;
         for (var i = 0; i < this.qxVals.length; i++) {
             var qxVal = this.qxVals[i];
             var xDistance = this.calculateDistanceFromBeamCenter(i, "x");
@@ -81,6 +82,13 @@ class Slicer {
                             var correctedDy = yDistance + (l - center) * this.pixelSize / numDimensions;
                             var iRadius = this.getIRadius(correctedDx, correctedDy);
                             nq = (iRadius > nq) ? iRadius : nq;
+                            if(jack==true) {
+                                jack = false
+                                console.log("Length1:" + String(window.aveIntensity.length));
+                                console.log("Iradius" + String(iRadius))
+                                console.log(window.aveIntensity);
+                                //Why does it have 90 length in debug but when you print length it is 1?
+                            }
                             window.aveIntensity[iRadius] = (window.aveIntensity[iRadius] === undefined) ? dataPixel / numDSquared : window.aveIntensity[iRadius] + dataPixel / numDSquared;
                             window.dSQ[iRadius] = (window.dSQ[iRadius] === undefined) ? dataPixel * dataPixel / numDSquared : window.dSQ[iRadius] + dataPixel * dataPixel / numDSquared;
                             window.nCells[iRadius] = (window.nCells[iRadius] === undefined) ? 1 / numDSquared : window.nCells[iRadius] + 1 / numDSquared;

@@ -45,6 +45,10 @@ def include_pixel(x_val, y_val, mask):
     return mask == 0
 
 
+def add_at_location(array, location):
+    pass
+
+
 class Slicer:
 
     def __init__(self, params):
@@ -115,6 +119,7 @@ class Slicer:
         self.calculate_q_range_slicer()
         self.set_values()
         self.calculate()
+
     def set_values(self):
         # Sets the max and min q values and all the phi values
 
@@ -138,7 +143,7 @@ class Slicer:
         nq = 0
         large_number = 1.0
         radius_center = 100
-        data = self.intencity_2D
+        data = self.intensity_2D
         data_i = []
         mask_i = []
         num_dimensions = 1
@@ -173,9 +178,13 @@ class Slicer:
                             # before reformated  self.ave_intensity[i_radius] = data_pixel/num_d_squared if self.ave_intensity[i_radius] is None else self.ave_intensity[i_radius]+data_pixel/num_d_squared
                             #                             self.d_sq[i_radius] = data_pixel*data_pixel/num_d_squared if self.d_sq[i_radius] is None else self.d_sq[i_radius]+data_pixel*data_pixel/num_d_squared
                             #                             self.n_cells[i_radius] = 1/num_d_squared if self.n_cells[i_radius] is None else self.n_cells[i_radius]+1 /num_d_squared
-                            self.ave_intensity[i_radius] = data_pixel / num_d_squared if self.ave_intensity[
-                                                                                             i_radius] is None else \
-                                self.ave_intensity[i_radius] + data_pixel / num_d_squared
+                            try:
+                                self.ave_intensity[i_radius] = self.ave_intensity[i_radius] + data_pixel / num_d_squared
+                            except IndexError:
+                                print(i_radius)
+                                print("Len one" + str(len(self.ave_intensity)))
+                                self.ave_intensity.append(data_pixel / num_d_squared)
+                                print("Len two" + str(len(self.ave_intensity)))
                             self.d_sq[i_radius] = data_pixel * data_pixel / num_d_squared if self.d_sq[
                                                                                                  i_radius] is None else \
                                 self.d_sq[i_radius] + data_pixel * data_pixel / num_d_squared
@@ -224,26 +233,26 @@ class Slicer:
                 self.sample_aperture * self.SDD / lp, 2)
         var_detector = math.pow(pixel_size / 2.3548, 2) + (pixel_size + pixel_size) / 12
         velocity_neutron = velocity_neutron_1a / self.lambda_val
-        var_gravity = 0.5 * gravity_constant * self.SDD*(self.SSD + self.SDD) / math.pow(velocity_neutron, 2)
+        var_gravity = 0.5 * gravity_constant * self.SDD * (self.SSD + self.SDD) / math.pow(velocity_neutron, 2)
         r_zero = self.SDD * math.tan(2.0 * math.asin(self.lambda_val * q_value / (4.0 * math.pi)))
         delta = 0.5 * math.pow(self.beam_stop_size - r_zero, 2) / var_detector
         inc_gamma = small_number
         # TODO find a gama function
 
-        f_sub_s = 0,5*(1.0+math.erf((r_zero-self.beam_stop_size)/math.sqrt(2.0*var_detector)))
-        if f_sub_s<small_number:
+        f_sub_s = 0, 5 * (1.0 + math.erf((r_zero - self.beam_stop_size) / math.sqrt(2.0 * var_detector)))
+        if f_sub_s < small_number:
             f_sub_s = small_number
 
-        fr = 1.0+math.sqrt(var_detector)*math.exp(-1.0*delta)/r_zero*f_sub_s*math.sqrt(2.0+math.pi)
-        fv = inc_gamma/(f_sub_s*math.sqrt(math.pi))-r_zero*r_zero*math.pow(fr-1.0,2)/var_detector
-        rmd = fr +r_zero
-        var_r1 = var_beam+var_detector*fv+var_gravity
-        rm = rmd +0.5 *var_r1/rmd
-        var_r = var_r1-0.5*(var_r1/rmd)*(var_r1/rmd)
-        if var_r<0:
+        fr = 1.0 + math.sqrt(var_detector) * math.exp(-1.0 * delta) / r_zero * f_sub_s * math.sqrt(2.0 + math.pi)
+        fv = inc_gamma / (f_sub_s * math.sqrt(math.pi)) - r_zero * r_zero * math.pow(fr - 1.0, 2) / var_detector
+        rmd = fr + r_zero
+        var_r1 = var_beam + var_detector * fv + var_gravity
+        rm = rmd + 0.5 * var_r1 / rmd
+        var_r = var_r1 - 0.5 * (var_r1 / rmd) * (var_r1 / rmd)
+        if var_r < 0:
             var_r = 0.0
-        self.q_average[i] = (4.0*math.pi/self.lambda_val)*math.sin(0.5*math.atan(rm/self.SDD))
-        self.sigma_q[i] = self.q_average[i]*math.sqrt((var_r/rmd)*(var_r/rmd)+var_lambda)
+        self.q_average[i] = (4.0 * math.pi / self.lambda_val) * math.sin(0.5 * math.atan(rm / self.SDD))
+        self.sigma_q[i] = self.q_average[i] * math.sqrt((var_r / rmd) * (var_r / rmd) + var_lambda)
         self.f_subs[i] = f_sub_s
 
     def calculate_distance_from_beam_center(self, pixel_value, x_or_y):
@@ -315,4 +324,3 @@ if __name__ == '__main__':
     assert len(ones) == 128
     assert ones.shape == (128, 128)
     assert np.all(ones == 1)
-
