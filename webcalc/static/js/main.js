@@ -14,12 +14,13 @@ function loadpage() {
     modelNode.onchange = function () {
         selectModel(this.value);
     }
+    //# TODO move function to main
     populateModelSelector(modelNode);
     var averagingNode = document.getElementById('averagingType');
     averagingNode.onchange = function () {
         selectAveragingMethod(this.value);
     }
-    // Restore persistant state on refresh
+    // Restore persistent state on refresh
     restorePersistantState();
 }
 
@@ -44,12 +45,10 @@ function initializeData() {
  * Run SASCALC for the current instrument and model
  */
 async function SASCALC(instrument) {
-    // Initialize data sets
+    // Initialize data sets - KEEP 12/6
     initializeData();
 
-    // Get current configuration so python can read
-    getCurrentConfig(instrument);
-
+    await sendToPythonInstrument(instrument);
 
     if (instrument == 'qrange') {
         // TODO: generate 1D and 2D data for a given q-range
@@ -76,9 +75,6 @@ async function SASCALC(instrument) {
     update2DChart();
     // Store persistant state
     storePersistantState(instrument);
-
-    // TODO: Temporary function
-    sendToPythonInstrument(instrument);
 }
 
 function calculateQRangeSlicer(instrument) {
@@ -367,7 +363,7 @@ function generateOnesData(instrument) {
  */
 function calculateBeamFlux(instrument) {
     var beamFluxNode = document.getElementById(instrument + 'BeamFlux');
-    
+
     // Get instrumental values
     var SSD = calculateSourceToSampleApertureDistance(instrument);
     var sourceAperture = getSourceAperture(instrument);
@@ -912,7 +908,7 @@ async function sendToPythonInstrument(instrument) {
     //Some Instruments have more than one detector
     json_object["detectors"] = [];
     json_object["detectors"][0] = {};
-    json_object["detectors"][0]["sdd"]  = document.getElementById(instrument + 'SDD').value
+    json_object["detectors"][0]["sdd"] = document.getElementById(instrument + 'SDD').value
     json_object["detectors"][0]["sdd_unit"] = window.units["detectorDistance"];
     json_object["detectors"][0]["offset"] = document.getElementById(instrument + "OffsetInputBox").value;
     json_object["detectors"][0]["offset_unit"] = window.units["detectorOffset"];
@@ -934,6 +930,7 @@ async function sendToPythonInstrument(instrument) {
 
     // TODO: This will eventually need to be an asynchronous method and this call will need to wait for and capture the return
     const pythonData = await post_data(`/calculate_instrument/${instrument}`, json_object);
+    console.log(pythonData)
 }
 
 /*

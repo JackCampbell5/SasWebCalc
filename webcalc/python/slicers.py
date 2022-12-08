@@ -71,6 +71,9 @@ class Slicer:
         self.d_sq = [0]
         self.n_cells = [0]
         self.sigma_ave = [0]
+        self.q_average = [0]
+        self.sigma_q = [0]
+        self.f_subs = [0]
         # Max and Min Q values
         self.max_qx: float = 0.0
         self.max_qy: float = 0.0
@@ -118,7 +121,6 @@ class Slicer:
         set_params(self, params)
         self.calculate_q_range_slicer()
         self.set_values()
-        self.calculate()
 
     def set_values(self):
         # Sets the max and min q values and all the phi values
