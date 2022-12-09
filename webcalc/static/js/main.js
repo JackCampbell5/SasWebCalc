@@ -14,12 +14,13 @@ function loadpage() {
     modelNode.onchange = function () {
         selectModel(this.value);
     }
+    //# TODO move function to main
     populateModelSelector(modelNode);
     var averagingNode = document.getElementById('averagingType');
     averagingNode.onchange = function () {
         selectAveragingMethod(this.value);
     }
-    // Restore persistant state on refresh
+    // Restore persistent state on refresh
     restorePersistantState();
 }
 
@@ -44,12 +45,10 @@ function initializeData() {
  * Run SASCALC for the current instrument and model
  */
 async function SASCALC(instrument) {
-    // Initialize data sets
+    // Initialize data sets - KEEP 12/6
     initializeData();
 
-    // Get current configuration so python can read
-    getCurrentConfig(instrument);
-
+    await sendToPythonInstrument(instrument);
 
     if (instrument == 'qrange') {
         // TODO: generate 1D and 2D data for a given q-range
@@ -76,9 +75,6 @@ async function SASCALC(instrument) {
     update2DChart();
     // Store persistant state
     storePersistantState(instrument);
-
-    // TODO: Temporary function
-    sendToPythonInstrument(instrument);
 }
 
 function calculateQRangeSlicer(instrument) {
@@ -174,7 +170,7 @@ function calculateMaximumQ(instrument) {
     // Calculate Q-maximum and populate the page
     var radial = Math.sqrt(Math.pow(0.5 * detWidth, 2) + Math.pow(0.5 * detWidth + offset, 2));
     var qMaximum = (4 * (Math.PI / lambda) * Math.sin(0.5 * Math.atan(radial / SDD)));
-    var qMaxNode = document.getElementById(instrument + "MaximumQ");
+    var qMaxNode = document.getElementById(instrument + " ");
     qMaxNode.value = Math.round(qMaximum*100000) / 100000;
 }
 
@@ -367,7 +363,7 @@ function generateOnesData(instrument) {
  */
 function calculateBeamFlux(instrument) {
     var beamFluxNode = document.getElementById(instrument + 'BeamFlux');
-    
+
     // Get instrumental values
     var SSD = calculateSourceToSampleApertureDistance(instrument);
     var sourceAperture = getSourceAperture(instrument);
@@ -912,7 +908,7 @@ async function sendToPythonInstrument(instrument) {
     //Some Instruments have more than one detector
     json_object["detectors"] = [];
     json_object["detectors"][0] = {};
-    json_object["detectors"][0]["sdd"]  = document.getElementById(instrument + 'SDD').value
+    json_object["detectors"][0]["sdd"] = document.getElementById(instrument + 'SDD').value
     json_object["detectors"][0]["sdd_unit"] = window.units["detectorDistance"];
     json_object["detectors"][0]["offset"] = document.getElementById(instrument + "OffsetInputBox").value;
     json_object["detectors"][0]["offset_unit"] = window.units["detectorOffset"];
@@ -934,6 +930,37 @@ async function sendToPythonInstrument(instrument) {
 
     // TODO: This will eventually need to be an asynchronous method and this call will need to wait for and capture the return
     const pythonData = await post_data(`/calculate_instrument/${instrument}`, json_object);
+
+    const beamFluxNode = document.getElementById(instrument + 'BeamFlux');
+    beamFluxNode.valeue = pythonData["user_inaccessible"]["beamFlux"];
+    const figureOfMeritNode = document.getElementById(instrument + 'FigureOfMerit');
+    figureOfMeritNode.value = pythonData["user_inaccessible"]["figureOfMerit"]
+    const attenuatorNode = document.getElementById(instrument + "Attenuators");
+    attenuatorNode.value = pythonData["user_inaccessible"]["numberOfAttenuators"]
+    const ssdNode = document.getElementById(instrument + "SSD");
+    ssdNode.value = pythonData["user_inaccessible"]["ssd"]
+    const sddNode = document.getElementById(instrument + 'SDD')
+    sddNode.value = pythonData["user_inaccessible"]["sdd"]
+    const beamStopNode = document.getElementById(instrument + "BeamFlux")
+    beamStopNode.value = pythonData["user_inaccessible"]["beamDiameter"]
+    const beamStopDiamNode  = document.getElementById(instrument+ "BeamStopSize")
+    beamStopDiamNode.value = pythonData["user_inaccessible"]["beamStopDiameter"]
+    const qxMaxNode = document.getElementById(instrument + "MaximumHorizontalQ");
+    qxMaxNode.value = pythonData["maxQx"]
+    // pythonData["minQx"]
+    maxQyNode = document.getElementById(instrument + "MaximumVerticalQ");
+    maxQyNode.value =  pythonData["maxQy"]
+    // pythonData["minQy"]
+    window.nCells =pythonData["nCells"]
+    window.qsq =pythonData["qsq"]
+    window.sigmaAve =pythonData["sigmaAve"]
+    window.qAverage =pythonData["qAverage"]
+    window.sigmaQ =pythonData["sigmaQ"]
+    window.fSubs =pythonData["fSubs"]
+    window.qxValues =pythonData["qxValues"]
+    window.qyValues =pythonData["qyValues"]
+    window.intensity2D = pythonData["intensitys2D"]
+
 }
 
 /*

@@ -8,6 +8,7 @@ from .slicers import Circular
 from .slicers import Sector
 from .slicers import Rectangular
 from .slicers import Elliptical
+from .helpers import encode_json
 
 
 # TODO: Replace all nodes with Instrument parameters
@@ -590,7 +591,9 @@ class Instrument:
             self.slicer = Circular(params.get('slicer', {}))
 
         # TODO move this function to sas_calc function
-        self.slicer.calculate_q_range_slicer()
+        # self.slicer.calculate_q_range_slicer()
+
+
 
     def sas_calc(self):
         # MainFunction for this class
@@ -602,7 +605,31 @@ class Instrument:
         # Final output returned to the JS
         # FIXME: What values need to be returned?
         # TODO Return Values
-        return "Return Works"
+        python_return = {}
+        python_return["user_inaccessible"] = {}
+        python_return["user_inaccessible"]["beamFlux"] = self.data.get_beam_flux()
+        python_return["user_inaccessible"]["figureOfMerit"] = self.calculate_figure_of_merit()
+        python_return["user_inaccessible"]["numberOfAttenuators"] = self.wavelength.number_of_attenuators
+        python_return["user_inaccessible"]["ssd"] = self.collimation.ssd
+        python_return["user_inaccessible"]["sdd"] = self.detectors[0].sdd
+        python_return["user_inaccessible"]["beamDiameter"] = self.get_beam_diameter()
+        python_return["user_inaccessible"]["beamStopDiameter"] = self.get_beam_stop_diameter()
+        python_return["maxQx"] = self.slicer.max_qx
+        python_return["minQx"] = self.slicer.min_qx
+        python_return["maxQy"] = self.slicer.max_qy
+        python_return["minQy"] = self.slicer.min_qy
+        python_return["nCells"] = self.slicer.n_cells
+        python_return["qsq"] = self.slicer.d_sq
+        python_return["sigmaAve"] = self.slicer.sigma_ave
+        python_return["qAverage"] = self.slicer.q_average
+        python_return["sigmaQ"] = self.slicer.sigma_q
+        python_return["fSubs"] = self.slicer.f_subs
+        python_return["qxValues"] = self.slicer.qx_values.tolist()
+        python_return["qyValues"] = self.slicer.qy_values.tolist()
+        python_return["intensitys2D"] = self.slicer.intensity_2D.tolist()
+
+        # Can return encode JSON just not a python dictionary
+        return encode_json(python_return)
 
     def calculate_instrument_parameters(self):
         # Calculate the beam stop diameter
@@ -766,6 +793,7 @@ class Instrument:
 
         slicer_params["lambda_width"] = self.wavelength.wavelength_spread
         slicer_params["guides"] = self.collimation.guides.number_of_guides
+        slicer_params["lens"] = self.collimation.guides.lenses
         # QUESTION      Is it get_source_aperture_size or get_source_aperture the javascript defines sourceAperture
         # and sampleAperture differently
         slicer_params["source_aperture"] = self.get_source_aperture_size() * 0.5

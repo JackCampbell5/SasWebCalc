@@ -51,9 +51,10 @@ class Slicer {
         var data = window.intensity2D;
         var dataI = new Array();
         var maskI = new Array();
+         console.log("Length1:" + String(window.aveIntensity.length));
         var numDimensions = 1;
         var center = 1;
-
+        var jack = true;
         for (var i = 0; i < this.qxVals.length; i++) {
             var qxVal = this.qxVals[i];
             var xDistance = this.calculateDistanceFromBeamCenter(i, "x");
