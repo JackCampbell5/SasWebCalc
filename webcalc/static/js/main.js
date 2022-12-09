@@ -170,7 +170,7 @@ function calculateMaximumQ(instrument) {
     // Calculate Q-maximum and populate the page
     var radial = Math.sqrt(Math.pow(0.5 * detWidth, 2) + Math.pow(0.5 * detWidth + offset, 2));
     var qMaximum = (4 * (Math.PI / lambda) * Math.sin(0.5 * Math.atan(radial / SDD)));
-    var qMaxNode = document.getElementById(instrument + "MaximumQ");
+    var qMaxNode = document.getElementById(instrument + " ");
     qMaxNode.value = Math.round(qMaximum*100000) / 100000;
 }
 
@@ -930,7 +930,37 @@ async function sendToPythonInstrument(instrument) {
 
     // TODO: This will eventually need to be an asynchronous method and this call will need to wait for and capture the return
     const pythonData = await post_data(`/calculate_instrument/${instrument}`, json_object);
-    console.log(pythonData)
+
+    const beamFluxNode = document.getElementById(instrument + 'BeamFlux');
+    beamFluxNode.valeue = pythonData["user_inaccessible"]["beamFlux"];
+    const figureOfMeritNode = document.getElementById(instrument + 'FigureOfMerit');
+    figureOfMeritNode.value = pythonData["user_inaccessible"]["figureOfMerit"]
+    const attenuatorNode = document.getElementById(instrument + "Attenuators");
+    attenuatorNode.value = pythonData["user_inaccessible"]["numberOfAttenuators"]
+    const ssdNode = document.getElementById(instrument + "SSD");
+    ssdNode.value = pythonData["user_inaccessible"]["ssd"]
+    const sddNode = document.getElementById(instrument + 'SDD')
+    sddNode.value = pythonData["user_inaccessible"]["sdd"]
+    const beamStopNode = document.getElementById(instrument + "BeamFlux")
+    beamStopNode.value = pythonData["user_inaccessible"]["beamDiameter"]
+    const beamStopDiamNode  = document.getElementById(instrument+ "BeamStopSize")
+    beamStopDiamNode.value = pythonData["user_inaccessible"]["beamStopDiameter"]
+    const qxMaxNode = document.getElementById(instrument + "MaximumHorizontalQ");
+    qxMaxNode.value = pythonData["maxQx"]
+    // pythonData["minQx"]
+    maxQyNode = document.getElementById(instrument + "MaximumVerticalQ");
+    maxQyNode.value =  pythonData["maxQy"]
+    // pythonData["minQy"]
+    window.nCells =pythonData["nCells"]
+    window.qsq =pythonData["qsq"]
+    window.sigmaAve =pythonData["sigmaAve"]
+    window.qAverage =pythonData["qAverage"]
+    window.sigmaQ =pythonData["sigmaQ"]
+    window.fSubs =pythonData["fSubs"]
+    window.qxValues =pythonData["qxValues"]
+    window.qyValues =pythonData["qyValues"]
+    window.intensity2D = pythonData["intensitys2D"]
+
 }
 
 /*

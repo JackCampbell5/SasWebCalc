@@ -613,7 +613,8 @@ class Instrument:
         python_return["user_inaccessible"]["numberOfAttenuators"] = self.wavelength.number_of_attenuators
         python_return["user_inaccessible"]["ssd"] = self.collimation.ssd
         python_return["user_inaccessible"]["sdd"] = self.detectors[0].sdd
-        python_return["user_inaccessible"]["beam_diameter"] = self.get_beam_diameter()
+        python_return["user_inaccessible"]["beamDiameter"] = self.get_beam_diameter()
+        python_return["user_inaccessible"]["beamStopDiameter"] = self.get_beam_stop_diameter()
         python_return["maxQx"] = self.slicer.max_qx
         python_return["minQx"] = self.slicer.min_qx
         python_return["maxQy"] = self.slicer.max_qy
