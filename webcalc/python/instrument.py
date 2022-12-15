@@ -90,6 +90,92 @@ def calculate_instrument(instrument, params):
     return i_class.sas_calc()
 
 
+def get_params(instrument: str) -> dict:
+    """ Return the base parameters for an instrument as a dictionary.
+    The parameter dictionary is structured as follows:
+    {
+        "param_name_1": [
+            "name": str,  # The display name if it differs from the param name.
+            "default": float,  # The default value of the parameter.
+            "type": str,  # The input type, usually number or select.
+            "min": float,  # The minimum value allowed for the input, if applicable.
+            "max": float,  # The maximum value allowed for the input, if applicable.
+            "unit": Optional[str],  # The units associated with the input value.
+            "options": Optional[List[str]],  # The select options for populating select inputs.
+            "category": Optional[str],  # The heading the parameter should be shown under. If blank,
+                the parameter will be displayed under the instrument name
+            "order": Optional[int],  # The order in which the param should be displayed under the heading. If no order
+                is given, the parameter will be shown in the order it is loaded.
+        ]
+    }
+    """
+    if instrument == 'ng7':
+        return {}
+    elif instrument == 'ngb30':
+        return {}
+    elif instrument == 'ngb10':
+        return {}
+    elif instrument == 'q_range':
+        return {
+                'q_min_vertical': {
+                    'name': 'Q Min Vertical',
+                    'default': -0.3,
+                    'type': "number",
+                    'min': -2.0,
+                    'max': 2.0,
+                    'unit': 'Å',
+                  },
+                'q_max_vertical': {
+                    'name': 'Q Max Vertical',
+                    'default': 0.3,
+                    'type': "number",
+                    'min': -2.0,
+                    'max': 2.0,
+                    'unit': 'Å',
+                  },
+                'q_min_horizontal': {
+                    'name': 'Q Min Horizontal',
+                    'default': -0.3,
+                    'type': "number",
+                    'min': -2.0,
+                    'max': 2.0,
+                    'unit': 'Å',
+                  },
+                'q_max_horizontal': {
+                    'name': 'Q Max Horizontal',
+                    'default': 0.3,
+                    'type': "number",
+                    'min': -2.0,
+                    'max': 2.0,
+                    'unit': 'Å',
+                  },
+                'dq': {
+                    'name': 'Q Resolution',
+                    'default': 10.0,
+                    'type': "number",
+                    'min': 0.0,
+                    'max': 'inf',
+                    'unit': '%',
+                  },
+                'points': {
+                    'name': 'Number of 1D points',
+                    'default': 50,
+                    'type': "number",
+                    'min': 0.0,
+                    'max': 1000,
+                    'unit': '',
+                  },
+                'point_spacing': {
+                    'name': 'Point Spacing',
+                    'default': "lin",
+                    'type': "select",
+                    'options': ['lin', 'log'],
+                  },
+    }
+    else:
+        return {}
+
+
 def set_params(instance, params):
     # type: (Instrument|Detector|Collimation, dict) -> None
     """
