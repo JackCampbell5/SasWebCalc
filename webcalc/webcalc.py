@@ -8,6 +8,7 @@ from flask import Flask, render_template, request
 from python.link_to_sasmodels import get_model_list, get_params
 from python.link_to_sasmodels import calculate_model as calculate_m
 from python.instrument import calculate_instrument as calculate_i
+from python.instrument import get_params as get_i_params
 from python.helpers import decode_json
 
 
@@ -23,6 +24,11 @@ def create_app():
     @app.route('/getmodels/', methods=['GET'])
     def get_all_models():
         return get_model_list()
+
+    @app.route('/getparams/<model_name>', methods=['GET'])
+    @app.route('/getparams/model/<model_name>', methods=['GET'])
+    def get_model_params(model_name):
+        return get_params(model_name)
 
     @app.route('/calculatemodel/<model_name>', methods=['POST'])
     def calculate_model(model_name):
@@ -47,6 +53,10 @@ def create_app():
         params = {param_names[i]: param_values[i] for i in range(len(param_values))}
         return calculate_m(model_name, q, params)
 
+    @app.route('/getparams/instrument/<instrument_name>', methods=['GET'])
+    def get_instrument_params(instrument_name):
+        return get_i_params(instrument_name)
+
     @app.route('/calculate_instrument/<instrument_name>', methods=['POST'])
     def calculate_instrument(instrument_name):
         # Decodes the data received from javascript
@@ -55,10 +65,6 @@ def create_app():
         params = data[0]
         # Calculates all the values and returns them
         return calculate_i(instrument_name, params)
-
-    @app.route('/getparams/<model_name>', methods=['GET'])
-    def get_model_params(model_name):
-        return get_params(model_name)
 
     return app
 
