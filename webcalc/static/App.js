@@ -49,14 +49,25 @@ const template = `
           <input type="number" v-model.number="param.default" 
           :min="(param.lower_limit == '-inf') ? null : param.lower_limit"
           :max="(param.upper_limit == 'inf') ? null : param.upper_limit"
-          @change="onModelParamChange"  
+          @change="onModelParamChange"
             />
         </li>
       </ul>
     </div>
   </div>
-  <div class="instrument-section">
-    <component v-if="active_instrument != ''" :is="active_instrument" :title="instruments[active_instrument]" @change="onInstrumentParamChange" />
+  <div class="instrument-section" id="instrumentParams">
+    <ul>
+      <li v-for="(param, param_name) in instrument_params" :key="param_name">
+        <label :for="active_instrument + '_' + param_name">{{param_name}}:</label>
+        <select v-if="param.type == 'select'" v-model="param.default" @change="onInstrumentParamChange">
+            <option v-for="option in param.options" :key="option" :value="option">{{option}}</option>
+        </select>
+        <input v-else type="number" v-model.number="param.default" 
+          :min="(param.lower_limit == '-inf') ? null : param.lower_limit"
+          :max="(param.upper_limit == 'inf') ? null : param.upper_limit"
+          @change="onInstrumentParamChange"/>
+      </li>
+    </ul>
   </div>
 </div>
 </main>
@@ -102,18 +113,15 @@ export default {
     async onModelParamChange() {
       let location = `/calculatemodel/${this.active_model}`;
       let data = JSON.stringify(this.model_params);
+      console.log(data);
+      console.log(location);
       let results = await this.fetch_with_data(location, data);
       console.log(results);
     },
     async onInstrumentParamChange() {
       console.log(this.active_instrument)
       let location = `/calculate_instrument/${this.active_instrument}`
-      let data = q_range.data().params;
-      if (this.active_instrument == 'q_range') {
-        let data = q_range.data().params;
-      } else {
-        let data = AveragingParams.data();
-      }
+      let data = this.instrument_params;
       console.log(data);
       let results = await this.fetch_with_data(location, data);
       console.log(results);
