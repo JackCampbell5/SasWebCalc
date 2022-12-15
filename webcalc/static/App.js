@@ -130,10 +130,12 @@ export default {
       return fetch_result.json();
     }
   },
-  async mounted() {
+  async beforeMount() {
     const fetch_result = await fetch("/getmodels/");
     this.model_names = await fetch_result.json();
-  }, 
+  },
+  mounted() {
+  },
   template
 }
 
