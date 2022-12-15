@@ -21,7 +21,7 @@ const template = `
   <div id="SASWEBCALC">
     <div class="instrument-section" title="Choose the instrument you plan to use.">
       <label for="instrumentSelector">Instrument: </label>
-      <select id="instrumentSelector" v-model="active_instrument">
+      <select id="instrumentSelector" v-model="active_instrument" @change="populateInstrumentParams">
         <option v-for="(label, alias, index) in instruments" :key="alias" :value="alias">{{label}}</option>
       </select>
       <label id="modelLabel" for="model">Model: </label>
@@ -90,8 +90,14 @@ export default {
   }),
   methods: {
     async populateModelParams() {
-      const fetch_result = await fetch(`/getparams/${this.active_model}`);
+      const fetch_result = await fetch(`/getparams/model/${this.active_model}`);
       this.model_params = await fetch_result.json();
+      console.log(this.model_params);
+    },
+    async populateInstrumentParams() {
+      const fetch_result = await fetch(`/getparams/instrument/${this.active_instrument}`);
+      this.instrument_params = await fetch_result.json();
+      console.log(this.instrument_params);
     },
     async onModelParamChange() {
       let location = `/calculatemodel/${this.active_model}`;
