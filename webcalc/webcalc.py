@@ -21,16 +21,16 @@ def create_app():
     def root():
         return render_template("index.html")
 
-    @app.route('/getmodels/', methods=['GET'])
+    @app.route('/get/models/', methods=['GET'])
     def get_all_models():
         return get_model_list()
 
-    @app.route('/getparams/<model_name>', methods=['GET'])
-    @app.route('/getparams/model/<model_name>', methods=['GET'])
+    @app.route('/get/params/<model_name>', methods=['GET'])
+    @app.route('/get/params/model/<model_name>', methods=['GET'])
     def get_model_params(model_name):
         return get_params(model_name)
 
-    @app.route('/calculatemodel/<model_name>', methods=['POST'])
+    @app.route('/calculate/model/<model_name>', methods=['POST'])
     def calculate_model(model_name):
         # TODO: Refactor this to accept JSON-like dictionary of params like:
         #  {
@@ -53,11 +53,11 @@ def create_app():
         params = {param_names[i]: param_values[i] for i in range(len(param_values))}
         return calculate_m(model_name, q, params)
 
-    @app.route('/getparams/instrument/<instrument_name>', methods=['GET'])
+    @app.route('/get/params/instrument/<instrument_name>', methods=['GET'])
     def get_instrument_params(instrument_name):
         return get_i_params(instrument_name)
 
-    @app.route('/calculate_instrument/<instrument_name>', methods=['POST'])
+    @app.route('/calculate/instrument/<instrument_name>', methods=['POST'])
     def calculate_instrument(instrument_name):
         # Decodes the data received from javascript
         data = decode_json(request.data)

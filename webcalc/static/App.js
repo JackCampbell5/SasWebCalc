@@ -101,17 +101,17 @@ export default {
   }),
   methods: {
     async populateModelParams() {
-      const fetch_result = await fetch(`/getparams/model/${this.active_model}`);
+      const fetch_result = await fetch(`/get/params/model/${this.active_model}`);
       this.model_params = await fetch_result.json();
       console.log(this.model_params);
     },
     async populateInstrumentParams() {
-      const fetch_result = await fetch(`/getparams/instrument/${this.active_instrument}`);
+      const fetch_result = await fetch(`/get/params/instrument/${this.active_instrument}`);
       this.instrument_params = await fetch_result.json();
       console.log(this.instrument_params);
     },
     async onModelParamChange() {
-      let location = `/calculatemodel/${this.active_model}`;
+      let location = `/calculate/model/${this.active_model}`;
       let data = JSON.stringify(this.model_params);
       console.log(data);
       console.log(location);
@@ -120,7 +120,7 @@ export default {
     },
     async onInstrumentParamChange() {
       console.log(this.active_instrument)
-      let location = `/calculate_instrument/${this.active_instrument}`
+      let location = `/calculate/instrument/${this.active_instrument}`
       let data = this.instrument_params;
       console.log(data);
       let results = await this.fetch_with_data(location, data);
@@ -145,7 +145,7 @@ export default {
     }
   },
   async beforeMount() {
-    const fetch_result = await fetch("/getmodels/");
+    const fetch_result = await fetch("/get/models/");
     this.model_names = await fetch_result.json();
   },
   mounted() {
