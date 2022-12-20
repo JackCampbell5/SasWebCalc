@@ -198,8 +198,9 @@ class Collimation:
         params = params['0']
         self.ssd = 0.0
         self.ssd_unit = 'cm'
-        self.ssad = 0.0
-        self.ssad_unit = 'cm'
+        # REMOVE SSD
+        # self.ssad = 0.0
+        # self.ssad_unit = 'cm'
         self.sample_space = " "
         self.aperture_offset = 0.0
         self.space_offset = 0.0
@@ -232,15 +233,16 @@ class Collimation:
     def get_ssd(self):
         return self.parent.d_converter(self.ssd, self.ssd_unit)
 
-    def get_ssad(self):
-        return self.parent.d_converter(self.ssad, self.ssad_unit)
+    # def get_ssad(self):
+    #     return self.parent.d_converter(self.ssad, self.ssad_unit)
 
     def get_sample_aperture_offset(self):
         return self.sample_aperture.get_offset()
 
     def calculate_source_to_sample_aperture_distance(self):
-        self.ssad = (self.guides.get_maximum_length() - self.guides.get_maximum_length()
-                     * self.guides.number_of_guides - self.get_sample_aperture_offset())
+        # REMOVE SSD
+        self.ssd = (self.guides.get_maximum_length() - self.guides.get_maximum_length()
+                    * self.guides.number_of_guides - self.get_sample_aperture_offset())
 
 
 class Detector:
@@ -323,7 +325,7 @@ class Detector:
     def get_pixel_size_z(self):
         return self.parent.d_converter(self.pixel_size_z, self.pixel_size_z_unit)
 
-    def get_ssd(self):
+    def get_sdd(self):
         return self.parent.d_converter(self.sdd, self.sdd_unit)
 
     def get_sadd(self):
@@ -575,7 +577,6 @@ class Instrument:
         self.wavelength = Wavelength(self, params.get('wavelength', {}))
         # TODO   What class should be imported into data
         self.data = Data(self, params.get('data', {}))
-        self.calculate_sample_to_detector_distance()
 
         # gets the parmaters for slicer object and updates the parameters dictionary for that
         params["slicer"] = self.get_slicer_params(params.get('slicer', {}))
@@ -593,8 +594,7 @@ class Instrument:
 
         # TODO move this function to sas_calc function
         # self.slicer.calculate_q_range_slicer()
-
-
+        self.calculate_sample_to_detector_distance()
 
     def sas_calc(self):
         # MainFunction for this class
@@ -673,12 +673,16 @@ class Instrument:
 
     def calculate_beam_diameter(self, index=0, direction='maximum'):
         # Update all instrument calculations needed for beam diameter
-        self.collimation.get_ssad()
+        # REMOVE SSD
+        # self.collimation.get_ssad()
+        self.collimation.get_ssd()
         self.get_sample_to_detector_distance(index)
         # Get instrumental values
         source_aperture = self.get_source_aperture_size()
         sample_aperture = self.get_sample_aperture_size()
-        ssd = self.get_source_to_sample_aperture_distance()
+        # REMOVE SSD
+        # ssd = self.get_source_to_sample_aperture_distance()
+        ssd = self.get_source_to_sample_distance()
         sdd = self.get_sample_aperture_to_detector_distance(index)
         wavelength = self.get_wavelength()
         wavelength_spread = self.get_wavelength_spread()
@@ -716,7 +720,8 @@ class Instrument:
                 return
         else:
             # If this is reached, that means the beam diameter is larger than the largest known beam stop
-            self.beam_stops[index].beam_stop_diameter = self.beam_stops[len(self.beam_stops) - 1].beam_stop_diameter
+            self.beam_stops[index]['beam_stop_diameter'] = self.beam_stops[len(self.beam_stops) - 1][
+                'beam_stop_diameter']
 
     def calculate_beam_stop_projection(self, index=0):
         self.get_sample_to_detector_distance(index)
@@ -757,9 +762,14 @@ class Instrument:
         self.collimation.ssd = ssd
         return ssd
 
-    def calculate_sample_to_detector_distance(self):
-        self.collimation.sdd = self.collimation.detector_distance + self.collimation.space_offset
-        return self.collimation.sdd
+    def calculate_sample_to_detector_distance(self, index=0):
+        try:
+            detector = self.detectors[index]
+        except IndexError:
+            detector = self.detectors[0]
+        detector.sdd = self.collimation.detector_distance + self.collimation.space_offset
+        print(detector.sdd)
+        return detector.get_sdd()
 
     # Various class updaters
     def update_wavelength(self, run_sas_calc=True):
@@ -790,7 +800,7 @@ class Instrument:
         slicer_params["y_center"] = self.detectors[index].beam_center_y
         slicer_params["pixel_size"] = self.detectors[index].pixel_size_x
         slicer_params["lambda_val"] = self.wavelength.get_wavelength()
-        slicer_params["detector_distance"] = self.detectors[index].get_ssd()
+        slicer_params["detector_distance"] = self.collimation.detector_distance
 
         slicer_params["lambda_width"] = self.wavelength.wavelength_spread
         slicer_params["guides"] = self.collimation.guides.number_of_guides
@@ -861,7 +871,7 @@ class Instrument:
             detector = self.detectors[index]
         except IndexError:
             return 0.0
-        return detector.get_ssd()
+        return detector.get_sdd()
 
     def get_detector_offset(self, index=0):
         # Detector offset in centimeters
@@ -875,9 +885,10 @@ class Instrument:
         # SSD in centimeters
         return self.collimation.get_ssd()
 
-    def get_source_to_sample_aperture_distance(self):
-        # SSAD in centimeters
-        return self.collimation.get_ssad()
+    # REMOVE SSD
+    # def get_source_to_sample_aperture_distance(self):
+    #     # SSAD in centimeters
+    #     return self.collimation.get_ssad()
 
     def get_wavelength(self):
         # Wavelength in Angstroms

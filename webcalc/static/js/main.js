@@ -48,6 +48,8 @@ async function SASCALC(instrument) {
     // Initialize data sets - KEEP 12/6
     initializeData();
 
+    console.log("Test 1")
+
     await sendToPythonInstrument(instrument);
 
     if (instrument == 'qrange') {
@@ -55,12 +57,16 @@ async function SASCALC(instrument) {
         //QUESTION      How would the instrument ever equal qrange?
     } else {
         //calculateresolution will be called from here
-
+        console.log("Test 1.1")
         // Calculate the beam stop diameter
         calculateBeamStopDiameter(instrument);
         // Calculate the estimated beam flux
+        console.log("Test 1.2")
+        //What is the data was not initialized to be edited the first time but it is the second time?
+
         calculateBeamFlux(instrument);
         // Calculate the figure of merit
+            console.log("Test 1.3")
         calculateFigureOfMerit(instrument);
         // Calculate the number of attenuators
         calculateNumberOfAttenuators(instrument);
@@ -68,6 +74,8 @@ async function SASCALC(instrument) {
         calculateQRangeSlicer(instrument);
         calculateMinimumAndMaximumQ(instrument);
     }
+        console.log("Test 2")
+
     // Do Circular Average of an array of 1s
     await calculateModel();
     // Update the charts
@@ -75,6 +83,7 @@ async function SASCALC(instrument) {
     update2DChart();
     // Store persistant state
     storePersistantState(instrument);
+        console.log("Test 3")
 }
 
 function calculateQRangeSlicer(instrument) {
@@ -399,7 +408,8 @@ function calculateBeamFlux(instrument) {
     var solid_angle = (Math.PI / 4) * (sourceAperture / SSD) * (sourceAperture / SSD);
     var beamFlux = Math.round(area * d2_phi * lambdaWidth * solid_angle * totalTrans);
 
-    beamFluxNode.value = beamFlux;
+    console.log("WHat: "+String(typeof beamFlux))
+    // beamFluxNode.value = beamFlux;
     return parseFloat(beamFluxNode.value);
 }
 
@@ -408,10 +418,10 @@ function calculateBeamFlux(instrument) {
  */
 function calculateFigureOfMerit(instrument) {
     var lambda = getWavelength(instrument);
-    var beamFlux = parseFloat(document.getElementById(instrument + 'BeamFlux').value);
+    // var beamFlux = parseFloat(document.getElementById(instrument + 'BeamFlux').value);
     var figureOfMerit = document.getElementById(instrument + 'FigureOfMerit');
-    var figureOfMeritValue = lambda * lambda * beamFlux;
-    figureOfMerit.value = figureOfMeritValue;
+    // var figureOfMeritValue = lambda * lambda * beamFlux;
+    // figureOfMerit.value = figureOfMeritValue;
 }
 
 /*
@@ -886,7 +896,8 @@ async function sendToPythonInstrument(instrument) {
     json_object["wavelength"]["wavelength_spread"] = getWavelengthSpread(instrument) / 100;
     json_object["wavelength"]["wavelength_spread_unit"] = "Percent";
     json_object["wavelength"]["number_of_attenuators"] = getAttenuators(instrument);
-    json_object["wavelength"]["attenuation_factor"] = calculateAttenuationFactor(instrument);
+    json_object["wavelength"]["attenuation_factor"] = 0.00021 //TODO FIX ME
+        //document.getElementById(instrument + "Attenuators");
     //Makes 3 Python Dictionary as the collimation has 2 sub objects (source_aperture and sample_aperture) and a main object
     json_object["collimation"] = {};
     json_object["collimation"]["source_aperture"] = {};
@@ -896,10 +907,11 @@ async function sendToPythonInstrument(instrument) {
     json_object["collimation"]["sample_aperture"]["diameter"] = getSampleApertureSize(instrument) * 10;
     json_object["collimation"]["sample_aperture"]["diameter_unit"] = window.units["sampleAperture"];
     json_object["collimation"][0] = {};
-    json_object["collimation"][0]["ssd"] = document.getElementById(instrument + 'SDD').value;
+    json_object["collimation"][0]["ssd"] = document.getElementById(instrument + 'SDD').value = " " ? 0.0 : document.getElementById(instrument + 'SDD').value ;
     json_object["collimation"][0]["ssd_unit"] = window.units["detectorDistance"];
-    json_object["collimation"][0]["ssad"] = document.getElementById(instrument + 'SDD').value - window[instrument + "Constants"]['ApertureOffset'];
-    json_object["collimation"][0]["ssad_unit"] = window.units["detectorDistance"];
+    // REMOVE SSD
+    // json_object["collimation"][0]["ssad"] = document.getElementById(instrument + 'SDD').value - window[instrument + "Constants"]['ApertureOffset'];
+    // json_object["collimation"][0]["ssad_unit"] = window.units["detectorDistance"];
     json_object["collimation"][0]["sample_space"] = document.getElementById(instrument + 'SampleTable').value;
     json_object["collimation"][0]["detector_distance"] = parseFloat(document.getElementById(instrument + 'SDDInputBox').value);
     json_object["collimation"]["guides"] = {};
@@ -929,12 +941,20 @@ async function sendToPythonInstrument(instrument) {
 
 
     // TODO: This will eventually need to be an asynchronous method and this call will need to wait for and capture the return
-    const pythonData = await post_data(`/calculate_instrument/${instrument}`, json_object);
+    const pythonDataEncoded = await post_data(`/calculate_instrument/${instrument}`, json_object);
+    const pythonData = JSON.parse(pythonDataEncoded);
 
-    const beamFluxNode = document.getElementById(instrument + 'BeamFlux');
-    beamFluxNode.valeue = pythonData["user_inaccessible"]["beamFlux"];
+    var test = 100;
+    var beamFluxNode = document.getElementById(instrument + 'BeamFlux');
+    console.log(String(typeof test))
+    console.log("Did it work?: ");
+    console.log(pythonData["user_inaccessible"]["beamFlux"]);
+    beamFluxNode.value = test;
+    console.log("Did it work 2?: ")
+    console.log(beamFluxNode.value);
+    // beamFluxNode.setAttribute("disabled", "");
     const figureOfMeritNode = document.getElementById(instrument + 'FigureOfMerit');
-    figureOfMeritNode.value = pythonData["user_inaccessible"]["figureOfMerit"]
+    figureOfMeritNode.innerHTML = pythonData["user_inaccessible"]["figureOfMerit"]
     const attenuatorNode = document.getElementById(instrument + "Attenuators");
     attenuatorNode.value = pythonData["user_inaccessible"]["numberOfAttenuators"]
     const ssdNode = document.getElementById(instrument + "SSD");
@@ -952,7 +972,7 @@ async function sendToPythonInstrument(instrument) {
     maxQyNode.value =  pythonData["maxQy"]
     // pythonData["minQy"]
     window.nCells =pythonData["nCells"]
-    window.qsq =pythonData["qsq"]
+    window.dSQ =pythonData["qsq"]
     window.sigmaAve =pythonData["sigmaAve"]
     window.qAverage =pythonData["qAverage"]
     window.sigmaQ =pythonData["sigmaQ"]
