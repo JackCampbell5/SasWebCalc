@@ -21,7 +21,7 @@ const template = `
   <div id="SASWEBCALC">
     <div class="instrument-section" title="Choose the instrument you plan to use.">
       <label for="instrumentSelector">Instrument: </label>
-      <select id="instrumentSelector" v-model="active_instrument" @change="populateInstrumentParams">
+      <select id="instrumentSelector" v-model="active_instrument">
         <option v-for="(label, alias, index) in instruments" :key="alias" :value="alias">{{label}}</option>
       </select>
       <label id="modelLabel" for="model">Model: </label>
@@ -56,18 +56,7 @@ const template = `
     </div>
   </div>
   <div class="instrument-section" id="instrumentParams">
-    <ul>
-      <li v-for="(param, param_name) in instrument_params" :key="param_name">
-        <label :for="active_instrument + '_' + param_name">{{param_name}}:</label>
-        <select v-if="param.type == 'select'" v-model="param.default" @change="onInstrumentParamChange">
-            <option v-for="option in param.options" :key="option" :value="option">{{option}}</option>
-        </select>
-        <input v-else type="number" v-model.number="param.default" 
-          :min="(param.lower_limit == '-inf') ? null : param.lower_limit"
-          :max="(param.upper_limit == 'inf') ? null : param.upper_limit"
-          @change="onInstrumentParamChange"/>
-      </li>
-    </ul>
+    <component v-if="active_instrument != ''" :is="active_instrument" @value-change="onInstrumentParamChange"/>
   </div>
 </div>
 </main>
@@ -105,11 +94,6 @@ export default {
       this.model_params = await fetch_result.json();
       console.log(this.model_params);
     },
-    async populateInstrumentParams() {
-      const fetch_result = await fetch(`/get/params/instrument/${this.active_instrument}`);
-      this.instrument_params = await fetch_result.json();
-      console.log(this.instrument_params);
-    },
     async onModelParamChange() {
       let location = `/calculate/model/${this.active_model}`;
       let data = JSON.stringify(this.model_params);
@@ -118,11 +102,10 @@ export default {
       let results = await this.fetch_with_data(location, data);
       console.log(results);
     },
-    async onInstrumentParamChange() {
-      console.log(this.active_instrument)
+    async onInstrumentParamChange(params) {
+      this.instrument_params = params;
       let location = `/calculate/instrument/${this.active_instrument}`
       let data = this.instrument_params;
-      console.log(data);
       let results = await this.fetch_with_data(location, data);
       console.log(results);
     },
