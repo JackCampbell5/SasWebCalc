@@ -1,6 +1,7 @@
 import json
 import math
 import numpy as np
+from typing import Dict, List, Union
 
 from .units import Converter
 from .constants import Constants
@@ -23,56 +24,31 @@ def calculate_instrument(instrument, params):
         instrument: String defining instrument name
         params: Dictionary containing the following information:
             {
-                instrument: "Name",
-                wavelength:
-                {
-                    lambda: <value>,
-                    lambda_unit: <unit>,
-                    d_lambda: <value>,
-                    d_lambda_unit: <unit>,
-                    attenuation_factor: <value>
-                },
-                collimation:
-                {
-                    source_aperture: <value>,  # Source aperture radius
-                    source_aperture_unit: "unit",  # Unit string for source aperture radius (e.g. mm, cm, centimeters)
-                    ssd: <value>,  # Source to sample distance
-                    ssd_unit: "unit",
-                    ssad: <value>, # Source to sample aperture distance
-                    ssad_unit: "unit",
-                    sample_aperture: <value>,
-                    sample_aperture_units: "unit",
-                },
-                detectors:
-                [
+                "param_name_001" :
                     {
-                        sdd: <value>,
-                        sdd_units: "unit",
-                        sadd: <value>,
-                        sadd_units: "unit",
-                        offset: <value>,
-                        offset_unit: "unit",
-                        pixel_size_x: <value>,
-                        pixel_size_x_unit: "unit"
-                        pixel_size_y: <value>,
-                        pixel_size_y_unit: "unit"
-                        pixel_size_z: <value>,
-                        pixel_size_z_unit: "unit"
-                        pixels_x: <value>,
-                        pixels_y: <value>,
-                        pixels_z: <value>,
-                        dead_time: <value>
+                        name: str,  # Display name for parameter
+                        default: Union[float, int, str],  # Current value
+                        type: Optional[str],  # input type, either ["string", "number", or "option"]
+                        min: Optional[Union[float, int, str]],
+                        max: Optional[Union[float, int, str]],
+                        options: Optional[List],
+                        unit: Optional[str],
                     },
-                    ...,
-                    {}
-                ],
-                constants:
-                {
-
-                }
+                ...
             }
 
-    Returns: [[1D resolutions], [2D resolutions]]
+    Returns: {
+        Qx: [],
+        dQx: [],
+        Qy: [],
+        dQy: [],
+        Iqxy: [],
+        q: [],
+        dq: [],
+        Iq: [],
+        beamflux: float,
+
+    }
     """
     # i_class is the python object for the interment
     if instrument == 'ng7':
@@ -543,25 +519,27 @@ class Instrument:
         self.d_converter = Converter('cm')
         self.t_converter = Converter('s')
         self.data = None
-        self.collimation = None
-        self.wavelength = None
-        self.detectors = None
-        self.beam_stops = None
+        self.beam_flux = None
+        self.one_dimensional = {"I": None, "dI": None, "Q": None, "dQ": None, "fSubS": None}
+        self.two_dimensional = {"I": None, "dI": None, "Qx": None, "dQx": None, "Qy": None, "dQy": None, "fSubS": None}
         if not params:
             params = {}
             # Only store values used for calculations in Instrument class
-            self.name = name
+        self.name = name
         self.constants = Constants()
+        self._params = params
+
+    @property
+    def params(self):
+        return self._params
+
+    @params.setter
+    def params(self, params):
         self.load_params(params)
 
-    """
-        Pseudo-abstract method to initialize constants associated with an instrument
-    """
-
     def load_params(self, params):
-        print("Default Load Params")
-        self.load_objects(params)
-        # default values for default instruments
+        """Pseudo-abstract method to initialize constants associated with an instrument"""
+        raise NotImplementedError(f"Instrument {self.name} has not implemented the `load_params` method.")
 
     def load_objects(self, params):
         # Creates the objects with the param array
@@ -592,8 +570,6 @@ class Instrument:
 
         # TODO move this function to sas_calc function
         # self.slicer.calculate_q_range_slicer()
-
-
 
     def sas_calc(self):
         # MainFunction for this class
@@ -632,22 +608,8 @@ class Instrument:
         return encode_json(python_return)
 
     def calculate_instrument_parameters(self):
-        # Calculate the beam stop diameter
-        self.calculate_beam_stop_diameter()
-        # Calculate the estimated beam flux
-        self.data.calculate_beam_flux()
-        # Calculate the figure of merit
-        self.calculate_figure_of_merit()
-        # Calculate the number of attenuators
-        self.calculate_attenuators()
-        # Do Circular Average of an array of 1s
-
-        # TODO Figure out point of this
-        # for index in range(len(self.detectors) - 1):
-        #     self.data.calculate_min_and_max_q(index)
-        #     # TODO: This might not be needed here...
-        #     # TODO J    This method does not exist
-        #     self.slicer.calculate_q_range_slicer(index)
+        """Instrument classes should override if required"""
+        pass
 
     def calculate_attenuation_factor(self, index=0):
         a2 = self.get_sample_aperture_size()
@@ -886,21 +848,100 @@ class Instrument:
         # Wavelength spread in percent
         return self.wavelength.wavelength_spread
 
+
 class NoInstrument(Instrument):
     # Constructor for the pseudo instrument with user-defined Q ranges and instrument resolutions
     def __init__(self, name, params):
         self.name = name if name else "Q Range"
         super().__init__(name, params)
+        self.n_pts = 0
+        self.spacing = 'lin'
+        self.q_min = 0.0
+        self.dq = 0.0
+        self.q_max = 0.0
+        self._q_max_horizon = 6.0
+        self._q_max_vert = 6.0
+        self._q_min_horizon = -6.0
+        self._q_min_vert = -6.0
         self.params = params
+        self.calculate_instrument_parameters()
 
-    def load_params(self, params):
-        # TODO: load in all params and initialize them
-        # TODO: Generate q-range based off inputs (q-min, q-max, points, point spacing, etc.)
-        print("Q Range Load Params")
-        self.data = Data(self, params)
+    @property
+    def q_max_vert(self):
+        return self._q_max_vert
+
+    @q_max_vert.setter
+    def q_max_vert(self, val: float):
+        self._q_max_vert = val
+        self.set_q_max()
+
+    @property
+    def q_min_vert(self):
+        return self._q_min_vert
+
+    @q_min_vert.setter
+    def q_min_vert(self, val: float):
+        self._q_min_vert = val
+        self.set_q_max()
+
+    @property
+    def q_max_horizon(self):
+        return self._q_max_horizon
+
+    @q_max_horizon.setter
+    def q_max_horizon(self, val: float):
+        self._q_max_horizon = val
+        self.set_q_max()
+
+    @property
+    def q_min_horizon(self):
+        return self._q_min_horizon
+
+    @q_min_horizon.setter
+    def q_min_horizon(self, val: float):
+        self._q_min_horizon = val
+        self.set_q_max()
+
+    def set_q_max(self):
+        corners = [
+            math.sqrt(self.q_max_vert**2 + self.q_max_horizon**2),
+            math.sqrt(self.q_min_vert**2 + self.q_max_horizon**2),
+            math.sqrt(self.q_max_vert**2 + self.q_min_horizon**2),
+            math.sqrt(self.q_min_vert**2 + self.q_min_horizon**2),
+        ]
+        self.q_max = max(corners)
+
+    def load_params(self, params: Dict[str, List[str, Union[float, int, str]]]):
+        values = {}
+        for name, value in params.values():
+            def_value = 0.0 if value.get("type", default="number") == "number" else "lin"
+            values[name] = value.get("default", def_value)
+        self.n_pts = values.get('points', 0.0)
+        self.spacing = values.get('point_spacing', self.spacing)
+        self.q_min = values.get('q_min', self.q_min)
+        self.dq = values.get('dq', self.dq)
+        self.q_max_vert = values.get('q_max_vertical', self.q_max_vert)
+        self.q_min_vert = values.get('q_min_vertical', self.q_min_vert)
+        self.q_max_horizon = values.get('q_max_horizontal', self.q_max_horizon)
+        self.q_min_horizon = values.get('q_min_horizontal', self.q_min_horizon)
 
     def sas_calc(self):
-        # TODO: Return real data
+        method = np.linspace if self.spacing == "lin" else np.logspace
+        q_vals = method(self.q_min, self.q_max, self.n_pts)
+        qx_values = method(self.q_min_horizon, self.q_max_horizon, self.n_pts)
+        qy_values = method(self.q_min_vert, self.q_max_vert, self.n_pts)
+        q_2d_vals = np.sqrt(qx_values*qx_values + qy_values*qy_values)
+        np.broadcast_to(qx_values, (self.n_pts, len(qx_values)))
+        np.broadcast_to(qy_values, (self.n_pts, len(qy_values)))
+        dq_vals = q_vals*self.dq
+        dqx_vals = qx_values*self.dq
+        dqy_vals = qy_values*self.dq
+        i_vals = np.ones_like(self.n_pts)
+        # FIXME: Set points where q_2d_vals < self.q_min to 0
+        i_2d_vals = np.ones_like((self.n_pts, self.n_pts))
+        # TODO: Populate this
+        self.one_dimensional = {"I": None, "dI": None, "Q": None, "dQ": None, "fSubS": None}
+        self.two_dimensional = {"I": None, "dI": None, "Qx": None, "dQx": None, "Qy": None, "dQy": None, "fSubS": None}
         return json.dumps(self.params)
 
 
@@ -942,6 +983,24 @@ class NG7SANS(Instrument):
 
         super().load_objects(params)
 
+    def calculate_instrument_parameters(self):
+        # Calculate the beam stop diameter
+        self.calculate_beam_stop_diameter()
+        # Calculate the estimated beam flux
+        self.data.calculate_beam_flux()
+        # Calculate the figure of merit
+        self.calculate_figure_of_merit()
+        # Calculate the number of attenuators
+        self.calculate_attenuators()
+        # Do Circular Average of an array of 1s
+
+        # TODO Figure out point of this
+        # for index in range(len(self.detectors) - 1):
+        #     self.data.calculate_min_and_max_q(index)
+        #     # TODO: This might not be needed here...
+        #     # TODO J    This method does not exist
+        #     self.slicer.calculate_q_range_slicer(index)
+
 
 class NGB30SANS(Instrument):
     # Class for the NGB 30m SANS instrument
@@ -980,6 +1039,24 @@ class NGB30SANS(Instrument):
 
         super().load_objects(params)
 
+    def calculate_instrument_parameters(self):
+        # Calculate the beam stop diameter
+        self.calculate_beam_stop_diameter()
+        # Calculate the estimated beam flux
+        self.data.calculate_beam_flux()
+        # Calculate the figure of merit
+        self.calculate_figure_of_merit()
+        # Calculate the number of attenuators
+        self.calculate_attenuators()
+        # Do Circular Average of an array of 1s
+
+        # TODO Figure out point of this
+        # for index in range(len(self.detectors) - 1):
+        #     self.data.calculate_min_and_max_q(index)
+        #     # TODO: This might not be needed here...
+        #     # TODO J    This method does not exist
+        #     self.slicer.calculate_q_range_slicer(index)
+
 
 class NGB10SANS(Instrument):
     # Class for the NGB 10m SANS instrument
@@ -1016,6 +1093,24 @@ class NGB10SANS(Instrument):
         params["temp"] = {}
         params["temp"]["serverName"] = "ngbsans.ncnr.nist.gov"
         super().load_objects(params)
+
+    def calculate_instrument_parameters(self):
+        # Calculate the beam stop diameter
+        self.calculate_beam_stop_diameter()
+        # Calculate the estimated beam flux
+        self.data.calculate_beam_flux()
+        # Calculate the figure of merit
+        self.calculate_figure_of_merit()
+        # Calculate the number of attenuators
+        self.calculate_attenuators()
+        # Do Circular Average of an array of 1s
+
+        # TODO Figure out point of this
+        # for index in range(len(self.detectors) - 1):
+        #     self.data.calculate_min_and_max_q(index)
+        #     # TODO: This might not be needed here...
+        #     # TODO J    This method does not exist
+        #     self.slicer.calculate_q_range_slicer(index)
 
     def calculate_source_to_sample_aperture_distance(self):
         super(NGB10SANS, self).calculate_source_to_sample_aperture_distance()
