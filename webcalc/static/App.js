@@ -104,7 +104,7 @@ export default {
     },
     async onInstrumentParamChange(params) {
       this.instrument_params = params;
-      let location = `/calculate/instrument/${this.active_instrument}`
+      let location = `/calculate/instrument/${this.active_instrument}`;
       let data = this.instrument_params;
       let results = await this.fetch_with_data(location, data);
       console.log(results);
