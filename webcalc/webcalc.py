@@ -8,7 +8,6 @@ from flask import Flask, render_template, request
 from python.link_to_sasmodels import get_model_list, get_params
 from python.link_to_sasmodels import calculate_model as calculate_m
 from python.instrument import calculate_instrument as calculate_i
-from python.instrument import get_params as get_i_params
 from python.helpers import decode_json
 
 
@@ -52,10 +51,6 @@ def create_app():
             q = [np.array(data[0][2])]
         params = {param_names[i]: param_values[i] for i in range(len(param_values))}
         return calculate_m(model_name, q, params)
-
-    @app.route('/get/params/instrument/<instrument_name>', methods=['GET'])
-    def get_instrument_params(instrument_name):
-        return get_i_params(instrument_name)
 
     @app.route('/calculate/instrument/<instrument_name>', methods=['POST'])
     def calculate_instrument(instrument_name):
