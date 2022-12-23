@@ -62,6 +62,14 @@ export default {
           max: 2.0,
           unit: 'Å',
         },
+        'q_min': {
+          name: 'Q Minimum',
+          default: 0.01,
+          type: "number",
+          min: -2.0,
+          max: 2.0,
+          unit: 'Å',
+        },
         'dq': {
           name: 'Q Resolution',
           default: 10.0,
