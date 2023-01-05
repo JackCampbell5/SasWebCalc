@@ -911,7 +911,7 @@ class NoInstrument(Instrument):
         ]
         self.q_max = max(corners)
 
-    def load_params(self, params: Dict[str, List[str, Union[float, int, str]]]):
+    def load_params(self, params: Dict[str, Dict[str, Union[float, int, str]]]):
         values = {}
         for name, value in params.values():
             def_value = 0.0 if value.get("type", default="number") == "number" else "lin"
