@@ -45,6 +45,6 @@ input.fixed-width-input {
     float: left;
 }
 
-div.param > div {
+div.parameter > div {
     display: inline-block;
 }
