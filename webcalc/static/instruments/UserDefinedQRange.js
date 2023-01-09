@@ -1,6 +1,6 @@
 const template = `
 <div class="instrument_params">
-  <h3>{{title}}</h3>
+  <h2>{{title}}</h2>
   <div id="q_range_inputs">
     <div class="param" v-for="(param, key) in instrument_params" :key="key">
         <label :for="key">{{param.name}}:&nbsp;</label>
@@ -29,6 +29,7 @@ export default {
   },
   data() {
     return {
+      title: "User Defined Q Range Parameters",
       instrument_params: {
         'q_min_vertical': {
           name: 'Q Min Vertical',
