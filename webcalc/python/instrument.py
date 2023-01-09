@@ -913,8 +913,9 @@ class NoInstrument(Instrument):
 
     def load_params(self, params: Dict[str, Dict[str, Union[float, int, str]]]):
         values = {}
-        for name, value in params.values():
-            def_value = 0.0 if value.get("type", default="number") == "number" else "lin"
+        # Simplify the parameters passed into a key:value pairing instead of a key: {sub_key: value} pairing
+        for name, value in params.items():
+            def_value = 0.0 if value.get("type", "number") == "number" else "lin"
             values[name] = value.get("default", def_value)
         self.n_pts = values.get('points', 0.0)
         self.spacing = values.get('point_spacing', self.spacing)
