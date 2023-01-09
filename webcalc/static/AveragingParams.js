@@ -1,7 +1,8 @@
 import { averagingInputs } from './constants.js';
 
 const template = `
-   <div id="averagingParams" class="params">
+   <div id="averagingParams" class="instrument-section" v-if="visibleParams.length > 0">
+      <h3>{{active_averaging_type}} Parameters:</h3>
       <div v-if="visibleParams.includes('phi')">
          <label for="phi">Orientation Angle (degrees): </label>
          <input v-model="averagingParams.phi" type="number" min="0" max="90" id="phi" title="" />

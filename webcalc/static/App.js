@@ -40,9 +40,10 @@ const template = `
     </div>
   </div>
   <div class="instrument-section" id="modelAndAveragingParams">
-    <h3>Averaging and Model Parameters:</h3>
+    <h2>Averaging and Model Parameters:</h2>
     <averaging-params ref="averaging_params" :active_averaging_type="active_averaging_type" @change="onChange"/>
-    <div class="instrument-section" id="modelParams">
+    <div class="instrument-section" id="modelParams" v-if="Object.keys(model_params).length > 0">
+     <h3>{{active_model}} Model Parameters:</h3>
       <ul>
         <li v-for="(param, param_name) in model_params" :key="param_name">
           <label :for="active_model + '_' + param_name">{{param_name}}:</label>
