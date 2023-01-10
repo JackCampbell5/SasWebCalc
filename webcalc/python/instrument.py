@@ -668,11 +668,14 @@ class Instrument:
     def calculate_attenuators(self):
         self.calculate_attenuation_factor()
         atten = self.get_attenuation_factor()
-        af = 0.498 + 0.0792 * self.get_wavelength() - 1.66e-3 * self.get_wavelength() ** 2
-        nf = -1 * math.log(atten) / af
-        num_atten = math.ceil(nf)
-        if num_atten > 6:
-            num_atten = 7 + math.floor((num_atten - 6) / 2)
+        if atten:
+            af = 0.498 + 0.0792 * self.get_wavelength() - 1.66e-3 * self.get_wavelength() ** 2
+            nf = -1 * math.log(atten) / af
+            num_atten = math.ceil(nf)
+            if num_atten > 6:
+                num_atten = 7 + math.floor((num_atten - 6) / 2)
+        else:
+            num_atten = 0
         self.wavelength.number_of_attenuators = num_atten
 
     def calculate_beam_diameter(self, index=0, direction='maximum'):
