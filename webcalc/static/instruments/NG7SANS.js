@@ -4,20 +4,30 @@ const template = `
   <div id="ng7_inputs">
     <div v-for="(category, cat_key) in categories" :id="cat_key" :key="cat_key" class="instrument-section" >
       <h3>{{category.display_name}}:</h3>
-      <div class="parameter" v-for="(param, key) in instrument_params" :key="key">
-        <span v-if="param.category == cat_key">
-          <label :for="key">{{param.name}}:&nbsp;</label>
-          <select v-if="param.type == 'select'" v-model.string="param.default" :id="key" @change="onChangeValue">
+      <div class="instrument-section">
+      <span class="parameter" v-for="(param, key) in instrument_params" :key="key">
+        <span v-if="param.category == cat_key" :style="(param.hidden) ? 'display:none' : ''">
+          <label :for="key" v-if="param.name != ''">{{param.name}}<span v-if="param.unit != ''"> (<span v-html="param.unit"></span>)</span>: </label>
+          <select v-if="param.type == 'select'" v-model.string="param.default" :id="key" 
+              :disabled="param.readonly" @change="onChangeValue">
               <option v-for="option in param.options" :key="option" :value="option">{{option}}</option>
           </select>
+          <span v-else-if="param.type == 'range'">
+            <input type="range" v-model.string="param.default" :disabled="param.readonly"
+              :min="(param.lower_limit == '-inf') ? null : param.lower_limit"
+              :max="(param.upper_limit == 'inf') ? null : param.upper_limit"
+              :list="key" @change="param.changeMethod" />
+            <datalist :id="param.range_id">
+              <option v-for="option in param.options" :key="option" :value="option">{{option}}</option>
+            </datalist>
+          </span>
           <input v-else type="number" v-model.number="param.default" :id="key" class="fixed-width-input" 
               :min="(param.lower_limit == '-inf') ? null : param.lower_limit"
               :max="(param.upper_limit == 'inf') ? null : param.upper_limit"
-              @input="onChangeValue"/>
-          <span v-if="param.unit != ''">&nbsp;{{param.unit}}</span>
+              :disabled="param.readonly"  @input="onChangeValue"/>
          </span>
+      </span>
       </div>
-     </div>
   </div>
 </div>
 `
