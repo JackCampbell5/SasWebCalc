@@ -16,7 +16,7 @@ const template = `
             <input type="range" v-model.string="param.default" :disabled="param.readonly"
               :min="(param.lower_limit == '-inf') ? null : param.lower_limit"
               :max="(param.upper_limit == 'inf') ? null : param.upper_limit"
-              :list="key" @change="param.changeMethod" />
+              :list="key" @change="onChangeValue" />
             <datalist :id="param.range_id">
               <option v-for="option in param.options" :key="option" :value="option">{{option}}</option>
             </datalist>
@@ -28,6 +28,7 @@ const template = `
          </span>
       </span>
       </div>
+    </div>
   </div>
 </div>
 `
@@ -39,9 +40,28 @@ export default {
     categories: {type: Object, default: {}},
   },
   methods: {
-   onChangeValue (event) {
-       this.$emit('valueChange', this.instrument_params);
-   }
+    onChangeValue(event) {
+      //TODO: Update secondary values based on event.target.id
+      if (event.target.id == "ng7GuideConfig") {
+        this.updateApertureOptions(event.target.value);
+      }
+      this.$emit('valueChange', this.instrument_params);
+    },
+    updateApertureOptions(value) {
+      let allApertureOptions = Object.values(document.getElementById("ng7SourceAperture").options);
+      let guideApertureOptions = this.sourceApertures[value];
+      for (let aperture in allApertureOptions) {
+        if (guideApertureOptions.includes(allApertureOptions[aperture].value.toString()))
+        {
+          allApertureOptions[aperture].disabled = false;
+          allApertureOptions[aperture].hidden = false;
+        }
+        else {
+          allApertureOptions[aperture].disabled = true;
+          allApertureOptions[aperture].hidden = true;
+        }
+      }
+    },
   },
   data() {
     return {
@@ -53,8 +73,20 @@ export default {
         "ng7Detector": {display_name: 'Detector Settings'},
         "ng7QRange": {display_name: 'Calculated Q Range'},
       },
+      sourceApertures: {
+        0: ['1.43', '2.54', '3.81'],
+        1: ['5.08'],
+        2: ['5.08'],
+        3: ['5.08'],
+        4: ['5.08'],
+        5: ['5.08'],
+        6: ['5.08'],
+        7: ['5.08'],
+        8: ['5.08'],
+        'LENS': ['1.43'],
+      },
       instrument_params: {
-        'ng7_sample_table': {
+        'ng7SampleTable': {
           name: 'Sample Table',
           default: "Chamber",
           type: "select",
@@ -67,7 +99,7 @@ export default {
         },
         'ng7WavelengthInput': {
           name: 'Wavelength',
-          default: '',
+          default: 6.0,
           type: "number",
           unit: '&#8491;',
           category: 'ng7Wavelength',
@@ -78,7 +110,7 @@ export default {
           type: "select",
           category: 'ng7Wavelength',
           unit: '',
-          options: [9.3, 11.5, 13.9, 22.1]
+          options: [9.3, 11.5, 13.9, 22.1],
         },
         'ng7BeamFlux': {
           name: 'Beam Flux',
@@ -118,7 +150,7 @@ export default {
           type: "select",
           category: 'ng7Collimation',
           unit: '',
-          options: [0, 1, 2, 3, 4, 5, 6, 7, 8, 'LENS']
+          options: [0, 1, 2, 3, 4, 5, 6, 7, 8, 'LENS'],
         },
         'ng7SourceAperture': {
           name: 'Source Aperture',
@@ -126,7 +158,7 @@ export default {
           type: "select",
           unit: 'cm',
           category: 'ng7Collimation',
-          options: [1.43, 2.54, 3.81, 5.08]
+          options: [1.43, 2.54, 3.81, 5.08],
         },
         'ng7SampleAperture': {
           name: 'Sample Aperture',
@@ -134,19 +166,19 @@ export default {
           type: "select",
           unit: 'inch',
           category: 'ng7Collimation',
-          options: [0.125, 0.25, 0.375, 0.125, 0.500, 0.625, 0.75, 0.875, 1.00, 'Custom']
+          options: [0.125, 0.25, 0.375, 0.125, 0.500, 0.625, 0.75, 0.875, 1.00, 'Custom'],
         },
         'ng7CustomAperture': {
           name: 'Aperture Diameter',
-          default: 100,
+          default: 13,
           type: "number",
-          unit: 'cm',
+          unit: 'mm',
           category: 'ng7Collimation',
           hidden: true,
         },
         'ng7SSD': {
           name: 'Source-To-Sample Distance',
-          default: 100,
+          default: 1627,
           type: "number",
           unit: 'cm',
           category: 'ng7Collimation',
@@ -168,7 +200,7 @@ export default {
           unit: '',
           lower_limit: 90,
           upper_limit: 1532,
-          options: [100, 400, 1300, 1530]
+          options: [100, 400, 1300, 1530],
         },
         'ng7OffsetInputBox': {
           name: 'Detector Offset',
@@ -185,7 +217,7 @@ export default {
           unit: '',
           lower_limit: 0,
           upper_limit: 25,
-          options: [0, 5, 10, 15, 20, 25]
+          options: [0, 5, 10, 15, 20, 25],
         },
         'ng7SDD': {
           name: 'Sample-To-Detector Distance',
@@ -244,7 +276,6 @@ export default {
           readonly: true,
         },
       }
-
     }
   },
   template: template
