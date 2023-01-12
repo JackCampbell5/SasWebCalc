@@ -73,7 +73,7 @@ export default {
     updateApertureOptions(target) {
       // Update the allowed aperture values based on the number of guides selected
       let allApertureOptions = Object.values(document.getElementById("ng7SourceAperture").options);
-      let guideApertureOptions = this.sourceApertures[target.value];
+      let guideApertureOptions = this.source_apertures[target.value];
       for (let aperture of allApertureOptions) {
         let toggle = !guideApertureOptions.includes(aperture.value.toString());
         // If the aperture is a possible value, enable it and set it to the existing value
@@ -95,7 +95,7 @@ export default {
         "ng7Detector": {display_name: 'Detector Settings'},
         "ng7QRange": {display_name: 'Calculated Q Range'},
       },
-      sourceApertures: {
+      source_apertures: {
         0: ['1.43', '2.54', '3.81'],
         1: ['5.08'],
         2: ['5.08'],
