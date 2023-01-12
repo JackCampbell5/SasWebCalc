@@ -50,7 +50,9 @@ export default {
         this.updateApertureOptions(target);
       }
       else if (target.id === "ng7WavelengthSpread") {
-        // TODO: Update wavelength range
+        let range = this.wavelength_ranges[target.value];
+        this.instrument_params['ng7WavelengthInput'].min = range[0];
+        this.instrument_params['ng7WavelengthInput'].max = range[1];
       }
       else if (target.id === "ng7SampleAperture") {
         this.instrument_params['ng7CustomAperture'].hidden = !(target.value === 'Custom');
@@ -105,6 +107,12 @@ export default {
         8: ['5.08'],
         'LENS': ['1.43'],
       },
+      wavelength_ranges: {
+        9.7: ['6.5', '20.0'],
+        13.9: ['4.8', '20.0'],
+        15: ['4.5', '20.0'],
+        22.1: ['4.0', '20.0']
+      },
       instrument_params: {
         'ng7SampleTable': {
           name: 'Sample Table',
@@ -120,7 +128,7 @@ export default {
         'ng7WavelengthInput': {
           name: 'Wavelength',
           default: 6.0,
-          min: 4.0,
+          min: 4.8,
           max: 20.0,
           type: "number",
           unit: '&#8491;',
@@ -128,11 +136,11 @@ export default {
         },
         'ng7WavelengthSpread': {
           name: 'Wavelength Spread',
-          default: 11.5,
+          default: 13.9,
           type: "select",
           category: 'ng7Wavelength',
           unit: '',
-          options: [9.3, 11.5, 13.9, 22.1],
+          options: [9.7, 13.9, 15, 22.1],
         },
         'ng7BeamFlux': {
           name: 'Beam Flux',
