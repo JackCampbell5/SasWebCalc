@@ -48,15 +48,19 @@ export default {
       this.$emit('valueChange', this.instrument_params);
     },
     updateApertureOptions(value) {
+      // Update the allowed aperture values based on the number of guides selected
       let allApertureOptions = Object.values(document.getElementById("ng7SourceAperture").options);
       let guideApertureOptions = this.sourceApertures[value];
       for (let aperture in allApertureOptions) {
         if (guideApertureOptions.includes(allApertureOptions[aperture].value.toString()))
         {
+          // If the aperture is a possible value, enable it and set it to the existing value
           allApertureOptions[aperture].disabled = false;
           allApertureOptions[aperture].hidden = false;
+          this.instrument_params['ng7SourceAperture'].default = allApertureOptions[aperture].value;
         }
         else {
+          // If the aperture is not a possible value, disable and hide the value.
           allApertureOptions[aperture].disabled = true;
           allApertureOptions[aperture].hidden = true;
         }
