@@ -41,28 +41,45 @@ export default {
   },
   methods: {
     onChangeValue(event) {
-      //TODO: Update secondary values based on event.target.id
-      if (event.target.id == "ng7GuideConfig") {
-        this.updateApertureOptions(event.target.value);
-      }
+      console.log(event);
+      this.updateSecondaryElements(event.target);
       this.$emit('valueChange', this.instrument_params);
     },
-    updateApertureOptions(value) {
+    updateSecondaryElements(target) {
+      if (target.id === "ng7GuideConfig") {
+        this.updateApertureOptions(target);
+      }
+      else if (target.id === "ng7WavelengthSpread") {
+        // TODO: Update wavelength range
+      }
+      else if (target.id === "ng7SampleAperture") {
+
+        // TODO: Show custom aperture if custom selected
+      }
+      else if (target.id === "ng7SDDInputBox") {
+        // TODO: Update slider value
+      }
+      else if (target.id === "ng7SDDDefaults") {
+        // TODO: Update input value
+      }
+      else if (target.id === "ng7OffsetInputBox") {
+        // TODO: Update slider value
+      }
+      else if (target.id === "ng7OffsetDefaults") {
+        // TODO: Update input value
+      }
+    },
+    updateApertureOptions(target) {
       // Update the allowed aperture values based on the number of guides selected
       let allApertureOptions = Object.values(document.getElementById("ng7SourceAperture").options);
-      let guideApertureOptions = this.sourceApertures[value];
-      for (let aperture in allApertureOptions) {
-        if (guideApertureOptions.includes(allApertureOptions[aperture].value.toString()))
-        {
-          // If the aperture is a possible value, enable it and set it to the existing value
-          allApertureOptions[aperture].disabled = false;
-          allApertureOptions[aperture].hidden = false;
-          this.instrument_params['ng7SourceAperture'].default = allApertureOptions[aperture].value;
-        }
-        else {
-          // If the aperture is not a possible value, disable and hide the value.
-          allApertureOptions[aperture].disabled = true;
-          allApertureOptions[aperture].hidden = true;
+      let guideApertureOptions = this.sourceApertures[target.value];
+      for (let aperture of allApertureOptions) {
+        let toggle = !guideApertureOptions.includes(aperture.value.toString());
+        // If the aperture is a possible value, enable it and set it to the existing value
+        aperture.disabled = toggle;
+        aperture.hidden = toggle;
+        if (!toggle) {
+          this.instrument_params['ng7SourceAperture'].default = aperture.value;
         }
       }
     },
@@ -104,6 +121,8 @@ export default {
         'ng7WavelengthInput': {
           name: 'Wavelength',
           default: 6.0,
+          min: 4.0,
+          max: 20.0,
           type: "number",
           unit: '&#8491;',
           category: 'ng7Wavelength',
@@ -197,7 +216,7 @@ export default {
         },
         'ng7SDDDefaults': {
           name: '',
-          default: 0,
+          default: 100,
           type: "range",
           category: 'ng7Detector',
           range_id: 'ng7SDDDefaults',
