@@ -53,8 +53,7 @@ export default {
         // TODO: Update wavelength range
       }
       else if (target.id === "ng7SampleAperture") {
-
-        // TODO: Show custom aperture if custom selected
+        this.instrument_params['ng7CustomAperture'].hidden = !(target.value === 'Custom');
       }
       else if (target.id === "ng7SDDInputBox") {
         // TODO: Update slider value
