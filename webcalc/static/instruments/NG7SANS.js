@@ -41,7 +41,6 @@ export default {
   },
   methods: {
     onChangeValue(event) {
-      console.log(event);
       this.updateSecondaryElements(event.target);
       this.$emit('valueChange', this.instrument_params);
     },
@@ -58,16 +57,16 @@ export default {
         this.instrument_params['ng7CustomAperture'].hidden = !(target.value === 'Custom');
       }
       else if (target.id === "ng7SDDInputBox") {
-        // TODO: Update slider value
+        this.instrument_params['ng7SDDDefaults'].default = this.instrument_params['ng7SDDInputBox'].default;
       }
       else if (target.id === "ng7SDDDefaults") {
-        // TODO: Update input value
+        this.instrument_params['ng7SDDInputBox'].default = this.instrument_params['ng7SDDDefaults'].default;
       }
       else if (target.id === "ng7OffsetInputBox") {
-        // TODO: Update slider value
+        this.instrument_params['ng7OffsetDefaults'].default = this.instrument_params['ng7OffsetInputBox'].default;
       }
       else if (target.id === "ng7OffsetDefaults") {
-        // TODO: Update input value
+        this.instrument_params['ng7OffsetInputBox'].default = this.instrument_params['ng7OffsetDefaults'].default;
       }
     },
     updateApertureOptions(target) {
