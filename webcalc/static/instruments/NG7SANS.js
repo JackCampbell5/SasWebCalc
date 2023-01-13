@@ -13,10 +13,10 @@ const template = `
               <option v-for="option in param.options" :key="option" :value="option">{{option}}</option>
           </select>
           <span v-else-if="param.type == 'range'">
-            <input type="range" v-model.string="param.default" :disabled="param.readonly"
+            <input type="range" v-model.string="param.default" :disabled="param.readonly" :id="key" 
               :min="(param.lower_limit == '-inf') ? null : param.lower_limit"
               :max="(param.upper_limit == 'inf') ? null : param.upper_limit"
-              :list="key" @change="onChangeValue" />
+              :list="param.range_id" @change="onChangeValue" />
             <datalist :id="param.range_id">
               <option v-for="option in param.options" :key="option" :value="option">{{option}}</option>
             </datalist>
@@ -225,7 +225,7 @@ export default {
           default: 100,
           type: "range",
           category: 'ng7Detector',
-          range_id: 'ng7SDDDefaults',
+          range_id: 'ng7SDDDefaultRange',
           unit: '',
           lower_limit: 90,
           upper_limit: 1532,
@@ -243,6 +243,7 @@ export default {
           default: 0,
           type: "range",
           category: 'ng7Detector',
+          range_id: 'ng7OffsetDefaultRange',
           unit: '',
           lower_limit: 0,
           upper_limit: 25,
