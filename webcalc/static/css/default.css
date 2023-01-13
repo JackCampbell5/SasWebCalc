@@ -45,8 +45,8 @@ input.fixed-width-input {
     float: left;
 }
 
-div.parameter > div, span.parameter {
+div.parameter > div, span.parameter, ul.parameter > li {
     display: inline-block;
-    margin: 3px;
+    margin: 5px;
     white-space: nowrap;
 }

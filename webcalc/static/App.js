@@ -30,12 +30,8 @@ const template = `
       </select>
       <label id="averagingTypeLabel" for="averagingType">Averaging Method: </label>
       <select id="averagingType" v-model="active_averaging_type">
-        <option v-for="averaging in ['circular', 'sector', 'rectangular']" :key="averaging" :value="averaging">
+        <option v-for="averaging in averaging_types" :key="averaging" :value="averaging">
           {{averaging}}</option>
-        <!--
-        <option value="annular">Annular</option>
-        <option value="elliptical">Elliptical</option>
-        -->
       </select>
     </div>
   </div>
@@ -82,7 +78,14 @@ export default {
   },
   data: () => ({
     active_instrument: "",
-    active_averaging_type: "circular",
+    active_averaging_type: "Circular",
+    averaging_types: {
+      'circular': 'Circular',
+      'sector: ': 'Sector',
+      'rectangular': 'Rectangular',
+      'annular': 'Annular',
+      'elliptical': 'Elliptical',
+    },
     active_model: "",
     model_names: [],
     model_params: {},

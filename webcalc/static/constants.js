@@ -22,11 +22,11 @@ export const units = {
 
 // Inputs for averaging types
 export const averagingInputs = {
-    "circular": [],
-    "sector": ["phi", "dPhi", "detectorSections"],
-    "annular": ["qCenter", "qWidth"],
-    "rectangular": ["qWidth", "phi", "detectorSections"],
-    "elliptical": ["phi", "aspectRatio", "detectorSections"]
+    "Circular": [],
+    "Sector": ["phi", "dPhi", "detectorSections"],
+    "Annular": ["qCenter", "qWidth"],
+    "Rectangular": ["qWidth", "phi", "detectorSections"],
+    "Elliptical": ["phi", "aspectRatio", "detectorSections"]
 }
 
 // Default configuration values onloading the page
