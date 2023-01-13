@@ -2,11 +2,10 @@ const template = `
 <div class="instrument_params">
   <h2>{{title}} Instrumental Parameters</h2>
   <div id="ng7_inputs">
-    <div v-for="(category, cat_key) in categories" :id="cat_key" :key="cat_key" class="instrument-section" >
+    <div v-for="(category, cat_key) in categories" :id="cat_key" :key="cat_key" class="instrument-section" :set="active_category = cat_key">
       <h3>{{category.display_name}}:</h3>
-      <div class="instrument-section">
-      <span v-for="(param, key) in instrument_params" :key="key">
-        <span class="parameter" v-if="param.category == cat_key" :style="(param.hidden) ? 'display:none' : ''">
+      <ul class="parameter">
+        <li v-for="(param, key) in item_in_category" :key="key" class="parameter">
           <label :for="key" v-if="param.name != ''">{{param.name}}<span v-if="param.unit != ''"> (<span v-html="param.unit"></span>)</span>: </label>
           <select v-if="param.type == 'select'" v-model.string="param.default" :id="key" 
               :disabled="param.readonly" @change="onChangeValue">
@@ -25,9 +24,8 @@ const template = `
               :min="(param.lower_limit == '-inf') ? null : param.lower_limit"
               :max="(param.upper_limit == 'inf') ? null : param.upper_limit"
               :disabled="param.readonly"  @input="onChangeValue"/>
-         </span>
-      </span>
-      </div>
+        </li>
+      </ul>
     </div>
   </div>
 </div>
@@ -38,6 +36,7 @@ export default {
     title: String,
     instrument_params: {type: Object, default: {}},
     categories: {type: Object, default: {}},
+    active_category: String,
   },
   methods: {
     onChangeValue(event) {
@@ -84,9 +83,20 @@ export default {
       }
     },
   },
+  computed: {
+    item_in_category: function () {
+      return Object.keys(this.instrument_params)
+        .filter(key => this.instrument_params[key].category === this.active_category).
+        reduce((obj, key) => {
+          obj[key] = this.instrument_params[key];
+        return obj;
+        }, {});
+    },
+  },
   data() {
     return {
       title: "NG7 SANS",
+      active_category: "",
       categories: {
         "ng7Sample": {display_name: 'Sample Area Settings'},
         "ng7Wavelength": {display_name: 'Wavelength Settings'},
