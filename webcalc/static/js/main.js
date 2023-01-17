@@ -287,7 +287,7 @@ function getAveragingParams() {
     return params;
 }
 function getCurrentConfig(instrument) {
-//Depricated function
+//Deprecated function
     window.currentConfig["guide.guide"] = document.getElementById(instrument + 'GuideConfig').value;
     window.currentConfig["geometry.externalSampleAperture"] = getSampleApertureSize(instrument) * 10 + window.units["sampleAperture"];
     window.currentConfig["guide.sourceAperture"] = getSourceAperture(instrument);
@@ -317,9 +317,9 @@ async function sendToPythonInstrument(instrument) {
     json_object["collimation"] = {};
     json_object["collimation"]["source_aperture"] = {};
     json_object["collimation"]["source_aperture"]["diameter"] = getSourceAperture(instrument);
-    json_object["collimation"]["source_aperture"]["diameter_unit"] = window.units["sampleAperture"];
+    json_object["collimation"]["source_aperture"]["diameter_unit"] = window.units["source_aperture"];
     json_object["collimation"]["sample_aperture"] = {};
-    json_object["collimation"]["sample_aperture"]["diameter"] = getSampleApertureSize(instrument) * 10;
+    json_object["collimation"]["sample_aperture"]["diameter"] = getSampleApertureSize(instrument);// TODO: Inst this supposed to be in inches?
     json_object["collimation"]["sample_aperture"]["diameter_unit"] = window.units["sampleAperture"];
     json_object["collimation"][0] = {};
     json_object["collimation"][0]["ssd"] = document.getElementById(instrument + 'SDD').value = " " ? 0.0 : document.getElementById(instrument + 'SDD').value ;
@@ -358,7 +358,6 @@ async function sendToPythonInstrument(instrument) {
     const pythonDataEncoded = await post_data(`/calculate_instrument/${instrument}`, json_object);
     const pythonData = JSON.parse(pythonDataEncoded);
 
-    //TODO add Attenuation factor
     var beamFluxNode = document.getElementById(instrument + 'BeamFlux');
     beamFluxNode.value = pythonData["user_inaccessible"]["beamFlux"];//Works
     const figureOfMeritNode = document.getElementById(instrument + 'FigureOfMerit');
@@ -393,6 +392,7 @@ async function sendToPythonInstrument(instrument) {
     window.qxValues =pythonData["qxValues"]
     window.qyValues =pythonData["qyValues"]
     window.intensity2D = pythonData["intensitys2D"]
+    window.qValues = pythonData["qValues"]
 }
 
 /*

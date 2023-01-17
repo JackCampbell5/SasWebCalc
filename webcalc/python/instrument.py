@@ -75,6 +75,7 @@ def calculate_instrument(instrument, params):
     Returns: [[1D resolutions], [2D resolutions]]
     """
     # TODO: Create classes for all instruments
+    print(params)
     # i_class is the python object for the interment
     if instrument == 'ng7':
         # Creates NG7SANS object if instrument is ng7
@@ -193,6 +194,7 @@ class Collimation:
         self.parent = parent
         self.source_aperture = Aperture(parent, params.get('source_aperture', {}))
         self.sample_aperture = Aperture(parent, params.get('sample_aperture', {}))
+        print(params['guides'])
         self.guides = Guide(parent, params.get('guides', {}))
         # Sets the params array to main values without aperture array
         params = params['0']
@@ -205,8 +207,6 @@ class Collimation:
         self.space_offset = 0.0
         self.detector_distance = 0.0
         self.set_params(params)
-
-
 
     def set_params(self, params=None):
         # type: (dict) -> None
@@ -232,6 +232,7 @@ class Collimation:
         return self.sample_aperture.get_diameter()
 
     def get_ssd(self):
+        self.calculate_source_to_sample_distance()
         return self.parent.d_converter(self.ssd, self.ssd_unit)
 
     def get_ssad(self):
@@ -242,9 +243,10 @@ class Collimation:
 
     def calculate_source_to_sample_distance(self):
         self.ssd = self.ssad - self.aperture_offset
+
     def calculate_source_to_sample_aperture_distance(self):
-        self.ssad = (self.guides.get_maximum_length() - self.guides.get_maximum_length()
-                    * self.guides.number_of_guides - self.get_sample_aperture_offset())
+        self.ssad = (self.guides.get_maximum_length() - self.guides.get_length_per_guide()
+                     * self.guides.number_of_guides - self.get_sample_aperture_offset())
 
 
 class Detector:
@@ -356,9 +358,9 @@ class Guide:
         """
         # TODO  J   Import values for  guide_width, gap_at_start, and length_per_guide
         self.parent = parent
-        self.guide_width = 0.0  ##
+        self.guide_width = 0.0
         self.guide_width_unit = 'cm'
-        self.transmission_per_guide = 1.0  ## GuideLoss
+        self.transmission_per_guide = 1.0  # GuideLoss
         self.length_per_guide = 0.0
         self.length_per_guide_unit = 'cm'
         self.number_of_guides = 0
@@ -413,6 +415,7 @@ class Wavelength:
         self.rpm_range = (0.0, np.inf)
         self.number_of_attenuators = 0
         self.attenuation_factor = 0
+        # FOM converter
         self.d_converter = Converter(self.wavelength_unit)
         # TODO Create WavelengthCalculator class and implement object
         # self.d_lambda_allowed = WavelengthCalculator...
@@ -431,7 +434,7 @@ class Wavelength:
         self.calculate_wavelength_range()
 
     def get_wavelength(self):
-        return self.parent.d_converter(self.wavelength, self.wavelength_unit)
+        return self.d_converter(self.wavelength, self.wavelength_unit)
 
     def set_wavelength(self, value, units):
         self.wavelength = self.d_converter(value, units)
@@ -491,29 +494,41 @@ class Data:
         set_params(self, params)
 
     def calculate_beam_flux(self):
+        # FOM Start with 1/18/22
         # FIXME: Flux calculation is about 7x too high
         guide_loss = self.parent.collimation.guides.transmission_per_guide
-        sample_aperture = self.parent.get_sample_aperture_size()
-        sdd = self.parent.get_sample_to_detector_distance()
+        sample_aperture = self.parent.get_sample_aperture_size()  # Correct
+        SSD = self.parent.collimation.get_ssd()  # SSD calculation wont
         wave = self.parent.get_wavelength()
         lambda_spread = self.parent.get_wavelength_spread()
         guides = self.parent.get_number_of_guides()
 
         # Run calculations
-        alpha = (self.parent.get_source_aperture_size() + sample_aperture) / (2 * sdd)
+        self.parent.collimation.calculate_source_to_sample_aperture_distance()
+        self.parent.collimation.calculate_source_to_sample_distance()
+        alpha = (self.parent.get_source_aperture_size() + sample_aperture) / (2 * SSD)
         f = (self.parent.collimation.guides.get_gap_at_start() * alpha) / (
                 2 * self.parent.collimation.guides.get_guide_width())
         trans4 = (1 - f) * (1 - f)
         trans5 = math.exp(guides * math.log(guide_loss))
-        trans6 = 1 - wave * (self.beta - (guides / 8) * (self.beta - self.charlie))
+        trans6 = 1 - (wave * (self.beta - ((guides / 8) * (self.beta - self.charlie))))
         total_trans = self.trans_1 * self.trans_2 * self.trans_3 * trans4 * trans5 * trans6
+
+        # All above calculations are correct
+        print(" alpha:  " + str(alpha))
+        print(" f:  " + str(f))
+        print(" trans4:  " + str(trans4))
+        print(" trans5:  " + str(trans5))
+        print(" trans6:  " + str(trans6))
+        print(" totalTrans:  " + str(total_trans))
 
         area = math.pi * sample_aperture * sample_aperture / 4
         d2_phi = self.peak_flux / (2 * math.pi)
         d2_phi = d2_phi * math.exp(4 * math.log(self.peak_wavelength / wave))
         d2_phi = d2_phi * math.exp(-1 * math.pow(self.peak_wavelength / wave, 2))
-        solid_angle = (math.pi / 4) * (sample_aperture / sdd) * (sample_aperture / sdd)
+        solid_angle = (math.pi / 4) * ((sample_aperture / SSD) * (sample_aperture / SSD))
         self.flux = area * d2_phi * lambda_spread * solid_angle * total_trans
+        print("Flux", self.flux)
 
     def calculate_min_and_max_q(self, index=0):
         sdd = self.parent.get_sample_to_detector_distance()
@@ -536,6 +551,7 @@ class Data:
 
     def get_beam_flux(self):
         self.calculate_beam_flux()
+        # FOM   Goal is that self.flux = 29.9004105043
         return (math.pow(self.parent.d_converter(self.flux, self.flux_size_unit), 2)
                 * self.parent.t_converter(self.flux, self.flux_time_unit))
 
@@ -614,12 +630,12 @@ class Instrument:
         python_return["user_inaccessible"] = {}
         python_return["user_inaccessible"]["beamFlux"] = self.data.get_beam_flux()
         python_return["user_inaccessible"]["figureOfMerit"] = self.calculate_figure_of_merit()
-        python_return["user_inaccessible"]["numberOfAttenuators"] = self.wavelength.number_of_attenuators
+        python_return["user_inaccessible"]["numberOfAttenuators"] = self.get_attenuator_number()
         python_return["user_inaccessible"]["ssd"] = self.collimation.ssd
         python_return["user_inaccessible"]["sdd"] = self.detectors[0].sdd
         python_return["user_inaccessible"]["beamDiameter"] = self.get_beam_diameter()
         python_return["user_inaccessible"]["beamStopDiameter"] = self.get_beam_stop_diameter()
-        python_return["user_inaccessible"]["attenuationFactor"] = self.wavelength.attenuation_factor
+        python_return["user_inaccessible"]["attenuationFactor"] = self.get_attenuation_factor()
         python_return["MaximumVerticalQ"] = self.data.q_max_vert
         python_return["MaximumHorizontalQ"] = self.data.q_max_horizon
         python_return["MaximumQ"] = self.data.q_max
@@ -633,6 +649,7 @@ class Instrument:
         python_return["qxValues"] = self.slicer.qx_values.tolist()
         python_return["qyValues"] = self.slicer.qy_values.tolist()
         python_return["intensitys2D"] = self.slicer.intensity_2D.tolist()
+        python_return["qValues"] = self.slicer.q_values
 
         # Can return encode JSON just not a python dictionary
         return encode_json(python_return)
@@ -645,7 +662,7 @@ class Instrument:
         # Calculate the figure of merit
         self.calculate_figure_of_merit()
         # Calculate the number of attenuators
-        self.calculate_attenuators()
+        self.calculate_attenuator_number()
         # Do Circular Average of an array of 1s
 
         # TODO Figure out point of this
@@ -655,17 +672,26 @@ class Instrument:
         #     # TODO J    This method does not exist
         #     self.slicer.calculate_q_range_slicer(index)
 
+    # TODO 1/5/23 fix this function to output not 1
     def calculate_attenuation_factor(self, index=0):
         a2 = self.get_sample_aperture_size()
         beam_diam = self.get_beam_diameter(index)
-        a_pixel = self.detectors[index].get_pixel_size_x()
-        i_pixel_max = self.detectors[index].per_pixel_max_flux
+        a_pixel = self.detectors[index].get_pixel_size_x() / 100  # Fix: This calc was 100 to high
+        i_pixel_max = self.detectors[index].per_pixel_max_flux  # Calculated correctly
         num_pixels = (math.pi / 4) * (0.5 * (a2 + beam_diam) / a_pixel) ** 2
         i_pixel = self.get_beam_flux() / num_pixels
         atten = 1.0 if i_pixel < i_pixel_max else i_pixel_max / i_pixel
+        # print("a2:  " + str(a2))
+        # print("beam_diam:  " + str(beam_diam))
+        # print("a_pixel:  " + str(a_pixel))
+        # print("i_pixel_max:  " + str(i_pixel_max))
+        # print("num_pixels:  " + str(num_pixels))
+        # print("i_pixel:  " + str(i_pixel))
+        # print("atten:  " + str(atten))
         self.wavelength.attenuation_factor = atten if atten == 1.0 else int(atten)
+        return self.wavelength.attenuation_factor
 
-    def calculate_attenuators(self):
+    def calculate_attenuator_number(self):
         self.calculate_attenuation_factor()
         atten = self.get_attenuation_factor()
         if atten:
@@ -677,6 +703,7 @@ class Instrument:
         else:
             num_atten = 0
         self.wavelength.number_of_attenuators = num_atten
+        return num_atten
 
     def calculate_beam_diameter(self, index=0, direction='maximum'):
         # Update all instrument calculations needed for beam diameter
@@ -732,12 +759,15 @@ class Instrument:
         self.calculate_beam_stop_diameter(index)
         bs_diam = self.get_beam_stop_diameter(index)
         sample_aperture = self.get_sample_aperture_size()
-        l2 = self.get_sample_aperture_to_detector_distance()  # Question why do we no longer need apature offset
+        l2 = self.get_sample_aperture_to_detector_distance()  # Question why do we no longer need aperture offset
         l_beam_stop = 20.1 + 1.61 * self.get_beam_stop_diameter()  # distance in cm from beam stop to anode plane
         return bs_diam + (bs_diam + sample_aperture) * l_beam_stop / (l2 - l_beam_stop)  # Return in cm
 
     def calculate_figure_of_merit(self):
+        # FOM This would work if beam flux is right
+        # TODO replace when beam flux works
         figure_of_merit = math.pow(self.get_wavelength(), 2) * self.get_beam_flux()
+        # figure_of_merit = math.pow(self.get_wavelength(), 2) * 26732
         return int(figure_of_merit)
 
     def calculate_sample_to_detector_distance(self, index=0):
@@ -794,12 +824,11 @@ class Instrument:
 
     def get_attenuation_factor(self):
         # TODO Fix The attenuation factor value calculated based on the number of attenuators
-        # Fixed ish this is will just infinatly loop
-        return self.wavelength.attenuation_factor
+        return self.calculate_attenuation_factor()
 
-    def get_attenuators(self):
+    def get_attenuator_number(self):
         # Number of attenuators in the beam
-        return self.calculate_attenuators()
+        return self.calculate_attenuator_number()
 
     def get_beam_flux(self):
         # Beam flux in cm^-2-s^-1
@@ -824,12 +853,14 @@ class Instrument:
         return guides
 
     def get_sample_aperture_size(self):
-        # Sample Aperture radius in centimeters
-        return self.collimation.get_sample_aperture_radius()
+        # Sample Aperture diameter in centimeters
+        # FOM Changed from radius to diameter
+        return self.collimation.get_sample_aperture_diameter()
 
     def get_source_aperture_size(self):
-        # Source Aperture radius in centimeters
-        return self.collimation.get_source_aperture_radius()
+        # Source Aperture diameter in centimeters
+        # FOM Changed from radius to diameter
+        return self.collimation.get_source_aperture_diameter()
 
     def get_sample_aperture_to_detector_distance(self, index=0):
         # SADD in centimeters
@@ -899,14 +930,17 @@ class NG7SANS(Instrument):
         params["data"]["trans_2"] = 0.7
         params["data"]["trans_3"] = 0.75
         params["detectors"][0]["pixel_size_x"] = 5.08
-        params["slicer"]["aperture_offset"] = 5.0
+        params["collimation"]["0"]["aperture_offset"] = 5
         params["slicer"]["coeff"] = 10000
         params["slicer"]["x_pixels"] = 128
         params["slicer"]["y_pixels"] = 128
+        params["collimation"]["guides"]["maximum_length"] = 1632
+        params["collimation"]["guides"]["length_per_guide"] = 155
         if params.get("collimation").get("sample_space", "Huber") == "Huber":
             params["collimation"]["space_offset"] = 54.8  # HuberOffset
         else:
             params["collimation"]["space_offset"] = 0.0  # ChamberOffset
+
         # Temporary constants not in use any more
         params["temp"] = {}
         params["temp"]["serverName"] = "ng7sans.ncnr.nist.gov"
@@ -936,10 +970,12 @@ class NGB30SANS(Instrument):
         params["collimation"]["guides"]["gap_at_start"] = 100
         params["collimation"]["guides"]["guide_width"] = 6.0
         params["collimation"]["guides"]["transmission_per_guide"] = 0.924
-        params["slicer"]["aperture_offset"] = 5
+        params["collimation"]["0"]["aperture_offset"] = 5
         params["slicer"]["coeff"] = 10000
         params["slicer"]["x_pixels"] = 128
         params["slicer"]["y_pixels"] = 128
+        params["collimation"]["guides"]["maximum_length"] = 1632
+        params["collimation"]["guides"]["length_per_guide"] = 155
         if params.get("collimation").get("sample_space", "Huber") == "Huber":
             params["collimation"]["space_offset"] = 54.8  # HuberOffset
         else:
@@ -974,7 +1010,11 @@ class NGB10SANS(Instrument):
         params["collimation"]["guides"]["gap_at_start"] = 165
         params["collimation"]["guides"]["guide_width"] = 5
         params["collimation"]["guides"]["transmission_per_guide"] = 0.974
-        params["slicer"]["aperture_offset"] = 5
+        params["collimation"]["guides"]["maximum_length"] = 513
+        if params["collimation"]["guides"]["number_of_guides"] != 0:
+            params["collimation"]["guides"]["length_per_guide"] = 150 + (
+                        61.9 / params["collimation"]["guides"]["number_of_guides"])
+        params["collimation"]["0"]["aperture_offset"] = 5
         params["slicer"]["coeff"] = 10000
         params["slicer"]["x_pixels"] = 128
         params["slicer"]["y_pixels"] = 128
