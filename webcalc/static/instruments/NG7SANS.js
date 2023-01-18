@@ -61,12 +61,6 @@ export default {
       else if (target.id === "ng7SDDDefaults") {
         this.instrument_params['ng7SDDInputBox'].default = this.instrument_params['ng7SDDDefaults'].default;
       }
-      else if (target.id === "ng7OffsetInputBox") {
-        this.instrument_params['ng7OffsetDefaults'].default = this.instrument_params['ng7OffsetInputBox'].default;
-      }
-      else if (target.id === "ng7OffsetDefaults") {
-        this.instrument_params['ng7OffsetInputBox'].default = this.instrument_params['ng7OffsetDefaults'].default;
-      }
     },
     updateApertureOptions(target) {
       // Update the allowed aperture values based on the number of guides selected
