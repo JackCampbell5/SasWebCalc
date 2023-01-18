@@ -62,7 +62,7 @@ const instruments = {
   "q_range": "User-Defined Q-Range and Resolutions",
   "ngb30": "NGB 30m SANS",
   "ng7": "NG7 SANS",
-  //"ngb10": "NGB 10m SANS",
+  "ngb10": "NGB 10m SANS",
   //"vsans": "VSANS",
 };
 
