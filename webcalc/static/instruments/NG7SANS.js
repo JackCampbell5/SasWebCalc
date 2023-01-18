@@ -5,7 +5,7 @@ const template = `
     <div v-for="(category, cat_key) in categories" :id="cat_key" :key="cat_key" class="instrument-section" :set="active_category = cat_key">
       <h3>{{category.display_name}}:</h3>
       <ul class="parameter">
-        <li v-for="(param, key) in item_in_category" :key="key" class="parameter">
+        <li v-for="(param, key) in item_in_category" :key="key" class="parameter" v-show="!param.hidden">
           <label :for="key" v-if="param.name != ''">{{param.name}}<span v-if="param.unit != ''"> (<span v-html="param.unit"></span>)</span>: </label>
           <select v-if="param.type == 'select'" v-model.string="param.default" :id="key" 
               :disabled="param.readonly" @change="onChangeValue">
