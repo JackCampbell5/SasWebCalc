@@ -4,6 +4,7 @@ import {default as ngb30} from "./instruments/NGB30SANS.js";
 import {default as vsans} from "./instruments/VSANS.js";
 import {default as q_range} from "./instruments/UserDefinedQRange.js";
 import {default as ngb10} from "./instruments/NGB10SANS.js";
+import Plotting, {default as plotting} from "./Plotting.js";
 
 const template = `
 <header class="top">
@@ -54,6 +55,7 @@ const template = `
   <div class="instrument-section" id="instrumentParams">
     <component v-if="active_instrument != ''" :is="active_instrument" @value-change="onInstrumentParamChange"/>
   </div>
+  <plotting ref="plotting">
 </div>
 </main>
 `;
@@ -69,6 +71,7 @@ const instruments = {
 export default {
   components: {
     'averaging-params': AveragingParams,
+    'plotting': plotting,
     'q_range': q_range,
     "ngb30": ngb30,
     "ng7": ng7,
@@ -133,8 +136,6 @@ export default {
   async beforeMount() {
     const fetch_result = await fetch("/get/models/");
     this.model_names = await fetch_result.json();
-  },
-  mounted() {
   },
   template
 }
