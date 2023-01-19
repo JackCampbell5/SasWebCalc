@@ -136,6 +136,33 @@ function updateInstrument(instrument, runSASCALC=true) {
         }
     }
 }
+
+/*
+ * Use the updated guide values to calculate the Q ranges for the current instrument
+ */
+function updateGuides(instrument, guideSelectStr, runSASCALC = true) {
+    // Get guide nodes for the specific instrument
+    var apertureNode = document.getElementById(instrument + "SourceAperture");
+    var allApertureOptions = Object.values(apertureNode.options);
+    var aperturesName = instrument + "SourceApertures";
+    var guideApertureOptions = Object.values(window[aperturesName][guideSelectStr]).join(" ");
+    // Show only source apertures allowed for the current guide configuration
+    for (aperture in allApertureOptions) {
+        var apertureValue = allApertureOptions[aperture].value.toString();
+        if (guideApertureOptions.includes(apertureValue)) {
+            allApertureOptions[aperture].disabled = false;
+            allApertureOptions[aperture].hidden = false;
+            allApertureOptions[aperture].selected = true;
+        } else {
+            allApertureOptions[aperture].disabled = true;
+            allApertureOptions[aperture].hidden = true;
+        }
+    }
+    if (runSASCALC) {
+        SASCALC(instrument);
+    }
+};
+
 /*
  * Set the event handlers for the current active instrument
  */
@@ -148,7 +175,7 @@ function setEventHandlers(instrument) {
     var wavelengthSpreadNode = document.getElementById(instrument + 'WavelengthSpread');
     wavelengthSpreadNode.onchange = function () { SASCALC(instrument); }
     var guideConfigNode = document.getElementById(instrument + 'GuideConfig');
-    guideConfigNode.onchange = function () { SASCALC(instrument); }
+    guideConfigNode.onchange = function () { updateGuides(instrument,this.value); }
     var apertureSourceNode = document.getElementById(instrument + 'SourceAperture');
     apertureSourceNode.onchange = function () { SASCALC(instrument); }
     var apertureSampleNode = document.getElementById(instrument + 'SampleAperture');

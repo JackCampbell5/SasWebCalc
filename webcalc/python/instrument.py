@@ -494,11 +494,13 @@ class Data:
         set_params(self, params)
 
     def calculate_beam_flux(self):
-        # FOM Start with 1/18/22
-        # FIXME: Flux calculation is about 7x too high
+        # Beam Flux Calculations now correct
+
+        #Varible defintion
         guide_loss = self.parent.collimation.guides.transmission_per_guide
-        sample_aperture = self.parent.get_sample_aperture_size()  # Correct
-        SSD = self.parent.collimation.get_ssd()  # SSD calculation wont
+        sourse_aperture = self.parent.get_source_aperture_diam()
+        sample_aperture = self.parent.get_sample_aperture_diam()
+        SSD = self.parent.collimation.get_ssd()
         wave = self.parent.get_wavelength()
         lambda_spread = self.parent.get_wavelength_spread()
         guides = self.parent.get_number_of_guides()
@@ -506,7 +508,7 @@ class Data:
         # Run calculations
         self.parent.collimation.calculate_source_to_sample_aperture_distance()
         self.parent.collimation.calculate_source_to_sample_distance()
-        alpha = (self.parent.get_source_aperture_size() + sample_aperture) / (2 * SSD)
+        alpha = (sourse_aperture + sample_aperture) / (2 * SSD)
         f = (self.parent.collimation.guides.get_gap_at_start() * alpha) / (
                 2 * self.parent.collimation.guides.get_guide_width())
         trans4 = (1 - f) * (1 - f)
@@ -514,21 +516,12 @@ class Data:
         trans6 = 1 - (wave * (self.beta - ((guides / 8) * (self.beta - self.charlie))))
         total_trans = self.trans_1 * self.trans_2 * self.trans_3 * trans4 * trans5 * trans6
 
-        # All above calculations are correct
-        print(" alpha:  " + str(alpha))
-        print(" f:  " + str(f))
-        print(" trans4:  " + str(trans4))
-        print(" trans5:  " + str(trans5))
-        print(" trans6:  " + str(trans6))
-        print(" totalTrans:  " + str(total_trans))
-
         area = math.pi * sample_aperture * sample_aperture / 4
         d2_phi = self.peak_flux / (2 * math.pi)
         d2_phi = d2_phi * math.exp(4 * math.log(self.peak_wavelength / wave))
         d2_phi = d2_phi * math.exp(-1 * math.pow(self.peak_wavelength / wave, 2))
-        solid_angle = (math.pi / 4) * ((sample_aperture / SSD) * (sample_aperture / SSD))
+        solid_angle = (math.pi / 4) * ((sourse_aperture / SSD) * (sourse_aperture / SSD))
         self.flux = area * d2_phi * lambda_spread * solid_angle * total_trans
-        print("Flux", self.flux)
 
     def calculate_min_and_max_q(self, index=0):
         sdd = self.parent.get_sample_to_detector_distance()
@@ -551,9 +544,12 @@ class Data:
 
     def get_beam_flux(self):
         self.calculate_beam_flux()
+        # Round up for intager value
+        self.flux = round(self.flux)
         # FOM   Goal is that self.flux = 29.9004105043
-        return (math.pow(self.parent.d_converter(self.flux, self.flux_size_unit), 2)
-                * self.parent.t_converter(self.flux, self.flux_time_unit))
+        # return (math.pow(self.parent.d_converter(self.flux, self.flux_size_unit), -2)
+        #         * math.pow(self.parent.t_converter(self.flux, self.flux_time_unit),-1))
+        return self.flux
 
 
 class Instrument:
@@ -853,13 +849,19 @@ class Instrument:
         return guides
 
     def get_sample_aperture_size(self):
-        # Sample Aperture diameter in centimeters
-        # FOM Changed from radius to diameter
-        return self.collimation.get_sample_aperture_diameter()
+        # Sample Aperture radius in centimeters
+        return self.collimation.get_sample_aperture_radius()
 
     def get_source_aperture_size(self):
+        # Source Aperture radius in centimeters
+        return self.collimation.get_source_aperture_radius()
+
+    def get_sample_aperture_diam(self):
+        # Sample Aperture diameter in centimeters
+        return self.collimation.get_sample_aperture_diameter()
+
+    def get_source_aperture_diam(self):
         # Source Aperture diameter in centimeters
-        # FOM Changed from radius to diameter
         return self.collimation.get_source_aperture_diameter()
 
     def get_sample_aperture_to_detector_distance(self, index=0):
@@ -1013,7 +1015,7 @@ class NGB10SANS(Instrument):
         params["collimation"]["guides"]["maximum_length"] = 513
         if params["collimation"]["guides"]["number_of_guides"] != 0:
             params["collimation"]["guides"]["length_per_guide"] = 150 + (
-                        61.9 / params["collimation"]["guides"]["number_of_guides"])
+                    61.9 / params["collimation"]["guides"]["number_of_guides"])
         params["collimation"]["0"]["aperture_offset"] = 5
         params["slicer"]["coeff"] = 10000
         params["slicer"]["x_pixels"] = 128
