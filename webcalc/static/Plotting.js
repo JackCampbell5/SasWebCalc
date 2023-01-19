@@ -1,8 +1,11 @@
 import 'https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.17.1/plotly.min.js';
-import { chartColors } from "./constants.js";
+import {averagingInputs, chartColors} from "./constants.js";
 
 const template = `
 <div id="sasCalcCharts">
+  <label for="offsetTraces">Offset Frozen Calculations:</label><input type="checkbox" id="offsetTraces"/>
+  <input type="button" :click="freezeCalculation">Freeze Calculation</input>
+  <input type="button" v-if="frozen" :click="unfreezeCalculations">UnFreeze All Calculations</input>
   <div class="chart" id="sasCalc1DChart"></div>
   <div class="chart" id="sasCalc2DChart"></div>
 </div>
@@ -60,7 +63,6 @@ export default {
             range: [this.data_1d['iMin'], this.data_1d['iMax']],
             type: 'log'
         },
-        shapes: this.makeAveragingShapes(),
       };
       Plotly.newPlot('sasCalc1DChart', this.frozen_data.push(dataSet), layout);
 
@@ -88,6 +90,28 @@ export default {
       };
       Plotly.newPlot('sasCalc2DChart', [dataSet], layout);
     },
+    freezeCalculation() {
+        console.log("Freezing calculation");
+        let dataSet = {
+            x: this.data_1d['qValues'],
+            y: this.data_1d['intensity'],
+            mode: 'lines+markers',
+            marker: {
+                color: chartColors[self.frozen.length],
+                size: 5,
+            },
+            line: {
+                color: chartColors[self.frozen.length],
+                size: 1,
+            },
+            name: "frozen" + self.frozen.length,
+          };
+        this.frozen_data.push(dataSet);
+    },
+    unfreezeCalculations() {
+        console.log("UnFreezing calculation");
+        this.frozen_data = [];
+    },
     makeAveragingShapes() {
       // TODO: convert this...
       let d3 = Plotly.d3;
@@ -101,6 +125,11 @@ export default {
         data_2d: {},
     }
   }),
+  computed: {
+    frozen() {
+      return this.frozen_data !== [];
+    }
+  },
   mounted() {
       this.frozen_data = [];
       this.data_1d = {
