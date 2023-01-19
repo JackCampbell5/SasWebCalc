@@ -9,6 +9,23 @@ const template = `
 `
 
 export default {
+  watch: {
+      data_1d: {
+          handler(newValue, oldValue) {
+            this.update1DChart();
+          }
+      },
+      data_2d: {
+          handler(newValue, oldValue) {
+            this.update2DChart();
+          }
+      },
+      frozen_data: {
+          handler(newValue, oldValue) {
+            this.update1DChart();
+          }
+      }
+  },
   methods: {
     update() {
       this.update1DChart()
@@ -85,6 +102,7 @@ export default {
     }
   }),
   mounted() {
+      this.frozen_data = [];
       this.data_1d = {
         qValues: [0.0001, 0.001, 0.01, 0.1],
         intensity: [1000, 100, 10, 1],
