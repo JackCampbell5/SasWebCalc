@@ -38,6 +38,11 @@ export default {
             this.data_2d.qyMax = Math.log10(Math.max(...this.data_2d.qyValues));
             this.update2DChart();
           }
+      },
+      offsetTraces: {
+          handler(newValue, oldValue) {
+            this.scaleFrozenDataSets();
+          }
       }
   },
   methods: {
@@ -100,12 +105,10 @@ export default {
       Plotly.newPlot('sasCalc2DChart', [dataSet], layout);
     },
     freezeCalculation() {
-        let len = this.frozen_data.length;
-        let offset = this.offsetTraces ? 1 + (len + 1) * 0.10 : 1;
-        console.log(offset);
         let dataSet = {
-            x: this.data_1d.qValues.map(function(element) {return element * offset;}),
+            x: this.data_1d.qValues,
             y: this.data_1d.intensity,
+            raw: this.data_1d.qValues,
             mode: 'lines+markers',
             marker: {
                 color: chartColors[this.frozen_data.length],
@@ -117,15 +120,23 @@ export default {
             },
             name: "frozen" + this.frozen_data.length,
           };
-        console.log("Data Frozen");
-        console.log(dataSet.x);
         this.frozen_data.push(dataSet);
+        this.scaleFrozenDataSets();
         this.update1DChart();
     },
     unfreezeCalculations() {
         this.frozen_data = [];
         this.update1DChart();
     },
+      scaleFrozenDataSets() {
+        let scale = 1.0;
+        let offset = this.offsetTraces ? 0.1 : 0.0;
+        for (let x in this.frozen_data) {
+            scale = scale + x * offset;
+            this.frozen_data[x].x = this.frozen_data[x].raw.map(function(element) {return element * scale;})
+        }
+        this.update1DChart();
+      },
     makeAveragingShapes() {
       // TODO: convert this...
       let d3 = Plotly.d3;
