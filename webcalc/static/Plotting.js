@@ -15,11 +15,19 @@ export default {
   watch: {
       data_1d: {
           handler(newValue, oldValue) {
+            this.data_1d['qMin'] = Math.log10(Math.min(this.data_1d['qValues']));
+            this.data_1d['qMax'] = Math.log10(Math.max(this.data_1d['qValues']));
+            this.data_1d['iMin'] = Math.log10(Math.min(this.data_1d['intensity']));
+            this.data_1d['iMax'] = Math.log10(Math.max(this.data_1d['intensity']));
             this.update1DChart();
           }
       },
       data_2d: {
           handler(newValue, oldValue) {
+            this.data_2d['qxMin'] = Math.log10(Math.min(this.data_2d['qxValues']));
+            this.data_2d['qxMax'] = Math.log10(Math.max(this.data_2d['qxValues']));
+            this.data_2d['qyMin'] = Math.log10(Math.min(this.data_2d['qyValues']));
+            this.data_2d['qyMax'] = Math.log10(Math.max(this.data_2d['qyValues']));
             this.update2DChart();
           }
       },
