@@ -162,6 +162,7 @@ class BeamStop:
             parent: The Instrument instance this Detector is a part of
             params: A dictionary mapping <param_name>: <value>
         """
+        # CAF beam stop class
         self.parent = parent
         self.diameter = 0.0
         self.diameter_unit = 'cm'
@@ -180,6 +181,7 @@ class BeamStop:
         Returns: None
         """
         set_params(self, params)
+        print("Important", str(self.diameter))
 
 
 class Collimation:
@@ -496,7 +498,7 @@ class Data:
     def calculate_beam_flux(self):
         # Beam Flux Calculations now correct
 
-        #Varible defintion
+        # Varible defintion
         guide_loss = self.parent.collimation.guides.transmission_per_guide
         sourse_aperture = self.parent.get_source_aperture_diam()
         sample_aperture = self.parent.get_sample_aperture_diam()
@@ -544,9 +546,10 @@ class Data:
 
     def get_beam_flux(self):
         self.calculate_beam_flux()
-        # Round up for intager value
+        # Round up for integer value
+        # Question: be sure we want that
         self.flux = round(self.flux)
-        # FOM   Goal is that self.flux = 29.9004105043
+        # TODO  fix this calculation
         # return (math.pow(self.parent.d_converter(self.flux, self.flux_size_unit), -2)
         #         * math.pow(self.parent.t_converter(self.flux, self.flux_time_unit),-1))
         return self.flux
@@ -585,6 +588,7 @@ class Instrument:
         # Creates the objects with the param array
         #       (This is not a part of load params so instrument can have default values if necessary)
 
+        # CAF Beam stop defined
         self.beam_stops = params.get('beam_stops', [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
         # TODO Implement current_beamstop object
         self.detectors = [Detector(self, detector_params) for detector_params in params.get('detectors', [{}])]
@@ -665,19 +669,19 @@ class Instrument:
         # for index in range(len(self.detectors) - 1):
         #     self.data.calculate_min_and_max_q(index)
         #     # TODO: This might not be needed here...
-        #     # TODO J    This method does not exist
         #     self.slicer.calculate_q_range_slicer(index)
 
-    # TODO 1/5/23 fix this function to output not 1
+    # Start 1/20/23 fix this function
     def calculate_attenuation_factor(self, index=0):
-        a2 = self.get_sample_aperture_size()
+        # CAF MASTER function
+        a2 = self.get_sample_aperture_diam()  # Correct with diameter instead of radius
         beam_diam = self.get_beam_diameter(index)
         a_pixel = self.detectors[index].get_pixel_size_x() / 100  # Fix: This calc was 100 to high
         i_pixel_max = self.detectors[index].per_pixel_max_flux  # Calculated correctly
         num_pixels = (math.pi / 4) * (0.5 * (a2 + beam_diam) / a_pixel) ** 2
         i_pixel = self.get_beam_flux() / num_pixels
         atten = 1.0 if i_pixel < i_pixel_max else i_pixel_max / i_pixel
-        # print("a2:  " + str(a2))
+        # print("\n \n a2:  " + str(a2))
         # print("beam_diam:  " + str(beam_diam))
         # print("a_pixel:  " + str(a_pixel))
         # print("i_pixel_max:  " + str(i_pixel_max))
@@ -688,6 +692,7 @@ class Instrument:
         return self.wavelength.attenuation_factor
 
     def calculate_attenuator_number(self):
+        # CAF   Dependent on main function
         self.calculate_attenuation_factor()
         atten = self.get_attenuation_factor()
         if atten:
@@ -702,29 +707,36 @@ class Instrument:
         return num_atten
 
     def calculate_beam_diameter(self, index=0, direction='maximum'):
+        # CAF Needs function to be fixed
+
         # Update all instrument calculations needed for beam diameter
         self.collimation.get_ssad()
         self.get_sample_to_detector_distance(index)
+
         # Get instrumental values
-        source_aperture = self.get_source_aperture_size()
-        sample_aperture = self.get_sample_aperture_size()
-        ssd = self.get_source_to_sample_aperture_distance()
-        sdd = self.get_sample_aperture_to_detector_distance(index)
-        wavelength = self.get_wavelength()
-        wavelength_spread = self.get_wavelength_spread()
+        source_aperture = self.get_source_aperture_diam()  # Correct if diam
+        sample_aperture = self.get_sample_aperture_diam()  # Correct if diam
+        ssd = self.get_source_to_sample_distance()  # Correct if ssd not SSAD
+        sdd = self.get_sample_to_detector_distance(index)  # Correct when sdd not sadd(as SADD DNE)
+        wavelength = self.get_wavelength()  # lambda
+        wavelength_spread = self.get_wavelength_spread()  # lambda delta
+
+        # Parameters above this point correct
+
         if self.collimation.guides.lenses:
             # If LENS configuration, the beam size is the source aperture size
-            # FIXME: This is showing -58 cm... Why?!?!
-            self.beam_stops[index]["beam_stop_diameter"] = self.get_source_aperture_size()
+            # FIXed: This is showing -58 cm... Why?!?! - it wa snot returning afterward
+            self.beam_stops[index]["beam_diameter"] = source_aperture  # Made beam diameter and returned
+            return
         # Calculate beam width on the detector
         try:
-            beam_width = source_aperture * sdd / ssd + sample_aperture * (ssd + sdd) / ssd
+            beam_width = source_aperture * sdd / ssd + sample_aperture * (ssd + sdd) / ssd # Correct calculation
         except ZeroDivisionError:
             beam_width = 0.0
         # Beam height due to gravity
         bv3 = ((ssd + sdd) * sdd) * wavelength ** 2
         bv4 = bv3 * wavelength_spread
-        bv = beam_width + 0.0000125 * bv4
+        bv = beam_width + 0.0000000125 * bv4  # 0.0000125 != 0.0000000125 Changed to 1.25e-8
         # Larger of the width*safetyFactor and height
         bm_bs = self.data.bs_factor * beam_width
         bm = bm_bs if bm_bs > bv else bv
@@ -763,7 +775,6 @@ class Instrument:
         # FOM This would work if beam flux is right
         # TODO replace when beam flux works
         figure_of_merit = math.pow(self.get_wavelength(), 2) * self.get_beam_flux()
-        # figure_of_merit = math.pow(self.get_wavelength(), 2) * 26732
         return int(figure_of_merit)
 
     def calculate_sample_to_detector_distance(self, index=0):
@@ -831,6 +842,7 @@ class Instrument:
         return self.data.get_beam_flux()
 
     def get_beam_diameter(self, index=0):
+        # CAF Beam diameter
         # Beam diameter in centimeters
         return self.beam_stops[index].get("beam_diameter")
 
