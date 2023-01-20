@@ -3,15 +3,23 @@ import {averagingInputs, chartColors} from "./constants.js";
 
 const template = `
 <div id="sasCalcCharts">
-  <label for="offsetTraces">Offset Frozen Calculations:</label><input type="checkbox" id="offsetTraces"/>
-  <input type="button" :click="freezeCalculation">Freeze Calculation</input>
-  <input type="button" v-if="frozen" :click="unfreezeCalculations">UnFreeze All Calculations</input>
+  <label for="offsetTraces">Offset Frozen Calculations:</label><input type="checkbox" id="offsetTraces" v-model="offsetTraces" />
+  <input type="button" v-model="doFreeze" @click="freezeCalculation"/>
+  <input type="button" v-if="frozen" v-model="unFrozen" @click="unfreezeCalculations"/>
   <div class="chart" id="sasCalc1DChart"></div>
   <div class="chart" id="sasCalc2DChart"></div>
 </div>
 `
 
 export default {
+  props: {
+    offsetTraces: Boolean,
+    doFreeze: String,
+    unFrozen: String,
+    frozen_data: Array,
+    data_1d: {type: Object, default: {}},
+    data_2d: {type: Object, default: {}},
+  },
   watch: {
       data_1d: {
           handler(newValue, oldValue) {
@@ -99,25 +107,26 @@ export default {
       Plotly.newPlot('sasCalc2DChart', [dataSet], layout);
     },
     freezeCalculation() {
-        console.log("Freezing calculation");
+        let len = this.frozen_data.length;
+        let offset = this.offsetTraces ? 1 + (len + 1) * 0.10 : 1;
+        console.log(offset);
         let dataSet = {
-            x: this.data_1d['qValues'],
+            x: this.data_1d['qValues'] * offset,
             y: this.data_1d['intensity'],
             mode: 'lines+markers',
             marker: {
-                color: chartColors[self.frozen.length],
+                color: chartColors[this.frozen_data.length],
                 size: 5,
             },
             line: {
-                color: chartColors[self.frozen.length],
+                color: chartColors[this.frozen_data.length],
                 size: 1,
             },
-            name: "frozen" + self.frozen.length,
+            name: "frozen" + this.frozen_data.length,
           };
         this.frozen_data.push(dataSet);
     },
     unfreezeCalculations() {
-        console.log("UnFreezing calculation");
         this.frozen_data = [];
     },
     makeAveragingShapes() {
@@ -127,11 +136,12 @@ export default {
     }
   },
   data: () => ({
-    params: {
-        frozen_data: [],
-        data_1d: {},
-        data_2d: {},
-    }
+    offsetTraces: false,
+    frozen_data: [],
+    data_1d: {},
+    data_2d: {},
+    doFreeze: "Freeze Calculation",
+    unFrozen: "Unfreeze Calculations",
   }),
   computed: {
     frozen() {
@@ -139,7 +149,6 @@ export default {
     }
   },
   mounted() {
-      this.frozen_data = [];
       this.data_1d = {
         qValues: [0.0001, 0.001, 0.01, 0.1],
         intensity: [1000, 100, 10, 1],
