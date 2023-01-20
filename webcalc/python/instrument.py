@@ -681,14 +681,7 @@ class Instrument:
         num_pixels = (math.pi / 4) * (0.5 * (a2 + beam_diam) / a_pixel) ** 2
         i_pixel = self.get_beam_flux() / num_pixels
         atten = 1.0 if i_pixel < i_pixel_max else i_pixel_max / i_pixel
-        # print("\n \n a2:  " + str(a2))
-        # print("beam_diam:  " + str(beam_diam))
-        # print("a_pixel:  " + str(a_pixel))
-        # print("i_pixel_max:  " + str(i_pixel_max))
-        # print("num_pixels:  " + str(num_pixels))
-        # print("i_pixel:  " + str(i_pixel))
-        # print("atten:  " + str(atten))
-        self.wavelength.attenuation_factor = atten if atten == 1.0 else int(atten)
+        self.wavelength.attenuation_factor = atten if atten == 1.0 else round(atten * 100000) / 100000
         return self.wavelength.attenuation_factor
 
     def calculate_attenuator_number(self):
