@@ -23,37 +23,28 @@ export default {
   watch: {
       data_1d: {
           handler(newValue, oldValue) {
-            this.data_1d['qMin'] = Math.log10(Math.min(this.data_1d['qValues']));
-            this.data_1d['qMax'] = Math.log10(Math.max(this.data_1d['qValues']));
-            this.data_1d['iMin'] = Math.log10(Math.min(this.data_1d['intensity']));
-            this.data_1d['iMax'] = Math.log10(Math.max(this.data_1d['intensity']));
+            this.data_1d.qMin = Math.log10(Math.min(...this.data_1d.qValues));
+            this.data_1d.qMax = Math.log10(Math.max(...this.data_1d.qValues));
+            this.data_1d.iMin = Math.log10(Math.min(...this.data_1d.intensity));
+            this.data_1d.iMax = Math.log10(Math.max(...this.data_1d.intensity));
             this.update1DChart();
           }
       },
       data_2d: {
           handler(newValue, oldValue) {
-            this.data_2d['qxMin'] = Math.log10(Math.min(this.data_2d['qxValues']));
-            this.data_2d['qxMax'] = Math.log10(Math.max(this.data_2d['qxValues']));
-            this.data_2d['qyMin'] = Math.log10(Math.min(this.data_2d['qyValues']));
-            this.data_2d['qyMax'] = Math.log10(Math.max(this.data_2d['qyValues']));
+            this.data_2d.qxMin = Math.log10(Math.min(...this.data_2d.qxValues));
+            this.data_2d.qxMax = Math.log10(Math.max(...this.data_2d.qxValues));
+            this.data_2d.qyMin = Math.log10(Math.min(...this.data_2d.qyValues));
+            this.data_2d.qyMax = Math.log10(Math.max(...this.data_2d.qyValues));
             this.update2DChart();
-          }
-      },
-      frozen_data: {
-          handler(newValue, oldValue) {
-            this.update1DChart();
           }
       }
   },
   methods: {
-    update() {
-      this.update1DChart()
-      this.update2DChart();
-    },
     update1DChart() {
       let dataSet = {
-        x: this.data_1d['qValues'],
-        y: this.data_1d['intensity'],
+        x: this.data_1d.qValues,
+        y: this.data_1d.intensity,
         mode: 'lines+markers',
         marker: {
             color: chartColors.black,
@@ -70,24 +61,26 @@ export default {
         xaxis: {
             exponentformat: 'power',
             title: "Q (Å^-1)",
-            range: [this.data_1d['qMin'], this.data_1d['qMax']],
+            range: [this.data_1d.qMin, this.data_1d.qMax],
             type: 'log'
         },
         yaxis: {
             exponentformat: 'power',
             title: 'Relative Intensity (Au)',
-            range: [this.data_1d['iMin'], this.data_1d['iMax']],
+            range: [this.data_1d.iMin, this.data_1d.iMax],
             type: 'log'
         },
       };
-      Plotly.newPlot('sasCalc1DChart', this.frozen_data.push(dataSet), layout);
-
+      let dataSets = [];
+      dataSets.push(dataSet)
+        dataSets.push.apply(dataSets, this.frozen_data);
+      Plotly.newPlot('sasCalc1DChart', dataSets, layout);
     },
     update2DChart() {
       let dataSet = {
-        x: this.data_2d['qxValues'],
-        y: this.data_2d['qyValues'],
-        z: this.data_2d['intensity2D'],
+        x: this.data_2d.qxValues,
+        y: this.data_2d.qyValues,
+        z: this.data_2d.intensity2D,
         type: 'heatmap',
         colorscale: 'Portland'
       };
@@ -95,12 +88,12 @@ export default {
         title: "SASCALC 2D Plot",
         xaxis: {
             title: "Qx (Å^-1)",
-            range: [this.data_2d['qxMin'], this.data_2d['qxMax']],
+            range: [this.data_2d.qxMin, this.data_2d.qxMax],
             constrain: 'domain',
         },
         yaxis: {
             title: "Qy (Å^-1)",
-            range: [this.data_2d['qyMin'], this.data_2d['qyMax']],
+            range: [this.data_2d.qyMin, this.data_2d.qyMax],
         },
         shapes: this.makeAveragingShapes(),
       };
@@ -111,8 +104,8 @@ export default {
         let offset = this.offsetTraces ? 1 + (len + 1) * 0.10 : 1;
         console.log(offset);
         let dataSet = {
-            x: this.data_1d['qValues'] * offset,
-            y: this.data_1d['intensity'],
+            x: this.data_1d.qValues.map(function(element) {return element * offset;}),
+            y: this.data_1d.intensity,
             mode: 'lines+markers',
             marker: {
                 color: chartColors[this.frozen_data.length],
@@ -124,10 +117,14 @@ export default {
             },
             name: "frozen" + this.frozen_data.length,
           };
+        console.log("Data Frozen");
+        console.log(dataSet.x);
         this.frozen_data.push(dataSet);
+        this.update1DChart();
     },
     unfreezeCalculations() {
         this.frozen_data = [];
+        this.update1DChart();
     },
     makeAveragingShapes() {
       // TODO: convert this...
@@ -152,29 +149,20 @@ export default {
       this.data_1d = {
         qValues: [0.0001, 0.001, 0.01, 0.1],
         intensity: [1000, 100, 10, 1],
-        qMin: Math.log10(0.0001),
-        qMax: Math.log10(1.0),
-        iMin: Math.log10(0.001),
-        iMax: Math.log10(100000),
+        qMin: 0.0001,
+        qMax: 1.0,
+        iMin: 0.001,
+        iMax: 100000,
       };
-      this.data_1d['qMin'] = Math.log10(Math.min(this.data_1d['qValues']));
-      this.data_1d['qMax'] = Math.log10(Math.max(this.data_1d['qValues']));
-      this.data_1d['iMin'] = Math.log10(Math.min(this.data_1d['intensity']));
-      this.data_1d['iMax'] = Math.log10(Math.max(this.data_1d['intensity']));
       this.data_2d = {
           qxValues: [[-1, 0, 1],[-1, 0, 1],[-1, 0, 1]],
           qyValues: [[-1, 0, 1],[-1, 0, 1],[-1, 0, 1]],
           intensity2D: [[0, 0, 0],[0, 1130, 0],[0, 0, 0]],
-          qxMin: Math.log10(0.0001),
-          qxMax: Math.log10(1.0),
-          qyMin: Math.log10(0.001),
-          qyMax: Math.log10(100000),
+          qxMin: 0.0001,
+          qxMax: 1.0,
+          qyMin: 0.001,
+          qyMax: 100000,
       };
-      this.data_2d['qxMin'] = Math.log10(Math.min(this.data_2d['qxValues']));
-      this.data_2d['qxMax'] = Math.log10(Math.max(this.data_2d['qxValues']));
-      this.data_2d['qyMin'] = Math.log10(Math.min(this.data_2d['qyValues']));
-      this.data_2d['qyMax'] = Math.log10(Math.max(this.data_2d['qyValues']));
-    this.update();
   },
   template: template,
 }
