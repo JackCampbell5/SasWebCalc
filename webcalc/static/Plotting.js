@@ -130,9 +130,9 @@ export default {
     },
       scaleFrozenDataSets() {
         let scale = 1.0;
-        let offset = this.offsetTraces ? 0.1 : 0.0;
+        let offset = this.offsetTraces ? 1.0 : 0.0;
         for (let x in this.frozen_data) {
-            scale = scale + x * offset;
+            scale = scale + offset;
             this.frozen_data[x].x = this.frozen_data[x].raw.map(function(element) {return element * scale;})
         }
         this.update1DChart();
