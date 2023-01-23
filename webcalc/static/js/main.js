@@ -183,13 +183,13 @@ function setEventHandlers(instrument) {
     var apertureSampleCustomNode = document.getElementById(instrument + 'CustomAperture');
     apertureSampleCustomNode.onchange = function () { SASCALC(instrument); }
     var detectorSlider = document.getElementById(instrument + "SDDSliderBar");
-    detectorSlider.onchange = function () { SASCALC(instrument);}
+    detectorSlider.onchange = function () {  detectorOutput.value = this.value; SASCALC(instrument);}
     var detectorOutput = document.getElementById(instrument + "SDDInputBox");
-    detectorOutput.oninput = function () { SASCALC(instrument); }
+    detectorOutput.oninput = function () { detectorSlider.value = this.value; SASCALC(instrument); }
     var offsetSlider = document.getElementById(instrument + "OffsetSliderBar");
-    offsetSlider.onchange = function () { SASCALC(instrument); }
+    offsetSlider.onchange = function () { offsetOutput.value = this.value; SASCALC(instrument); }
     var offsetOutput = document.getElementById(instrument + "OffsetInputBox");
-    offsetOutput.oninput = function () { SASCALC(instrument); }
+    offsetOutput.oninput = function () { offsetSlider.value = this.value; SASCALC(instrument); }
     // Initialize onclick events for freezing and clearing calculations
     var freezeButton = document.getElementById("freezeButton");
     freezeButton.onclick = function () { freezeSASCALC(); }

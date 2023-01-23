@@ -162,7 +162,6 @@ class BeamStop:
             parent: The Instrument instance this Detector is a part of
             params: A dictionary mapping <param_name>: <value>
         """
-        # CAF beam stop class
         self.parent = parent
         self.diameter = 0.0
         self.diameter_unit = 'cm'
@@ -633,7 +632,7 @@ class Instrument:
         python_return["user_inaccessible"]["numberOfAttenuators"] = self.get_attenuator_number()
         python_return["user_inaccessible"]["ssd"] = self.collimation.ssd
         python_return["user_inaccessible"]["sdd"] = self.detectors[0].sdd
-        python_return["user_inaccessible"]["beamDiameter"] = self.get_beam_diameter()
+        python_return["user_inaccessible"]["beamDiameter"] = int(self.get_beam_diameter()*10000)/10000
         python_return["user_inaccessible"]["beamStopDiameter"] = self.get_beam_stop_diameter()
         python_return["user_inaccessible"]["attenuationFactor"] = self.get_attenuation_factor()
         python_return["MaximumVerticalQ"] = self.data.q_max_vert
@@ -673,7 +672,6 @@ class Instrument:
 
     # Start 1/20/23 fix this function
     def calculate_attenuation_factor(self, index=0):
-        # CAF MASTER function
         a2 = self.get_sample_aperture_diam()  # Correct with diameter instead of radius
         beam_diam = self.get_beam_diameter(index)
         a_pixel = self.detectors[index].get_pixel_size_x() / 100  # Fix: This calc was 100 to high
@@ -685,7 +683,6 @@ class Instrument:
         return self.wavelength.attenuation_factor
 
     def calculate_attenuator_number(self):
-        # CAF   Dependent on main function
         self.calculate_attenuation_factor()
         atten = self.get_attenuation_factor()
         if atten:
@@ -835,7 +832,6 @@ class Instrument:
         return self.data.get_beam_flux()
 
     def get_beam_diameter(self, index=0):
-        # CAF Beam diameter
         # Beam diameter in centimeters
         return self.beam_stops[index].get("beam_diameter")
 
