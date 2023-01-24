@@ -2,24 +2,18 @@ import 'https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.17.1/plotly.min.js';
 import {averagingInputs, chartColors} from "./constants.js";
 
 const template = `
-<div id="sasCalcCharts">
+<div class="freezer">
   <label for="offsetTraces">Offset Frozen Calculations:</label><input type="checkbox" id="offsetTraces" v-model="offsetTraces" />
   <input type="button" v-model="doFreeze" @click="freezeCalculation"/>
   <input type="button" v-if="frozen" v-model="unFrozen" @click="unfreezeCalculations"/>
-  <div class="chart" id="sasCalc1DChart"></div>
-  <div class="chart" id="sasCalc2DChart"></div>
+</div>
+<div id="sasCalcCharts">
+  <div id="sasCalc1DChart"></div>
+  <div id="sasCalc2DChart"></div>
 </div>
 `
 
 export default {
-  props: {
-    offsetTraces: Boolean,
-    doFreeze: String,
-    unFrozen: String,
-    frozen_data: Array,
-    data_1d: {type: Object, default: {}},
-    data_2d: {type: Object, default: {}},
-  },
   watch: {
       data_1d: {
           handler(newValue, oldValue) {

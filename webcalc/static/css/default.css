@@ -40,9 +40,20 @@ input.fixed-width-input {
     width: 10em;
 }
 
+#sasCalcCharts {
+    clear: both;
+}
+
 #sasCalc1DChart, #sasCalc2DChart {
     width: 49%;
     float: left;
+    border: black 1px solid;
+}
+
+div.freezer {
+    float: left;
+    clear: both;
+    margin-bottom: 5px;
 }
 
 div.parameter > div, span.parameter, ul.parameter > li {
