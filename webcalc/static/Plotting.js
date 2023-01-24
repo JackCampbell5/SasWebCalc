@@ -116,7 +116,6 @@ export default {
           };
         this.frozen_data.push(dataSet);
         this.scaleFrozenDataSets();
-        this.update1DChart();
     },
     unfreezeCalculations() {
         this.frozen_data = [];
