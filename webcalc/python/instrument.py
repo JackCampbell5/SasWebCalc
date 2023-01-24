@@ -218,7 +218,6 @@ class Collimation:
         Returns: None
         """
         set_params(self, params)
-        self.calculate_source_to_sample_aperture_distance()
 
     def get_source_aperture_radius(self):
         return self.source_aperture.get_radius()
@@ -507,7 +506,7 @@ class Data:
         guides = self.parent.get_number_of_guides()
 
         # Run calculations
-        self.parent.collimation.calculate_source_to_sample_aperture_distance()
+        self.parent.calculate_source_to_sample_aperture_distance()
         self.parent.collimation.calculate_source_to_sample_distance()
         alpha = (sourse_aperture + sample_aperture) / (2 * SSD)
         f = (self.parent.collimation.guides.get_gap_at_start() * alpha) / (
@@ -632,7 +631,7 @@ class Instrument:
         python_return["user_inaccessible"]["numberOfAttenuators"] = self.get_attenuator_number()
         python_return["user_inaccessible"]["ssd"] = self.collimation.ssd
         python_return["user_inaccessible"]["sdd"] = self.detectors[0].sdd
-        python_return["user_inaccessible"]["beamDiameter"] = int(self.get_beam_diameter()*10000)/10000
+        python_return["user_inaccessible"]["beamDiameter"] = int(self.get_beam_diameter() * 10000) / 10000
         python_return["user_inaccessible"]["beamStopDiameter"] = self.get_beam_stop_diameter()
         python_return["user_inaccessible"]["attenuationFactor"] = self.get_attenuation_factor()
         python_return["MaximumVerticalQ"] = self.data.q_max_vert
@@ -720,7 +719,7 @@ class Instrument:
             return
         # Calculate beam width on the detector
         try:
-            beam_width = source_aperture * sdd / ssd + sample_aperture * (ssd + sdd) / ssd # Correct calculation
+            beam_width = source_aperture * sdd / ssd + sample_aperture * (ssd + sdd) / ssd  # Correct calculation
         except ZeroDivisionError:
             beam_width = 0.0
         # Beam height due to gravity
@@ -814,7 +813,7 @@ class Instrument:
         slicer_params["source_aperture"] = self.get_source_aperture_size() * 0.5
         slicer_params["sample_aperture"] = self.get_sample_aperture_size() * 0.5
         slicer_params["beam_stop_size"] = self.get_beam_stop_diameter() * 2.54
-        slicer_params["SSD"] = self.collimation.calculate_source_to_sample_aperture_distance()
+        slicer_params["SSD"] = self.calculate_source_to_sample_aperture_distance()
         slicer_params["SDD"] = self.calculate_sample_to_detector_distance()
         del slicer_params["averaging_params"]
         return slicer_params
@@ -907,6 +906,9 @@ class Instrument:
     def get_wavelength_spread(self):
         # Wavelength spread in percent
         return self.wavelength.wavelength_spread
+
+    def calculate_source_to_sample_aperture_distance(self):
+        self.collimation.calculate_source_to_sample_aperture_distance()
 
 
 class NG7SANS(Instrument):
@@ -1032,10 +1034,15 @@ class NGB10SANS(Instrument):
         super().load_objects(params)
 
     def calculate_source_to_sample_aperture_distance(self):
-        super(NGB10SANS, self).calculate_source_to_sample_aperture_distance()
-        # TODO Implement object spesific function
+        # TODO: This runs way to many times
+        ssd_temp = self.collimation.guides.get_maximum_length() - self.collimation.space_offset
+        if self.collimation.guides.number_of_guides != 0:
+            ssd_temp = ssd_temp - (self.d_converter(61.9, 'cm')) - (
+                        self.collimation.guides.get_length_per_guide() * self.collimation.guides.number_of_guides)
+        self.collimation.ssad = ssd_temp - self.collimation.get_sample_aperture_offset()
 
 # class VSANS(Instrument):
+# TODO Implement VSANS
 #     # Class for the VSANS instrument
 #     def __init__(self, name, params):
 #         super().__init__(name, params)
