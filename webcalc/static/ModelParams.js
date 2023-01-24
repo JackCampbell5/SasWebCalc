@@ -15,10 +15,6 @@ const template = `
 `
 
 export default {
-    props: {
-        model_names: Array,
-        model_params: {type: Object, default: {}},
-    },
     methods: {
         onChangeValue(event) {
           this.$emit('modelValueChange', this.model_params);
