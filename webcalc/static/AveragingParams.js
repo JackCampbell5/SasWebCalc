@@ -54,7 +54,8 @@ export default {
       qCenter: 0.1,
       qWidth: 0.05,
       aspectRatio: 1.0,
-    }
+    },
+    shapes: [],
   }),
   computed: {
     visibleParams() {
@@ -64,10 +65,43 @@ export default {
   watch: {
     averagingParams: {
       handler(newValue, oldValue) {
+        this.makeAveragingShapes();
         this.$emit('change', newValue);
       },
       deep: true
     }
+  },
+  methods: {
+    makeAveragingShapes() {
+      let shapes = [];
+      let params = this.averagingParams;
+      let used_params = {};
+      let type = this.active_averaging_type;
+      let expected_params = averagingInputs[type];
+      for (let param in params) {
+          if (params[param] in expected_params) {
+              used_params[param] = params[param];
+          }
+      }
+      switch (type) {
+          default: case 'Circular':
+              // No shapes needed for a circular or empty slicer
+              break;
+          case 'Sector':
+              // TODO: Write this
+              break;
+          case 'Annular':
+              // TODO: Write this
+              break;
+          case 'Rectangular':
+              // TODO: Write this
+              break;
+          case 'Elliptical':
+              // TODO: Write this
+              break;
+      }
+      this.shapes = shapes;
+    },
   },
   template: template
 }

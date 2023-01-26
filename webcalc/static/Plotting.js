@@ -1,5 +1,6 @@
 import 'https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.17.1/plotly.min.js';
-import {averagingInputs, chartColors} from "./constants.js";
+import {chartColors} from "./constants.js";
+import {default as AveragingParams} from "./AveragingParams.js";
 
 const template = `
 <div class="freezer">
@@ -94,7 +95,7 @@ export default {
             title: "Qy (Å^-1)",
             range: [this.data_2d.qyMin, this.data_2d.qyMax],
         },
-        shapes: this.makeAveragingShapes(),
+        shapes: AveragingParams.shapes,
       };
       Plotly.newPlot('sasCalc2DChart', [dataSet], layout);
     },
@@ -130,11 +131,6 @@ export default {
         }
         this.update1DChart();
       },
-    makeAveragingShapes() {
-      // TODO: convert this...
-      let d3 = Plotly.d3;
-      return {};
-    }
   },
   data: () => ({
     offsetTraces: false,
