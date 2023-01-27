@@ -25,7 +25,7 @@ export const averagingInputs = {
     "Circular": [],
     "Sector": ["phi", "dPhi", "detectorSections"],
     "Annular": ["qCenter", "qWidth"],
-    "Rectangular": ["qWidth", "phi", "detectorSections"],
+    "Rectangular": ["qWidth", "qHeight", "detectorSections"],
     "Elliptical": ["phi", "aspectRatio", "detectorSections"]
 }
 
