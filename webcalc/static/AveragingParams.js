@@ -75,16 +75,42 @@ export default {
     makeAveragingShapes() {
       this.shapes = [];
       let type = this.active_averaging_type;
+      let qCenter = parseFloat(this.averagingParams['qCenter']);
+      let qWidth = parseFloat(this.averagingParams['qWidth']);
+      let phi = parseFloat(this.averagingParams['phi']);
+      let dPhi = parseFloat(this.averagingParams['dPhi']);
+      let halves = this.averagingParams['detectorSections'];
+      let aspectRatio = parseFloat(this.averagingParams['aspectRatio']);
+      // TODO: Need to get min and max Qx and Qy values...
       switch (type) {
           default: case 'Circular':
             // No shapes needed for a circular or empty slicer
             break;
           case 'Sector':
-            // TODO: Write this
+            let phiUp = phi + dPhi;
+            let phiDown = phi - dPhi;
+            let phiToURCorner = Math.atan(maxQy / maxQx);
+            let phiToULCorner = Math.atan(maxQy / minQx) + Math.PI;
+            let phiToLLCorner = Math.atan(minQy / minQx) + Math.PI;
+            let phiToLRCorner = Math.atan(minQy / maxQx) + 2 * Math.PI;
+            if (halves === "both" || halves === "right") {
+                this.shapes.push(this.makeShape('line', 0, 0, (phi > phiToURCorner && phi < phiToULCorner) ? maxQy / Math.tan(phi) : maxQx,
+                    (phi > phiToURCorner && phi < phiToULCorner) ? maxQy : maxQx * Math.tan(phi)));
+                this.shapes.push(this.makeShape('line', 0, 0, (phiUp > phiToURCorner && phiUp < phiToULCorner) ? maxQy / Math.tan(phiUp) : maxQx,
+                    (phiUp > phiToURCorner && phiUp < phiToULCorner) ? maxQy : maxQx * Math.tan(phiUp), "orange"));
+                this.shapes.push(this.makeShape('line', 0, 0, (phiDown > phiToURCorner && phiDown < phiToULCorner) ? maxQy / Math.tan(phiDown) : maxQx,
+                    (phiDown > phiToURCorner && phiDown < phiToULCorner) ? maxQy : maxQx * Math.tan(phiDown), "orange"));
+            }
+            if (halves === "both" || halves === "left") {
+                this.shapes.push(this.makeShape('line', 0, 0, (phi > phiToLLCorner && phi < phiToLRCorner) ? minQy / Math.tan(phi) : minQx,
+                    (phi > phiToLLCorner && phi < phiToLRCorner) ? minQy : minQx * Math.tan(phi)));
+                this.shapes.push(this.makeShape('line', 0, 0, (phiUp > phiToLLCorner && phiUp < phiToLRCorner) ? minQy / Math.tan(phiUp) : minQx,
+                    (phiUpTwoPi > phiToLLCorner && phiUp < phiToLRCorner) ? minQy : minQx * Math.tan(phiUp), "orange"));
+                this.shapes.push(this.makeShape('line', 0, 0, (phiDown > phiToLLCorner && phiDown < phiToLRCorner) ? minQy / Math.tan(phiDown) : minQx,
+                    (phiDown > phiToLLCorner && phiDown < phiToLRCorner) ? minQy : minQx * Math.tan(phiDown), "orange"));
+            }
             break;
           case 'Annular':
-            let qCenter = parseFloat(this.averagingParams['qCenter']);
-            let qWidth = parseFloat(this.averagingParams['qWidth']);
             let innerQ = qCenter - qWidth;
             let outerQ = qCenter + qWidth;
             this.shapes.push(this.makeShape('circle', -1 * qCenter, -1 * qCenter, qCenter, qCenter, "white"));
@@ -92,13 +118,19 @@ export default {
             this.shapes.push(this.makeShape('circle', -1 * outerQ, -1 * outerQ, outerQ, outerQ, "orange"));
             break;
           case 'Rectangular':
-            // TODO: Write this
+            // FIXME: Write two lines, one on top and one on bottom
+            if (halves === "left") {
+                this.shapes.push(this.makeShape('rectangle', -1 * qWidth / 2, qHeight / 2, qWidth / 2, 0, "orange"));
+            } else if (halves === "right") {
+                this.shapes.push(this.makeShape('rectangle', -1 * qWidth / 2, -1 * qHeight / 2, qWidth / 2, 0, "orange"));
+            } else {
+                this.shapes.push(this.makeShape('rectangle', -1 * qWidth / 2, -1 * qHeight / 2, qWidth / 2, qHeight / 2, "orange"));
+            }
             break;
           case 'Elliptical':
             // TODO: Write this
             break;
       }
-      this.shapes = shapes;
     },
     /*
     * Return a dictionary that defines a line object in plot.ly
