@@ -73,36 +73,50 @@ export default {
   },
   methods: {
     makeAveragingShapes() {
-      let shapes = [];
-      let params = this.averagingParams;
-      let used_params = {};
+      this.shapes = [];
       let type = this.active_averaging_type;
-      let expected_params = averagingInputs[type];
-      for (let param in params) {
-          if (params[param] in expected_params) {
-              used_params[param] = params[param];
-          }
-      }
       switch (type) {
           default: case 'Circular':
-              // No shapes needed for a circular or empty slicer
-              break;
+            // No shapes needed for a circular or empty slicer
+            break;
           case 'Sector':
-              // TODO: Write this
-              break;
+            // TODO: Write this
+            break;
           case 'Annular':
-              // TODO: Write this
-              break;
+            let qCenter = parseFloat(this.averagingParams['qCenter']);
+            let qWidth = parseFloat(this.averagingParams['qWidth']);
+            let innerQ = qCenter - qWidth;
+            let outerQ = qCenter + qWidth;
+            this.shapes.push(this.makeShape('circle', -1 * qCenter, -1 * qCenter, qCenter, qCenter, "white"));
+            this.shapes.push(this.makeShape('circle', -1 * innerQ, -1 * innerQ, innerQ, innerQ, "orange"));
+            this.shapes.push(this.makeShape('circle', -1 * outerQ, -1 * outerQ, outerQ, outerQ, "orange"));
+            break;
           case 'Rectangular':
-              // TODO: Write this
-              break;
+            // TODO: Write this
+            break;
           case 'Elliptical':
-              // TODO: Write this
-              break;
+            // TODO: Write this
+            break;
       }
       this.shapes = shapes;
     },
+    /*
+    * Return a dictionary that defines a line object in plot.ly
+    */
+    makeShape(shape, x0, y0, x1, y1, color = "black") {
+        return {
+            type: shape,
+            xref: 'x',
+            yref: 'y',
+            x0: x0,
+            y0: y0,
+            x1: x1,
+            y1: y1,
+            line: {
+                color: color,
+            }
+        };
+}
   },
   template: template
 }
-
