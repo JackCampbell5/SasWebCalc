@@ -14,7 +14,8 @@ window.chartColors = {
 // Default units for inputs
 window.units = {
     "wavelength": "Å",
-    "sampleAperture": "mm",
+    "sampleAperture": "cm",
+    "source_aperture": "cm",
     "detectorOffset": "cm",
     "detectorDistance": "cm",
     "beamCenter": "cm",

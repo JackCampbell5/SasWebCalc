@@ -37,15 +37,6 @@ def set_params(instance, params):
             print(f"The parameter {key} is not a known {instance} attribute. Unable to set it to {value}.")
 
 
-def create_plot():
-    return []
-
-
-# Question are x_val and y-val needed in this method
-def include_pixel(x_val, y_val, mask):
-    return mask == 0
-
-
 def add_at_location(array, location):
     pass
 
@@ -55,6 +46,8 @@ class Slicer:
     def __init__(self, params):
 
         # Import all parameters for slicer class
+
+        self.average_type = "Default"
 
         # Params needed for calculate_q_range_slicer
         self.mask: np.array = np.zeros_like(0)
@@ -72,6 +65,9 @@ class Slicer:
         self.d_sq = [0]
         self.n_cells = [0]
         self.sigma_ave = [0]
+        self.q_average = [0]
+        self.sigma_q = [0]
+        self.f_subs = [0]
         # Max and Min Q values
         self.max_qx: float = 0.0
         self.max_qy: float = 0.0
@@ -119,7 +115,6 @@ class Slicer:
         set_params(self, params)
         self.calculate_q_range_slicer()
         self.set_values()
-        self.calculate()
 
     def set_values(self):
         # Sets the max and min q values and all the phi values
@@ -174,7 +169,7 @@ class Slicer:
             data_i = data[i]
             for j in range(len(self.qy_values)):
                 qy_val = self.qy_values[j]
-                if include_pixel(qx_val, qy_val, mask_i[j]):
+                if self.include_pixel(qx_val, qy_val, mask_i[j]):
                     y_distance = self.calculate_distance_from_beam_center(j, "y")
                     data_pixel = data_i[j]
                     total_distence = math.sqrt(x_distence * x_distence + y_distance * y_distance)
@@ -200,7 +195,6 @@ class Slicer:
                             try:
                                 self.ave_intensity[i_radius] = self.ave_intensity[i_radius] + data_pixel / num_d_squared
                             except IndexError:
-                                print(i_radius)
                                 print("Len one" + str(len(self.ave_intensity)))
                                 self.ave_intensity.append(data_pixel / num_d_squared)
                                 print("Len two" + str(len(self.ave_intensity)))
@@ -296,6 +290,8 @@ class Slicer:
         y_distances = calculate_distance_from_beam_center(y_pixels, self.y_center, self.pixel_size, self.coeff)
         theta_y = np.arctan(y_distances / self.detector_distance) / 2
         self.qy_values = (4 * math.pi / self.lambda_val) * np.sin(theta_y)
+        # TODO fix calculate function so it does not have to be commented out
+        # self.calculate()  # SCRR Why was this not here?
 
     def generate_ones_data(self) -> np.array:
         return np.ones((self.x_pixels, self.y_pixels))
@@ -306,26 +302,74 @@ class Slicer:
                  for i in range(self.x_pixels)] for j in range(self.y_pixels)]
         return np.asarray(mask)
 
+    def include_pixel(self, x_val, y_val, mask):
+        return mask == 0
 
+    # Slicer recturn method for all the values need to return to slicer
+    def slicer_return(self):
+        # SCRR Return Method
+        slicer_return = {}
+        slicer_return["average_type"] = self.average_type
+        return slicer_return
+
+
+# Circular averaging class (No overridden methods)
 class Circular(Slicer):
     def __init__(self, params):
+        super().average_type = "circular"
         super().__init__(params)
 
 
+# Sector averaging class 3 overridden methods
 class Sector(Slicer):
     def __init__(self, params):
+        super().average_type = "sector"
         super().__init__(params)
+
+    def include_pixel(self, x_val, y_val, mask):
+        # Overriding does work
+        pixel_angle = math.atan(x_val / y_val)
+        is_correct_angle = (pixel_angle > self.phi_lower) and (pixel_angle < self.phi_upper)
+        forward = is_correct_angle and x_val > 0
+        mirror = is_correct_angle and x_val < 0
+        both = self.detector_sections == "both" and (mirror or forward)
+        left = self.detector_sections == "left" and mirror
+        right = self.detector_sections == "right" and forward
+        return (both or left or right) and (mask == 0)
 
 
 class Rectangular(Slicer):
     def __init__(self, params):
+        super().average_type = "rectangular"
         super().__init__(params)
+
+    def include_pixel(self, x_val, y_val, mask):
+        corrected_radius = math.sqrt(x_val * x_val + y_val * y_val)
+        dot_product = (x_val * self.phi_x + y_val * self.phi_y) / corrected_radius
+        dphi_pixel = math.acos(dot_product)
+        d_perpendicular = corrected_radius * math.sin(dphi_pixel)
+        a = (d_perpendicular <= 0.5 * self.q_width * self.pixel_size)
+        b = self.detector_sections == "both"
+        c = self.detector_sections == "left" and dot_product >= 0
+        d = self.detector_sections == "right" and dot_product < 0
+        return a and (b or c or d) and (mask == 0)
 
 
 class Elliptical(Slicer):
     def __init__(self, params):
-        # TODO create elliptical object
+        super().average_type = "elliptical"
         super().__init__(params)
+
+    def calculate_q(self, theta):
+        # FIXME: This needs to know the pixel position
+        return super().calculate_q(theta)
+
+    def calculate_radius(self, x_val, y_val):
+        # Supposed to be super().calculate _radius but DNE in slicer class
+        i_circular = super().get_i_radius(x_val, y_val)
+        rho = math.atan(x_val / y_val) - self.phi
+        return math.floor(i_circular * math.sqrt(
+            math.cos(rho) * math.cos(rho) + self.aspect_ratio * math.sin(rho) * math.sin(rho))) + 1
 
 
 if __name__ == '__main__':
