@@ -420,6 +420,10 @@ async function sendToPythonInstrument(instrument) {
     window.qyValues =pythonData["qyValues"]
     window.intensity2D = pythonData["intensitys2D"]
     window.qValues = pythonData["qValues"]
+    // SCRR Return to Main.js
+    const slicerReturnArray = pythonData["slicer_params"];
+    const averageType = slicerReturnArray["average_type"];
+    console.log("averageType",averageType)
 }
 
 /*

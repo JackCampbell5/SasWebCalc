@@ -46,6 +46,8 @@ class Slicer:
 
         # Import all parameters for slicer class
 
+        self.average_type = "Default"
+
         # Params needed for calculate_q_range_slicer
         self.mask: np.array = np.zeros_like(0)
         self.intensity_2D: np.array = np.zeros_like(0)
@@ -268,7 +270,8 @@ class Slicer:
         y_distances = calculate_distance_from_beam_center(y_pixels, self.y_center, self.pixel_size, self.coeff)
         theta_y = np.arctan(y_distances / self.detector_distance) / 2
         self.qy_values = (4 * math.pi / self.lambda_val) * np.sin(theta_y)
-        self.calculate()  # Why was this not here?
+        # TODO fix calculate function so it does not have to be commented out
+        # self.calculate()  # SCRR Why was this not here?
 
     def generate_ones_data(self) -> np.array:
         return np.ones((self.x_pixels, self.y_pixels))
@@ -282,16 +285,25 @@ class Slicer:
     def include_pixel(self, x_val, y_val, mask):
         return mask == 0
 
+    # Slicer recturn method for all the values need to return to slicer
+    def slicer_return(self):
+        # SCRR Return Method
+        slicer_return = {}
+        slicer_return["average_type"] = self.average_type
+        return slicer_return
+
 
 # Circular averaging class (No overridden methods)
 class Circular(Slicer):
     def __init__(self, params):
+        super().average_type = "circular"
         super().__init__(params)
 
 
 # Sector averaging class 3 overridden methods
 class Sector(Slicer):
     def __init__(self, params):
+        super().average_type = "sector"
         super().__init__(params)
 
     def include_pixel(self, x_val, y_val, mask):
@@ -308,6 +320,7 @@ class Sector(Slicer):
 
 class Rectangular(Slicer):
     def __init__(self, params):
+        super().average_type = "rectangular"
         super().__init__(params)
 
     def include_pixel(self, x_val, y_val, mask):
@@ -324,6 +337,7 @@ class Rectangular(Slicer):
 
 class Elliptical(Slicer):
     def __init__(self, params):
+        super().average_type = "elliptical"
         super().__init__(params)
 
     def calculate_q(self, theta):
@@ -334,7 +348,8 @@ class Elliptical(Slicer):
         # Supposed to be super().calculate _radius but DNE in slicer class
         i_circular = super().get_i_radius(x_val, y_val)
         rho = math.atan(x_val / y_val) - self.phi
-        return math.floor(i_circular*math.sqrt(math.cos(rho)*math.cos(rho)+self.aspect_ratio*math.sin(rho)*math.sin(rho)))+1
+        return math.floor(i_circular * math.sqrt(
+            math.cos(rho) * math.cos(rho) + self.aspect_ratio * math.sin(rho) * math.sin(rho))) + 1
 
 
 if __name__ == '__main__':

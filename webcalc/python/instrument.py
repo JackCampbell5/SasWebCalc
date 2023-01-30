@@ -648,6 +648,8 @@ class Instrument:
         python_return["qyValues"] = self.slicer.qy_values.tolist()
         python_return["intensitys2D"] = self.slicer.intensity_2D.tolist()
         python_return["qValues"] = self.slicer.q_values
+        # SCRR Slicer Return from Python
+        python_return["slicer_params"] = self.slicer.slicer_return()
 
         # Can return encode JSON just not a python dictionary
         return encode_json(python_return)
