@@ -136,81 +136,45 @@ class Slicer:
         self.phi_to_lr_corner = math.atan(self.min_qy / self.max_qx) + 2 * math.pi
 
     def calculate(self):
-        nq = 0
         large_number = 1.0
+        # The radius, in cm, from the center of the beam to slice pixels into a 3x3 grid
         radius_center = 100
-        data = self.intensity_2D
-        data_i = []
-        mask_i = []
-        num_dimensions = 1
-        center = 1
+        # x and y pixel indices
         x_indices = np.asarray(range(1, len(self.qx_values) + 1))
         y_indices = np.asarray(range(1, len(self.qy_values) + 1))
+        # Calculate distance array from the beam center
         x_distances = calculate_distance_from_beam_center(x_indices, self.x_center, self.pixel_size, self.coeff)
         y_distances = calculate_distance_from_beam_center(y_indices, self.y_center, self.pixel_size, self.coeff)
+        # Calculate total distances for all pixels
         total_distances = np.sqrt(x_distances * x_distances + y_distances * y_distances)
+        # Convert pixels near the center into 3x3 pixels
         num_dimensions = np.asarray([1 if total_distance > radius_center else 3 for total_distance in total_distances])
+        # Set existing pixel center value
         center = np.asarray([1 if total_distance > radius_center else 2 for total_distance in total_distances])
         num_d_squared = num_dimensions * num_dimensions
-        # FIXME: num_dimensions is an array...
-        corrected_dx = x_distances + (np.asarray(list(range(1, num_dimensions + 1))) - center) * self.pixel_size / num_dimensions
-        corrected_dy = y_distances + (
-                    np.asarray(list(range(1, num_dimensions + 1))) - center) * self.pixel_size / num_dimensions
+        corrected_dx = np.asarray([x_distance + (n - center[i]) * self.pixel_size / n
+                                   for i, x_distance in enumerate(x_distances) for n in range(1, num_dimensions[i])])
+        print(len(x_distances))
+        corrected_dy = np.asarray([y_distance + (n - center[i]) * self.pixel_size / n
+                                   for i, y_distance in enumerate(y_distances) for n in range(1, num_dimensions[i])])
         i_radius = self.get_i_radius(corrected_dx, corrected_dy)
         nq = max(i_radius) if len(i_radius) > 0 else 0
-        self.ave_intensity = np.zeros_like(list(np.asarray(range(nq))))
-        self.d_sq = np.zeros_like(list(np.asarray(range(nq))))
-        self.n_cells = np.zeros_like(list(np.asarray(range(nq))))
-        # FIXME:
-        for i in range(len(self.qx_values)):
-            qx_val = self.qx_values[i]
-            x_distence = self.calculate_distance_from_beam_center(i, "x")
-            mask_i = self.mask[i]
-            data_i = data[i]
-            for j in range(len(self.qy_values)):
-                qy_val = self.qy_values[j]
-                if self.include_pixel(qx_val, qy_val, mask_i[j]):
-                    y_distance = self.calculate_distance_from_beam_center(j, "y")
-                    data_pixel = data_i[j]
-                    total_distence = math.sqrt(x_distence * x_distence + y_distance * y_distance)
-                    # breaks pixels up into a 3*3 grid close to beam center
-                    if total_distence > radius_center:
-                        num_dimensions = 1
-                        center = 1
-                    else:
-                        num_dimensions = 3
-                        center = 2
-                    num_d_squared = num_dimensions * num_dimensions
-                    # Loop over sliced pixels
-                    for k in range(1, num_dimensions + 1):
-                        corrected_dx = x_distence + (k - center) * self.pixel_size / num_dimensions
-                        for l in range(1, num_dimensions + 1):
-                            corrected_dy = y_distance + (l - center) * self.pixel_size / num_dimensions
-                            i_radius = self.get_i_radius(corrected_dx, corrected_dy)
-                            nq = i_radius if i_radius > nq else nq
+        print(nq)
 
-                            # before reformated  self.ave_intensity[i_radius] = data_pixel/num_d_squared if self.ave_intensity[i_radius] is None else self.ave_intensity[i_radius]+data_pixel/num_d_squared
-                            #                             self.d_sq[i_radius] = data_pixel*data_pixel/num_d_squared if self.d_sq[i_radius] is None else self.d_sq[i_radius]+data_pixel*data_pixel/num_d_squared
-                            #                             self.n_cells[i_radius] = 1/num_d_squared if self.n_cells[i_radius] is None else self.n_cells[i_radius]+1 /num_d_squared
-                            try:
-                                self.ave_intensity[i_radius] = self.ave_intensity[i_radius] + data_pixel / num_d_squared
-                            except IndexError:
-                                print("Len one" + str(len(self.ave_intensity)))
-                                self.ave_intensity.append(data_pixel / num_d_squared)
-                                print("Len two" + str(len(self.ave_intensity)))
-                            self.d_sq[i_radius] = data_pixel * data_pixel / num_d_squared if self.d_sq[
-                                                                                                 i_radius] is None else \
-                                self.d_sq[i_radius] + data_pixel * data_pixel / num_d_squared
-                            self.n_cells[i_radius] = 1 / num_d_squared if self.n_cells[i_radius] is None else \
-                                self.n_cells[i_radius] + 1 / num_d_squared
-        for i in range(nq):
+        self.ave_intensity = np.zeros_like(int(nq))
+        # self.ave_intensity[i_radius] = self.ave_intensity[i_radius] + data_pixel / num_d_squared
+        self.d_sq = np.zeros_like(int(nq))
+        # self.d_sq[i_radius] = data_pixel * data_pixel / num_d_squared
+        self.n_cells = np.zeros_like(int(nq))
+        # self.n_cells[i_radius] = 1 / num_d_squared if self.n_cells[i_radius]
+        for i in range(int(nq)):
             self.calculate_q(i)
             if self.n_cells[i] <= 1:
                 self.ave_intensity[i] = 0 if self.n_cells[i] == 0 or math.isnan(self.n_cells[i]) else \
                     self.ave_intensity[i] / self.n_cells[i]
                 self.sigma_ave[i] = large_number
             else:
-                self.ave_intensity[i] = self.ave_intensity[i] if math.isnan(self.n_cell[i]) else self.ave_intensity[i] / \
+                self.ave_intensity[i] = self.ave_intensity[i] if math.isnan(self.n_cells[i]) else self.ave_intensity[i] / \
                                                                                                  self.n_cells[i]
                 ave_sq = self.ave_intensity[i] * self.ave_intensity[i]
                 ave_isq = self.d_sq[i] if math.isnan(self.n_cells[i]) else self.d_sq[i] / self.n_cells[i]
@@ -291,7 +255,7 @@ class Slicer:
         theta_y = np.arctan(y_distances / self.detector_distance) / 2
         self.qy_values = (4 * math.pi / self.lambda_val) * np.sin(theta_y)
         # TODO fix calculate function so it does not have to be commented out
-        # self.calculate()  # SCRR Why was this not here?
+        self.calculate()  # SCRR Why was this not here?
 
     def generate_ones_data(self) -> np.array:
         return np.ones((self.x_pixels, self.y_pixels))
@@ -316,15 +280,15 @@ class Slicer:
 # Circular averaging class (No overridden methods)
 class Circular(Slicer):
     def __init__(self, params):
-        super().average_type = "circular"
         super().__init__(params)
+        self.average_type = "circular"
 
 
 # Sector averaging class 3 overridden methods
 class Sector(Slicer):
     def __init__(self, params):
-        super().average_type = "sector"
         super().__init__(params)
+        self.average_type = "sector"
 
     def include_pixel(self, x_val, y_val, mask):
         # Overriding does work
@@ -340,8 +304,8 @@ class Sector(Slicer):
 
 class Rectangular(Slicer):
     def __init__(self, params):
-        super().average_type = "rectangular"
         super().__init__(params)
+        self.average_type = "rectangular"
 
     def include_pixel(self, x_val, y_val, mask):
         corrected_radius = math.sqrt(x_val * x_val + y_val * y_val)
@@ -357,8 +321,8 @@ class Rectangular(Slicer):
 
 class Elliptical(Slicer):
     def __init__(self, params):
-        super().average_type = "elliptical"
         super().__init__(params)
+        self.average_type = "elliptical"
 
     def calculate_q(self, theta):
         # FIXME: This needs to know the pixel position
