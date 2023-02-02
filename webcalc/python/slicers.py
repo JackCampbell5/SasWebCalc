@@ -1,6 +1,7 @@
 # TODO: Create slicer class and child slicers
 # built-in imports
 import math
+from typing import Union
 
 import numpy as np
 from scipy.special import gamma, gammainc
@@ -136,6 +137,9 @@ class Slicer:
         self.phi_to_lr_corner = math.atan(self.min_qy / self.max_qx) + 2 * math.pi
 
     def calculate(self):
+        """
+        Calculate the average intensity for all Q values
+        """
         large_number = 1.0
         # The radius, in cm, from the center of the beam to slice pixels into a 3x3 grid
         radius_center = 100
@@ -167,25 +171,37 @@ class Slicer:
         # self.d_sq[i_radius] = data_pixel * data_pixel / num_d_squared
         self.n_cells = np.zeros_like(int(nq))
         # self.n_cells[i_radius] = 1 / num_d_squared if self.n_cells[i_radius]
-        for i in range(int(nq)):
-            self.calculate_q(i)
-            if self.n_cells[i] <= 1:
-                self.ave_intensity[i] = 0 if self.n_cells[i] == 0 or math.isnan(self.n_cells[i]) else \
-                    self.ave_intensity[i] / self.n_cells[i]
-                self.sigma_ave[i] = large_number
-            else:
-                self.ave_intensity[i] = self.ave_intensity[i] if math.isnan(self.n_cells[i]) else self.ave_intensity[i] / \
-                                                                                                 self.n_cells[i]
-                ave_sq = self.ave_intensity[i] * self.ave_intensity[i]
-                ave_isq = self.d_sq[i] if math.isnan(self.n_cells[i]) else self.d_sq[i] / self.n_cells[i]
-                diff = ave_isq - ave_sq
-                self.sigma_ave[i] = large_number if diff < 0 else math.sqrt(diff / self.n_cells[i] - 1)
+        nq_array = np.arange(nq)
+        self.calculate_q(nq_array)
+        # FIXME: list comprehension/vectorization...
+        # TODO: calculate n_cells and d_sq -> ave_intensity calculated below
+        if self.n_cells[i] <= 1:
+            self.ave_intensity[i] = 0 if self.n_cells[i] == 0 or math.isnan(self.n_cells[i]) else \
+                self.ave_intensity[i] / self.n_cells[i]
+        else:
+            self.ave_intensity[i] = self.ave_intensity[i] if math.isnan(self.n_cells[i]) else self.ave_intensity[i] / \
+                                                                                             self.n_cells[i]
+        ave_sq = self.ave_intensity * self.ave_intensity
+        ave_isq = np.asarray([self.d_sq[i] if np.isnan(self.n_cells[i]) else self.d_sq[i] / self.n_cells[i]
+                              for i in nq_array])
+        diff = ave_isq - ave_sq
+        self.sigma_ave = np.asarray([large_number if diff[i] < 0 or self.n_cells <= 1
+                                     else math.sqrt(diff[i] / (self.n_cells[i] - 1)) for i in nq_array])
         self.calculate_resolution()
 
-    def calculate_q(self, i):
-        radius = (2 * i) * self.pixel_size / 2
-        theta = math.atan(radius / self.SDD) / 2
-        self.q_values[i] = (4 * math.pi / self.lambda_val) * math.sin(theta)
+    def calculate_q(self, i: Union[np.ndarray, int]):
+        """Calculates the q value for a given detector pixel, i pixels from the center of the beam or a range of
+        q values if i is ann array
+
+        Args:
+            i: Either an integer or an array of integers
+        """
+        radius = i * self.pixel_size
+        theta = np.atan(radius / self.SDD) / 2
+        if isinstance(i, (np.ndarray, np.generic)):
+            self.q_values = (4 * np.pi / self.lambda_val) * np.sin(theta)
+        else:
+            self.q_values[i] = (4 * np.pi / self.lambda_val) * np.sin(theta)
 
     def get_i_radius(self, x_val, y_val):
         return np.floor(np.sqrt(x_val * x_val + y_val * y_val) / self.pixel_size) + 1
