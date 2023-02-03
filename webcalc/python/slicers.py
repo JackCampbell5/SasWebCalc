@@ -137,55 +137,57 @@ class Slicer:
         self.phi_to_lr_corner = math.atan(self.min_qy / self.max_qx) + 2 * math.pi
 
     def calculate(self):
-        """
-        Calculate the average intensity for all Q values
-        """
+        """Calculate the average intensity for all Q values at a given instrument configuration"""
         large_number = 1.0
         # The radius, in cm, from the center of the beam to slice pixels into a 3x3 grid
         radius_center = 100
+        # Number of unique Q points used for the averaging
+        nq = 0
         # x and y pixel indices
         x_indices = np.asarray(range(1, len(self.qx_values) + 1))
         y_indices = np.asarray(range(1, len(self.qy_values) + 1))
         # Calculate distance array from the beam center
-        x_distances = calculate_distance_from_beam_center(x_indices, self.x_center, self.pixel_size, self.coeff)
-        y_distances = calculate_distance_from_beam_center(y_indices, self.y_center, self.pixel_size, self.coeff)
+        x_distances = np.full((self.x_pixels, self.x_pixels), calculate_distance_from_beam_center(x_indices, self.x_center, self.pixel_size, self.coeff))
+        y_distances = np.full((self.y_pixels, self.y_pixels), calculate_distance_from_beam_center(y_indices, self.y_center, self.pixel_size, self.coeff))
         # Calculate total distances for all pixels
         total_distances = np.sqrt(x_distances * x_distances + y_distances * y_distances)
         # Convert pixels near the center into 3x3 pixels
-        num_dimensions = np.asarray([1 if total_distance > radius_center else 3 for total_distance in total_distances])
+        num_dimensions = np.ones(np.shape(total_distances))
+        num_dimensions[total_distances <= radius_center] = 3
         # Set existing pixel center value
-        center = np.asarray([1 if total_distance > radius_center else 2 for total_distance in total_distances])
+        center = np.ones(np.shape(total_distances))
+        center[total_distances <= radius_center] = 2
         num_d_squared = num_dimensions * num_dimensions
-        corrected_dx = np.asarray([x_distance + (n - center[i]) * self.pixel_size / n
-                                   for i, x_distance in enumerate(x_distances) for n in range(1, num_dimensions[i])])
-        print(len(x_distances))
-        corrected_dy = np.asarray([y_distance + (n - center[i]) * self.pixel_size / n
-                                   for i, y_distance in enumerate(y_distances) for n in range(1, num_dimensions[i])])
-        i_radius = self.get_i_radius(corrected_dx, corrected_dy)
-        nq = max(i_radius) if len(i_radius) > 0 else 0
-        print(nq)
+        self.ave_intensity = np.zeros(1000)
+        self.d_sq = np.zeros(1000)
+        self.n_cells = np.zeros(1000)
 
-        self.ave_intensity = np.zeros_like(int(nq))
-        # self.ave_intensity[i_radius] = self.ave_intensity[i_radius] + data_pixel / num_d_squared
-        self.d_sq = np.zeros_like(int(nq))
-        # self.d_sq[i_radius] = data_pixel * data_pixel / num_d_squared
-        self.n_cells = np.zeros_like(int(nq))
-        # self.n_cells[i_radius] = 1 / num_d_squared if self.n_cells[i_radius]
+        for i in range(self.x_pixels):
+            for j in range(self.y_pixels):
+                data_px = self.intensity_2D[i][j]
+                nd = int(num_dimensions[i][j])
+                for k in range(1, nd):
+                    corrected_dx = x_distances[i][j] + (k - center[i][j]) * self.pixel_size / k
+                    n_d_sqr = nd
+                    for el in range(1, nd):
+                        corrected_dy = y_distances[i][j] + (el - center[i][j]) * self.pixel_size / el
+                        i_radius = self.get_i_radius(corrected_dx, corrected_dy)
+                        self.n_cells[i_radius] += 1 / n_d_sqr
+                        self.ave_intensity[i_radius] = (0 if self.n_cells[i] == 0 or math.isnan(self.n_cells[i])
+                                                        else self.ave_intensity[i] / self.n_cells[i])
+                        self.d_sq[i_radius] += data_px * data_px / n_d_sqr
+                        nq = max(i_radius, nq)
+
+        self.ave_intensity = self.ave_intensity[:nq]
+        self.d_sq = self.d_sq[:nq]
+        self.n_cells = self.n_cells[:nq]
         nq_array = np.arange(nq)
         self.calculate_q(nq_array)
-        # FIXME: list comprehension/vectorization...
-        # TODO: calculate n_cells and d_sq -> ave_intensity calculated below
-        if self.n_cells[i] <= 1:
-            self.ave_intensity[i] = 0 if self.n_cells[i] == 0 or math.isnan(self.n_cells[i]) else \
-                self.ave_intensity[i] / self.n_cells[i]
-        else:
-            self.ave_intensity[i] = self.ave_intensity[i] if math.isnan(self.n_cells[i]) else self.ave_intensity[i] / \
-                                                                                             self.n_cells[i]
         ave_sq = self.ave_intensity * self.ave_intensity
         ave_isq = np.asarray([self.d_sq[i] if np.isnan(self.n_cells[i]) else self.d_sq[i] / self.n_cells[i]
                               for i in nq_array])
         diff = ave_isq - ave_sq
-        self.sigma_ave = np.asarray([large_number if diff[i] < 0 or self.n_cells <= 1
+        self.sigma_ave = np.asarray([large_number if diff[i] < 0 or self.n_cells[i] <= 1
                                      else math.sqrt(diff[i] / (self.n_cells[i] - 1)) for i in nq_array])
         self.calculate_resolution()
 
@@ -197,14 +199,14 @@ class Slicer:
             i: Either an integer or an array of integers
         """
         radius = i * self.pixel_size
-        theta = np.atan(radius / self.SDD) / 2
+        theta = np.arctan(radius / self.SDD) / 2
         if isinstance(i, (np.ndarray, np.generic)):
             self.q_values = (4 * np.pi / self.lambda_val) * np.sin(theta)
         else:
             self.q_values[i] = (4 * np.pi / self.lambda_val) * np.sin(theta)
 
     def get_i_radius(self, x_val, y_val):
-        return np.floor(np.sqrt(x_val * x_val + y_val * y_val) / self.pixel_size) + 1
+        return int(np.floor(np.sqrt(x_val * x_val + y_val * y_val) / self.pixel_size) + 1)
 
     def calculate_resolution(self):
         velocity_neutron_1a = 3.956e5
@@ -226,13 +228,11 @@ class Slicer:
         var_detector = math.pow(pixel_size / 2.3548, 2) + (pixel_size + pixel_size) / 12
         velocity_neutron = velocity_neutron_1a / self.lambda_val
         var_gravity = 0.5 * gravity_constant * self.SDD*(self.SSD + self.SDD) / math.pow(velocity_neutron, 2)
-        r_zero = self.SDD * np.tan(2.0 * np.asin(self.lambda_val * np.asarray(self.q_values) / (4.0 * np.pi)))
-        delta = 0.5 * np.pow(self.beam_stop_size - r_zero, 2) / var_detector
-        if r_zero < self.beam_stop_size:
-            inc_gamma = np.exp(np.log(gamma(1.5))) * (1 - gammainc(1.5, delta) / gamma(1.5))
-        else:
-            inc_gamma = np.exp(np.log(gamma(1.5))) * (1 + gammainc(1.5, delta) / gamma(1.5))
-
+        r_zero = self.SDD * np.tan(2.0 * np.arcsin(self.lambda_val * np.asarray(self.q_values) / (4.0 * np.pi)))
+        delta = 0.5 * np.power(self.beam_stop_size - r_zero, 2) / var_detector
+        inc_gamma = np.full_like(r_zero, np.exp(np.log(gamma(1.5))) * (1 + gammainc(1.5, delta) / gamma(1.5)))
+        # FIXME: indexing broken here
+        # inc_gamma[r_zero < self.beam_stop_size] = np.exp(np.log(gamma(1.5))) * (1 - gammainc(1.5, delta) / gamma(1.5))
         f_sub_s = 0.5 * (1.0 + np.erf((r_zero - self.beam_stop_size) / math.sqrt(2.0 * var_detector)))
         if f_sub_s < small_number:
             f_sub_s = small_number
@@ -259,8 +259,8 @@ class Slicer:
     # Calculate Q Range Slicer and its helper methods
     def calculate_q_range_slicer(self):
         # Detector values pixel size in mm
-        self.intensity_2D = self.generate_ones_data()
-        self.mask = self.generate_standard_mask()
+        self.generate_ones_data()
+        self.generate_standard_mask()
         # Calculate Qx and Qy values
         x_pixels = np.array([i for i in range(self.x_pixels)])
         x_distances = calculate_distance_from_beam_center(x_pixels, self.x_center, self.pixel_size, self.coeff)
@@ -270,17 +270,18 @@ class Slicer:
         y_distances = calculate_distance_from_beam_center(y_pixels, self.y_center, self.pixel_size, self.coeff)
         theta_y = np.arctan(y_distances / self.detector_distance) / 2
         self.qy_values = (4 * math.pi / self.lambda_val) * np.sin(theta_y)
-        # TODO fix calculate function so it does not have to be commented out
-        self.calculate()  # SCRR Why was this not here?
+        self.calculate()
 
-    def generate_ones_data(self) -> np.array:
-        return np.ones((self.x_pixels, self.y_pixels))
+    def generate_ones_data(self):
+        """Create an array of 1s as a basis for the 2D intensity values. These 1s willed be scaled relative to the
+        average intensity for each pixel"""
+        self.intensity_2D = np.ones((self.x_pixels, self.y_pixels))
 
-    # Generate a standard SANS mask with the outer 2 pixels masked
     def generate_standard_mask(self):
-        mask = [[1 if i <= 1 or i >= self.x_pixels - 2 or j <= 1 or j >= (self.y_pixels - 2) else 0
-                 for i in range(self.x_pixels)] for j in range(self.y_pixels)]
-        return np.asarray(mask)
+        """ Generate an array that uses 1 to represent a masked pixel and 0 otherwise. The outer two pixels are masked
+        by default."""
+        self.mask = [[1 if i <= 1 or i >= self.x_pixels - 2 or j <= 1 or j >= (self.y_pixels - 2) else 0
+                      for i in range(self.x_pixels)] for j in range(self.y_pixels)]
 
     def include_pixel(self, x_val, y_val, mask):
         return mask == 0
@@ -360,11 +361,11 @@ if __name__ == '__main__':
         'detector_distance': 6.0,
     }
     slicer = Slicer(params)
-    mask = slicer.generate_standard_mask()
-    ones = slicer.generate_ones_data()
-    assert len(mask) == 128
-    assert mask.shape == (128, 128)
-    assert not np.all(mask == 1)
-    assert len(ones) == 128
-    assert ones.shape == (128, 128)
-    assert np.all(ones == 1)
+    slicer.generate_standard_mask()
+    slicer.generate_ones_data()
+    assert len(slicer.mask) == 128
+    assert slicer.mask.shape == (128, 128)
+    assert not np.all(slicer.mask == 1)
+    assert len(slicer.intensity_2D) == 128
+    assert slicer.intensity_2D.shape == (128, 128)
+    assert np.all(slicer.intensity_2D == 1)
