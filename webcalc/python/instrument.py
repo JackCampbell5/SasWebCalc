@@ -247,6 +247,7 @@ class Collimation:
     def calculate_source_to_sample_aperture_distance(self):
         self.ssad = (self.guides.get_maximum_length() - self.guides.get_length_per_guide()
                      * self.guides.number_of_guides - self.get_sample_aperture_offset())
+        return self.ssad
 
 
 class Detector:
@@ -638,16 +639,16 @@ class Instrument:
         python_return["MaximumHorizontalQ"] = self.data.q_max_horizon
         python_return["MaximumQ"] = self.data.q_max
         python_return["MinimumQ"] = self.data.q_min
-        python_return["nCells"] = self.slicer.n_cells
-        python_return["qsq"] = self.slicer.d_sq
-        python_return["sigmaAve"] = self.slicer.sigma_ave
-        python_return["qAverage"] = self.slicer.q_average
-        python_return["sigmaQ"] = self.slicer.sigma_q
-        python_return["fSubs"] = self.slicer.f_subs
+        python_return["nCells"] = self.slicer.n_cells.tolist()
+        python_return["qsq"] = self.slicer.d_sq.tolist()
+        python_return["sigmaAve"] = self.slicer.sigma_ave.tolist()
+        python_return["qAverage"] = self.slicer.q_average.tolist()
+        python_return["sigmaQ"] = self.slicer.sigma_q.tolist()
+        python_return["fSubs"] = self.slicer.f_subs.tolist()
         python_return["qxValues"] = self.slicer.qx_values.tolist()
         python_return["qyValues"] = self.slicer.qy_values.tolist()
         python_return["intensitys2D"] = self.slicer.intensity_2D.tolist()
-        python_return["qValues"] = self.slicer.q_values
+        python_return["qValues"] = self.slicer.q_values.tolist()
         # SCRR Slicer Return from Python
         python_return["slicer_params"] = self.slicer.slicer_return()
 
@@ -795,9 +796,6 @@ class Instrument:
         slicer_params["q_width"] = averaging_params[4]
         slicer_params["aspect_ratio"] = averaging_params[5]
 
-        # Import params needed for calculateQRangeSlicer
-        #  aperture_offset, coeff, x_pixels, y_pixels imported in object creation
-
         # QUESTION      [0] Do I need to run a loop here? how does this work with multiple detectors
         self.detectors[index].calculate_beam_center_x()
         self.detectors[index].calculate_beam_center_y()
@@ -910,7 +908,7 @@ class Instrument:
         return self.wavelength.wavelength_spread
 
     def calculate_source_to_sample_aperture_distance(self):
-        self.collimation.calculate_source_to_sample_aperture_distance()
+        return self.collimation.calculate_source_to_sample_aperture_distance()
 
 
 class NG7SANS(Instrument):
