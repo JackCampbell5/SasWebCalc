@@ -422,8 +422,23 @@ async function sendToPythonInstrument(instrument) {
     window.qValues = pythonData["qValues"]
     // SCRR Return to Main.js
     const slicerReturnArray = pythonData["slicer_params"];
-    const averageType = slicerReturnArray["average_type"];
-    console.log("averageType",averageType)
+    const averageType = slicerReturnArray["averageType"];
+    switch (averageType) {
+        case "circular":
+        default:
+            window.slicer = new Circular(slicerReturnArray);
+            break;
+        case "sector":
+            window.slicer = new Sector(slicerReturnArray);
+            break;
+        case "rectangular":
+            window.slicer = new Rectangular(slicerReturnArray);
+            break;
+        case "elliptical":
+            window.slicer = new Elliptical(slicerReturnArray);
+            break;
+    }//Averaging type switch end
+    //elliptical        rectangular     sector      circular
 }
 
 /*

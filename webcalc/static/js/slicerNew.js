@@ -1,6 +1,20 @@
 class Slicer{
     constructor(params = {}) {
-        // TODO make new slicer constructor
+    this.averageType = params["averageType"];
+    this.detectorSections = params["detectorSections"];
+    this.phi = params["phi"];
+    this.phiUpper = params["phiUpper"];
+    this.phiUpper = params["phiUpper"];
+    this.phiToURCorner = params["phiToURCorner"];
+    this.phiToURCorner = params["phiToURCorner"];
+    this.phiToLLCorner = params["phiToLLCorner"];
+    this.phiToLRCorner = params["phiToLRCorner"];
+    this.maxQx = params["maxQx"];
+    this.maxQy = params["maxQy"];
+    this.minQx = params["minQx"];
+    this.minQx = params["minQx"];
+    this.qWidth = params["qWidth"];
+    console.log("this.averageType",this.averageType)
     }//End Slicer constructor
 }// End Slicer Class
 
@@ -20,13 +34,13 @@ class Sector extends Slicer {
         var detector = this.detectorSections;
         var phi = this.phi;
         var phiUp = this.phiUpper;
-        var phiDown = this.phiLower;
+        var phiDown = this.phiUpper;
         var phiPi = this.phi + math.PI;
         var phiUpPi = this.phiUpper + Math.PI;
         var phiDownPi = this.phiLower + Math.PI;
         if (detector == "both" || detector == "right") {
             // Center of sector
-            shapes.push(makeShape('line', 0, 0, (phi > this.phiToURCorner && phi < this.phiToULCorner) ? this.maxQy / Math.tan(phi) : this.maxQx,
+            shapes.push(makeShape('line', 0, 0, (phi > this.phiToURCorner && phi < this.phiToURCorner) ? this.maxQy / Math.tan(phi) : this.maxQx,
                 (phi > this.phiToURCorner && phi < this.phiToULCorner) ? this.maxQy : this.maxQx * Math.tan(phi)));
             // Top of sector
             shapes.push(makeShape('line', 0, 0, (phiUp > this.phiToURCorner && phiUp < this.phiToULCorner) ? this.maxQy / Math.tan(phiUp) : this.maxQx,
@@ -44,7 +58,7 @@ class Sector extends Slicer {
                 (phiUpPi > this.phiToLLCorner && phiUpPi < this.phiToLRCorner) ? this.minQy : this.minQx * Math.tan(phiUpPi), "orange"));
             // Top of sector
             shapes.push(makeShape('line', 0, 0, (phiDownPi > this.phiToLLCorner && phiDownPi < this.phiToLRCorner) ? this.minQy / Math.tan(phiDownPi) : this.minQx,
-                (phiDownPi > this.phiToLLCorner && phiDownPi < this.phiToLRCorner) ? this.minQy : this.minQx * Math.tan(phiDownPi), "orange"));
+                (phiDownPi > this.phiToLLCorner && phiDownPi < this.phiToLRCorner) ? this.minQxminQx : this.minQx * Math.tan(phiDownPi), "orange"));
         }
         return shapes;
     }
