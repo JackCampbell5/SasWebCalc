@@ -54,7 +54,7 @@ function restorePersistantState() {
         var wavelengthSpreadNode = document.getElementById(instrument + 'WavelengthSpread').value;
         wavelengthNode.value = wavelength;
         wavelengthSpreadNode.value = wavelengthSpread;
-        updateWavelength(instrument, false);
+
         // Restore aperture and guide configuration values
         var customAperture = sessionStorage.getItem(instrument + 'CustomAperture');
         var sampleAperture = sessionStorage.getItem(instrument + 'SampleAperture');
@@ -64,9 +64,7 @@ function restorePersistantState() {
         var guideNode = document.getElementById(instrument + 'GuideConfig');
         customApertureNode.value = customAperture;
         sampleApertureSelectorNode.value = sampleAperture;
-        updateAperture(instrument, false);
         guideNode.value = guideConfig;
-        updateGuides(instrument, guideConfig, false);
         // Restore detector distances
         var detectorDistance = sessionStorage.getItem(instrument + 'SDDInputBox');
         var detectorOffset = sessionStorage.getItem(instrument + 'OffsetInputBox');
