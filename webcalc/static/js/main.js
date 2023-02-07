@@ -420,7 +420,6 @@ async function sendToPythonInstrument(instrument) {
     window.qyValues =pythonData["qyValues"]
     window.intensity2D = pythonData["intensitys2D"]
     window.qValues = pythonData["qValues"]
-    // SCRR Return to Main.js
     const slicerReturnArray = pythonData["slicer_params"];
     const averageType = slicerReturnArray["averageType"];
     switch (averageType) {
@@ -438,7 +437,6 @@ async function sendToPythonInstrument(instrument) {
             window.slicer = new Elliptical(slicerReturnArray);
             break;
     }//Averaging type switch end
-    //elliptical        rectangular     sector      circular
 }
 
 /*
