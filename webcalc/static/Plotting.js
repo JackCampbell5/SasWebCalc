@@ -22,19 +22,11 @@ export default {
   watch: {
       data_1d: {
           handler(newValue, oldValue) {
-            this.data_1d.qMin = Math.log10(Math.min(...this.data_1d.qValues));
-            this.data_1d.qMax = Math.log10(Math.max(...this.data_1d.qValues));
-            this.data_1d.iMin = Math.log10(Math.min(...this.data_1d.intensity));
-            this.data_1d.iMax = Math.log10(Math.max(...this.data_1d.intensity));
             this.update1DChart();
           }
       },
       data_2d: {
           handler(newValue, oldValue) {
-            this.data_2d.qxMin = Math.log10(Math.min(...this.data_2d.qxValues));
-            this.data_2d.qxMax = Math.log10(Math.max(...this.data_2d.qxValues));
-            this.data_2d.qyMin = Math.log10(Math.min(...this.data_2d.qyValues));
-            this.data_2d.qyMax = Math.log10(Math.max(...this.data_2d.qyValues));
             this.update2DChart();
           }
       },
@@ -51,6 +43,10 @@ export default {
   },
   methods: {
     update1DChart() {
+        let qMin = Math.log10(this.getMin(this.data_2d.qxValues));
+        let qMax = Math.log10(this.getMax(this.data_2d.qxValues));
+        let iMin = Math.log10(this.getMin(this.data_2d.qyValues));
+        let iMax = Math.log10(this.getMax(this.data_2d.qyValues));
       let dataSet = {
         x: this.data_1d.qValues,
         y: this.data_1d.intensity,
@@ -70,13 +66,13 @@ export default {
         xaxis: {
             exponentformat: 'power',
             title: "Q (Å^-1)",
-            range: [this.data_1d.qMin, this.data_1d.qMax],
+            range: [qMin, qMax],
             type: 'log'
         },
         yaxis: {
             exponentformat: 'power',
             title: 'Relative Intensity (Au)',
-            range: [this.data_1d.iMin, this.data_1d.iMax],
+            range: [iMin, iMax],
             type: 'log'
         },
       };
@@ -86,6 +82,10 @@ export default {
       Plotly.newPlot('sasCalc1DChart', dataSets, layout);
     },
     update2DChart() {
+        let qxMin = this.getMin(this.data_2d.qxValues);
+        let qxMax = this.getMax(this.data_2d.qxValues);
+        let qyMin = this.getMin(this.data_2d.qyValues);
+        let qyMax = this.getMax(this.data_2d.qyValues);
       let dataSet = {
         x: this.data_2d.qxValues,
         y: this.data_2d.qyValues,
@@ -97,12 +97,12 @@ export default {
         title: "SASCALC 2D Plot",
         xaxis: {
             title: "Qx (Å^-1)",
-            range: [this.data_2d.qxMin, this.data_2d.qxMax],
+            range: [qxMin, qxMax],
             constrain: 'domain',
         },
         yaxis: {
             title: "Qy (Å^-1)",
-            range: [this.data_2d.qyMin, this.data_2d.qyMax],
+            range: [qyMin, qyMax],
         },
         shapes: this.shapes,
       };
@@ -140,6 +140,12 @@ export default {
         }
         this.update1DChart();
       },
+    getMax(array) {
+        return Math.max(...array.map(e => Array.isArray(e) ? this.getMax(e) : e))
+    },
+    getMin(array) {
+        return Math.min(...array.map(e => Array.isArray(e) ? this.getMin(e) : e))
+    }
   },
   data: () => ({
     offsetTraces: false,

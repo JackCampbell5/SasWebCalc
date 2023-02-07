@@ -92,10 +92,10 @@ export default {
       let maxQy = 1.0;
       let minQy = -1.0;
       if (this.data_2d != null) {
-          maxQx = Math.max(...this.data_2d['qxValues']);
-          minQx = Math.min(...this.data_2d['qxValues']);
-          maxQy = Math.max(...this.data_2d['qyValues']);
-          minQy = Math.min(...this.data_2d['qyValues']);
+          maxQx = this.getMax(this.data_2d['qxValues']);
+          minQx = this.getMin(this.data_2d['qxValues']);
+          maxQy = this.getMax(this.data_2d['qyValues']);
+          minQy = this.getMin(this.data_2d['qyValues']);
       }
       switch (type) {
           default: case 'Circular':
@@ -212,6 +212,12 @@ export default {
             arr.push(startValue + (step * i));
         }
         return arr;
+    },
+    getMax(array) {
+        return Math.max(...array.map(e => Array.isArray(e) ? this.getMax(e) : e))
+    },
+    getMin(array) {
+        return Math.min(...array.map(e => Array.isArray(e) ? this.getMin(e) : e))
     }
   },
   template: template
