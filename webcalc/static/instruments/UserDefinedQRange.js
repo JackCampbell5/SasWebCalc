@@ -20,7 +20,6 @@ const template = `
 export default {
   props: {
     title: String,
-    instrument_params: {type: Object, default: {}},
   },
   methods: {
    onChangeValue (event) {
@@ -29,7 +28,6 @@ export default {
   },
   data() {
     return {
-      title: "User Defined Q Range Parameters",
       instrument_params: {
         'q_min_vertical': {
           name: 'Q Min Vertical',

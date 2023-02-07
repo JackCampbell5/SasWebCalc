@@ -34,9 +34,6 @@ const template = `
 export default {
   props: {
     title: String,
-    instrument_params: {type: Object, default: {}},
-    categories: {type: Object, default: {}},
-    active_category: String,
   },
   methods: {
     onChangeValue(event) {
@@ -95,7 +92,6 @@ export default {
   },
   data() {
     return {
-      title: "NG7 SANS",
       active_category: "",
       categories: {
         "ngb10Wavelength": {display_name: 'Wavelength Settings'},

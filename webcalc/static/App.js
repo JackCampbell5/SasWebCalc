@@ -56,7 +56,8 @@ const template = `
     <!-- TODO: Replace above with a component -->
   </div>
   <div class="instrument-section" id="instrumentParams">
-    <component v-if="active_instrument != ''" :is="active_instrument" @value-change="onInstrumentParamChange"/>
+    <component v-if="active_instrument != ''" :is="active_instrument" :title="instruments[active_instrument]"
+        @value-change="onInstrumentParamChange"/>
   </div>
   <plotting ref="plotting" :data_1d="data_1d" :data_2d="data_2d" :shapes="shapes" />
 </div>
