@@ -501,14 +501,14 @@ class Data:
         guide_loss = self.parent.collimation.guides.transmission_per_guide
         sourse_aperture = self.parent.get_source_aperture_diam()
         sample_aperture = self.parent.get_sample_aperture_diam()
+        self.parent.calculate_source_to_sample_aperture_distance()
+        self.parent.collimation.calculate_source_to_sample_distance()
         SSD = self.parent.collimation.get_ssd()
         wave = self.parent.get_wavelength()
         lambda_spread = self.parent.get_wavelength_spread()
         guides = self.parent.get_number_of_guides()
 
         # Run calculations
-        self.parent.calculate_source_to_sample_aperture_distance()
-        self.parent.collimation.calculate_source_to_sample_distance()
         alpha = (sourse_aperture + sample_aperture) / (2 * SSD)
         f = (self.parent.collimation.guides.get_gap_at_start() * alpha) / (
                 2 * self.parent.collimation.guides.get_guide_width())
@@ -1039,8 +1039,9 @@ class NGB10SANS(Instrument):
             ssd_temp = ssd_temp - (self.d_converter(61.9, 'cm')) - (
                         self.collimation.guides.get_length_per_guide() * self.collimation.guides.number_of_guides)
         self.collimation.ssad = ssd_temp - self.collimation.get_sample_aperture_offset()
+        return self.collimation.ssad
 
-# class VSANS(Instrument):
+    # class VSANS(Instrument):
 # TODO Implement VSANS
 #     # Class for the VSANS instrument
 #     def __init__(self, name, params):
