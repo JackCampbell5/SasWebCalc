@@ -4,7 +4,8 @@ import {default as ngb30} from "./instruments/NGB30SANS.js";
 import {default as vsans} from "./instruments/VSANS.js";
 import {default as q_range} from "./instruments/UserDefinedQRange.js";
 import {default as ngb10} from "./instruments/NGB10SANS.js";
-import Plotting, {default as plotting} from "./Plotting.js";
+import {default as plotting} from "./Plotting.js";
+import {default as model} from "./ModelParams.js";
 
 const template = `
 <header class="top">
@@ -39,21 +40,8 @@ const template = `
   <div class="instrument-section" id="modelAndAveragingParams">
     <averaging-params ref="averaging_params" :active_averaging_type="active_averaging_type" :data_1d="data_1d"
         :data_2d="data_2d" @change-ave-params="onChange"/>
-    <!-- TODO: Replace this with a component -->
-    <div id="modelParams" v-if="Object.keys(model_params).length > 0">
-     <h2>{{active_model}} Model Parameters:</h2>
-      <ul class="parameter">
-        <li v-for="(param, param_name) in model_params" :key="param_name">
-          <label :for="active_model + '_' + param_name">{{param_name}}:</label>
-          <input type="number" v-model.number="param.default" 
-          :min="(param.lower_limit == '-inf') ? null : param.lower_limit"
-          :max="(param.upper_limit == 'inf') ? null : param.upper_limit"
-          @change="onModelParamChange"
-            />
-        </li>
-      </ul>
-    </div>
-    <!-- TODO: Replace above with a component -->
+    <model-params ref="model" :active_model="active_model" :model_names="model_names" :model_params="model_params"
+        @model-value-change="onModelParamChange" />
   </div>
   <div class="instrument-section" id="instrumentParams">
     <component v-if="active_instrument != ''" :is="active_instrument" :title="instruments[active_instrument]"
@@ -75,6 +63,7 @@ const instruments = {
 export default {
   components: {
     'averaging-params': AveragingParams,
+    'model-params': model,
     'plotting': plotting,
     'q_range': q_range,
     "ngb30": ngb30,
@@ -105,16 +94,13 @@ export default {
     async populateModelParams() {
       const fetch_result = await fetch(`/get/params/model/${this.active_model}`);
       this.model_params = await fetch_result.json();
-      console.log(this.model_params);
     },
     async onModelParamChange() {
       let location = `/calculate/model/${this.active_model}`;
       let data = JSON.stringify(this.model_params);
       console.log(data);
-      console.log(location);
       // TODO: Consolidate all params and send to server
       let results = await this.fetch_with_data(location, data);
-      console.log(results);
     },
     async onInstrumentParamChange(params) {
       this.instrument_params = params;
@@ -122,7 +108,6 @@ export default {
       let data = this.instrument_params;
       // TODO: Consolidate all params and send to server
       let results = await this.fetch_with_data(location, data);
-      console.log(results);
     },
     onChange(p) {
       // TODO: run calculations
