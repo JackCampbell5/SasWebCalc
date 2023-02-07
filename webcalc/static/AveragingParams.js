@@ -73,7 +73,9 @@ export default {
   },
   methods: {
     makeAveragingShapes() {
+      // Reset shapes so only current shape(s) visible
       this.shapes = [];
+      // Get all parameters to be used by any slicer drawer
       let type = this.active_averaging_type;
       let qCenter = parseFloat(this.averagingParams['qCenter']);
       let qWidth = parseFloat(this.averagingParams['qWidth']);
@@ -105,7 +107,7 @@ export default {
                 this.shapes.push(this.makeShape('line', 0, 0, (phi > phiToLLCorner && phi < phiToLRCorner) ? minQy / Math.tan(phi) : minQx,
                     (phi > phiToLLCorner && phi < phiToLRCorner) ? minQy : minQx * Math.tan(phi)));
                 this.shapes.push(this.makeShape('line', 0, 0, (phiUp > phiToLLCorner && phiUp < phiToLRCorner) ? minQy / Math.tan(phiUp) : minQx,
-                    (phiUpTwoPi > phiToLLCorner && phiUp < phiToLRCorner) ? minQy : minQx * Math.tan(phiUp), "orange"));
+                    (phiUp > phiToLLCorner && phiUp < phiToLRCorner) ? minQy : minQx * Math.tan(phiUp), "orange"));
                 this.shapes.push(this.makeShape('line', 0, 0, (phiDown > phiToLLCorner && phiDown < phiToLRCorner) ? minQy / Math.tan(phiDown) : minQx,
                     (phiDown > phiToLLCorner && phiDown < phiToLRCorner) ? minQy : minQx * Math.tan(phiDown), "orange"));
             }
@@ -128,7 +130,13 @@ export default {
             }
             break;
           case 'Elliptical':
-            // TODO: Write this
+            let side = aspectRatio * maxQy;
+            let start = 0;
+            let end = 2 * Math.PI;
+            let steps = 100;
+            if (halves === "left") { end = Math.PI; steps = 50; }
+            if (halves === "right") { start = Math.PI; steps = 50; }
+            this.shapes.push(makeSVGPath(makeEllipseArc(0, 0, side, maxQy, start, end, phi, steps, false)));
             break;
       }
     },
@@ -148,7 +156,51 @@ export default {
                 color: color,
             }
         };
-}
+    },
+    /*
+     * Return a dictionary that defines a path-like object in plot.ly
+     */
+    makeSVGPath(path, color = "black") {
+        return {
+            type: 'path',
+            path: path,
+            line: {
+                color: color,
+            }
+        };
+    },
+    /*
+     * Return a path-like object that represents an oriented ellipse-like shape
+     */
+    makeEllipseArc(xCenter = 0, yCenter = 0, a = 1, b = 1, startAngle = 0, endAngle = 2 * Math.PI, orientationAngle = 0, N = 100, closed = false) {
+        // FIXME: orientationAngle needs to work properly
+        let x = [];
+        let y = [];
+        let t = makeArr(startAngle, endAngle, N);
+        for (let i = 0; i < t.length; i++) {
+            x[i] = xCenter + a * Math.cos(t[i] + orientationAngle);
+            y[i] = yCenter + b * Math.sin(t[i] + orientationAngle);
+        }
+        let path = 'M ' + x[0] + ', ' + y[0];
+        for (let k = 1; k < t.length; k++) {
+            path += ' L' + x[k] + ', ' + y[k];
+        }
+        if (closed) {
+            path += ' Z';
+        }
+        return path
+    },
+    /*
+     * Create a filled array from startValue to stopValue with cardinality points in between
+     */
+    makeArr(startValue, stopValue, cardinality) {
+        let arr = [];
+        let step = (stopValue - startValue) / (cardinality - 1);
+        for (let i = 0; i < cardinality; i++) {
+            arr.push(startValue + (step * i));
+        }
+        return arr;
+    }
   },
   template: template
 }
