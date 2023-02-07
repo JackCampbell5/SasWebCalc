@@ -83,8 +83,8 @@ export default {
       let qCenter = parseFloat(this.averagingParams['qCenter']);
       let qWidth = parseFloat(this.averagingParams['qWidth']);
       let qHeight = parseFloat(this.averagingParams['qHeight']);
-      let phi = parseFloat(this.averagingParams['phi']);
-      let dPhi = parseFloat(this.averagingParams['dPhi']);
+      let phi = parseFloat(this.averagingParams['phi']) * Math.PI / 180;
+      let dPhi = parseFloat(this.averagingParams['dPhi']) * Math.PI / 180;
       let halves = this.averagingParams['detectorHalves'];
       let aspectRatio = parseFloat(this.averagingParams['aspectRatio']);
       let maxQx = 1.0;
@@ -126,7 +126,7 @@ export default {
             }
             break;
           case 'Annular':
-            let innerQ = qCenter - qWidth;
+            let innerQ = Math.max(qCenter - qWidth, 0);
             let outerQ = qCenter + qWidth;
             this.shapes.push(this.makeShape('circle', -1 * qCenter, -1 * qCenter, qCenter, qCenter, "white"));
             this.shapes.push(this.makeShape('circle', -1 * innerQ, -1 * innerQ, innerQ, innerQ, "orange"));
@@ -134,9 +134,9 @@ export default {
             break;
           case 'Rectangular':
             if (halves === "left") {
-                this.shapes.push(this.makeShape('rect', -1 * qWidth / 2, qHeight / 2, qWidth / 2, 0, "orange"));
+                this.shapes.push(this.makeShape('rect', -1 * qWidth / 2, qHeight / 2, 0, -1 * qHeight / 2, "orange"));
             } else if (halves === "right") {
-                this.shapes.push(this.makeShape('rect', -1 * qWidth / 2, -1 * qHeight / 2, qWidth / 2, 0, "orange"));
+                this.shapes.push(this.makeShape('rect', 0, qHeight / 2, qWidth / 2, -1 * qHeight / 2, "orange"));
             } else {
                 this.shapes.push(this.makeShape('rect', -1 * qWidth / 2, -1 * qHeight / 2, qWidth / 2, qHeight / 2, "orange"));
             }
@@ -146,8 +146,8 @@ export default {
             let start = 0;
             let end = 2 * Math.PI;
             let steps = 100;
-            if (halves === "left") { end = Math.PI; steps = 50; }
-            if (halves === "right") { start = Math.PI; steps = 50; }
+            if (halves === "left") { start = Math.PI / 2; end = 3 * Math.PI / 2; steps = 50; }
+            if (halves === "right") { start = -1 * Math.PI / 2; end = Math.PI / 2; steps = 50; }
             this.shapes.push(this.makeSVGPath(this.makeEllipseArc(0, 0, side, maxQy, start, end, phi, steps, false)));
             break;
       }
