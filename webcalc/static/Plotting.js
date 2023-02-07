@@ -40,7 +40,6 @@ export default {
       },
       shapes: {
           handler(newValue, oldValue) {
-              console.log("Is this updating?")
               this.update2DChart();
           }
       },
