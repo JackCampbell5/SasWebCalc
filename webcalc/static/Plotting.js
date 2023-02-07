@@ -1,6 +1,5 @@
 import 'https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.17.1/plotly.min.js';
 import {chartColors} from "./constants.js";
-import {default as AveragingParams} from "./AveragingParams.js";
 
 const template = `
 <div class="freezer">
@@ -15,6 +14,11 @@ const template = `
 `
 
 export default {
+  props: {
+    data_1d: Object,
+    data_2d: Object,
+    shapes: Array,
+  },
   watch: {
       data_1d: {
           handler(newValue, oldValue) {
@@ -34,11 +38,17 @@ export default {
             this.update2DChart();
           }
       },
+      shapes: {
+          handler(newValue, oldValue) {
+              console.log("Is this updating?")
+              this.update2DChart();
+          }
+      },
       offsetTraces: {
           handler(newValue, oldValue) {
             this.scaleFrozenDataSets();
           }
-      }
+      },
   },
   methods: {
     update1DChart() {
@@ -95,7 +105,7 @@ export default {
             title: "Qy (Å^-1)",
             range: [this.data_2d.qyMin, this.data_2d.qyMax],
         },
-        shapes: AveragingParams.shapes,
+        shapes: this.shapes,
       };
       Plotly.newPlot('sasCalc2DChart', [dataSet], layout);
     },
@@ -135,8 +145,6 @@ export default {
   data: () => ({
     offsetTraces: false,
     frozen_data: [],
-    data_1d: {},
-    data_2d: {},
     doFreeze: "Freeze Calculation",
     unFrozen: "Unfreeze Calculations",
   }),
@@ -144,25 +152,6 @@ export default {
     frozen() {
       return this.frozen_data !== [];
     }
-  },
-  mounted() {
-      this.data_1d = {
-        qValues: [0.0001, 0.001, 0.01, 0.1],
-        intensity: [1000, 100, 10, 1],
-        qMin: 0.0001,
-        qMax: 1.0,
-        iMin: 0.001,
-        iMax: 100000,
-      };
-      this.data_2d = {
-          qxValues: [[-1, 0, 1],[-1, 0, 1],[-1, 0, 1]],
-          qyValues: [[-1, 0, 1],[-1, 0, 1],[-1, 0, 1]],
-          intensity2D: [[0, 0, 0],[0, 1130, 0],[0, 0, 0]],
-          qxMin: 0.0001,
-          qxMax: 1.0,
-          qyMin: 0.001,
-          qyMax: 100000,
-      };
   },
   template: template,
 }

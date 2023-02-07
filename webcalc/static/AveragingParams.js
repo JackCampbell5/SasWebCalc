@@ -44,7 +44,9 @@ const template = `
 
 export default {
   props: {
-    active_averaging_type: String
+    active_averaging_type: String,
+    data_1d: Object,
+    data_2d: Object,
   },
   data: () => ({
     averagingParams: {
@@ -53,6 +55,7 @@ export default {
       detectorHalves: "both",
       qCenter: 0.1,
       qWidth: 0.05,
+      qHeight: 0.02,
       aspectRatio: 1.0,
     },
     shapes: [],
@@ -66,7 +69,7 @@ export default {
     averagingParams: {
       handler(newValue, oldValue) {
         this.makeAveragingShapes();
-        this.$emit('change', newValue);
+        this.$emit('changeAveParams', this.shapes);
       },
       deep: true
     }
@@ -79,11 +82,21 @@ export default {
       let type = this.active_averaging_type;
       let qCenter = parseFloat(this.averagingParams['qCenter']);
       let qWidth = parseFloat(this.averagingParams['qWidth']);
+      let qHeight = parseFloat(this.averagingParams['qHeight']);
       let phi = parseFloat(this.averagingParams['phi']);
       let dPhi = parseFloat(this.averagingParams['dPhi']);
-      let halves = this.averagingParams['detectorSections'];
+      let halves = this.averagingParams['detectorHalves'];
       let aspectRatio = parseFloat(this.averagingParams['aspectRatio']);
-      // TODO: Need to get min and max Qx and Qy values...
+      let maxQx = 1.0;
+      let minQx = -1.0;
+      let maxQy = 1.0;
+      let minQy = -1.0;
+      if (this.data_2d != null) {
+          maxQx = Math.max(...this.data_2d['qxValues']);
+          minQx = Math.min(...this.data_2d['qxValues']);
+          maxQy = Math.max(...this.data_2d['qyValues']);
+          minQy = Math.min(...this.data_2d['qyValues']);
+      }
       switch (type) {
           default: case 'Circular':
             // No shapes needed for a circular or empty slicer
@@ -120,13 +133,12 @@ export default {
             this.shapes.push(this.makeShape('circle', -1 * outerQ, -1 * outerQ, outerQ, outerQ, "orange"));
             break;
           case 'Rectangular':
-            // FIXME: Write two lines, one on top and one on bottom
             if (halves === "left") {
-                this.shapes.push(this.makeShape('rectangle', -1 * qWidth / 2, qHeight / 2, qWidth / 2, 0, "orange"));
+                this.shapes.push(this.makeShape('rect', -1 * qWidth / 2, qHeight / 2, qWidth / 2, 0, "orange"));
             } else if (halves === "right") {
-                this.shapes.push(this.makeShape('rectangle', -1 * qWidth / 2, -1 * qHeight / 2, qWidth / 2, 0, "orange"));
+                this.shapes.push(this.makeShape('rect', -1 * qWidth / 2, -1 * qHeight / 2, qWidth / 2, 0, "orange"));
             } else {
-                this.shapes.push(this.makeShape('rectangle', -1 * qWidth / 2, -1 * qHeight / 2, qWidth / 2, qHeight / 2, "orange"));
+                this.shapes.push(this.makeShape('rect', -1 * qWidth / 2, -1 * qHeight / 2, qWidth / 2, qHeight / 2, "orange"));
             }
             break;
           case 'Elliptical':
@@ -136,7 +148,7 @@ export default {
             let steps = 100;
             if (halves === "left") { end = Math.PI; steps = 50; }
             if (halves === "right") { start = Math.PI; steps = 50; }
-            this.shapes.push(makeSVGPath(makeEllipseArc(0, 0, side, maxQy, start, end, phi, steps, false)));
+            this.shapes.push(this.makeSVGPath(this.makeEllipseArc(0, 0, side, maxQy, start, end, phi, steps, false)));
             break;
       }
     },
@@ -176,7 +188,7 @@ export default {
         // FIXME: orientationAngle needs to work properly
         let x = [];
         let y = [];
-        let t = makeArr(startAngle, endAngle, N);
+        let t = this.makeArr(startAngle, endAngle, N);
         for (let i = 0; i < t.length; i++) {
             x[i] = xCenter + a * Math.cos(t[i] + orientationAngle);
             y[i] = yCenter + b * Math.sin(t[i] + orientationAngle);

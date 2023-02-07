@@ -37,7 +37,8 @@ const template = `
     </div>
   </div>
   <div class="instrument-section" id="modelAndAveragingParams">
-    <averaging-params ref="averaging_params" :active_averaging_type="active_averaging_type" @change="onChange"/>
+    <averaging-params ref="averaging_params" :active_averaging_type="active_averaging_type" @change-ave-params="onChange"/>
+    <!-- TODO: Replace this with a component -->
     <div id="modelParams" v-if="Object.keys(model_params).length > 0">
      <h2>{{active_model}} Model Parameters:</h2>
       <ul class="parameter">
@@ -51,6 +52,7 @@ const template = `
         </li>
       </ul>
     </div>
+    <!-- TODO: Replace above with a component -->
   </div>
   <div class="instrument-section" id="instrumentParams">
     <component v-if="active_instrument != ''" :is="active_instrument" @value-change="onInstrumentParamChange"/>
@@ -92,6 +94,9 @@ export default {
     model_names: [],
     model_params: {},
     instrument_params: {},
+    data_1d: {},
+    data_2d: {},
+    shapes: [],
     instruments,
   }),
   methods: {
@@ -105,6 +110,7 @@ export default {
       let data = JSON.stringify(this.model_params);
       console.log(data);
       console.log(location);
+      // TODO: Consolidate all params and send to server
       let results = await this.fetch_with_data(location, data);
       console.log(results);
     },
@@ -112,12 +118,14 @@ export default {
       this.instrument_params = params;
       let location = `/calculate/instrument/${this.active_instrument}`;
       let data = this.instrument_params;
+      // TODO: Consolidate all params and send to server
       let results = await this.fetch_with_data(location, data);
       console.log(results);
     },
     onChange(p) {
       // TODO: run calculations
-      console.log('changed: ', p);
+      // TODO: Consolidate all params and send to server
+      this.shapes = p;
     },
     async fetch_with_data(location, data) {
       const fetch_result = await fetch(
@@ -137,6 +145,26 @@ export default {
     const fetch_result = await fetch("/get/models/");
     this.model_names = await fetch_result.json();
   },
-  template
+  mounted() {
+    // TODO: Remove this once everything is working
+    this.data_1d = {
+      qValues: [0.0001, 0.001, 0.01, 0.1],
+      intensity: [1000, 100, 10, 1],
+      qMin: 0.0001,
+      qMax: 1.0,
+      iMin: 0.001,
+      iMax: 100000,
+    };
+    this.data_2d = {
+        qxValues: [[-1, 0, 1],[-1, 0, 1],[-1, 0, 1]],
+        qyValues: [[-1, 0, 1],[-1, 0, 1],[-1, 0, 1]],
+        intensity2D: [[0, 0, 0],[0, 1130, 0],[0, 0, 0]],
+        qxMin: 0.0001,
+        qxMax: 1.0,
+        qyMin: 0.001,
+        qyMax: 100000,
+    };
+  },
+  template: template,
 }
 
