@@ -37,7 +37,8 @@ const template = `
     </div>
   </div>
   <div class="instrument-section" id="modelAndAveragingParams">
-    <averaging-params ref="averaging_params" :active_averaging_type="active_averaging_type" @change-ave-params="onChange"/>
+    <averaging-params ref="averaging_params" :active_averaging_type="active_averaging_type" :data_1d="data_1d"
+        :data_2d="data_2d" @change-ave-params="onChange"/>
     <!-- TODO: Replace this with a component -->
     <div id="modelParams" v-if="Object.keys(model_params).length > 0">
      <h2>{{active_model}} Model Parameters:</h2>
@@ -57,7 +58,7 @@ const template = `
   <div class="instrument-section" id="instrumentParams">
     <component v-if="active_instrument != ''" :is="active_instrument" @value-change="onInstrumentParamChange"/>
   </div>
-  <plotting ref="plotting" />
+  <plotting ref="plotting" :data_1d="data_1d" :data_2d="data_2d" :shapes="shapes" />
 </div>
 </main>
 `;
