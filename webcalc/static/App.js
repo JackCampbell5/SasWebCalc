@@ -114,11 +114,13 @@ export default {
     async onChange() {
       let location = `/calculate/`;
       let data = JSON.stringify({
-        'instrument': this.instrument_params,
-        'model': this.model_params,
-        'averaging': this.averaging_params,
+        'instrument': this.active_instrument,
+        'instrument_params': this.instrument_params,
+        'model': this.active_model,
+        'model_params': this.model_params,
+        'averaging_type': this.active_averaging_type,
+        'averaging_params': this.averaging_params,
       });
-      console.log(data);
       let results = await this.fetch_with_data(location, data);
       console.log(results);
 
