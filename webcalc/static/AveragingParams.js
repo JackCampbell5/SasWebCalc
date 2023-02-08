@@ -69,7 +69,8 @@ export default {
     averagingParams: {
       handler(newValue, oldValue) {
         this.makeAveragingShapes();
-        this.$emit('changeAveParams', this.shapes);
+        this.$emit('changeAveParams', this.averagingParams);
+        this.$emit('changeShapes', this.shapes);
       },
       deep: true
     }

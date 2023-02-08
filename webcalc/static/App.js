@@ -39,7 +39,7 @@ const template = `
   </div>
   <div class="instrument-section" id="modelAndAveragingParams">
     <averaging-params ref="averaging_params" :active_averaging_type="active_averaging_type" :data_1d="data_1d"
-        :data_2d="data_2d" @change-ave-params="onChange"/>
+        :data_2d="data_2d" @change-shapes="onShapeChange" @change-ave-params="onAveragingChange"/>
     <model-params ref="model" :active_model="active_model" :model_names="model_names" :model_params="model_params"
         @model-value-change="onModelParamChange" />
   </div>
@@ -87,6 +87,7 @@ export default {
     instrument_params: {},
     data_1d: {},
     data_2d: {},
+    averaging_params: {},
     shapes: [],
     instruments,
   }),
@@ -97,22 +98,30 @@ export default {
     },
     async onModelParamChange() {
       let location = `/calculate/model/${this.active_model}`;
-      let data = JSON.stringify(this.model_params);
-      console.log(data);
-      // TODO: Consolidate all params and send to server
-      let results = await this.fetch_with_data(location, data);
+      await this.onChange();
     },
     async onInstrumentParamChange(params) {
       this.instrument_params = params;
-      let location = `/calculate/instrument/${this.active_instrument}`;
-      let data = this.instrument_params;
-      // TODO: Consolidate all params and send to server
-      let results = await this.fetch_with_data(location, data);
+      await this.onChange();
     },
-    onChange(p) {
-      // TODO: run calculations
-      // TODO: Consolidate all params and send to server
-      this.shapes = p;
+    async onAveragingChange(params) {
+      this.averaging_params = params;
+      await this.onChange();
+    },
+    onShapeChange(shapes) {
+      this.shapes = shapes;
+    },
+    async onChange() {
+      let location = `/calculate/`;
+      let data = JSON.stringify({
+        'instrument': this.instrument_params,
+        'model': this.model_params,
+        'averaging': this.averaging_params,
+      });
+      console.log(data);
+      let results = await this.fetch_with_data(location, data);
+      console.log(results);
+
     },
     async fetch_with_data(location, data) {
       const fetch_result = await fetch(
