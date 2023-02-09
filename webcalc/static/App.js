@@ -165,6 +165,19 @@ export default {
     localStorage.setItem("shapes", this.shapes);
     localStorage.setItem("offset", this.offset);
   },
+  loadPersistentState() {
+    this.active_instrument = localStorage.getItem('active_instrument');
+    this.active_averaging_type = localStorage.getItem("active_averaging_type");
+    this.active_model = localStorage.getItem("active_model");
+    this.model_params = localStorage.getItem("model_params");
+    this.instrument_params = localStorage.getItem("instrument_params");
+    this.averaging_params = localStorage.getItem("averaging_params");
+    this.data_1d = localStorage.getItem("data_1d");
+    this.data_2d = localStorage.getItem("data_2d");
+    this.frozen = localStorage.getItem("frozen");
+    this.shapes = localStorage.getItem("shapes");
+    this.offset = localStorage.getItem("offset");
+  },
   async beforeMount() {
     const fetch_result = await fetch("/get/models/");
     this.model_names = await fetch_result.json();
