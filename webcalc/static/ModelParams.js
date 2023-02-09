@@ -1,5 +1,5 @@
 const template = `
-<div id="modelParams" v-if="Object.keys(model_params).length > 0">
+<div id="modelParams" v-if="Object.keys(model_params).length > 0" @set-model-persistence="loadPersistence">
  <h2>{{active_model}} Model Parameters:</h2>
   <ul class="parameter">
     <li v-for="(param, param_name) in model_params_local" :key="param_name">
@@ -31,6 +31,9 @@ export default {
         onChangeValue(event) {
           this.$emit('modelValueChange', this.model_params_local);
         },
+        loadPersistence(params) {
+            this.model_params_local = params;
+        }
     },
     data: () => ({
         model_params_local: {},

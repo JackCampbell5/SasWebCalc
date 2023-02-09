@@ -1,5 +1,5 @@
 const template = `
-<div class="instrument_params">
+<div class="instrument_params" @set-instrument-persistence="loadPersistence">
   <h2>{{title}} Instrumental Parameters</h2>
   <div id="ngb30_inputs">
     <div v-for="(category, cat_key) in categories" :id="cat_key" :key="cat_key" class="instrument-section" :set="active_category = cat_key">
@@ -79,6 +79,9 @@ export default {
         }
       }
     },
+    loadPersistence(params) {
+      this.instrument_params = params;
+    }
   },
   computed: {
     item_in_category: function () {

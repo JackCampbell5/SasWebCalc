@@ -1,7 +1,7 @@
 import { averagingInputs } from './constants.js';
 
 const template = `
-   <div id="averagingParams" v-if="visibleParams.length > 0">
+   <div id="averagingParams" v-if="visibleParams.length > 0" @se-averaging-persistence="loadPersistence">
       <h2>{{active_averaging_type}} Parameters:</h2>
       <ul class="parameter">
         <li v-if="visibleParams.includes('phi')">
@@ -219,6 +219,9 @@ export default {
     },
     getMin(array) {
         return Math.min(...array.map(e => Array.isArray(e) ? this.getMin(e) : e))
+    },
+    loadPersistence(params) {
+        this.averagingParams = params;
     }
   },
   template: template

@@ -141,43 +141,55 @@ export default {
             body: JSON.stringify(data)
       })
       return fetch_result.json();
-    }
+    },
+    onFreeze(frozen) {
+      this.frozen = frozen;
+    },
+    onOffset(offset) {
+      this.offset = offset;
+    },
+    persist() {
+      /*
+      Store the current values into active memory to be recalled if the page is refreshed.
+       */
+      localStorage.setItem("active_instrument", this.active_instrument);
+      localStorage.setItem("active_averaging_type", this.active_averaging_type);
+      localStorage.setItem("active_model", this.active_model);
+      localStorage.setItem("model_params", this.model_params);
+      localStorage.setItem("instrument_params", this.instrument_params);
+      localStorage.setItem("averaging_params", this.averaging_params);
+      localStorage.setItem("data_1d", this.data_1d);
+      localStorage.setItem("data_2d", this.data_2d);
+      localStorage.setItem("frozen", this.frozen);
+      localStorage.setItem("offset", this.offset);
+    },
+    loadPersistentState() {
+      this.active_instrument = localStorage.getItem('active_instrument') || "";
+      this.active_averaging_type = localStorage.getItem("active_averaging_type") || "Circular";
+      this.active_model = localStorage.getItem("active_model") || "";
+      this.model_params = localStorage.getItem("model_params") || {};
+      if (this.model_params !== {}) {
+        this.$emit('setModelPersistence', this.model_params);
+      }
+      this.instrument_params = localStorage.getItem("instrument_params") || {};
+      if (this.instrument_params !== {}) {
+        this.$emit('setInstrumentPersistence', this.instrument_params);
+      }
+      this.averaging_params = localStorage.getItem("averaging_params") || {};
+      if (this.averaging_params !== {}) {
+        this.$emit('setAveragingPersistence', this.instrument_params);
+      }
+      this.data_1d = localStorage.getItem("data_1d") || {};
+      this.data_2d = localStorage.getItem("data_2d") || {};
+      this.frozen = localStorage.getItem("frozen") || [];
+      if (this.frozen !== []) {
+        this.$emit('setFrozenPersistence', this.frozen);
+      }
+      this.offset = localStorage.getItem("offset") || false;
+      this.$emit('setOffsetPersistence', this.offset);
+    },
   },
-  onFreeze(frozen) {
-    this.frozen = frozen;
-  },
-  onOffset(offset) {
-    this.offset = offset;
-  },
-  persist() {
-    /*
-    Store the current values into active memory to be recalled if the page is refreshed.
-     */
-    localStorage.setItem("active_instrument", this.active_instrument);
-    localStorage.setItem("active_averaging_type", this.active_averaging_type);
-    localStorage.setItem("active_model", this.active_model);
-    localStorage.setItem("model_params", this.model_params);
-    localStorage.setItem("instrument_params", this.instrument_params);
-    localStorage.setItem("averaging_params", this.averaging_params);
-    localStorage.setItem("data_1d", this.data_1d);
-    localStorage.setItem("data_2d", this.data_2d);
-    localStorage.setItem("frozen", this.frozen);
-    localStorage.setItem("shapes", this.shapes);
-    localStorage.setItem("offset", this.offset);
-  },
-  loadPersistentState() {
-    this.active_instrument = localStorage.getItem('active_instrument');
-    this.active_averaging_type = localStorage.getItem("active_averaging_type");
-    this.active_model = localStorage.getItem("active_model");
-    this.model_params = localStorage.getItem("model_params");
-    this.instrument_params = localStorage.getItem("instrument_params");
-    this.averaging_params = localStorage.getItem("averaging_params");
-    this.data_1d = localStorage.getItem("data_1d");
-    this.data_2d = localStorage.getItem("data_2d");
-    this.frozen = localStorage.getItem("frozen");
-    this.shapes = localStorage.getItem("shapes");
-    this.offset = localStorage.getItem("offset");
-  },
+
   async beforeMount() {
     const fetch_result = await fetch("/get/models/");
     this.model_names = await fetch_result.json();
@@ -193,8 +205,12 @@ export default {
         qyValues: [[-1, 0, 1],[-1, 0, 1],[-1, 0, 1]],
         intensity2D: [[0, 0, 0],[0, 1130, 0],[0, 0, 0]],
     };
-    this.loadPersistentState();
-    this.onChange();
+    if (localStorage.getItem('active_instrument') !== null) {
+      this.loadPersistentState();
+    }
+    if (this.active_instrument !== "" && this.active_model !== "") {
+      this.onChange();
+    }
   },
   template: template,
 }
