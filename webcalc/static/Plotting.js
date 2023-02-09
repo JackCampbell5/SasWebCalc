@@ -126,12 +126,18 @@ export default {
           };
         this.frozen_data.push(dataSet);
         this.scaleFrozenDataSets();
+        this.emitFrozenData();
     },
     unfreezeCalculations() {
         this.frozen_data = [];
         this.update1DChart();
+        this.emitFrozenData();
     },
-      scaleFrozenDataSets() {
+    emitFrozenData() {
+       this.$emit('freeze', this.frozen_data);
+       this.$emit('offsetTraces', this.offsetTraces);
+    },
+    scaleFrozenDataSets() {
         let scale = 1.0;
         let offset = this.offsetTraces ? 1.0 : 0.0;
         for (let x in this.frozen_data) {

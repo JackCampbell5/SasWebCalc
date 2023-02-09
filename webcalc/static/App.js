@@ -47,7 +47,8 @@ const template = `
     <component v-if="active_instrument != ''" :is="active_instrument" :title="instruments[active_instrument]"
         @value-change="onInstrumentParamChange"/>
   </div>
-  <plotting ref="plotting" :data_1d="data_1d" :data_2d="data_2d" :shapes="shapes" />
+  <plotting ref="plotting" :data_1d="data_1d" :data_2d="data_2d" :shapes="shapes"
+      @freeze="onFreeze" @offset-traces="onOffset"/>
 </div>
 </main>
 `;
@@ -87,6 +88,8 @@ export default {
     instrument_params: {},
     data_1d: {},
     data_2d: {},
+    frozen: [],
+    offset: false,
     averaging_params: {},
     shapes: [],
     instruments,
@@ -140,6 +143,12 @@ export default {
       return fetch_result.json();
     }
   },
+  onFreeze(frozen) {
+    this.frozen = frozen;
+  },
+  onOffset(offset) {
+    this.offset = offset;
+  },
   persist() {
     /*
     Store the current values into active memory to be recalled if the page is refreshed.
@@ -152,7 +161,9 @@ export default {
     localStorage.setItem("averaging_params", this.averaging_params);
     localStorage.setItem("data_1d", this.data_1d);
     localStorage.setItem("data_2d", this.data_2d);
+    localStorage.setItem("frozen", this.frozen);
     localStorage.setItem("shapes", this.shapes);
+    localStorage.setItem("offset", this.offset);
   },
   async beforeMount() {
     const fetch_result = await fetch("/get/models/");
