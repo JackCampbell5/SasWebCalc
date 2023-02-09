@@ -87,8 +87,10 @@ def calculate_instrument(instrument, params):
         # Creates NG7SANS object if instrument is ngb30
         i_class = NGB10SANS(instrument, params)
     else:
+        # Creates blank instrument if none of the above
         i_class = Instrument(instrument, params)
-    print(i_class.sas_calc())
+    print(i_class.sas_calc())  # Debugging RBP(Remove Before Publish)
+    # Runs the SasCalc function and returns the python return array
     return i_class.sas_calc()
 
 
@@ -118,10 +120,15 @@ def set_params(instance, params):
 
 
 class Aperture:
+    """
+    Attributes?:
+    """
     def __init__(self, parent, params):
         # type: (Instrument, dict) -> None
         """
-        A class for storing and manipulating collimation related data.
+        A class for storing and manipulating aperture related data.
+        Class parameters: parent, diameter, diameter_unit, offset, and offset_unit
+
         Args:
             parent: The Instrument instance this Detector is a part of
             params: A dictionary mapping <param_name>: <value>
@@ -143,7 +150,10 @@ class Aperture:
         """
         set_params(self, params)
 
-    def get_diameter(self):
+    def get_diameter(self)->int:
+        """
+        Gets the diameter of the function and
+        """
         return self.parent.d_converter(self.diameter, self.diameter_unit)
 
     def get_radius(self):
@@ -1037,7 +1047,7 @@ class NGB10SANS(Instrument):
         ssd_temp = self.collimation.guides.get_maximum_length() - self.collimation.space_offset
         if self.collimation.guides.number_of_guides != 0:
             ssd_temp = ssd_temp - (self.d_converter(61.9, 'cm')) - (
-                        self.collimation.guides.get_length_per_guide() * self.collimation.guides.number_of_guides)
+                    self.collimation.guides.get_length_per_guide() * self.collimation.guides.number_of_guides)
         self.collimation.ssad = ssd_temp - self.collimation.get_sample_aperture_offset()
         return self.collimation.ssad
 
