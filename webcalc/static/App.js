@@ -113,6 +113,7 @@ export default {
     },
     async onChange() {
       let location = `/calculate/`;
+      this.persist();
       let data = JSON.stringify({
         'instrument': this.active_instrument,
         'instrument_params': this.instrument_params,
@@ -139,6 +140,20 @@ export default {
       return fetch_result.json();
     }
   },
+  persist() {
+    /*
+    Store the current values into active memory to be recalled if the page is refreshed.
+     */
+    localStorage.setItem("active_instrument", this.active_instrument);
+    localStorage.setItem("active_averaging_type", this.active_averaging_type);
+    localStorage.setItem("active_model", this.active_model);
+    localStorage.setItem("model_params", this.model_params);
+    localStorage.setItem("instrument_params", this.instrument_params);
+    localStorage.setItem("averaging_params", this.averaging_params);
+    localStorage.setItem("data_1d", this.data_1d);
+    localStorage.setItem("data_2d", this.data_2d);
+    localStorage.setItem("shapes", this.shapes);
+  },
   async beforeMount() {
     const fetch_result = await fetch("/get/models/");
     this.model_names = await fetch_result.json();
@@ -154,6 +169,8 @@ export default {
         qyValues: [[-1, 0, 1],[-1, 0, 1],[-1, 0, 1]],
         intensity2D: [[0, 0, 0],[0, 1130, 0],[0, 0, 0]],
     };
+    this.loadPersistentState();
+    this.onChange();
   },
   template: template,
 }
