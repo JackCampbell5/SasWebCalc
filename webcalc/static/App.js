@@ -100,6 +100,7 @@ export default {
     async populateModelParams() {
       const fetch_result = await fetch(`/get/params/model/${this.active_model}`);
       this.model_params = await fetch_result.json();
+      await this.onChange();
     },
     async onModelParamChange() {
       let location = `/calculate/model/${this.active_model}`;
@@ -207,7 +208,7 @@ export default {
         qyValues: [[-1, 0, 1],[-1, 0, 1],[-1, 0, 1]],
         intensity2D: [[0, 0, 0],[0, 1130, 0],[0, 0, 0]],
     };
-    if (localStorage.getItem('active_instrument') !== null) {
+    if (localStorage.getItem('active_instrument') !== 'null') {
       this.loadPersistentState();
     }
     if (this.active_instrument !== "" && this.active_model !== "") {
