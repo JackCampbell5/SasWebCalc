@@ -15,6 +15,7 @@ const template = `
 `
 
 export default {
+  emits: ['offsetTraces', 'freeze'],
   props: {
     data_1d: Object,
     data_2d: Object,
