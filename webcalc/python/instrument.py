@@ -15,8 +15,7 @@ from .helpers import encode_json
 # TODO: Call slicer directly using known parameters
 
 
-def calculate_instrument(instrument, params):
-    # type: (str, dict) -> dict
+def calculate_instrument(instrument: str, params: dict) -> dict:
     """ The base calculation script. Creates an instrument class, calculates the instrumental resolution for the
     configuration, and returns two list of intensities
     Args:
@@ -94,8 +93,7 @@ def calculate_instrument(instrument, params):
     return i_class.sas_calc()
 
 
-def set_params(instance, params):
-    # type: (Instrument|Detector|Collimation, dict) -> None
+def set_params(instance, params: dict) -> None:
     """
     Set class attributes based on a dictionary of values. The dict should map <param_name> -> <value>.
     Args:
@@ -120,18 +118,23 @@ def set_params(instance, params):
 
 
 class Aperture:
-    """
-    Attributes?:
-    """
-    def __init__(self, parent, params):
-        # type: (Instrument, dict) -> None
-        """
-        A class for storing and manipulating aperture related data.
-        Class parameters: parent, diameter, diameter_unit, offset, and offset_unit
+    """This is what the class is about
 
-        Args:
-            parent: The Instrument instance this Detector is a part of
-            params: A dictionary mapping <param_name>: <value>
+    :param Collimation parent: A parent object that has all the objects
+    :param int self.diameter: Stores the diameter
+    :param str self.diameter_unit: Stores the unit for the diameter value, used for converter
+    :param int self.offset: How much the diameter is offset
+    :param str self.offset_unit: The units of the offset used for converter
+    """
+
+    def __init__(self, parent, params):
+        """A class for storing and manipulating aperture related data.
+        Sets parameters parent, diameter, diameter_unit, offset, and offset_unit
+
+        :param  Collimation parent: The Collimation instance this Aperture object is a part of
+        :param dict params: A dictionary mapping <param_name>: <value>
+        :returns: Nothing as it just sets all the parameters
+        :rtype None:
         """
         self.parent = parent
         self.diameter = 0.0
@@ -141,25 +144,33 @@ class Aperture:
         self.set_params(params)
 
     def set_params(self, params=None):
-        # type: (dict) -> None
         """
         Set class attributes based on a dictionary of values using the generic set_params function.
         Args:
-            params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
-        Returns: None
+        :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
+        :rtype None:
         """
         set_params(self, params)
 
-    def get_diameter(self)->int:
+    def get_diameter(self):
         """
-        Gets the diameter of the function and
+        :returns: Converted diameter and diameter unit value for distance
+        :rtype: int
         """
         return self.parent.d_converter(self.diameter, self.diameter_unit)
 
     def get_radius(self):
+        """
+        :returns: Converted radius and diameter unit value for distance
+        :rtype: int
+        """
         return self.parent.d_converter(self.diameter / 2, self.diameter_unit)
 
     def get_offset(self):
+        """
+        :returns: converted offset and offset unit value for distance
+        :rtype: int
+        """
         return self.parent.d_converter(self.offset, self.offset_unit)
 
 
@@ -190,7 +201,6 @@ class BeamStop:
         Returns: None
         """
         set_params(self, params)
-        print("Important", str(self.diameter))
 
 
 class Collimation:
