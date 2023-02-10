@@ -167,9 +167,9 @@ export default {
       localStorage.setItem("offset", this.offset);
     },
     loadPersistentState() {
-      this.active_instrument = JSON.parse(localStorage.getItem('active_instrument')) || "";
-      this.active_averaging_type = JSON.parse(localStorage.getItem("active_averaging_type")) || "Circular";
-      this.active_model = JSON.parse(localStorage.getItem("active_model")) || "";
+      this.active_instrument = localStorage.getItem('active_instrument') || "";
+      this.active_averaging_type = localStorage.getItem("active_averaging_type") || "Circular";
+      this.active_model = localStorage.getItem("active_model") || "";
       this.model_params = JSON.parse(localStorage.getItem("model_params")) || {};
       if (this.model_params !== {}) {
         this.$emit('setModelPersistence', this.model_params);
