@@ -62,6 +62,8 @@ const instruments = {
 };
 
 export default {
+  emits: ['setOffsetPersistence', 'setFrozenPersistence', 'setAveragingPersistence',
+    'setInstrumentPersistence', 'setModelPersistence'],
   components: {
     'averaging-params': AveragingParams,
     'model-params': model,
