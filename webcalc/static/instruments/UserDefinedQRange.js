@@ -1,5 +1,5 @@
 const template = `
-<div class="instrument_params" @set-instrument-persistence="loadPersistence">
+<div class="instrument_params">
   <h2>{{title}}</h2>
   <div id="q_range_inputs">
     <div class="param" v-for="(param, key) in instrument_params" :key="key" class="instrument-section" >
@@ -24,10 +24,7 @@ export default {
   methods: {
    onChangeValue (event) {
        this.$emit('valueChange', this.instrument_params);
-   },
-    loadPersistence(params) {
-      this.instrument_params = params;
-    }
+   }
   },
   data() {
     return {

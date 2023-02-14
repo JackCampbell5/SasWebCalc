@@ -4,9 +4,8 @@ import {chartColors} from "./constants.js";
 const template = `
 <div class="freezer">
   <label for="offsetTraces">Offset Frozen Calculations:</label><input type="checkbox" id="offsetTraces" v-model="offsetTraces" />
-  <input type="button" v-model="doFreeze" @click="freezeCalculation" @set-frozen-persistence="loadFrozenPersistence" />
-  <input type="button" v-if="frozen" v-model="unFrozen" @click="unfreezeCalculations"
-    @set-offset-persistence="loadOffsetPersistence" />
+  <input type="button" v-model="doFreeze" @click="freezeCalculation" />
+  <input type="button" v-if="frozen" v-model="unFrozen" @click="unfreezeCalculations" />
 </div>
 <div id="sasCalcCharts">
   <div id="sasCalc1DChart"></div>
@@ -15,7 +14,6 @@ const template = `
 `
 
 export default {
-  emits: ['offsetTraces', 'freeze'],
   props: {
     data_1d: Object,
     data_2d: Object,
@@ -153,12 +151,6 @@ export default {
     },
     getMin(array) {
         return Math.min(...array.map(e => Array.isArray(e) ? this.getMin(e) : e))
-    },
-    loadFrozenPersistence(frozen) {
-        this.frozen_data = frozen;
-    },
-    loadOffsetPersistence(offset) {
-        this.offsetTraces = offset;
     }
   },
   data: () => ({

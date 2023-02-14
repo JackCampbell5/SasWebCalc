@@ -62,8 +62,6 @@ const instruments = {
 };
 
 export default {
-  emits: ['setOffsetPersistence', 'setFrozenPersistence', 'setAveragingPersistence',
-    'setInstrumentPersistence', 'setModelPersistence'],
   components: {
     'averaging-params': AveragingParams,
     'model-params': model,
@@ -117,6 +115,12 @@ export default {
     onShapeChange(shapes) {
       this.shapes = shapes;
     },
+    onFreeze(frozen) {
+      this.frozen = frozen;
+    },
+    onOffset(offset) {
+      this.offset = offset;
+    },
     async onChange() {
       let location = `/calculate/`;
       this.persist();
@@ -145,12 +149,6 @@ export default {
       })
       return fetch_result.json();
     },
-    onFreeze(frozen) {
-      this.frozen = frozen;
-    },
-    onOffset(offset) {
-      this.offset = offset;
-    },
     persist() {
       /*
       Store the current values into active memory to be recalled if the page is refreshed.
@@ -158,11 +156,9 @@ export default {
       localStorage.setItem("active_instrument", this.active_instrument);
       localStorage.setItem("active_averaging_type", this.active_averaging_type);
       localStorage.setItem("active_model", this.active_model);
-      localStorage.setItem("model_params", JSON.stringify(this.model_params));
-      localStorage.setItem("instrument_params", JSON.stringify(this.instrument_params));
-      localStorage.setItem("averaging_params", JSON.stringify(this.averaging_params));
-      localStorage.setItem("data_1d", JSON.stringify(this.data_1d));
-      localStorage.setItem("data_2d", JSON.stringify(this.data_2d));
+      localStorage.setItem(this.active_model + "_model_params", JSON.stringify(this.model_params));
+      localStorage.setItem(this.active_instrument + "_instrument_params", JSON.stringify(this.instrument_params));
+      localStorage.setItem(this.active_averaging_type + "_averaging_params", JSON.stringify(this.averaging_params));
       localStorage.setItem("frozen", JSON.stringify(this.frozen));
       localStorage.setItem("offset", this.offset);
     },
@@ -170,29 +166,8 @@ export default {
       this.active_instrument = localStorage.getItem('active_instrument') || "";
       this.active_averaging_type = localStorage.getItem("active_averaging_type") || "Circular";
       this.active_model = localStorage.getItem("active_model") || "";
-      this.model_params = JSON.parse(localStorage.getItem("model_params")) || {};
-      if (this.model_params !== {}) {
-        this.$emit('setModelPersistence', this.model_params);
-      }
-      this.instrument_params = JSON.parse(localStorage.getItem("instrument_params")) || {};
-      if (this.instrument_params !== {}) {
-        this.$emit('setInstrumentPersistence', this.instrument_params);
-      }
-      this.averaging_params = JSON.parse(localStorage.getItem("averaging_params")) || {};
-      if (this.averaging_params !== {}) {
-        this.$emit('setAveragingPersistence', this.instrument_params);
-      }
-      this.data_1d = JSON.parse(localStorage.getItem("data_1d")) || {};
-      this.data_2d = JSON.parse(localStorage.getItem("data_2d") )|| {};
-      this.frozen = JSON.parse(localStorage.getItem("frozen")) || [];
-      if (this.frozen !== []) {
-        this.$emit('setFrozenPersistence', this.frozen);
-      }
-      this.offset = (localStorage.getItem("offset") === 'true')
-      this.$emit('setOffsetPersistence', this.offset);
     },
   },
-
   async beforeMount() {
     const fetch_result = await fetch("/get/models/");
     this.model_names = await fetch_result.json();
@@ -208,9 +183,6 @@ export default {
         qyValues: [[-1, 0, 1],[-1, 0, 1],[-1, 0, 1]],
         intensity2D: [[0, 0, 0],[0, 1130, 0],[0, 0, 0]],
     };
-    if (localStorage.getItem('active_instrument') !== 'null') {
-      this.loadPersistentState();
-    }
     if (this.active_instrument !== "" && this.active_model !== "") {
       this.onChange();
     }

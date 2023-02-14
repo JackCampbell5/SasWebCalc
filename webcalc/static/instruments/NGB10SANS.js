@@ -1,5 +1,5 @@
 const template = `
-<div class="instrument_params" @set-instrument-persistence="loadPersistence">
+<div class="instrument_params">
   <h2>{{title}} Instrumental Parameters</h2>
   <div id="ngb10_inputs">
     <div v-for="(category, cat_key) in categories" :id="cat_key" :key="cat_key" class="instrument-section" :set="active_category = cat_key">
@@ -78,9 +78,6 @@ export default {
           this.instrument_params['ngb10SourceAperture'].default = aperture.value;
         }
       }
-    },
-    loadPersistence(params) {
-      this.instrument_params = params;
     }
   },
   computed: {
