@@ -120,7 +120,7 @@ def set_params(instance, params: dict) -> None:
 class Aperture:
     """This is what the class is about
 
-    :param Collimation parent: A parent object that has all the objects
+    :param Collimation self.parent: A parent object that has all the objects
     :param int self.diameter: Stores the diameter
     :param str self.diameter_unit: Stores the unit for the diameter value, used for converter
     :param int self.offset: How much the diameter is offset
@@ -134,7 +134,7 @@ class Aperture:
         :param  Collimation parent: The Collimation instance this Aperture object is a part of
         :param dict params: A dictionary mapping <param_name>: <value>
         :returns: Nothing as it just sets all the parameters
-        :rtype None:
+        :rtype: None
         """
         self.parent = parent
         self.diameter = 0.0
@@ -146,9 +146,9 @@ class Aperture:
     def set_params(self, params=None):
         """
         Set class attributes based on a dictionary of values using the generic set_params function.
-        Args:
+
         :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
-        :rtype None:
+        :rtype: None
         """
         set_params(self, params)
 
