@@ -13,7 +13,7 @@ Table of Contents
    :maxdepth: 2
    :caption: Contents:
 
-   api/webcalc.python
+   api/webcalc
 
 
 
