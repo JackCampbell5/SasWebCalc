@@ -7,6 +7,7 @@ API
 
 
 .. toctree::
+    :maxdepth: 2
     :caption: Full API Listing
 
     webcalc.python

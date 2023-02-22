@@ -1,4 +1,4 @@
-webcalc/.python
+webcalc\.python
 ===============
 
 .. automodule:: webcalc.python.__init__
@@ -7,6 +7,7 @@ webcalc/.python
 
 
 .. toctree::
+    :maxdepth: 1
     :caption: Python Folder API Listing
 
     webcalc.python.instrument
