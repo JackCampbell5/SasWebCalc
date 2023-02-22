@@ -1,5 +1,5 @@
 webcalc\.python\.slicers\.Rectangular
-=================================
+=====================================
 
 .. autoclass:: webcalc.python.slicers.Rectangular
     :members:

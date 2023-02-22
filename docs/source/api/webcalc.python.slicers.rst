@@ -1,5 +1,5 @@
 webcalc.\python\.slicers package
-==========================
+================================
 
 .. automodule:: webcalc.python.slicers
     :undoc-members:

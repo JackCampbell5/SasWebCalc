@@ -1,8 +1,8 @@
-webcalc\.python package
-==========================
+webcalc\.python\.instrument package
+===================================
 
 .. automodule:: webcalc.python.instrument
-    :undoc-members:
+    :members: calculate_instrument,set_params
     :show-inheritance:
 
 

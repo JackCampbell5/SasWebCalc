@@ -1,7 +1,7 @@
 API
 ===
 
-.. automodule:: webcalc._init_
+.. automodule:: webcalc.__init__
     :undoc-members:
     :show-inheritance:
 
