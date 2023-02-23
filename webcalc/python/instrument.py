@@ -118,9 +118,9 @@ def set_params(instance, params: dict) -> None:
 
 
 class Aperture:
-    """This is what the class is about
+    """A class for storing and manipulating Aperture data.
 
-    :param Collimation self.parent: A parent object that has all the objects
+    :param Instrument self.parent: A parent object that has all the objects
     :param int self.diameter: Stores the diameter
     :param str self.diameter_unit: Stores the unit for the diameter value, used for converter
     :param int self.offset: How much the diameter is offset
@@ -128,10 +128,10 @@ class Aperture:
     """
 
     def __init__(self, parent, params):
-        """A class for storing and manipulating aperture related data.
-        Sets parameters parent, diameter, diameter_unit, offset, and offset_unit
+        """Creates object parameters for BeamStop class and runs set params method
+        Sets object parameters parent, diameter, diameter_unit, offset, and offset_unit
 
-        :param  Collimation parent: The Collimation instance this Aperture object is a part of
+        :param  Instrument parent: The Collimation instance this Aperture object is a part of
         :param dict params: A dictionary mapping <param_name>: <value>
         :returns: Nothing as it just sets all the parameters
         :rtype: None
@@ -175,13 +175,27 @@ class Aperture:
 
 
 class BeamStop:
+    # TODO update documentation once class is implemented
+    """ A class for storing and manipulating BeamStop related data.
+
+    :param Instrument self.parent: The parent instrument object
+    :param int self.diameter:
+    :param str self.diameter_unit:
+    :param int self.offset: The beam stop offset
+    :param str self.offset_unit: The unit for the beam stop offset
+    :param int self.beam_stop_size:  The beam stop size
+    :param int self.beam_stop_diameter: The beam stop diameter
+    """
+    # TODO implement this class somewhere
     def __init__(self, parent, params):
-        # type: (Instrument, dict) -> None
-        """
-        A class for storing and manipulating collimation related data.
-        Args:
-            parent: The Instrument instance this Detector is a part of
-            params: A dictionary mapping <param_name>: <value>
+        """Creates object parameters for BeamStop class and runs set params method
+        Sets object parameters self.parent, self.diameter, self.diameter_unit, self.offset,
+         self.offset_unit, self.beam_stop_size, and self.beam_stop_diameter
+
+        :param Instrument parent: The Instrument instance this Detector is a part of
+        :param dict params: A dictionary mapping <param_name>: <value>
+        :return: None as it just sets the parameters
+        :rtype: None
         """
         self.parent = parent
         self.diameter = 0.0
@@ -193,29 +207,46 @@ class BeamStop:
         self.set_params(params)
 
     def set_params(self, params=None):
-        # type: (dict) -> None
         """
         Set class attributes based on a dictionary of values using the generic set_params function.
-        Args:
-            params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
-        Returns: None
+
+        :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
+        :return: None as it just sets the parameters
+        :rtype: None
         """
         set_params(self, params)
 
 
 class Collimation:
+    """A class for storing and manipulating Collimation related data.
+
+    :param  self.parent: The parent instrument object
+    :param  self.source_aperture: An aperture object for source
+    :param  self.sample_aperture:
+    :param  self.guides:
+    :param  self.ssd:
+    :param  self.ssd_unit:
+    :param  self.ssad:
+    :param  self.ssad_unit:
+    :param  self.sample_space:
+    :param  self.aperture_offset:
+    :param  self.space_offset:
+    :param  self.detector_distance:
+
+    """
     def __init__(self, parent, params):
         # type: (Instrument, dict) -> None
-        """
-        A class for storing and manipulating collimation related data.
-        Args:
-            parent: The Instrument instance this Detector is a part of
-            params: A dictionary mapping <param_name>: <value>
+        """Creates object parameters for Collimation class and runs set params method
+        Sets object parameters self.parent, self.source_aperture, self.sample_aperture,
+        self.guides, self.ssd, self.ssd_unit, self.ssad, self.ssad_unit, self.sample_space,
+        self.aperture_offset, self.space_offset, and self.detector_distance
+
+        :param Instrument parent: The Instrument instance this Detector is a part of
+        :param dict params: A dictionary mapping <param_name>: <value>
         """
         self.parent = parent
         self.source_aperture = Aperture(parent, params.get('source_aperture', {}))
         self.sample_aperture = Aperture(parent, params.get('sample_aperture', {}))
-        print(params['guides'])
         self.guides = Guide(parent, params.get('guides', {}))
         # Sets the params array to main values without aperture array
         params = params['0']
@@ -230,41 +261,86 @@ class Collimation:
         self.set_params(params)
 
     def set_params(self, params=None):
-        # type: (dict) -> None
         """
         Set class attributes based on a dictionary of values using the generic set_params function.
-        Args:
-            params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
-        Returns: None
+
+        :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
+        :return: None as it just sets the parameters
+        :rtype: None
         """
         set_params(self, params)
 
     def get_source_aperture_radius(self):
+        """
+
+        :return:
+        :rtype:
+        """
         return self.source_aperture.get_radius()
 
     def get_source_aperture_diameter(self):
+        """
+
+        :return:
+        :rtype:
+        """
         return self.source_aperture.get_diameter()
 
     def get_sample_aperture_radius(self):
+        """
+
+        :return:
+        :rtype:
+        """
         return self.sample_aperture.get_radius()
 
     def get_sample_aperture_diameter(self):
+        """
+
+        :return:
+        :rtype:
+        """
         return self.sample_aperture.get_diameter()
 
     def get_ssd(self):
+        """
+
+        :return:
+        :rtype:
+        """
         self.calculate_source_to_sample_distance()
         return self.parent.d_converter(self.ssd, self.ssd_unit)
 
     def get_ssad(self):
+        """
+
+        :return:
+        :rtype:
+        """
         return self.parent.d_converter(self.ssad, self.ssad_unit)
 
     def get_sample_aperture_offset(self):
+        """
+
+        :return:
+        :rtype:
+        """
         return self.sample_aperture.get_offset()
 
     def calculate_source_to_sample_distance(self):
+        """
+
+        :return:
+        :rtype:
+        """
         self.ssd = self.ssad - self.aperture_offset
 
     def calculate_source_to_sample_aperture_distance(self):
+        """
+
+        :return:
+        :rtype:
+        """
         self.ssad = (self.guides.get_maximum_length() - self.guides.get_length_per_guide()
                      * self.guides.number_of_guides - self.get_sample_aperture_offset())
         return self.ssad
