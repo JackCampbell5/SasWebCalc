@@ -14,65 +14,18 @@ from .helpers import encode_json
 # TODO: Replace all nodes with Instrument parameters
 # TODO: Call slicer directly using known parameters
 
+# TODO Doc      Add args to top if instrument package html
 
 def calculate_instrument(instrument: str, params: dict) -> dict:
     """ The base calculation script. Creates an instrument class, calculates the instrumental resolution for the
     configuration, and returns two list of intensities
-    Args:
-        instrument: String defining instrument name
-        params: Dictionary containing the following information:
-            {
-                instrument: "Name",
-                wavelength:
-                {
-                    lambda: <value>,
-                    lambda_unit: <unit>,
-                    d_lambda: <value>,
-                    d_lambda_unit: <unit>,
-                    attenuation_factor: <value>
-                },
-                collimation:
-                {
-                    source_aperture: <value>,  # Source aperture radius
-                    source_aperture_unit: "unit",  # Unit string for source aperture radius (e.g. mm, cm, centimeters)
-                    ssd: <value>,  # Source to sample distance
-                    ssd_unit: "unit",
-                    ssad: <value>, # Source to sample aperture distance
-                    ssad_unit: "unit",
-                    sample_aperture: <value>,
-                    sample_aperture_units: "unit",
-                },
-                detectors:
-                [
-                    {
-                        sdd: <value>,
-                        sdd_units: "unit",
-                        sadd: <value>,
-                        sadd_units: "unit",
-                        offset: <value>,
-                        offset_unit: "unit",
-                        pixel_size_x: <value>,
-                        pixel_size_x_unit: "unit"
-                        pixel_size_y: <value>,
-                        pixel_size_y_unit: "unit"
-                        pixel_size_z: <value>,
-                        pixel_size_z_unit: "unit"
-                        pixels_x: <value>,
-                        pixels_y: <value>,
-                        pixels_z: <value>,
-                        dead_time: <value>
-                    },
-                    ...,
-                    {}
-                ],
-                constants:
-                {
 
-                }
-            }
-
-    Returns: [[1D resolutions], [2D resolutions]]
+    :param str instrument: The instrument that we're doing the calculations based off of
+    :param dict params: A dictionary of parameters inputted by the user in the JavaScript
+    :return: The python return dictionary
+    :rtype: dict
     """
+
     # TODO: Create classes for all instruments
     print(params)
     # i_class is the python object for the interment
@@ -93,13 +46,13 @@ def calculate_instrument(instrument: str, params: dict) -> dict:
     return i_class.sas_calc()
 
 
-def set_params(instance, params: dict) -> None:
-    """
-    Set class attributes based on a dictionary of values. The dict should map <param_name> -> <value>.
-    Args:
-        instance: An instance of any class type in this file that needs params set in bulk.
-        params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
-    Returns: None
+def set_params(instance, params):
+    """ Set class attributes based on a dictionary of values. The dict should map <param_name> -> <value>.
+
+    :param instance: An instance of any class type in this file that needs params set in bulk.
+    :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
+    :return: Nothing justs prints errors if there are anu
+    :rtype: None
     """
     if isinstance(params, (list, tuple)):
         # If a list is passed, try using the first value in the list
@@ -190,7 +143,7 @@ class BeamStop:
     def __init__(self, parent, params):
         """Creates object parameters for BeamStop class and runs set params method
         Sets object parameters self.parent, self.diameter, self.diameter_unit, self.offset,
-         self.offset_unit, self.beam_stop_size, and self.beam_stop_diameter
+        self.offset_unit, self.beam_stop_size, and self.beam_stop_diameter
 
         :param Instrument parent: The Instrument instance this Detector is a part of
         :param dict params: A dictionary mapping <param_name>: <value>
