@@ -74,9 +74,9 @@ class Aperture:
     """A class for storing and manipulating Aperture data.
 
     :param Instrument self.parent: A parent object that has all the objects
-    :param int self.diameter: Stores the diameter
+    :param float self.diameter: Stores the diameter
     :param str self.diameter_unit: Stores the unit for the diameter value, used for converter
-    :param int self.offset: How much the diameter is offset
+    :param float self.offset: How much the diameter is offset
     :param str self.offset_unit: The units of the offset used for converter
     """
 
@@ -106,21 +106,24 @@ class Aperture:
         set_params(self, params)
 
     def get_diameter(self):
-        """
+        """ Gets diameter value of the Aperture object
+
         :returns: Converted diameter and diameter unit value for distance
         :rtype: int
         """
         return self.parent.d_converter(self.diameter, self.diameter_unit)
 
     def get_radius(self):
-        """
+        """ Gets the radius of the Aperture object
+
         :returns: Converted radius and diameter unit value for distance
         :rtype: int
         """
         return self.parent.d_converter(self.diameter / 2, self.diameter_unit)
 
     def get_offset(self):
-        """
+        """  Gets the offset of the Aperture object
+
         :returns: converted offset and offset unit value for distance
         :rtype: int
         """
@@ -132,11 +135,11 @@ class BeamStop:
     """ A class for storing and manipulating BeamStop related data.
 
     :param Instrument self.parent: The parent instrument object
-    :param int self.diameter:
+    :param float self.diameter:
     :param str self.diameter_unit:
-    :param int self.offset: The beam stop offset
+    :param float self.offset: The beam stop offset
     :param str self.offset_unit: The unit for the beam stop offset
-    :param int self.beam_stop_size:  The beam stop size
+    :param float self.beam_stop_size:  The beam stop size
     :param int self.beam_stop_diameter: The beam stop diameter
     """
     # TODO implement this class somewhere
@@ -173,18 +176,18 @@ class BeamStop:
 class Collimation:
     """A class for storing and manipulating Collimation related data.
 
-    :param  self.parent: The parent instrument object
-    :param  self.source_aperture: An aperture object for source
-    :param  self.sample_aperture:
-    :param  self.guides:
-    :param  self.ssd:
-    :param  self.ssd_unit:
-    :param  self.ssad:
-    :param  self.ssad_unit:
-    :param  self.sample_space:
-    :param  self.aperture_offset:
-    :param  self.space_offset:
-    :param  self.detector_distance:
+    :param  Instrument self.parent: The parent instrument object
+    :param  Aperture self.source_aperture: An aperture object for source aperture(Passed source aperture parameters)
+    :param  Aperture self.sample_aperture: An Aperture object for the sample aperture(Passed sample aperture parameters)
+    :param  Guide self.guides: A guide object that contains the guide values(Passed the guide parameters)
+    :param  float self.ssd: The source to sample distance
+    :param  str self.ssd_unit: The unit of the source to sample distance
+    :param  float self.ssad: The source to sample aperture distance
+    :param  str self.ssad_unit: The unit of the source to sample aperture distance
+    :param  float self.sample_space: The sample space chosen by the user (Chamber or Huber)
+    :param  float self.aperture_offset: The offset if the aperture(Used for calculation of SSAD)
+    :param  float self.space_offset: The offset given by the sample space
+    :param  float self.detector_distance: The distance to the detector
 
     """
     def __init__(self, parent, params):
@@ -224,75 +227,74 @@ class Collimation:
         set_params(self, params)
 
     def get_source_aperture_radius(self):
-        """
+        """ Gets the radius attribute from the Source Aperture object
 
-        :return:
-        :rtype:
+        :return: The integer value of the radius
+        :rtype: float
         """
         return self.source_aperture.get_radius()
 
     def get_source_aperture_diameter(self):
-        """
+        """ The diameter attribute from the Source Aperture object
 
-        :return:
-        :rtype:
+        :return: The integer value of the diameter
+        :rtype: float
         """
         return self.source_aperture.get_diameter()
 
     def get_sample_aperture_radius(self):
-        """
+        """Gets the radius attribute from the Sample Aperture object
 
-        :return:
-        :rtype:
+        :return:The integer value of the radius
+        :rtype: float
         """
         return self.sample_aperture.get_radius()
 
     def get_sample_aperture_diameter(self):
-        """
+        """The diameter attribute from the Sample Aperture object
 
-        :return:
-        :rtype:
+        :return: The integer value of the diameter
+        :rtype: float
         """
         return self.sample_aperture.get_diameter()
 
     def get_ssd(self):
-        """
+        """ The source to sample distance
 
-        :return:
-        :rtype:
+        :return: The ssd value
+        :rtype: float
         """
         self.calculate_source_to_sample_distance()
         return self.parent.d_converter(self.ssd, self.ssd_unit)
 
     def get_ssad(self):
-        """
+        """ The source to sample aperture distance
 
-        :return:
-        :rtype:
+        :return: The SSAD value
+        :rtype: float
         """
         return self.parent.d_converter(self.ssad, self.ssad_unit)
 
     def get_sample_aperture_offset(self):
         """
-
-        :return:
-        :rtype:
+        :return: The sample aperture offset
+        :rtype: float
         """
         return self.sample_aperture.get_offset()
 
     def calculate_source_to_sample_distance(self):
-        """
+        """ Calculates the source to sample distance from the ssad value and aperture offset value
 
-        :return:
-        :rtype:
+        :return: The calculates SSD value
+        :rtype: float
         """
         self.ssd = self.ssad - self.aperture_offset
 
     def calculate_source_to_sample_aperture_distance(self):
-        """
+        """ Calculates the source to sample aperture distance from the guide values and sample aperture offset
 
-        :return:
-        :rtype:
+        :return: The calculated SSAD value
+        :rtype: float
         """
         self.ssad = (self.guides.get_maximum_length() - self.guides.get_length_per_guide()
                      * self.guides.number_of_guides - self.get_sample_aperture_offset())
