@@ -302,14 +302,43 @@ class Collimation:
 
 
 class Detector:
+    """A class for storing and manipulating Detector related data.
+
+    :param  Instrument self.parent: The parent instrument object
+    :param  float self.sadd: The source to aperture detector distance
+    :param  str self.sadd_unit: The unit of the source to aperture detector distance(Typically centimeters)
+    :param  float self.sdd: The source to detector distance
+    :param  str self.sdd_unit: The unit of the source to detector distance(Typically centimeters)
+    :param  float self.offset: The offset of the detector
+    :param  str self.offset_unit: The offset of the detector(Typically centimeters)
+    :param  float self.pixel_size_x: The size of the detector in the x direction
+    :param  str self.pixel_size_x_unit: The unit for the size of the detector in the x direction (Typically centimeters)
+    :param  float self.pixel_size_y: The size of the detector in the y direction
+    :param  str self.pixel_size_y_unit: The unit for the size of the detector in the y direction (Typically centimeters)
+    :param  float self.pixel_size_z: The size of the detector in the z direction
+    :param  str self.pixel_size_z_unit: The unit for the size of the detector in the z direction (Typically centimeters)
+    :param  float self.pixel_no_x:  #TODO figure out the point of this
+    :param  float self.pixel_no_y:
+    :param  float self.pixel_no_z:
+    :param  float self.per_pixel_max_flux:
+    :param  float self.dead_time:
+    :param  float self.beam_center_x: The location of the center of the beam in the x direction
+    :param  float self.beam_center_y: The location of the center of the beam in the y direction
+    :param  float self.beam_center_z: The location of the center of the beam in the z direction
+
+    """
     def __init__(self, parent, params):
-        # type: (Instrument, dict) -> None
-        """
-        A class for storing and manipulating detector related data.
+        """Creates object parameters for Detector class and runs set params method
         Most useful for instrument with multiple detectors.
-        Args:
-            parent: The Instrument instance this Detector is a part of
-            params: A dictionary mapping <param_name>: <value>
+         Sets object parameters self.parent, self.sadd, self.sadd_unit, self.sdd, self.sdd_unit, self.offset,
+         self.offset_unit, self.pixel_size_x, self.pixel_size_x_unit, self.pixel_size_y, self.pixel_size_y_unit,
+         self.pixel_size_z, self.pixel_size_z_unit, self.pixel_no_x, self.pixel_no_y, self.pixel_no_z,
+         self.per_pixel_max_flux, self.dead_time, self.beam_center_x, self.beam_center_y, and self.beam_center_z
+
+        :param Instrument parent: The Instrument instance this Detector is a part of
+        :param dict params: A dictionary mapping <param_name>: <value>
+        :return: None as it just sets the parameters
+        :rtype: None
         """
         self.parent = parent
         self.sadd = 0.0
@@ -336,23 +365,32 @@ class Detector:
         self.set_params(params)
 
     def set_params(self, params=None):
-        # type: (dict) -> None
-        """
-        Set class attributes based on a dictionary of values using the generic set_params function.
-        Args:
-            params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
-        Returns: None
+        """Set class attributes based on a dictionary of values using the generic set_params function.
+
+        :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
+        :rtype: None
         """
         set_params(self, params)
+
         # Calculate all beam centers using existing values
         self.calculate_all_beam_centers()
 
     def calculate_all_beam_centers(self):
+        """ Call the functions that calculates the x, y, and z centers
+
+        :return: Nothing as it just doing calculations not outputting them
+        :rtype: None
+        """
         self.calculate_beam_center_x()
         self.calculate_beam_center_y()
         self.calculate_beam_center_z()
 
     def calculate_beam_center_x(self):
+        """ Calculates the beam center x by calling functions to get the values no_x, size_x and the offset
+
+        :return: Returns nothing but in the end sets the beam center x
+        :rtype: None
+        """
         # Find the number of x pixels in the detector
         x_pixels = self.pixel_no_x
         # Get pixel size in mm and convert to cm
@@ -362,36 +400,82 @@ class Detector:
         self.beam_center_x = x_pixels / 2 + 0.5 if dr == 0 else offset / dr + x_pixels / 2 + 0.5
 
     def calculate_beam_center_y(self):
+        """ Calculates the beam center y by calling functions to get the values no_y
+
+        :return: Returns nothing but in the end sets the beam center y
+        :rtype: None
+        """
         # Find the number of y pixels in the detector
         y_pixels = self.pixel_no_y
         # Get detector offset in cm
         self.beam_center_y = y_pixels / 2 + 0.5
 
     def calculate_beam_center_z(self):
+        """ Calculates the beam center z by calling functions to get the values no_z
+
+        :return: Returns nothing but in the end sets the beam center z
+        :rtype: None
+        """
         # Find the number of x pixels in the detector
         z_pixels = self.pixel_no_z
         # Get detector offset in cm
         self.beam_center_z = z_pixels / 2 + 0.5
 
     def get_pixel_size_x(self):
+        """Gets the pixel_size_x attribute from the Detector object and converts it for distance with its unit
+
+        :return:The converted value of the pixel_size_x
+        :rtype: float
+        """
         return self.parent.d_converter(self.pixel_size_x, self.pixel_size_x_unit)
 
     def get_pixel_size_y(self):
+        """Gets the pixel_size_y attribute from the Detector object and converts it for distance with its unit
+
+        :return:The converted value of the pixel_size_y
+        :rtype: float
+        """
         return self.parent.d_converter(self.pixel_size_y, self.pixel_size_y_unit)
 
     def get_pixel_size_z(self):
+        """Gets the pixel_size_z attribute from the Detector object and converts it for distance with its unit
+
+        :return:The converted value of the pixel_size_z
+        :rtype: float
+        """
         return self.parent.d_converter(self.pixel_size_z, self.pixel_size_z_unit)
 
     def get_sdd(self):
+        """Gets the sample to detector distance attribute from the Detector object and converts it for distance with its unit
+
+        :return:The converted value of the sdd
+        :rtype: float
+        """
         return self.parent.d_converter(self.sdd, self.sdd_unit)
 
     def get_sadd(self):
+        """Gets the sample to aperture detector distance attribute from the Detector object and converts it for distance with its unit
+
+        :return:The converted value of the sadd
+        :rtype: float
+        """
         return self.parent.d_converter(self.sadd, self.sadd_unit)
 
     def get_offset(self):
+        """Gets the offset attribute from the Detector object and converts it for distance with its unit
+
+        :return:The converted value of the offset
+        :rtype: float
+        """
         return self.parent.d_converter(self.offset, self.offset_unit)
 
     def calculate_distance_from_beam_center(self, coefficient):
+        """Calculates the distance from the beams center to the point in question
+
+        :param int coefficient: The integer of the coefficient that is passed into the calculation
+        :return: The calculated value of the distance from beam center
+        :rtype: float
+        """
         pixel_array = np.array(self.pixel_no_x, self.pixel_no_y)
         # FIXME: This should be more than just pixel size in x
         raw_value = pixel_array * self.get_pixel_size_x()
@@ -408,7 +492,6 @@ class Guide:
             parent: The Instrument instance this Detector is a part of
             params: A dictionary mapping <param_name>: <value>
         """
-        # TODO  J   Import values for  guide_width, gap_at_start, and length_per_guide
         self.parent = parent
         self.guide_width = 0.0
         self.guide_width_unit = 'cm'
