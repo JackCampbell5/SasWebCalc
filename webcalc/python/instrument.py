@@ -317,7 +317,7 @@ class Detector:
     :param  str self.pixel_size_y_unit: The unit for the size of the detector in the y direction (Typically centimeters)
     :param  float self.pixel_size_z: The size of the detector in the z direction
     :param  str self.pixel_size_z_unit: The unit for the size of the detector in the z direction (Typically centimeters)
-    :param  float self.pixel_no_x:  #TODO figure out the point of this
+    :param  float self.pixel_no_x:  TODO DOCS figure out the point of this
     :param  float self.pixel_no_y:
     :param  float self.pixel_no_z:
     :param  float self.per_pixel_max_flux:
@@ -483,14 +483,32 @@ class Detector:
 
 
 class Guide:
+    """A class for storing and manipulating Detector related data.
+
+    :param Instrument self.parent: A parent object that has all the objects
+    :param float self.guide_width: Thw width of the guides
+    :param str self.guide_width_unit: The unit for the width of the guides
+    :param float self.transmission_per_guide: TODO DOCS  - Ask what this is for
+    :param float self.length_per_guide: The length of each evidential guides
+    :param float self.length_per_guide_unit: The unit for the length of each evidential guides
+    :param float self.number_of_guides: The number of guides set by the user
+    :param boolean self.lenses: A boolean for if there are lenses
+    :param float self.gap_at_start: The gap at the start of the guides
+    :param float self.gap_at_start_unit: The unit of the gap at the start of the guides
+    :param float self.maximum_length: The maximum length for an individual guide
+    :param float self.maximum_length_unit: The unit for the maximum length for an individual guide
+    """
+
     def __init__(self, parent, params):
-        # type: (Instrument, dict) -> None
-        """
-        A class for storing and manipulating detector related data.
-        Most useful for instrument with multiple detectors.
-        Args:
-            parent: The Instrument instance this Detector is a part of
-            params: A dictionary mapping <param_name>: <value>
+        """Creates object parameters for Detector class and runs set params method Sets object parameters
+        self.parent, self.guide_width, self.guide_width_unit, self.transmission_per_guide, self.length_per_guide,
+        self.length_per_guide_unit, self.number_of_guides, self.lenses, self.gap_at_start, self.gap_at_start_unit,
+        self.maximum_length, and self.maximum_length_unit
+
+        :param Instrument parent: The Instrument instance this Detector is a part of
+        :param dict params: A dictionary mapping <param_name>: <value>
+        :return: None as it just sets the parameters
+        :rtype: None
         """
         self.parent = parent
         self.guide_width = 0.0
@@ -508,25 +526,43 @@ class Guide:
         self.set_params(params)
 
     def set_params(self, params=None):
-        # type: (dict) -> None
-        """
-        Set class attributes based on a dictionary of values using the generic set_params function.
-        Args:
-            params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
-        Returns: None
+        """Set class attributes based on a dictionary of values using the generic set_params function.
+
+        :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
+        :rtype: None
         """
         set_params(self, params)
 
     def get_gap_at_start(self):
+        """Gets the gap_at_start attribute from the Guide object and converts it for distance with its unit
+
+        :return: The converted value of the gap_at_start
+        :rtype: float
+        """
         return self.parent.d_converter(self.gap_at_start, self.gap_at_start_unit)
 
     def get_guide_width(self):
+        """Gets the guide_width attribute from the Guide object and converts it for distance with its unit
+
+        :return: The converted value of the guide_width
+        :rtype: float
+        """
         return self.parent.d_converter(self.guide_width, self.guide_width_unit)
 
     def get_length_per_guide(self):
+        """Gets the length_per_guide attribute from the Guide object and converts it for distance with its unit
+
+        :return: The converted value of the length_per_guide
+        :rtype: float
+        """
         return self.parent.d_converter(self.length_per_guide, self.length_per_guide_unit)
 
     def get_maximum_length(self):
+        """Gets the maximum_length attribute from the Guide object and converts it for distance with its unit
+
+        :return: The converted value of the maximum_length
+        :rtype: float
+        """
         return self.parent.d_converter(self.maximum_length, self.maximum_length_unit)
 
 
