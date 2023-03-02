@@ -142,6 +142,7 @@ class BeamStop:
     :param float self.beam_stop_size:  The beam stop size
     :param int self.beam_stop_diameter: The beam stop diameter
     """
+
     # TODO implement this class somewhere
     def __init__(self, parent, params):
         """Creates object parameters for BeamStop class and runs set params method
@@ -190,6 +191,7 @@ class Collimation:
     :param  float self.detector_distance: The distance to the detector
 
     """
+
     def __init__(self, parent, params):
         # type: (Instrument, dict) -> None
         """Creates object parameters for Collimation class and runs set params method
@@ -327,6 +329,7 @@ class Detector:
     :param  float self.beam_center_z: The location of the center of the beam in the z direction
 
     """
+
     def __init__(self, parent, params):
         """Creates object parameters for Detector class and runs set params method
         Most useful for instrument with multiple detectors.
@@ -483,7 +486,7 @@ class Detector:
 
 
 class Guide:
-    """A class for storing and manipulating Detector related data.
+    """A class for storing and manipulating Guide related data.
 
     :param Instrument self.parent: A parent object that has all the objects
     :param float self.guide_width: Thw width of the guides
@@ -567,13 +570,33 @@ class Guide:
 
 
 class Wavelength:
+    """A class for storing and manipulating Wavelength related data.
+
+    :param  Instrument self.parent: The parent instrument object
+    :param float self.wavelength: The wavelength
+    :param float self.wavelength_min: The maximum wavelength(Calculated from wavelength_constants)
+    :param float self.wavelength_max: The minimum wavelength(Calculated from wavelength_constants)
+    :param float self.wavelength_unit: The unit for all the wavelengths(Typically nm)
+    :param float self.wavelength_spread: TODO DOCS Ask what this is for
+    :param float self.wavelength_spread_unit: The unit for wavelength spread(Typically %)
+    :param tuple self.wavelength_constants: An array of wavelength constants
+    :param tuple self.rpm_range: The range of revolutions per minute
+    :param float self.number_of_attenuators: TODO DOCS Ask what this is for
+    :param float self.attenuation_factor: TODO DOCS Ask what this is for
+    :param Converter self.d_converter: A converter with values for wavelength units
+    """
+
     def __init__(self, parent, params):
-        # type: (Instrument, dict) -> None
-        """
-        A class for storing and manipulating collimation related data.
-        Args:
-            parent: The Instrument instance this Detector is a part of
-            params: A dictionary mapping <param_name>: <value>
+        """ Creates object parameters for Wavelength class and runs set params method
+
+        Sets object parameters self.parent, self.wavelength, self.wavelength_min, self.wavelength_max,
+        self.wavelength_unit, self.wavelength_spread, self.wavelength_spread_unit, self.wavelength_constants,
+        self.rpm_range, self.number_of_attenuators, self.attenuation_factor, and self.d_converter
+
+        :param Instrument parent: The Instrument instance this Detector is a part of
+        :param dict params: A dictionary mapping <param_name>: <value>
+        :return: None as it just sets the parameters
+        :rtype: None
         """
         self.parent = parent
         self.wavelength = 0.0
@@ -594,23 +617,40 @@ class Wavelength:
         self.set_params(params)
 
     def set_params(self, params=None):
-        # type: (dict) -> None
-        """
-        Set class attributes based on a dictionary of values using the generic set_params function.
-        Args:
-            params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
-        Returns: None
+        """Set class attributes based on a dictionary of values using the generic set_params function.
+
+        :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
+        :rtype: None
         """
         set_params(self, params)
         self.calculate_wavelength_range()
 
     def get_wavelength(self):
+        """Gets the wavelength attribute from the Wavelength object and converts it for distance with its unit
+
+        :return: The converted value of the wavelength
+        :rtype: float
+        """
         return self.d_converter(self.wavelength, self.wavelength_unit)
 
     def set_wavelength(self, value, units):
+        """ Sets the value of the wavelength to the value parameter and converts it with the units
+
+        :param float value: The value to set it too
+        :param str units: The units to be used to convert it
+        :return: Nothing as it sets the value and does not return it
+        :rtype: None
+        """
         self.wavelength = self.d_converter(value, units)
 
     def calculate_wavelength_range(self):
+        """ Calculate the wavelength range based off the wavelength
+         Uses wavelength_constants and rpm range if rpm_range[1] is not 0
+         If not uses the min/max as 0.0 and infinity respectively
+
+        :return: Nothing as it sets and calculates the values
+        :rtype: None
+        """
         try:
             calculated_min = self.wavelength_constants[0] + (self.wavelength_constants[1] / self.rpm_range[1])
         except ZeroDivisionError:
