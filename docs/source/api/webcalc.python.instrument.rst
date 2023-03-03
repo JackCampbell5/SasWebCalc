@@ -58,7 +58,7 @@ This is the overall organization of the variables in the instrument class
     #        }
 
 .. automodule:: webcalc.python.instrument
-    :members: heading,calculate_instrument,set_params
+    :members: calculate_instrument,set_params
     :show-inheritance:
     :undoc-members:
 

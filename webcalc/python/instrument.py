@@ -332,11 +332,12 @@ class Detector:
 
     def __init__(self, parent, params):
         """Creates object parameters for Detector class and runs set params method
+
         Most useful for instrument with multiple detectors.
-         Sets object parameters self.parent, self.sadd, self.sadd_unit, self.sdd, self.sdd_unit, self.offset,
-         self.offset_unit, self.pixel_size_x, self.pixel_size_x_unit, self.pixel_size_y, self.pixel_size_y_unit,
-         self.pixel_size_z, self.pixel_size_z_unit, self.pixel_no_x, self.pixel_no_y, self.pixel_no_z,
-         self.per_pixel_max_flux, self.dead_time, self.beam_center_x, self.beam_center_y, and self.beam_center_z
+        Sets object parameters self.parent, self.sadd, self.sadd_unit, self.sdd, self.sdd_unit, self.offset,
+        self.offset_unit, self.pixel_size_x, self.pixel_size_x_unit, self.pixel_size_y, self.pixel_size_y_unit,
+        self.pixel_size_z, self.pixel_size_z_unit, self.pixel_no_x, self.pixel_no_y, self.pixel_no_z,
+        self.per_pixel_max_flux, self.dead_time, self.beam_center_x, self.beam_center_y, and self.beam_center_z
 
         :param Instrument parent: The Instrument instance this Detector is a part of
         :param dict params: A dictionary mapping <param_name>: <value>
@@ -664,13 +665,40 @@ class Wavelength:
 
 
 class Data:
+    """A class for storing and manipulating Wavelength related data.
+
+    :param  Instrument self.parent: The parent instrument object
+    :param float self.peak_flux: The maximum beam flux
+    :param float self.peak_wavelength: The maximum wavelength
+    :param float self.bs_factor: TODO docs ask what this is for
+    :param float self.trans_1: TODO docs ask what this is for
+    :param float self.trans_2: TODO docs ask what this is for
+    :param float self.trans_3: TODO docs ask what this is for
+    :param float self.beta: The beta value or B
+    :param float self.charlie: The charlie valye or c
+    :param float self.q_max: The maximum Q value (calculated from slicer)
+    :param float self.q_max_horizon: The max horizontal value (calculated from slicer)
+    :param float self.q_max_vert: The max vertical value (calculated from slicer)
+    :param str self.q_unit: The unit for the q values
+    :param float self.q_min: The overall minimum value
+    :param list self.q_values: An array of q values
+    :param list self.intensity: The list of values for q intensity
+    :param float self.flux: The beam flux values
+    :param str  self.flux_size_unit: The size unit for beam flux(Usually cm)
+    :param str self.flux_time_unit: The time unit for beam flux (Usually s)
+    """
     def __init__(self, parent, params):
-        # type: (Instrument, dict) -> None
-        """
-        A class for storing and manipulating collimation related data.
-        Args:
-            parent: The Instrument instance this Detector is a part of
-            params: A dictionary mapping <param_name>: <value>
+        """Creates object parameters for Wavelength class and runs set params method
+
+        Sets object parameters self.parent, self.peak_flux, self.peak_wavelength, self.bs_factor, self.trans_1,
+        self.trans_2, self.trans_3, self.beta, self.charlie, self.q_max, self.q_max_horizon, self.q_max_vert,
+        self.q_unit, self.q_min, self.q_values, self.intensity, self.flux, self.flux_size_unit, and self.flux_time_unit
+
+
+        :param Instrument parent: The Instrument instance this Detector is a part of
+        :param dict params: A dictionary mapping <param_name>: <value>
+        :return: None as it just sets the parameters
+        :rtype: None
         """
         self.parent = parent
         self.peak_flux = np.inf  # peakFlux in constants.js
@@ -695,16 +723,19 @@ class Data:
         self.set_params(params)
 
     def set_params(self, params=None):
-        # type: (dict) -> None
-        """
-        Set class attributes based on a dictionary of values using the generic set_params function.
-        Args:
-            params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
-        Returns: None
+        """Set class attributes based on a dictionary of values using the generic set_params function.
+
+        :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
+        :rtype: None
         """
         set_params(self, params)
 
     def calculate_beam_flux(self):
+        """ Calculate the beam flux range based off lots of different parameter from other classes
+
+        :return: Nothing as it sets and calculates the beam_flux value
+        :rtype: None
+        """
         # Beam Flux Calculations now correct
 
         # Varible defintion
@@ -735,6 +766,11 @@ class Data:
         self.flux = area * d2_phi * lambda_spread * solid_angle * total_trans
 
     def calculate_min_and_max_q(self, index=0):
+        """ Calculate the maximum and minimum q range and max horizontal and vertical q values
+
+        :return: Nothing as it calculates and sets the q_max, q_min, q_max_horizon, and q_max_vert
+        :rtype: None
+        """
         sdd = self.parent.get_sample_to_detector_distance()
         offset = self.parent.get_detector_offset()
         wave = self.parent.get_wavelength()
@@ -754,6 +790,11 @@ class Data:
         self.q_max_vert = 4 * (math.pi / wave) * math.sin(0.5 * theta)
 
     def get_beam_flux(self):
+        """Gets the beam_flux attribute from the Data object and rounds it
+
+        :return: The rounded value of beam_flux
+        :rtype: int
+        """
         self.calculate_beam_flux()
         # Round up for integer value
         # Question: be sure we want that
