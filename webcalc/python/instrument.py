@@ -843,6 +843,10 @@ class Instrument:
         self.d_converter = Converter('cm')
         self.t_converter = Converter('s')
         self.data = None
+        self.collimation = None
+        self.wavelength = None
+        self.detectors = None
+        self.beam_stops = None
         self.beam_flux = None
         self.one_dimensional = {"I": None, "dI": None, "Q": None, "dQ": None, "fSubS": None}
         self.two_dimensional = {"I": None, "dI": None, "Qx": None, "dQx": None, "Qy": None, "dQy": None, "fSubS": None}
@@ -851,7 +855,7 @@ class Instrument:
             # Only store values used for calculations in Instrument class
         self.name = name
         self.constants = Constants()
-        self._params = params
+        self.params = params
 
     @property
     def params(self):
@@ -862,8 +866,9 @@ class Instrument:
         self.load_params(params)
 
     def load_params(self, params):
-        """Pseudo-abstract method to initialize constants associated with an instrument"""
-        raise NotImplementedError(f"Instrument {self.name} has not implemented the `load_params` method.")
+        # """Pseudo-abstract method to initialize constants associated with an instrument"""
+        # raise NotImplementedError(f"Instrument {self.name} has not implemented the `load_params` method.")
+        self.load_objects(params)
 
     def load_objects(self, params):
         # Creates the objects with the param array
