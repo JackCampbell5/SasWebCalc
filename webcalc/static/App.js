@@ -172,7 +172,6 @@ export default {
       this.active_instrument = localStorage.getItem('active_instrument') || "";
       this.active_averaging_type = localStorage.getItem("active_averaging_type") || "Circular";
       this.active_model = localStorage.getItem("active_model") || "";
-      // TODO get the rest of the params and restore them?
     },
   },
   async beforeMount() {
