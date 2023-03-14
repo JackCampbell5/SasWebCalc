@@ -38,6 +38,7 @@ export default {
   methods: {
     onChangeValue(event) {
       this.updateSecondaryElements(event.target);
+      console.log(this.instrument_params)
       this.$emit('valueChange', this.instrument_params);
     },
     updateSecondaryElements(target) {
@@ -307,6 +308,9 @@ export default {
         },
       }
     }
+  },
+  mounted(){
+    this.$emit('valueChange', this.instrument_params);
   },
   template: template
 }
