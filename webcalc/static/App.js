@@ -124,8 +124,7 @@ export default {
     async onChange() {
       //Does not run the function if the instrument or model is blank
       // This is so when the python objects are created they have the correct data
-      console.log(this.active_instrument)
-      if( this.active_instrument !== "") {
+      if(this.active_instrument !== "" && this.active_model !== "") {
         let location = `/calculate/`;
         this.persist();
         let data = JSON.stringify({

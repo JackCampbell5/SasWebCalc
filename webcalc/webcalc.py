@@ -43,6 +43,8 @@ def create_app():
         if not slicer:
             slicer = 'Circular'
         instrument = calculate_instrument(instrument, instrument_params)
+        # FIX
+        # model_new = calculate_model(model, model_params)
         # TODO: Calculate instrument
         #  Calculate slicer (as part of instrument?)
         #  Calculate model
@@ -50,7 +52,7 @@ def create_app():
         return instrument
 
     @app.route('/calculate/model/<model_name>', methods=['POST'])
-    def calculate_model(model_name):
+    def calculate_model(model_name, model_params=None):
         # TODO: Refactor this to accept JSON-like dictionary of params like:
         #  {
         #   'q': [],
@@ -60,7 +62,8 @@ def create_app():
         #   ...
         #   'param_n': {}
         #  }
-        data = decode_json(request.data)
+        if model_params is not None:
+            data = decode_json(request.data)
         print(data)
         param_names = data[0][0]
         param_values = data[0][1]

@@ -93,7 +93,8 @@ def set_params(instance, params):
     for key, value in params.items():
         if hasattr(instance, key):
             # Set known attributes
-            setattr(instance, key, value)
+            if value is not None:
+                setattr(instance, key, value)
         else:
             # Print unrecognized attributes to the console
             print(f"The parameter {key} is not a known {instance} attribute. Unable to set it to {value}.")
@@ -875,6 +876,7 @@ class Instrument:
         #       (This is not a part of load params so instrument can have default values if necessary)
 
         # CAF Beam stop defined
+        # TODO Create Beam stop object(Its just set to an dict right now
         self.beam_stops = params.get('beam_stops', [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
         # TODO Implement current_beamstop object
         self.detectors = [Detector(self, detector_params) for detector_params in params.get('detectors', [{}])]

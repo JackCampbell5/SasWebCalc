@@ -32,7 +32,8 @@ def set_params(instance, params):
     for key, value in params.items():
         if hasattr(instance, key):
             # Set known attributes
-            setattr(instance, key, value)
+            if value is not None:
+                setattr(instance, key, value)
         else:
             # Print unrecognized attributes to the console
             print(f"The parameter {key} is not a known {instance} attribute. Unable to set it to {value}.")
