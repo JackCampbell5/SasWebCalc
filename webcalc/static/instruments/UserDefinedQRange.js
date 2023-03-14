@@ -98,5 +98,8 @@ export default {
       },
     }
   },
+  mounted(){
+    this.$emit('valueChange', this.instrument_params);
+  },
   template: template,
 }

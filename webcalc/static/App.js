@@ -122,18 +122,24 @@ export default {
       this.offset = offset;
     },
     async onChange() {
-      let location = `/calculate/`;
-      this.persist();
-      let data = JSON.stringify({
-        'instrument': this.active_instrument,
-        'instrument_params': this.instrument_params,
-        'model': this.active_model,
-        'model_params': this.model_params,
-        'averaging_type': this.active_averaging_type,
-        'averaging_params': this.averaging_params,
-      });
-      let results = await this.fetch_with_data(location, data);
-      console.log(results);
+      //Does not run the function if the instrument or model is blank
+      // This is so when the python objects are created they have the correct data
+      console.log(this.active_instrument)
+      if( this.active_instrument !== "") {
+        let location = `/calculate/`;
+        this.persist();
+        let data = JSON.stringify({
+          'instrument': this.active_instrument,
+          'instrument_params': this.instrument_params,
+          'model': this.active_model,
+          'model_params': this.model_params,
+          'averaging_type': this.active_averaging_type,
+          'averaging_params': this.averaging_params,
+        });
+        let results = await this.fetch_with_data(location, data);
+        console.log(results);
+        // TODO implement new python return method
+      }//End if statement to check instrument existence
 
     },
     async fetch_with_data(location, data) {
@@ -166,6 +172,7 @@ export default {
       this.active_instrument = localStorage.getItem('active_instrument') || "";
       this.active_averaging_type = localStorage.getItem("active_averaging_type") || "Circular";
       this.active_model = localStorage.getItem("active_model") || "";
+      // TODO get the rest of the params and restore them?
     },
   },
   async beforeMount() {
