@@ -465,6 +465,8 @@ class Converter(object):
         # counts array would be bad.  Sometimes copying and other times
         # not copying is also bad, but copy on modify semantics isn't
         # supported.
+        if units[len(units)-1] == ";":
+            units = units[0:len(units)-1]
         if not units or self.scalemap is None:
             return value
         try:

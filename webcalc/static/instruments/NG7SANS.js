@@ -34,6 +34,7 @@ const template = `
 export default {
   props: {
     title: String,
+    pythonParams: {}
   },
   methods: {
     onChangeValue(event) {
@@ -131,7 +132,7 @@ export default {
           min: 4.8,
           max: 20.0,
           type: "number",
-          unit: '&#8491;',
+          unit: 'Å;',
           category: 'ng7Wavelength',
         },
         'ng7WavelengthSpread': {
@@ -278,7 +279,7 @@ export default {
           name: 'Minimum Q',
           default: '',
           type: "number",
-          unit: "&#8491;<sup>-1</sup>",
+          unit: "Å;<sup>-1</sup>",
           category: 'ng7QRange',
           readonly: true,
         },
@@ -286,7 +287,7 @@ export default {
           name: 'Maximum Q',
           default: '',
           type: "number",
-          unit: "&#8491;<sup>-1</sup>",
+          unit: "Å;<sup>-1</sup>",
           category: 'ng7QRange',
           readonly: true,
         },
@@ -294,7 +295,7 @@ export default {
           name: 'Maximum Vertical Q',
           default: '',
           type: "number",
-          unit: "&#8491;<sup>-1</sup>",
+          unit: "Å;<sup>-1</sup>",
           category: 'ng7QRange',
           readonly: true,
         },
@@ -302,7 +303,7 @@ export default {
           name: 'Maximum Horizontal Q',
           default: '',
           type: "number",
-          unit: "&#8491;<sup>-1</sup>",
+          unit: "Å;<sup>-1</sup>",
           category: 'ng7QRange',
           readonly: true,
         },
@@ -311,6 +312,27 @@ export default {
   },
   mounted(){
     this.$emit('valueChange', this.instrument_params);
+  },
+  watch: {
+    pythonParams: function (value){
+      let valuesInaccessible =value["user_inaccessible"];
+      let instName = "ng7";
+
+      console.log(this.instrument_params)
+
+      for (const name in value["user_inaccessible"]){
+        console.log(instName+name)
+        console.log(this.instrument_params[instName+name])
+        console.log(this.instrument_params[instName+name].default);
+        this.instrument_params[instName+name].default = valuesInaccessible[name];
+        console.log(this.instrument_params[instName+name].default);
+      }
+      console.log(this.instrument_params)
+      //
+      // var cool = "ng7BeamFlux"
+      // this.instrument_params["ng7BeamFlux"].default = value["user_inaccessible"]["beamFlux"]
+    }
+
   },
   template: template
 }

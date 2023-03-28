@@ -647,6 +647,7 @@ class Wavelength:
 
         self.set_params(params)
 
+
     def set_params(self, params=None):
         """Set class attributes based on a dictionary of values using the generic set_params function.
 
@@ -888,31 +889,26 @@ class Instrument:
         params["collimation"]["guides"]["lenses"] =  self.guide_lense_config(old_params["ng7GuideConfig"]["default"],False) if old_params["ng7GuideConfig"]["default"] != "" else None
         params["collimation"]["guides"]["number_of_guides"] = self.guide_lense_config(old_params["ng7GuideConfig"]["default"],True) if old_params["ng7GuideConfig"]["default"] != "" else None
         params["collimation"]["sample_aperture"] = {}
-        params["collimation"]["sample_aperture"]["diameter_unit"] = old_params["ng7SampleAperture"]["unit"] if old_params["ng7SampleAperture"]["unit"] != "" else None
-        params["collimation"]["sample_aperture"]["diameter"] = old_params["ng7SampleAperture"]["default"] if old_params["ng7SampleAperture"]["default"] != "" else None
+        # TODO Fix: Gives errors if you give inches as units
+        # params["collimation"]["sample_aperture"]["diameter_unit"] = old_params["ng7SampleAperture"]["unit"] if old_params["ng7SampleAperture"]["unit"] != "" else None
+        params["collimation"]["sample_aperture"]["diameter"] = old_params["ng7SampleAperture"]["default"]*2.54 if old_params["ng7SampleAperture"]["default"] != "" else None
         params["collimation"]["source_aperture"] = {}
         params["collimation"]["source_aperture"]["diameter_unit"] = old_params["ng7SourceAperture"]["unit"] if old_params["ng7SourceAperture"]["unit"] != "" else None
         params["collimation"]["source_aperture"]["diameter"] = old_params["ng7SourceAperture"]["default"] if old_params["ng7SourceAperture"]["default"] != "" else None
-        params["collimation"][0] = {}
-        params["collimation"][0]["detector_distance"] = old_params["ng7SDDInputBox"]["default"] if old_params["ng7SDDInputBox"]["default"] != "" else None
-        params["collimation"][0]["sample_space"] = old_params["ng7SampleTable"]["default"] if old_params["ng7SampleTable"]["default"] != "" else None
-        params["collimation"][0]["ssad_unit"] = old_params["ng7SSD"]["unit"] if old_params["ng7SSD"]["unit"] != "" else None
-        params["collimation"][0]["ssad"] = old_params["ng7SSD"]["default"] if old_params["ng7SSD"]["default"] != "" else None
-        params["collimation"][0]["ssd_unit"] = old_params["ng7SSD"]["unit"] if old_params["ng7SSD"]["unit"] != "" else None
-        params["collimation"][0]["ssd"] = old_params["ng7SSD"]["default"] if old_params["ng7SSD"]["default"] != "" else None
-        params["detectors"] = []
+        params["collimation"]["0"] = {}
+        params["collimation"]["0"]["detector_distance"] = old_params["ng7SDDInputBox"]["default"] if old_params["ng7SDDInputBox"]["default"] != "" else None
+        params["collimation"]["0"]["sample_space"] = old_params["ng7SampleTable"]["default"] if old_params["ng7SampleTable"]["default"] != "" else None
+        params["collimation"]["0"]["ssad_unit"] = old_params["ng7SSD"]["unit"] if old_params["ng7SSD"]["unit"] != "" else None
+        params["collimation"]["0"]["ssad"] = old_params["ng7SSD"]["default"] if old_params["ng7SSD"]["default"] != "" else None
+        params["collimation"]["0"]["ssd_unit"] = old_params["ng7SSD"]["unit"] if old_params["ng7SSD"]["unit"] != "" else None
+        params["collimation"]["0"]["ssd"] = old_params["ng7SSD"]["default"] if old_params["ng7SSD"]["default"] != "" else None
+        params["detectors"] = [None]
         params["detectors"][0] = {}
         params["detectors"][0]["offset_unit"] = old_params["ng7OffsetInputBox"]["unit"] if old_params["ng7OffsetInputBox"]["unit"] != "" else None
         params["detectors"][0]["offset"] = old_params["ng7OffsetInputBox"]["default"] if old_params["ng7OffsetInputBox"]["default"] != "" else None
-        # params["detectors"][0]["pixel_no_x"] =
-        # params["detectors"][0]["pixel_no_y"] =
-        # params["detectors"][0]["pixel_size_x_unit"] =
-        # params["detectors"][0]["pixel_size_x"] =
-        # params["detectors"][0]["pixel_size_y_unit"] =
-        # params["detectors"][0]["pixel_size_y"] =
         params["detectors"][0]["sdd_unit"] = old_params["ng7SDD"]["unit"] if old_params["ng7SDD"]["unit"] != "" else None
         params["detectors"][0]["sdd"] = old_params["ng7SDD"]["default"] if old_params["ng7SDD"]["default"] != "" else None
-        # params["slicer"] = {}
+        params["slicer"] = {}
         # params["slicer"]["averaging_params"] =
         params["wavelength"] = {}
         params["wavelength"]["attenuation_factor"] =  old_params["ng7AttenuationFactor"]["default"] if old_params["ng7AttenuationFactor"]["default"] != "" else None
@@ -921,6 +917,7 @@ class Instrument:
         params["wavelength"]["wavelength_spread"] = old_params["ng7WavelengthSpread"]["default"] if old_params["ng7WavelengthSpread"]["default"] != "" else None
         params["wavelength"]["wavelength_unit"] =  old_params["ng7WavelengthInput"]["unit"] if old_params["ng7WavelengthInput"]["unit"] != "" else None
         params["wavelength"]["wavelength"] = old_params["ng7WavelengthInput"]["default"] if old_params["ng7WavelengthInput"]["default"] != "" else None
+        return params
 
     def guide_lense_config(self, value,guide_param):
         if value == "LENS":
@@ -981,18 +978,18 @@ class Instrument:
         # TODO Return Values
         python_return = {}
         python_return["user_inaccessible"] = {}
-        python_return["user_inaccessible"]["beamFlux"] = self.data.get_beam_flux()
-        python_return["user_inaccessible"]["figureOfMerit"] = self.calculate_figure_of_merit()
-        python_return["user_inaccessible"]["numberOfAttenuators"] = self.get_attenuator_number()
-        python_return["user_inaccessible"]["ssd"] = self.collimation.ssd
-        python_return["user_inaccessible"]["sdd"] = self.detectors[0].sdd
-        python_return["user_inaccessible"]["beamDiameter"] = int(self.get_beam_diameter() * 10000) / 10000
-        python_return["user_inaccessible"]["beamStopDiameter"] = self.get_beam_stop_diameter()
-        python_return["user_inaccessible"]["attenuationFactor"] = self.get_attenuation_factor()
-        python_return["MaximumVerticalQ"] = self.data.q_max_vert
-        python_return["MaximumHorizontalQ"] = self.data.q_max_horizon
-        python_return["MaximumQ"] = self.data.q_max
-        python_return["MinimumQ"] = self.data.q_min
+        python_return["user_inaccessible"]["BeamFlux"] = self.data.get_beam_flux()
+        python_return["user_inaccessible"]["FigureOfMerit"] = self.calculate_figure_of_merit()
+        python_return["user_inaccessible"]["Attenuators"] = self.get_attenuator_number()
+        python_return["user_inaccessible"]["SSD"] = self.collimation.ssd
+        python_return["user_inaccessible"]["SDDInputBox"] = self.detectors[0].sdd
+        python_return["user_inaccessible"]["BeamDiameter"] = int(self.get_beam_diameter() * 10000) / 10000
+        python_return["user_inaccessible"]["BeamStopSize"] = self.get_beam_stop_diameter()
+        python_return["user_inaccessible"]["AttenuationFactor"] = self.get_attenuation_factor()
+        python_return["user_inaccessible"]["MaximumVerticalQ"] = self.data.q_max_vert
+        python_return["user_inaccessible"]["MaximumHorizontalQ"] = self.data.q_max_horizon
+        python_return["user_inaccessible"]["MaximumQ"] = self.data.q_max
+        python_return["user_inaccessible"]["MinimumQ"] = self.data.q_min
         python_return["nCells"] = self.slicer.n_cells.tolist()
         python_return["qsq"] = self.slicer.d_sq.tolist()
         python_return["sigmaAve"] = self.slicer.sigma_ave.tolist()
@@ -1027,13 +1024,23 @@ class Instrument:
 
     # Start 1/20/23 fix this function
     def calculate_attenuation_factor(self, index=0):
-        a2 = self.get_sample_aperture_diam()  # Correct with diameter instead of radius
+        a2 = self.get_sample_aperture_diam() # Good
         beam_diam = self.get_beam_diameter(index)
-        a_pixel = self.detectors[index].get_pixel_size_x() / 100  # Fix: This calc was 100 to high
-        i_pixel_max = self.detectors[index].per_pixel_max_flux  # Calculated correctly
+        # Start 3/29 fix beam diamater
+        a_pixel = self.detectors[index].get_pixel_size_x() / 100  # Good
+        i_pixel_max = self.detectors[index].per_pixel_max_flux  # Good
         num_pixels = (math.pi / 4) * (0.5 * (a2 + beam_diam) / a_pixel) ** 2
         i_pixel = self.get_beam_flux() / num_pixels
         atten = 1.0 if i_pixel < i_pixel_max else i_pixel_max / i_pixel
+
+        print("a2", a2)
+        print("beam_diam", beam_diam)
+        print("a_pixel", a_pixel)
+        print("i_pixel_max", i_pixel_max)
+        print("num_pixels", num_pixels)
+        print("i_pixel", i_pixel)
+        print("atten", atten)
+
         self.wavelength.attenuation_factor = atten if atten == 1.0 else round(atten * 100000) / 100000
         return self.wavelength.attenuation_factor
 
@@ -1141,13 +1148,13 @@ class Instrument:
 
     def get_slicer_params(self, slicer_params, index=0):
         # Import averaging_params
-        averaging_params = slicer_params.get("averaging_params", [])
-        slicer_params["phi"] = (math.pi / 180) * averaging_params[0]
-        slicer_params["d_phi"] = (math.pi / 180) * averaging_params[1]
-        slicer_params["detector_sections"] = averaging_params[2]
-        slicer_params["q_center"] = averaging_params[3]
-        slicer_params["q_width"] = averaging_params[4]
-        slicer_params["aspect_ratio"] = averaging_params[5]
+        # averaging_params = slicer_params.get("averaging_params", [])
+        # slicer_params["phi"] = (math.pi / 180) * averaging_params[0]
+        # slicer_params["d_phi"] = (math.pi / 180) * averaging_params[1]
+        # slicer_params["detector_sections"] = averaging_params[2]
+        # slicer_params["q_center"] = averaging_params[3]
+        # slicer_params["q_width"] = averaging_params[4]
+        # slicer_params["aspect_ratio"] = averaging_params[5]
 
         # QUESTION      [0] Do I need to run a loop here? how does this work with multiple detectors
         self.detectors[index].calculate_beam_center_x()
@@ -1168,7 +1175,7 @@ class Instrument:
         slicer_params["beam_stop_size"] = self.get_beam_stop_diameter() * 2.54
         slicer_params["SSD"] = self.calculate_source_to_sample_aperture_distance()
         slicer_params["SDD"] = self.calculate_sample_to_detector_distance()
-        del slicer_params["averaging_params"]
+        # del slicer_params["averaging_params"]
         return slicer_params
 
     def get_attenuation_factor(self):
@@ -1366,7 +1373,7 @@ class NG7SANS(Instrument):
     # Constructor for the NG7SANS instrument
     def __init__(self, name, params):
         self.name = "ng7"
-        self.param_restructure(params)
+        params = self.param_restructure(params)
         # Super is the Instrument class
         super().__init__(name, params)
 
@@ -1386,6 +1393,11 @@ class NG7SANS(Instrument):
         params["data"]["trans_2"] = 0.7
         params["data"]["trans_3"] = 0.75
         params["detectors"][0]["pixel_size_x"] = 5.08
+        params["detectors"][0]["pixel_size_y"] = 5.08
+        params["detectors"][0]["pixel_size_x_unit"] = "mm"
+        params["detectors"][0]["pixel_size_y_unit"] = "mm"
+        params["detectors"][0]["pixel_no_x"] = 128
+        params["detectors"][0]["pixel_no_y"] = 128
         params["collimation"]["0"]["aperture_offset"] = 5
         params["slicer"]["coeff"] = 10000
         params["slicer"]["x_pixels"] = 128
@@ -1411,7 +1423,7 @@ class NG7SANS(Instrument):
         # Calculate the figure of merit
         self.calculate_figure_of_merit()
         # Calculate the number of attenuators
-        self.calculate_attenuators()
+        self.calculate_attenuator_number()
         # Do Circular Average of an array of 1s
 
         # TODO Figure out point of this
@@ -1426,7 +1438,7 @@ class NGB30SANS(Instrument):
     # Class for the NGB 30m SANS instrument
     def __init__(self, name, params):
         self.name = "ngb30"
-        self.param_restructure(params)
+        params = self.param_restructure(params)
         super().__init__(name, params)
 
     def load_params(self, params):
@@ -1442,6 +1454,11 @@ class NGB30SANS(Instrument):
         params["data"]["trans_2"] = 1.0
         params["data"]["trans_3"] = 0.75
         params["detectors"][0]["pixel_size_x"] = 5.08
+        params["detectors"][0]["pixel_size_y"] = 5.08
+        params["detectors"][0]["pixel_size_x_unit"] = "mm"
+        params["detectors"][0]["pixel_size_y_unit"] = "mm"
+        params["detectors"][0]["pixel_no_x"] = 128
+        params["detectors"][0]["pixel_no_y"] = 128
         params["collimation"]["guides"]["gap_at_start"] = 100
         params["collimation"]["guides"]["guide_width"] = 6.0
         params["collimation"]["guides"]["transmission_per_guide"] = 0.924
@@ -1470,7 +1487,7 @@ class NGB30SANS(Instrument):
         # Calculate the figure of merit
         self.calculate_figure_of_merit()
         # Calculate the number of attenuators
-        self.calculate_attenuators()
+        self.calculate_attenuator_number()
         # Do Circular Average of an array of 1s
 
         # TODO Figure out point of this
@@ -1485,7 +1502,7 @@ class NGB10SANS(Instrument):
     # Class for the NGB 10m SANS instrument
     def __init__(self, name, params):
         self.name = "ngb10"
-        self.param_restructure(params)
+        params = self.param_restructure(params)
         super().__init__(name, params)
 
     def load_params(self, params):
@@ -1501,6 +1518,11 @@ class NGB10SANS(Instrument):
         params["data"]["trans_2"] = 1.0
         params["data"]["trans_3"] = 0.75
         params["detectors"][0]["pixel_size_x"] = 5.08
+        params["detectors"][0]["pixel_size_y"] = 5.08
+        params["detectors"][0]["pixel_size_x_unit"] = "mm"
+        params["detectors"][0]["pixel_size_y_unit"] = "mm"
+        params["detectors"][0]["pixel_no_x"] = 128
+        params["detectors"][0]["pixel_no_y"] = 128
         params["collimation"]["guides"]["gap_at_start"] = 165
         params["collimation"]["guides"]["guide_width"] = 5
         params["collimation"]["guides"]["transmission_per_guide"] = 0.974
@@ -1530,7 +1552,7 @@ class NGB10SANS(Instrument):
         # Calculate the figure of merit
         self.calculate_figure_of_merit()
         # Calculate the number of attenuators
-        self.calculate_attenuators()
+        self.calculate_attenuator_number()
         # Do Circular Average of an array of 1s
 
         # TODO Figure out point of this

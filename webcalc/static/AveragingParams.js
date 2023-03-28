@@ -21,16 +21,16 @@ const template = `
            </select>
         </li>
         <li v-if="visibleParams.includes('qCenter')">
-           <label for="qCenter">Q Center of Annulus (&#8491;<sup>-1</sup>): </label>
+           <label for="qCenter">Q Center of Annulus (Å): </label>
            <input v-model="averagingParams.qCenter" type="number" min="0.00" max="1.0" step="0.01" id="qCenter"
               title="" />
         </li>
         <li v-if="visibleParams.includes('qWidth')">
-           <label for="qWidth">Q Width (&#8491;<sup>-1</sup>): </label>
+           <label for="qWidth">Q Width (Å): </label>
            <input v-model="averagingParams.qWidth" type="number" min="0.00" max="1.0" step="0.01" id="qWidth" title="" />
         </li>
         <li v-if="visibleParams.includes('qHeight')">
-           <label for="qHeight">Q Height (&#8491;<sup>-1</sup>): </label>
+           <label for="qHeight">Q Height (Å): </label>
            <input v-model="averagingParams.qHeight" type="number" min="0.00" max="1.0" step="0.01" id="qHeight" title="" />
         </li>
         <li v-if="visibleParams.includes('aspectRatio')">

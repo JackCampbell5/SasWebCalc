@@ -44,7 +44,7 @@ const template = `
         @model-value-change="onModelParamChange" />
   </div>
   <div class="instrument-section" id="instrumentParams">
-    <component v-if="active_instrument != ''" :is="active_instrument" :title="instruments[active_instrument]"
+    <component v-if="active_instrument != ''" :is="active_instrument" :title="instruments[active_instrument]" :pythonParams="pythonParams"
         @value-change="onInstrumentParamChange"/>
   </div>
   <plotting ref="plotting" :data_1d="data_1d" :data_2d="data_2d" :shapes="shapes"
@@ -93,6 +93,7 @@ export default {
     averaging_params: {},
     shapes: [],
     instruments,
+    pythonParams: {},
   }),
   methods: {
     async populateModelParams() {
@@ -137,6 +138,7 @@ export default {
         });
         let results = await this.fetch_with_data(location, data);
         console.log(results);
+        this.pythonParams = results
         // TODO implement new python return method
       }//End if statement to check instrument existence
 
@@ -179,6 +181,12 @@ export default {
   },
   mounted() {
     // TODO: Remove this once everything is working
+
+    // Sets the dropdowns to automatically choose for testing
+    this.active_model = "adsorbed_layer"
+    this.populateModelParams()
+    this.active_instrument = "ng7"
+
     this.data_1d = {
       qValues: [0.0001, 0.001, 0.01, 0.1],
       intensity: [1000, 100, 10, 1],

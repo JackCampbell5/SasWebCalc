@@ -193,7 +193,7 @@ class Instrument {
             if (this.wavelengthOptions) {
                 this.wavelengthContainer = createChildElement(this.instrumentContainer, 'div', { 'id': 'Wavelength', 'class': "slidecontainer instrument-section" }, '');
                 createChildElement(this.wavelengthContainer, 'h3', {}, 'Neutron Wavelength:');
-                this.wavelengthNode = createChildElementWithLabel(this.wavelengthContainer, 'input', { 'type': 'number', 'id': 'WavelengthInput', 'value': this.wavelengthOptions.default.toNumeric() }, '', '&lambda; (&#8491;): ');
+                this.wavelengthNode = createChildElementWithLabel(this.wavelengthContainer, 'input', { 'type': 'number', 'id': 'WavelengthInput', 'value': this.wavelengthOptions.default.toNumeric() }, '', '&lambda; (Å;): ');
                 this.wavelengthSpreadNode = createChildElementWithLabel(this.wavelengthContainer, 'select', { 'id': 'WavelengthSpread' }, '', '&Delta;&lambda;/&lambda; (%): ');
                 for (var spreadValue in this.wavelengthOptions.spreads) {
                     createChildElement(this.wavelengthSpreadNode, 'option', { 'value': spreadValue.toString() }, spreadValue);
