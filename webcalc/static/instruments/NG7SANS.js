@@ -34,12 +34,11 @@ const template = `
 export default {
   props: {
     title: String,
-    pythonParams: {}
+    pythonParams: {},
   },
   methods: {
     onChangeValue(event) {
       this.updateSecondaryElements(event.target);
-      console.log(this.instrument_params)
       this.$emit('valueChange', this.instrument_params);
     },
     updateSecondaryElements(target) {
@@ -132,7 +131,7 @@ export default {
           min: 4.8,
           max: 20.0,
           type: "number",
-          unit: 'Å;',
+          unit: 'nm;',
           category: 'ng7Wavelength',
         },
         'ng7WavelengthSpread': {
@@ -141,6 +140,7 @@ export default {
           type: "select",
           category: 'ng7Wavelength',
           unit: '',
+          //TODO Question: where is 11.5 and why is 15 here
           options: [9.7, 13.9, 15, 22.1],
         },
         'ng7BeamFlux': {
@@ -318,19 +318,9 @@ export default {
       let valuesInaccessible =value["user_inaccessible"];
       let instName = "ng7";
 
-      console.log(this.instrument_params)
-
       for (const name in value["user_inaccessible"]){
-        console.log(instName+name)
-        console.log(this.instrument_params[instName+name])
-        console.log(this.instrument_params[instName+name].default);
         this.instrument_params[instName+name].default = valuesInaccessible[name];
-        console.log(this.instrument_params[instName+name].default);
       }
-      console.log(this.instrument_params)
-      //
-      // var cool = "ng7BeamFlux"
-      // this.instrument_params["ng7BeamFlux"].default = value["user_inaccessible"]["beamFlux"]
     }
 
   },

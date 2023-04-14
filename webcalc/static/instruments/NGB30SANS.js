@@ -34,6 +34,7 @@ const template = `
 export default {
   props: {
     title: String,
+    pythonParams: {},
   },
   methods: {
     onChangeValue(event) {
@@ -137,7 +138,7 @@ export default {
           min: 3.0,
           max: 20.0,
           type: "number",
-          unit: 'Å;',
+          unit: 'nm;',
           category: 'ngb30Wavelength',
         },
         'ngb30WavelengthSpread': {
@@ -317,6 +318,17 @@ export default {
   },
   mounted(){
     this.$emit('valueChange', this.instrument_params);
+  },
+   watch: {
+    pythonParams: function (value){
+      let valuesInaccessible =value["user_inaccessible"];
+      let instName = "ngb30";
+
+      for (const name in value["user_inaccessible"]){
+        this.instrument_params[instName+name].default = valuesInaccessible[name];
+      }
+    }
+
   },
   template: template
 }
