@@ -137,7 +137,6 @@ export default {
           'averaging_params': this.averaging_params,
         });
         let results = await this.fetch_with_data(location, data);
-        console.log(results);
         this.pythonParams = results
         // TODO implement new python return method
       }//End if statement to check instrument existence

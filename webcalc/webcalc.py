@@ -49,6 +49,7 @@ def create_app():
         #  Calculate slicer (as part of instrument?)
         #  Calculate model
         #  Multiply values to get final 1D/2D data
+        print("Returning")
         return instrument
 
     @app.route('/calculate/model/<model_name>', methods=['POST'])

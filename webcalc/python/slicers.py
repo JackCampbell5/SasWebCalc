@@ -250,8 +250,6 @@ class Slicer:
         var_r = var_r1 - 0.5 * (var_r1 / rmd) * (var_r1 / rmd)
         var_r[var_r < 0] = 0.0
         self.q_average = (4.0 * np.pi / self.lambda_val) * np.sin(0.5 * np.arctan(rm / self.SDD))
-        print(type(self.q_average[1]))
-        print(np.isnan(self.q_average[0]))
         if np.isnan(self.q_average[0]): self.q_average[0] = 0.0
         self.sigma_q = self.q_average * np.sqrt((var_r / rmd) * (var_r / rmd) + var_lambda)
         if np.isnan(self.sigma_q[0]): self.sigma_q[0] = 0.0
