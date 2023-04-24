@@ -647,7 +647,6 @@ class Wavelength:
 
         self.set_params(params)
 
-
     def set_params(self, params=None):
         """Set class attributes based on a dictionary of values using the generic set_params function.
 
@@ -842,6 +841,8 @@ class Instrument:
 
     def __init__(self, name="", params=None):
         # Unit converters
+        self.averaging_type = None
+        self.slicer_params = None
         self.slicer = None
         self.d_converter = Converter('cm')
         self.t_converter = Converter('s')
@@ -873,10 +874,13 @@ class Instrument:
         # raise NotImplementedError(f"Instrument {self.name} has not implemented the `load_params` method.")
         self.load_objects(params)
 
-    def param_restructure(self, old_params):
+    def param_restructure(self, calculate_params):
+
+        old_params = calculate_params["instrument_params"]
         name = self.name
         # Instrument class paramsaters
-        self.beam_flux = old_params[name+"BeamFlux"]["default"] if old_params[name+"BeamFlux"]["default"] != "" else None
+        self.beam_flux = old_params[name + "BeamFlux"]["default"] if old_params[name + "BeamFlux"][
+                                                                         "default"] != "" else None
 
         # Start 3/14 update the paramaters with if statements
         params = {}
@@ -919,7 +923,7 @@ class Instrument:
         if name + "SampleTable" in old_params.values():
             params["collimation"]["0"]["sample_space"] = old_params[name + "SampleTable"]["default"] if \
                 old_params[name + "SampleTable"][
-                "default"] != "" else None
+                    "default"] != "" else None
         params["collimation"]["0"]["ssad_unit"] = old_params[name + "SSD"]["unit"] if old_params[name + "SSD"][
                                                                                           "unit"] != "" else None
         params["collimation"]["0"]["ssad"] = old_params[name + "SSD"]["default"] if old_params[name + "SSD"][
@@ -941,6 +945,7 @@ class Instrument:
                                                                                    "default"] != "" else None
         params["slicer"] = {}
         # params["slicer"]["averaging_params"] =
+        params["average_type"] = calculate_params["slicer"]
         params["wavelength"] = {}
         params["wavelength"]["attenuation_factor"] = old_params[name + "AttenuationFactor"]["default"] if \
             old_params[name + "AttenuationFactor"]["default"] != "" else None
@@ -948,7 +953,7 @@ class Instrument:
             old_params[name + "CustomAperture"]["default"] != "" else None
         params["wavelength"]["wavelength_spread_unit"] = old_params[name + "WavelengthSpread"]["unit"] if \
             old_params[name + "WavelengthSpread"]["unit"] != "" else None
-        params["wavelength"]["wavelength_spread"] = old_params[name + "WavelengthSpread"]["default"]/100 if \
+        params["wavelength"]["wavelength_spread"] = old_params[name + "WavelengthSpread"]["default"] / 100 if \
             old_params[name + "WavelengthSpread"]["default"] != "" else None
         params["wavelength"]["wavelength_unit"] = old_params[name + "WavelengthInput"]["unit"] if \
             old_params[name + "WavelengthInput"][
@@ -984,19 +989,11 @@ class Instrument:
         # TODO   What class should be imported into data
         self.data = Data(self, params.get('data', {}))
 
-        # gets the parmaters for slicer object and updates the parameters dictionary for that
-        params["slicer"] = self.get_slicer_params(params.get('slicer', {}))
+        # gets the parameters for slicer object and updates the parameters dictionary for that
 
-        # Creates slicer objects
-        averaging_type = params.get("average_type", "ERROR")
-        if averaging_type == "sector":
-            self.slicer = Sector(params.get('slicer', {}))
-        elif averaging_type == "rectangular":
-            self.slicer = Rectangular(params.get('slicer', {}))
-        elif averaging_type == "elliptical":
-            self.slicer = Elliptical(params.get('slicer', {}))
-        else:
-            self.slicer = Circular(params.get('slicer', {}))
+        # Creates slicer param objects
+        self.averaging_type = params.get("average_type", "ERROR")
+        self.slicer_params = params.get('slicer', {})
 
         # TODO move this function to sas_calc function
         # self.slicer.calculate_q_range_slicer()
@@ -1038,6 +1035,8 @@ class Instrument:
         python_return["intensitys2D"] = self.slicer.intensity_2D.tolist()
         python_return["qValues"] = self.slicer.q_values.tolist()
         python_return["slicer_params"] = self.slicer.slicer_return()
+        print(python_return["intensitys2D"][1])
+
 
         # Can return encode JSON just not a python dictionary
         return encode_json(python_return)
@@ -1051,15 +1050,15 @@ class Instrument:
         self.calculate_figure_of_merit()
         # Calculate the number of attenuators
         self.calculate_attenuator_number()
-        # Do Circular Average of an array of 1s
-
+        self.calculate_slicer()
+        self.calculate_sample_to_detector_distance()
+        self.data.calculate_min_and_max_q()
         # TODO Figure out point of this
         # for index in range(len(self.detectors) - 1):
         #     self.data.calculate_min_and_max_q(index)
         #     # TODO: This might not be needed here...
         #     self.slicer.calculate_q_range_slicer(index)
 
-    # Start 1/20/23 fix this function
     def calculate_attenuation_factor(self, index=0):
         a2 = self.get_sample_aperture_diam()  # Good
         beam_diam = self.get_beam_diameter(index)
@@ -1168,13 +1167,14 @@ class Instrument:
     # Various class updaters
     def update_wavelength(self, run_sas_calc=True):
         self.wavelength.calculate_wavelength_range()
-        if run_sas_calc:
-            self.sas_calc()
 
     # Various class getter functions
     # Use these to be sure units are correct
 
-    def get_slicer_params(self, slicer_params, index=0):
+    def calculate_slicer(self, index=0):
+        print("02")
+        slicer_params = self.slicer_params
+
         # Import averaging_params
         # averaging_params = slicer_params.get("averaging_params", [])
         # slicer_params["phi"] = (math.pi / 180) * averaging_params[0]
@@ -1204,7 +1204,16 @@ class Instrument:
         slicer_params["SSD"] = self.calculate_source_to_sample_aperture_distance()
         slicer_params["SDD"] = self.calculate_sample_to_detector_distance()
         # del slicer_params["averaging_params"]
-        return slicer_params
+        averaging_type = self.averaging_type
+        if averaging_type == "sector":
+            self.slicer = Sector(slicer_params)
+        elif averaging_type == "rectangular":
+            self.slicer = Rectangular(slicer_params)
+        elif averaging_type == "elliptical":
+            self.slicer = Elliptical(slicer_params)
+        else:
+            self.slicer = Circular(slicer_params)
+        return
 
     def get_attenuation_factor(self):
         # TODO Fix The attenuation factor value calculated based on the number of attenuators
@@ -1377,6 +1386,7 @@ class NoInstrument(Instrument):
         self.q_min_horizon = values.get('q_min_horizontal', self.q_min_horizon)
 
     def sas_calc(self):
+        print("06")
         method = np.linspace if self.spacing == "lin" else np.logspace
         q_vals = method(self.q_min, self.q_max, self.n_pts)
         qx_values = method(self.q_min_horizon, self.q_max_horizon, self.n_pts)
@@ -1444,22 +1454,23 @@ class NG7SANS(Instrument):
         super().load_objects(params)
 
     def calculate_instrument_parameters(self):
-        # Calculate the beam stop diameter
-        self.calculate_beam_stop_diameter()
-        # Calculate the estimated beam flux
-        self.data.calculate_beam_flux()
-        # Calculate the figure of merit
-        self.calculate_figure_of_merit()
-        # Calculate the number of attenuators
-        self.calculate_attenuator_number()
-        # Do Circular Average of an array of 1s
-
-        # TODO Figure out point of this
-        # for index in range(len(self.detectors) - 1):
-        #     self.data.calculate_min_and_max_q(index)
-        #     # TODO: This might not be needed here...
-        #     # TODO J    This method does not exist
-        #     self.slicer.calculate_q_range_slicer(index)
+        super().calculate_instrument_parameters()
+        # # Calculate the beam stop diameter
+        # self.calculate_beam_stop_diameter()
+        # # Calculate the estimated beam flux
+        # self.data.calculate_beam_flux()
+        # # Calculate the figure of merit
+        # self.calculate_figure_of_merit()
+        # # Calculate the number of attenuators
+        # self.calculate_attenuator_number()
+        # # Do Circular Average of an array of 1s
+        #
+        # # TODO Figure out point of this
+        # # for index in range(len(self.detectors) - 1):
+        # #     self.data.calculate_min_and_max_q(index)
+        # #     # TODO: This might not be needed here...
+        # #     # TODO J    This method does not exist
+        # #     self.slicer.calculate_q_range_slicer(index)
 
 
 class NGB30SANS(Instrument):
@@ -1508,22 +1519,23 @@ class NGB30SANS(Instrument):
         super().load_objects(params)
 
     def calculate_instrument_parameters(self):
-        # Calculate the beam stop diameter
-        self.calculate_beam_stop_diameter()
-        # Calculate the estimated beam flux
-        self.data.calculate_beam_flux()
-        # Calculate the figure of merit
-        self.calculate_figure_of_merit()
-        # Calculate the number of attenuators
-        self.calculate_attenuator_number()
-        # Do Circular Average of an array of 1s
-
-        # TODO Figure out point of this
-        # for index in range(len(self.detectors) - 1):
-        #     self.data.calculate_min_and_max_q(index)
-        #     # TODO: This might not be needed here...
-        #     # TODO J    This method does not exist
-        #     self.slicer.calculate_q_range_slicer(index)
+        super().calculate_instrument_parameters(self)
+        # # Calculate the beam stop diameter
+        # self.calculate_beam_stop_diameter()
+        # # Calculate the estimated beam flux
+        # self.data.calculate_beam_flux()
+        # # Calculate the figure of merit
+        # self.calculate_figure_of_merit()
+        # # Calculate the number of attenuators
+        # self.calculate_attenuator_number()
+        # # Do Circular Average of an array of 1s
+        #
+        # # TODO Figure out point of this
+        # # for index in range(len(self.detectors) - 1):
+        # #     self.data.calculate_min_and_max_q(index)
+        # #     # TODO: This might not be needed here...
+        # #     # TODO J    This method does not exist
+        # #     self.slicer.calculate_q_range_slicer(index)
 
 
 class NGB10SANS(Instrument):
@@ -1573,22 +1585,23 @@ class NGB10SANS(Instrument):
         super().load_objects(params)
 
     def calculate_instrument_parameters(self):
-        # Calculate the beam stop diameter
-        self.calculate_beam_stop_diameter()
-        # Calculate the estimated beam flux
-        self.data.calculate_beam_flux()
-        # Calculate the figure of merit
-        self.calculate_figure_of_merit()
-        # Calculate the number of attenuators
-        self.calculate_attenuator_number()
-        # Do Circular Average of an array of 1s
-
-        # TODO Figure out point of this
-        # for index in range(len(self.detectors) - 1):
-        #     self.data.calculate_min_and_max_q(index)
-        #     # TODO: This might not be needed here...
-        #     # TODO J    This method does not exist
-        #     self.slicer.calculate_q_range_slicer(index)
+        super().calculate_instrument_parameters(self)
+        # # Calculate the beam stop diameter
+        # self.calculate_beam_stop_diameter()
+        # # Calculate the estimated beam flux
+        # self.data.calculate_beam_flux()
+        # # Calculate the figure of merit
+        # self.calculate_figure_of_merit()
+        # # Calculate the number of attenuators
+        # self.calculate_attenuator_number()
+        # # Do Circular Average of an array of 1s
+        #
+        # # TODO Figure out point of this
+        # # for index in range(len(self.detectors) - 1):
+        # #     self.data.calculate_min_and_max_q(index)
+        # #     # TODO: This might not be needed here...
+        # #     # TODO J    This method does not exist
+        # #     self.slicer.calculate_q_range_slicer(index)
 
     def calculate_source_to_sample_aperture_distance(self):
         # TODO: This runs way to many times

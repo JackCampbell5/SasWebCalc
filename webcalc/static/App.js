@@ -137,8 +137,11 @@ export default {
           'averaging_params': this.averaging_params,
         });
         let results = await this.fetch_with_data(location, data);
-        this.pythonParams = results
-        // TODO implement new python return method
+        // TODO idea- split it on both sides
+        this.pythonParams = results["user_inaccessible"];
+        this.data_1d = {qValues:results["qValues"],intensity:results["fSubs"]};
+        this.data_2d = {qxValues:results["qxValues"],qyValues:results["qyValues"],intensity2D: results["intensitys2D"]};
+
       }//End if statement to check instrument existence
 
     },
@@ -186,15 +189,15 @@ export default {
     this.populateModelParams()
     this.active_instrument = "ng7"
 
-    this.data_1d = {
-      qValues: [0.0001, 0.001, 0.01, 0.1],
-      intensity: [1000, 100, 10, 1],
-    };
-    this.data_2d = {
-        qxValues: [[-1, 0, 1],[-1, 0, 1],[-1, 0, 1]],
-        qyValues: [[-1, 0, 1],[-1, 0, 1],[-1, 0, 1]],
-        intensity2D: [[0, 0, 0],[0, 1130, 0],[0, 0, 0]],
-    };
+    // this.data_1d = {
+    //   qValues: [0.0001, 0.001, 0.01, 0.1],
+    //   intensity: [1000, 100, 10, 1],
+    // };
+    // this.data_2d = {
+    //     qxValues: [[-1, 0, 1],[-1, 0, 1],[-1, 0, 1]],
+    //     qyValues: [[-1, 0, 1],[-1, 0, 1],[-1, 0, 1]],
+    //     intensity2D: [[0, 0, 0],[0, 1130, 0],[0, 0, 0]],
+    // };
     if (this.active_instrument !== "" && this.active_model !== "") {
       this.onChange();
     }
