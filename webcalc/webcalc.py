@@ -34,22 +34,43 @@ def create_app():
     def calculate():
         data = decode_json(request.data)[0]
         json_like = json.loads(data)
+
+        # Gets ine instrument and instrument params out of the dict
         instrument = json_like.get('instrument', '')
         instrument_params = json_like.get('instrument_params', {})
+
+        # Gets the model and model params out of the dict
         model = json_like.get('model', '')
         model_params = json_like.get('model_params', {})
+
+        # Gets slicer and Slicer params out of dict
         slicer = json_like.get('averaging_type', '')
         slicer_params = json_like.get('averaging_params', {})
+
+        # Returns if array is empty
+        if instrument_params == {}:
+            print("Returning Blank")
+            return {}
+
+        # Make slicer circular if none given
         if not slicer:
             slicer = 'Circular'
-        instrument = calculate_instrument(instrument, instrument_params)
-        # FIX
+
+        # Run the functions based on the data
+
+        # Creates params for calculation from all the params
+        calculate_params = {"instrument_params": instrument_params, "slicer": slicer, "slicer_params": slicer_params}
+
+        # Calculate the instrument
+        instrument = calculate_instrument(instrument, calculate_params)
+
+        # FIXMe
         # model_new = calculate_model(model, model_params)
         # TODO: Calculate instrument
-        #  Calculate slicer (as part of instrument?)
         #  Calculate model
         #  Multiply values to get final 1D/2D data
         print("Returning")
+        print(instrument)
         return instrument
 
     @app.route('/calculate/model/<model_name>', methods=['POST'])
