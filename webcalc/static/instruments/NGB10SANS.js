@@ -283,11 +283,10 @@ export default {
   },
   watch: {
     pythonParams: function (value){
-      let valuesInaccessible =value["user_inaccessible"];
       let instName = "ngb10";
 
-      for (const name in value["user_inaccessible"]){
-        this.instrument_params[instName+name].default = valuesInaccessible[name];
+      for (const name in value){
+        this.instrument_params[instName+name].default = value;
       }
     }
 
