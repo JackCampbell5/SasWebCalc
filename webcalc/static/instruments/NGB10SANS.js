@@ -101,9 +101,9 @@ export default {
         "ngb10QRange": {display_name: 'Calculated Q Range'},
       },
       source_apertures: {
-        0: ['1.3', '2.5', '3.8'],
-        1: ['5'],
-        2: ['5']
+        0: [1.3, 2.5, 3.8],
+        1: [5],
+        2: [5]
       },
       wavelength_ranges: {
         9.2: ['5.5', '20.0'],
