@@ -2,6 +2,7 @@
 import json
 import sys
 
+import numpy
 import numpy as np
 from flask import Flask, render_template, request
 
@@ -9,7 +10,7 @@ from flask import Flask, render_template, request
 from python.link_to_sasmodels import get_model_list, get_params
 from python.link_to_sasmodels import calculate_model as calculate_m
 from python.instrument import calculate_instrument as calculate_i
-from python.helpers import decode_json
+from python.helpers import decode_json, encode_json
 
 
 def create_app():
@@ -63,39 +64,26 @@ def create_app():
 
         # Calculate the instrument
         instrument = calculate_instrument(instrument, calculate_params)
-
-        # FIXMe
-        # model_new = calculate_model(model, model_params)
-        # TODO: Calculate instrument
-        #  Calculate model
-        #  Multiply values to get final 1D/2D data
-        print("Returning")
-        print(instrument)
-        return instrument
+        params = decode_json(instrument)[0]
+        q_1d = numpy.asarray(params.get('qValues', []))
+        q_2d = numpy.asarray(params.get('q2DValues', []))
+        model_1d = decode_json(calculate_model(model, model_params, q_1d))
+        comb_1d = numpy.asarray(model_1d[0]) * numpy.asarray(params.get('fSubs', []))
+        params['fSubs'] = comb_1d.tolist()
+        model_2d = decode_json(calculate_model(model, model_params, q_2d))
+        i_2d = numpy.asarray(params.get('intensity2D', []))
+        comb_2d = numpy.asarray(model_2d[0]).reshape(i_2d.shape) * i_2d
+        params['intensity2D'] = comb_2d.tolist()
+        return encode_json(params)
 
     @app.route('/calculate/model/<model_name>', methods=['POST'])
-    def calculate_model(model_name, model_params=None):
-        # TODO: Refactor this to accept JSON-like dictionary of params like:
-        #  {
-        #   'q': [],
-        #   'qx': [[]],
-        #   'qy': [[]],
-        #   'param_1': {'units': '', val: '', min: '', max: '', ...}
-        #   ...
-        #   'param_n': {}
-        #  }
-        if model_params is not None:
-            data = decode_json(request.data)
-        print(data)
-        param_names = data[0][0]
-        param_values = data[0][1]
-        if len(data[0]) > 3:
-            q = [np.array([np.tile(x, len(data[0][3])) for x in data[0][2]]).flatten(),
-                 np.array(np.tile(data[0][3], (1, len(data[0][2])))).flatten()]
-        else:
-            q = [np.array(data[0][2])]
+    def calculate_model(model_name, model_params=None, instrument_data=None):
+        data = decode_json(request.data) if model_params is None else model_params
+        param_names = list(data.keys())
+        param_values = [v['default'] for v in data.values()]
+        q = numpy.asarray(decode_json(request.data)[0]).flatten() if instrument_data is None else instrument_data
         params = {param_names[i]: param_values[i] for i in range(len(param_values))}
-        return calculate_m(model_name, q, params)
+        return calculate_m(model_name, [q.flatten()], params)
 
     @app.route('/calculate/instrument/<instrument_name>', methods=['POST'])
     def calculate_instrument(instrument_name, params=None):
@@ -108,7 +96,11 @@ def create_app():
     return app
 
 
-if __name__ == '__main__':
+def main():
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8002
     sas_calc = create_app()
     sas_calc.run(port=port, debug=True)
+
+
+if __name__ == '__main__':
+    main()
