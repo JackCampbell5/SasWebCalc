@@ -1032,12 +1032,10 @@ class Instrument:
         python_return["fSubs"] = self.slicer.f_subs.tolist()
         python_return["qxValues"] = self.slicer.qx_values.tolist()
         python_return["qyValues"] = self.slicer.qy_values.tolist()
-        python_return["intensitys2D"] = self.slicer.intensity_2D.tolist()
+        python_return["q2DValues"] = self.slicer.q_2d_values.tolist()
+        python_return["intensity2D"] = self.slicer.intensity_2D.tolist()
         python_return["qValues"] = self.slicer.q_values.tolist()
         python_return["slicer_params"] = self.slicer.slicer_return()
-        print(python_return["intensitys2D"][1])
-
-
         # Can return encode JSON just not a python dictionary
         return encode_json(python_return)
 

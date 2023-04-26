@@ -62,6 +62,7 @@ class Slicer:
         # Q values
         self.qx_values = None
         self.qy_values = None
+        self.q_2d_values = None
         self.q_values = None
         self.ave_intensity = None
         self.d_sq = [0]
@@ -163,9 +164,10 @@ class Slicer:
         center = np.ones(np.shape(total_distances))
         center[total_distances <= radius_center] = 2
         num_d_squared = num_dimensions * num_dimensions
-        self.ave_intensity = np.zeros(1000)
-        self.d_sq = np.zeros(1000)
-        self.n_cells = np.zeros(1000)
+        # Generate 1D arrays with size of x_pixels*y_pixels
+        self.ave_intensity = np.zeros(self.x_pixels * self.y_pixels)
+        self.d_sq = np.zeros(self.x_pixels * self.y_pixels)
+        self.n_cells = np.zeros(self.x_pixels * self.y_pixels)
 
         for i in range(self.x_pixels):
             for j in range(self.y_pixels):
@@ -276,6 +278,9 @@ class Slicer:
         y_distances = calculate_distance_from_beam_center(y_pixels, self.y_center, self.pixel_size, self.coeff)
         theta_y = np.arctan(y_distances / (self.detector_distance*10)) / 2
         self.qy_values = (4 * math.pi / self.lambda_val) * np.sin(theta_y)
+        qx_2d = np.full((self.x_pixels, self.y_pixels), self.qx_values)
+        qy_2d = np.transpose(np.full((self.y_pixels, self.x_pixels), self.qy_values))
+        self.q_2d_values = qx_2d * qy_2d
         self.calculate()
 
     def generate_ones_data(self):

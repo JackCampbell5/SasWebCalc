@@ -140,7 +140,7 @@ export default {
         // TODO idea- split it on both sides
         this.pythonParams = results["user_inaccessible"];
         this.data_1d = {qValues:results["qValues"],intensity:results["fSubs"]};
-        this.data_2d = {qxValues:results["qxValues"],qyValues:results["qyValues"],intensity2D: results["intensitys2D"]};
+        this.data_2d = {qxValues:results["qxValues"],qyValues:results["qyValues"],intensity2D: results["intensity2D"]};
 
       }//End if statement to check instrument existence
 
@@ -182,22 +182,10 @@ export default {
     this.model_names = await fetch_result.json();
   },
   mounted() {
-    // TODO: Remove this once everything is working
-
     // Sets the dropdowns to automatically choose for testing
     this.active_model = "adsorbed_layer"
     this.populateModelParams()
     this.active_instrument = "ng7"
-
-    // this.data_1d = {
-    //   qValues: [0.0001, 0.001, 0.01, 0.1],
-    //   intensity: [1000, 100, 10, 1],
-    // };
-    // this.data_2d = {
-    //     qxValues: [[-1, 0, 1],[-1, 0, 1],[-1, 0, 1]],
-    //     qyValues: [[-1, 0, 1],[-1, 0, 1],[-1, 0, 1]],
-    //     intensity2D: [[0, 0, 0],[0, 1130, 0],[0, 0, 0]],
-    // };
     if (this.active_instrument !== "" && this.active_model !== "") {
       this.onChange();
     }
