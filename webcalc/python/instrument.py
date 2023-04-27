@@ -695,7 +695,7 @@ class Wavelength:
 
 
 class Data:
-    """A class for storing and manipulating Wavelength related data.
+    """A class for storing and manipulating Data related data.
 
     :param  Instrument self.parent: The parent instrument object
     :param float self.peak_flux: The maximum beam flux
@@ -719,7 +719,7 @@ class Data:
     """
 
     def __init__(self, parent, params):
-        """Creates object parameters for Wavelength class and runs set params method
+        """Creates object parameters for Data class and runs set params method
 
         Sets object parameters self.parent, self.peak_flux, self.peak_wavelength, self.bs_factor, self.trans_1,
         self.trans_2, self.trans_3, self.beta, self.charlie, self.q_max, self.q_max_horizon, self.q_max_vert,
@@ -837,9 +837,35 @@ class Data:
 
 
 class Instrument:
+    """ The master class for storing and manipulating Instrument related data.
+
+    :param String self.averaging_type:
+    :param  self.slicer_params:
+    :param Slicer self.slicer:
+    :param Converter self.d_converter:
+    :param Converter self.t_converter:
+    :param Data self.data:
+    :param Collimation self.collimation:
+    :param Wavelength self.wavelength:
+    :param Detector self.detectors:
+    :param BeamStop self.beam_stops:
+    :param Float self.beam_flux:
+    :param Dict self.one_dimensional:
+    :param Dict self.two_dimensional:
+    :param String self.name:
+    :param Constant self.constants:
+    :param Dict self.params:
+    """
     isReal = False
 
     def __init__(self, name="", params=None):
+        """Creates object parameters for Instrument class and runs set the params parameter which runs the load params methods
+
+        :param str name: The instrument name
+        :param dict params: The dictionary of params
+        :return: None as it just sets the parameters
+        :rtype: None
+        """
         # Unit converters
         self.averaging_type = None
         self.slicer_params = None
@@ -870,19 +896,30 @@ class Instrument:
         self.load_params(params)
 
     def load_params(self, params):
+        """Runs the load object methods.
+
+        :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
+        :rtype: None
+        """
         # """Pseudo-abstract method to initialize constants associated with an instrument"""
         # raise NotImplementedError(f"Instrument {self.name} has not implemented the `load_params` method.")
         self.load_objects(params)
 
     def param_restructure(self, calculate_params):
+        """ A method that takes the list of params from the Javascript and assigns it to a dictionary allowing the python to assign variables to objects
+
+        :param dict calculate_params: A dictionary of the values gotten from the js
+        :return: An array of the params
+        :rtype: Dict
+        """
 
         old_params = calculate_params["instrument_params"]
         name = self.name
-        # Instrument class paramsaters
+        # Instrument class parameters
         self.beam_flux = old_params[name + "BeamFlux"]["default"] if old_params[name + "BeamFlux"][
                                                                          "default"] != "" else None
 
-        # Start 3/14 update the paramaters with if statements
+        # Start 3/14 update the parameters with if statements
         params = {}
         # params["average_type"] =
         params["beamStops"] = {}
@@ -964,6 +1001,16 @@ class Instrument:
         return params
 
     def guide_lense_config(self, value, guide_param):
+        """Helper functions which helps set values in relation to guides
+
+        If guide param the value being set is the # of guides
+        If the guide_param is false the value being set is boolean value of LENSes
+
+        :param str value: The value the user input on the JS side
+        :param boolean guide_param: The boolean value that is true for # of guides and false for lenses
+        :return: An int or a boolean based on what was requested
+        :rtype: int and boolean
+        """
         if value == "LENS":
             if guide_param:
                 return 0
@@ -976,11 +1023,16 @@ class Instrument:
                 return False
 
     def load_objects(self, params):
+        """
+
+        :param params:
+        :return:
+        """
         # Creates the objects with the param array
         #       (This is not a part of load params so instrument can have default values if necessary)
 
         # CAF Beam stop defined
-        # TODO Create Beam stop object(Its just set to an dict right now
+        # TODO Create Beam stop object(Its just set to an dict right now)
         self.beam_stops = params.get('beam_stops', [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
         # TODO Implement current_beamstop object
         self.detectors = [Detector(self, detector_params) for detector_params in params.get('detectors', [{}])]
