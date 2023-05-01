@@ -59,13 +59,19 @@ export default {
       else if (target.id === "ng7SDDDefaults") {
         this.instrument_params['ng7SDDInputBox'].default = this.instrument_params['ng7SDDDefaults'].default;
       }
+      else if (target.id === "ng7OffsetInputBox") {
+        this.instrument_params['ng7OffsetDefaults'].default = this.instrument_params['ng7OffsetInputBox'].default;
+      }
+      else if (target.id === "ng7OffsetDefaults") {
+        this.instrument_params['ng7OffsetInputBox'].default = this.instrument_params['ng7OffsetDefaults'].default;
+      }
     },
     updateApertureOptions(target) {
       // Update the allowed aperture values based on the number of guides selected
       let allApertureOptions = Object.values(document.getElementById("ng7SourceAperture").options);
       let guideApertureOptions = this.source_apertures[target.value];
       for (let aperture of allApertureOptions) {
-        let toggle = !guideApertureOptions.includes(aperture.value.toString());
+        let toggle = !guideApertureOptions.includes(parseFloat(aperture.value));
         // If the aperture is a possible value, enable it and set it to the existing value
         aperture.disabled = toggle;
         aperture.hidden = toggle;
