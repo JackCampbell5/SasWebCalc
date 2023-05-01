@@ -78,6 +78,7 @@ def calculate_instrument(instrument: str, params: dict) -> dict:
 def set_params(instance, params):
     """ Set class attributes based on a dictionary of values. The dict should map <param_name> -> <value>.
 
+
     :param instance: An instance of any class type in this file that needs params set in bulk.
     :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
     :return: Nothing justs prints errors if there are anu
@@ -839,22 +840,22 @@ class Data:
 class Instrument:
     """ The master class for storing and manipulating Instrument related data.
 
-    :param String self.averaging_type:
-    :param  self.slicer_params:
-    :param Slicer self.slicer:
-    :param Converter self.d_converter:
-    :param Converter self.t_converter:
-    :param Data self.data:
-    :param Collimation self.collimation:
-    :param Wavelength self.wavelength:
-    :param Detector self.detectors:
-    :param BeamStop self.beam_stops:
-    :param Float self.beam_flux:
-    :param Dict self.one_dimensional:
-    :param Dict self.two_dimensional:
-    :param String self.name:
-    :param Constant self.constants:
-    :param Dict self.params:
+    :param String self.averaging_type: The averaging type for slicer
+    :param  self.slicer_params: Paramaters for slicer
+    :param Slicer self.slicer: A slicer object for the calcuation of the perdicted data
+    :param Converter self.d_converter: A distence converter object, typically in CM
+    :param Converter self.t_converter: A time converter object, typically in s
+    :param Data self.data: A Data object that contains more paramaters
+    :param Collimation self.collimation: A collemeition objct that handles collemention related data
+    :param Wavelength self.wavelength: A wavelength objct that handles wavelength related data
+    :param Detector self.detectors: A detector objct that handles detector related data
+    :param BeamStop self.beam_stops: A beam stop objct that handles beam stop related data
+    :param Float self.beam_flux: The beam flux of the calculation
+    :param Dict self.one_dimensional: One dementional data
+    :param Dict self.two_dimensional: Two dementional data
+    :param String self.name: The name of the selected instrument
+    :param Constant self.constants: A constant objec that handles the constant s for the data
+    :param Dict self.params: A dictonary of paramaters recived from the Java Script
     """
     isReal = False
 
@@ -1023,10 +1024,14 @@ class Instrument:
                 return False
 
     def load_objects(self, params):
-        """
+        """A function that creates the objects nessasary for the calaculations
 
-        :param params:
-        :return:
+        Runs calculate_sample_to_detector_distance and calculate_min_and_max_q.
+        Create objects beam_stops, detectors, collimation, and wavelength
+
+        :param dict params: A dictonary of paramaters to send to the initalization of the objects
+        :return: Nothing as it just sets up all the objects
+        :rtype: None
         """
         # Creates the objects with the param array
         #       (This is not a part of load params so instrument can have default values if necessary)
@@ -1053,6 +1058,13 @@ class Instrument:
         self.data.calculate_min_and_max_q()
 
     def sas_calc(self):
+        """ The main fucntion that runsa all the calculation and returns the results
+
+        Makes a user inacessable sub dictonary whitch contains the results to be sent back to the instument JS
+
+        :return: A dictionary of the calculation results
+        :rtype: Dict
+        """
         # MainFunction for this class
 
         # Calculate any instrument parameters
