@@ -81,7 +81,7 @@ def set_params(instance, params):
 
     :param instance: An instance of any class type in this file that needs params set in bulk.
     :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
-    :return: Nothing justs prints errors if there are anu
+    :return: Nothing just prints errors if there are anu
     :rtype: None
     """
     if isinstance(params, (list, tuple)):
@@ -706,7 +706,7 @@ class Data:
     :param float self.trans_2: TODO docs ask what this is for
     :param float self.trans_3: TODO docs ask what this is for
     :param float self.beta: The beta value or B
-    :param float self.charlie: The charlie valye or c
+    :param float self.charlie: The charlie value or c
     :param float self.q_max: The maximum Q value (calculated from slicer)
     :param float self.q_max_horizon: The max horizontal value (calculated from slicer)
     :param float self.q_max_vert: The max vertical value (calculated from slicer)
@@ -770,9 +770,9 @@ class Data:
         """
         # Beam Flux Calculations now correct
 
-        # Varible defintion
+        # Variable definition
         guide_loss = self.parent.collimation.guides.transmission_per_guide
-        sourse_aperture = self.parent.get_source_aperture_diam()
+        source_aperture = self.parent.get_source_aperture_diam()
         sample_aperture = self.parent.get_sample_aperture_diam()
         self.parent.calculate_source_to_sample_aperture_distance()
         self.parent.collimation.calculate_source_to_sample_distance()
@@ -782,7 +782,7 @@ class Data:
         guides = self.parent.get_number_of_guides()
 
         # Run calculations
-        alpha = (sourse_aperture + sample_aperture) / (2 * SSD)
+        alpha = (source_aperture + sample_aperture) / (2 * SSD)
         f = (self.parent.collimation.guides.get_gap_at_start() * alpha) / (
                 2 * self.parent.collimation.guides.get_guide_width())
         trans4 = (1 - f) * (1 - f)
@@ -794,7 +794,7 @@ class Data:
         d2_phi = self.peak_flux / (2 * math.pi)
         d2_phi = d2_phi * math.exp(4 * math.log(self.peak_wavelength / wave))
         d2_phi = d2_phi * math.exp(-1 * math.pow(self.peak_wavelength / wave, 2))
-        solid_angle = (math.pi / 4) * ((sourse_aperture / SSD) * (sourse_aperture / SSD))
+        solid_angle = (math.pi / 4) * ((source_aperture / SSD) * (source_aperture / SSD))
         self.flux = area * d2_phi * lambda_spread * solid_angle * total_trans
 
     def calculate_min_and_max_q(self, index=0):
@@ -841,21 +841,21 @@ class Instrument:
     """ The master class for storing and manipulating Instrument related data.
 
     :param String self.averaging_type: The averaging type for slicer
-    :param  self.slicer_params: Paramaters for slicer
-    :param Slicer self.slicer: A slicer object for the calcuation of the perdicted data
-    :param Converter self.d_converter: A distence converter object, typically in CM
+    :param  self.slicer_params: Parameters for slicer
+    :param Slicer self.slicer: A slicer object for the calculation of the perdicted data
+    :param Converter self.d_converter: A distance converter object, typically in CM
     :param Converter self.t_converter: A time converter object, typically in s
-    :param Data self.data: A Data object that contains more paramaters
-    :param Collimation self.collimation: A collemeition objct that handles collemention related data
-    :param Wavelength self.wavelength: A wavelength objct that handles wavelength related data
-    :param Detector self.detectors: A detector objct that handles detector related data
-    :param BeamStop self.beam_stops: A beam stop objct that handles beam stop related data
+    :param Data self.data: A Data object that contains more parameters
+    :param Collimation self.collimation: A collection object that handles collection related data
+    :param Wavelength self.wavelength: A wavelength object that handles wavelength related data
+    :param Detector self.detectors: A detector object that handles detector related data
+    :param BeamStop self.beam_stops: A beam stop object that handles beam stop related data
     :param Float self.beam_flux: The beam flux of the calculation
-    :param Dict self.one_dimensional: One dementional data
-    :param Dict self.two_dimensional: Two dementional data
+    :param Dict self.one_dimensional: One denominational data
+    :param Dict self.two_dimensional: Two denominational data
     :param String self.name: The name of the selected instrument
-    :param Constant self.constants: A constant objec that handles the constant s for the data
-    :param Dict self.params: A dictonary of paramaters recived from the Java Script
+    :param Constant self.constants: A constant object that handles the constant s for the data
+    :param Dict self.params: A dictionary of parameters received from the JavaScript
     """
     isReal = False
 
@@ -938,10 +938,10 @@ class Instrument:
                 "unit"] != "" else None
         params["collimation"] = {}
         params["collimation"]["guides"] = {}
-        params["collimation"]["guides"]["lenses"] = self.guide_lense_config(old_params[name + "GuideConfig"]["default"],
-                                                                            False) if \
+        params["collimation"]["guides"]["lenses"] = self.guide_lens_config(old_params[name + "GuideConfig"]["default"],
+                                                                           False) if \
             old_params[name + "GuideConfig"]["default"] != "" else None
-        params["collimation"]["guides"]["number_of_guides"] = self.guide_lense_config(
+        params["collimation"]["guides"]["number_of_guides"] = self.guide_lens_config(
             old_params[name + "GuideConfig"]["default"],
             True) if old_params[name + "GuideConfig"][
                          "default"] != "" else None
@@ -1001,7 +1001,7 @@ class Instrument:
                 "default"] != "" else None
         return params
 
-    def guide_lense_config(self, value, guide_param):
+    def guide_lens_config(self, value, guide_param):
         """Helper functions which helps set values in relation to guides
 
         If guide param the value being set is the # of guides
@@ -1024,12 +1024,12 @@ class Instrument:
                 return False
 
     def load_objects(self, params):
-        """A function that creates the objects nessasary for the calaculations
+        """A function that creates the objects necessary for the calculations
 
         Runs calculate_sample_to_detector_distance and calculate_min_and_max_q.
         Create objects beam_stops, detectors, collimation, and wavelength
 
-        :param dict params: A dictonary of paramaters to send to the initalization of the objects
+        :param dict params: A dictionary of parameters to send to the initialization of the objects
         :return: Nothing as it just sets up all the objects
         :rtype: None
         """
@@ -1058,9 +1058,9 @@ class Instrument:
         self.data.calculate_min_and_max_q()
 
     def sas_calc(self):
-        """ The main fucntion that runsa all the calculation and returns the results
+        """ The main function that runs all the calculation and returns the results
 
-        Makes a user inacessable sub dictonary whitch contains the results to be sent back to the instument JS
+        Makes a user inaccessible sub dictionary witch contains the results to be sent back to the instrument JS
 
         :return: A dictionary of the calculation results
         :rtype: Dict
@@ -1124,7 +1124,7 @@ class Instrument:
     def calculate_attenuation_factor(self, index=0):
         a2 = self.get_sample_aperture_diam()  # Good
         beam_diam = self.get_beam_diameter(index)
-        # Start 3/29 fix beam diamater
+        # Start 3/29 fix beam diameter
         a_pixel = self.detectors[index].get_pixel_size_x() / 100  # Good
         i_pixel_max = self.detectors[index].per_pixel_max_flux  # Good
         num_pixels = (math.pi / 4) * (0.5 * (a2 + beam_diam) / a_pixel) ** 2
