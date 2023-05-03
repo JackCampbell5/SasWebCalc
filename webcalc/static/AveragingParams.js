@@ -68,14 +68,23 @@ export default {
   watch: {
     averagingParams: {
       handler(newValue, oldValue) {
+        this.watchForChanges();
+      },
+      deep: true
+    },
+      active_averaging_type: {
+          handler(newValue, oldValue) {
+              this.watchForChanges();
+          },
+          deep: true
+      }
+  },
+  methods: {
+      watchForChanges() {
         this.makeAveragingShapes();
         this.$emit('changeAveParams', this.averagingParams);
         this.$emit('changeShapes', this.shapes);
       },
-      deep: true
-    }
-  },
-  methods: {
     makeAveragingShapes() {
       // Reset shapes so only current shape(s) visible
       this.shapes = [];

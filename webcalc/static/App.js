@@ -31,7 +31,7 @@ const template = `
         <option v-for="model_name in model_names" :key="model_name" :value="model_name">{{model_name}}</option>
       </select>
       <label id="averagingTypeLabel" for="averagingType">Averaging Method: </label>
-      <select id="averagingType" v-model="active_averaging_type">
+      <select id="averagingType" v-model="active_averaging_type" @change="populateAveragingParams">
         <option v-for="averaging in averaging_types" :key="averaging" :value="averaging">
           {{averaging}}</option>
       </select>
