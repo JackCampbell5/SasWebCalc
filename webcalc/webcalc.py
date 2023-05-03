@@ -62,18 +62,25 @@ def create_app():
         # Creates params for calculation from all the params
         calculate_params = {"instrument_params": instrument_params, "slicer": slicer, "slicer_params": slicer_params}
 
-        # Calculate the instrument
+        # Calculate the instrument and slicer
         instrument = calculate_instrument(instrument, calculate_params)
+
+        # Get q in proper format
         params = decode_json(instrument)[0]
         q_1d = numpy.asarray(params.get('qValues', []))
         q_2d = numpy.asarray(params.get('q2DValues', []))
+
+        # Calculate the 1D model
         model_1d = decode_json(calculate_model(model, model_params, q_1d))
         comb_1d = numpy.asarray(model_1d[0]) * numpy.asarray(params.get('fSubs', []))
         params['fSubs'] = comb_1d.tolist()
+        # Calculate the 2D model
         model_2d = decode_json(calculate_model(model, model_params, q_2d))
         i_2d = numpy.asarray(params.get('intensity2D', []))
         comb_2d = numpy.asarray(model_2d[0]).reshape(i_2d.shape) * i_2d
         params['intensity2D'] = comb_2d.tolist()
+
+        # Return all data
         return encode_json(params)
 
     @app.route('/calculate/model/<model_name>', methods=['POST'])
