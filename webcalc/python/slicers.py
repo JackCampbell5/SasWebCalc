@@ -191,8 +191,8 @@ class Slicer:
         nq_array = np.arange(nq)
         self.calculate_q(nq_array)
         ave_sq = self.ave_intensity * self.ave_intensity
-        ave_isq = np.asarray([self.d_sq[i] if np.isnan(self.n_cells[i]) else self.d_sq[i] / self.n_cells[i]
-                              for i in nq_array])
+        ave_isq = np.asarray([self.d_sq[i] if (np.isfinite(self.n_cells[i]) or self.n_cells[i] <= 0)
+                              else self.d_sq[i] / self.n_cells[i] for i in nq_array])
         diff = ave_isq - ave_sq
         self.sigma_ave = np.asarray([large_number if diff[i] < 0 or self.n_cells[i] <= 1
                                      else math.sqrt(diff[i] / (self.n_cells[i] - 1)) for i in nq_array])
@@ -237,14 +237,13 @@ class Slicer:
         velocity_neutron = velocity_neutron_1a / self.lambda_val
         var_gravity = 0.5 * gravity_constant * self.SDD * (self.SSD + self.SDD) / math.pow(velocity_neutron, 2)
         r_zero = self.SDD * np.tan(2.0 * np.arcsin(self.lambda_val * np.asarray(self.q_values) / (4.0 * np.pi)))
+        r_zero[r_zero < small_number] = small_number
         delta = 0.5 * np.power(self.beam_stop_size - r_zero, 2) / var_detector
-        inc_gamma = np.full_like(r_zero, np.exp(np.log(gamma(1.5))) * (1 + gammainc(1.5, delta) / gamma(1.5)))
-        # FIXME: indexing broken here
-        # inc_gamma[r_zero < self.beam_stop_size] = np.exp(np.log(gamma(1.5))) * (1 - gammainc(1.5, delta) / gamma(1.5))
-        # FIXME AS ERF OUTPUTS ARRAy
+        inc_gamma = np.asarray([np.exp(np.log(gamma(1.5))) * (1 + gammainc(1.5, delta) / gamma(1.5)) if r_zero[i] >= self.beam_stop_size
+                                else np.exp(np.log(gamma(1.5))) * (1 - gammainc(1.5, delta) / gamma(1.5)) for i in range(len(r_zero))])
         f_sub_s = 0.5 * (1.0 + erf((r_zero - self.beam_stop_size) / math.sqrt(2.0 * var_detector)))
         f_sub_s[f_sub_s < small_number] = small_number
-        fr = 1.0 + np.sqrt(var_detector) * np.exp(-1.0 * delta) / r_zero * f_sub_s * np.sqrt(2.0 + np.pi)
+        fr = 1.0 + np.sqrt(var_detector) * np.exp(-1.0 * delta) / (r_zero * f_sub_s * np.sqrt(2.0 + np.pi))
         fv = inc_gamma / (f_sub_s * np.sqrt(math.pi)) - r_zero * r_zero * np.power(fr - 1.0, 2) / var_detector
         rmd = fr + r_zero
         var_r1 = var_beam + var_detector * fv + var_gravity
@@ -252,9 +251,7 @@ class Slicer:
         var_r = var_r1 - 0.5 * (var_r1 / rmd) * (var_r1 / rmd)
         var_r[var_r < 0] = 0.0
         self.q_average = (4.0 * np.pi / self.lambda_val) * np.sin(0.5 * np.arctan(rm / self.SDD))
-        if np.isnan(self.q_average[0]): self.q_average[0] = 0.0
         self.sigma_q = self.q_average * np.sqrt((var_r / rmd) * (var_r / rmd) + var_lambda)
-        if np.isnan(self.sigma_q[0]): self.sigma_q[0] = 0.0
         self.f_subs = f_sub_s
 
     def calculate_distance_from_beam_center(self, pixel_value, x_or_y):
@@ -272,7 +269,7 @@ class Slicer:
         # Calculate Qx and Qy values
         x_pixels = np.array([i for i in range(self.x_pixels)])
         x_distances = calculate_distance_from_beam_center(x_pixels, self.x_center, self.pixel_size, self.coeff)
-        theta_x = np.arctan(x_distances / (self.detector_distance*10)) / 2
+        theta_x = np.arctan(x_distances / (float(self.detector_distance)*10.0)) / 2.0
         self.qx_values = (4 * math.pi / self.lambda_val) * np.sin(theta_x)
         y_pixels = np.array([i for i in range(self.y_pixels)])
         y_distances = calculate_distance_from_beam_center(y_pixels, self.y_center, self.pixel_size, self.coeff)
