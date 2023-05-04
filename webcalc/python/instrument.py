@@ -56,8 +56,6 @@ def calculate_instrument(instrument: str, params: dict) -> dict:
 
     }
     """
-    # TODO: Create classes for all instruments
-    print(params)
     # i_class is the python object for the interment
     if instrument == 'ng7':
         # Creates NG7SANS object if instrument is ng7
@@ -75,15 +73,18 @@ def calculate_instrument(instrument: str, params: dict) -> dict:
     return i_class.sas_calc()
 
 
-def set_params(instance, params):
+def set_params(instance, params, float_params=None):
     """ Set class attributes based on a dictionary of values. The dict should map <param_name> -> <value>.
 
 
     :param instance: An instance of any class type in this file that needs params set in bulk.
     :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
+    :param float_params: A list of parameters that are meant to be float
     :return: Nothing just prints errors if there are anu
     :rtype: None
     """
+    if not float_params:
+        float_params = []
     if isinstance(params, (list, tuple)):
         # If a list is passed, try using the first value in the list
         params = params[0]
@@ -95,6 +96,15 @@ def set_params(instance, params):
         if hasattr(instance, key):
             # Set known attributes
             if value is not None:
+                if key in float_params:
+                    try:
+                        value = float(value)
+                    except ValueError:
+                        # Bad value sent for floats -> raise error
+                        raise
+                    except Exception:
+                        # Otherwise, ignore
+                        pass
                 setattr(instance, key, value)
         else:
             # Print unrecognized attributes to the console
@@ -134,7 +144,8 @@ class Aperture:
         :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
         :rtype: None
         """
-        set_params(self, params)
+        float_params = ["diameter", "offset"]
+        set_params(self, params, float_params)
 
     def get_diameter(self):
         """ Gets diameter value of the Aperture object
@@ -202,7 +213,8 @@ class BeamStop:
         :return: None as it just sets the parameters
         :rtype: None
         """
-        set_params(self, params)
+        float_params = ["diameter", "offset", "beam_stop_size", "beam_stop_diameter"]
+        set_params(self, params, float_params)
 
 
 class Collimation:
@@ -257,7 +269,8 @@ class Collimation:
         :return: None as it just sets the parameters
         :rtype: None
         """
-        set_params(self, params)
+        float_params = ["ssd", "ssad", "aperture_offset", "space_offset", "detector_distance"]
+        set_params(self, params, float_params)
 
     def get_source_aperture_radius(self):
         """ Gets the radius attribute from the Source Aperture object
@@ -405,7 +418,9 @@ class Detector:
         :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
         :rtype: None
         """
-        set_params(self, params)
+        float_params = ["ssd", "ssad", "offset", "pixel_size_x", "pixel_size_y", "pixel_size_z",
+                        "pixel_no_x", "pixel_no_y", "pixel_no_z", "beam_center_x", "beam_center_y", "beam_center_z"]
+        set_params(self, params, float_params)
 
         # Calculate all beam centers using existing values
         self.calculate_all_beam_centers()
@@ -566,7 +581,8 @@ class Guide:
         :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
         :rtype: None
         """
-        set_params(self, params)
+        float_params = ["guide_width", "length_per_guide", "number_of_guides", "gap_at_start", "maximum_length"]
+        set_params(self, params, float_params)
 
     def get_gap_at_start(self):
         """Gets the gap_at_start attribute from the Guide object and converts it for distance with its unit
@@ -654,7 +670,9 @@ class Wavelength:
         :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
         :rtype: None
         """
-        set_params(self, params)
+        float_params = ["wavelength", "wavelength_min", "wavelength_spread", "number_of_attenuators",
+                        "attenuation_factor"]
+        set_params(self, params, float_params)
         self.calculate_wavelength_range()
 
     def get_wavelength(self):
@@ -1234,7 +1252,6 @@ class Instrument:
     # Use these to be sure units are correct
 
     def calculate_slicer(self, index=0):
-        print("02")
         slicer_params = self.slicer_params
 
         # Import averaging_params
@@ -1448,7 +1465,6 @@ class NoInstrument(Instrument):
         self.q_min_horizon = values.get('q_min_horizontal', self.q_min_horizon)
 
     def sas_calc(self):
-        print("06")
         method = np.linspace if self.spacing == "lin" else np.logspace
         q_vals = method(self.q_min, self.q_max, self.n_pts)
         qx_values = method(self.q_min_horizon, self.q_max_horizon, self.n_pts)
