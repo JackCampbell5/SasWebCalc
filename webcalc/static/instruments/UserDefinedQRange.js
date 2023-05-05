@@ -2,7 +2,7 @@ const template = `
 <div class="instrument_params">
   <h2>{{title}}</h2>
   <div id="q_range_inputs">
-    <div class="param" v-for="(param, key) in instrument_params_local" :key="key" class="instrument-section" >
+    <div class="param, instrument-section" v-for="(param, key) in instrument_params_local" :key="key" >
         <label :for="key">{{param.name}}:&nbsp;</label>
         <select v-if="param.type == 'select'" v-model.string="param.default" :id="key" @change="onChangeValue">
             <option v-for="option in param.options" :key="option" :value="option">{{option}}</option>
