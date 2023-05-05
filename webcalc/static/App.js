@@ -47,8 +47,7 @@ const template = `
     <component v-if="active_instrument != ''" :is="active_instrument" :title="instruments[active_instrument]" :pythonParams="pythonParams"
         @value-change="onInstrumentParamChange"/>
   </div>
-  <plotting ref="plotting" :data_1d="data_1d" :data_2d="data_2d" :shapes="shapes"
-      @freeze="onFreeze" @offset-traces="onOffset"/>
+  <plotting ref="plotting" :data_1d="data_1d" :data_2d="data_2d" :shapes="shapes"/>
 </div>
 </main>
 `;
@@ -102,7 +101,6 @@ export default {
       await this.onChange();
     },
     async onModelParamChange() {
-      let location = `/calculate/model/${this.active_model}`;
       await this.onChange();
     },
     async onInstrumentParamChange(params) {
@@ -183,9 +181,6 @@ export default {
   },
   mounted() {
     // Sets the dropdowns to automatically choose for testing
-    this.active_model = "adsorbed_layer"
-    this.populateModelParams()
-    this.active_instrument = "ng7"
     if (this.active_instrument !== "" && this.active_model !== "") {
       this.onChange();
     }
