@@ -23,12 +23,12 @@ export default {
   },
   methods: {
    onChangeValue (event) {
-       this.$emit('valueChange', this.instrument_params);
+       this.$emit('valueChange', this.instrument_params_local);
    }
   },
   data() {
     return {
-      instrument_params: {
+      instrument_params_local: {
         'q_min_vertical': {
           name: 'Q Min Vertical',
           default: -0.3,
@@ -99,7 +99,7 @@ export default {
     }
   },
   mounted(){
-    this.$emit('valueChange', this.instrument_params);
+    this.$emit('valueChange', this.instrument_params_local);
   },
   template: template,
 }
