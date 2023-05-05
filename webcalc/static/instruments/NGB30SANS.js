@@ -39,7 +39,9 @@ export default {
   methods: {
     onChangeValue(event) {
       this.updateSecondaryElements(event.target);
-      this.$emit('valueChange', this.instrument_params_local);
+      if (!event.target.disabled) {
+        this.$emit('valueChange', this.instrument_params_local);
+      }
     },
     updateSecondaryElements(target) {
       if (target.id === "ngb30GuideConfig") {
