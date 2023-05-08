@@ -39,7 +39,9 @@ export default {
   methods: {
     onChangeValue(event) {
       this.updateSecondaryElements(event.target);
-      this.$emit('valueChange', this.instrument_params);
+      if (!event.target.disabled) {
+        this.$emit('valueChange', this.instrument_params_local);
+      }
     },
     updateSecondaryElements(target) {
       if (target.id === "ngb30GuideConfig") {
@@ -47,23 +49,23 @@ export default {
       }
       else if (target.id === "ngb30WavelengthSpread") {
         let range = this.wavelength_ranges[target.value];
-        this.instrument_params['ngb30WavelengthInput'].min = range[0];
-        this.instrument_params['ngb30WavelengthInput'].max = range[1];
+        this.instrument_params_local['ngb30WavelengthInput'].min = range[0];
+        this.instrument_params_local['ngb30WavelengthInput'].max = range[1];
       }
       else if (target.id === "ngb30SampleAperture") {
-        this.instrument_params['ngb30CustomAperture'].hidden = !(target.value === 'Custom');
+        this.instrument_params_local['ngb30CustomAperture'].hidden = !(target.value === 'Custom');
       }
       else if (target.id === "ngb30SDDInputBox") {
-        this.instrument_params['ngb30SDDDefaults'].default = this.instrument_params['ngb30SDDInputBox'].default;
+        this.instrument_params_local['ngb30SDDDefaults'].default = this.instrument_params_local['ngb30SDDInputBox'].default;
       }
       else if (target.id === "ngb30SDDDefaults") {
-        this.instrument_params['ngb30SDDInputBox'].default = this.instrument_params['ngb30SDDDefaults'].default;
+        this.instrument_params_local['ngb30SDDInputBox'].default = this.instrument_params_local['ngb30SDDDefaults'].default;
       }
       else if (target.id === "ngb30OffsetInputBox") {
-        this.instrument_params['ngb30OffsetDefaults'].default = this.instrument_params['ngb30OffsetInputBox'].default;
+        this.instrument_params_local['ngb30OffsetDefaults'].default = this.instrument_params_local['ngb30OffsetInputBox'].default;
       }
       else if (target.id === "ngb30OffsetDefaults") {
-        this.instrument_params['ngb30OffsetInputBox'].default = this.instrument_params['ngb30OffsetDefaults'].default;
+        this.instrument_params_local['ngb30OffsetInputBox'].default = this.instrument_params_local['ngb30OffsetDefaults'].default;
       }
     },
     updateApertureOptions(target) {
@@ -76,17 +78,17 @@ export default {
         aperture.disabled = toggle;
         aperture.hidden = toggle;
         if (!toggle) {
-          this.instrument_params['ngb30SourceAperture'].default = aperture.value;
+          this.instrument_params_local['ngb30SourceAperture'].default = aperture.value;
         }
       }
     }
   },
   computed: {
     item_in_category: function () {
-      return Object.keys(this.instrument_params)
-        .filter(key => this.instrument_params[key].category === this.active_category).
+      return Object.keys(this.instrument_params_local)
+        .filter(key => this.instrument_params_local[key].category === this.active_category).
         reduce((obj, key) => {
-          obj[key] = this.instrument_params[key];
+          obj[key] = this.instrument_params_local[key];
         return obj;
         }, {});
     },
@@ -120,7 +122,7 @@ export default {
         16.8: ['3.0', '20.0'],
         25.6: ['3.0', '20.0']
       },
-      instrument_params: {
+      instrument_params_local: {
         'ngb30SampleTable': {
           name: 'Sample Table',
           default: "Chamber",
@@ -317,14 +319,14 @@ export default {
     }
   },
   mounted(){
-    this.$emit('valueChange', this.instrument_params);
+    this.$emit('valueChange', this.instrument_params_local);
   },
    watch: {
     pythonParams: function (value){
       let instName = "ngb30";
 
       for (const name in value){
-        this.instrument_params[instName+name].default = value;
+        this.instrument_params_local[instName+name].default = value;
       }
     }
 

@@ -2,7 +2,7 @@ const template = `
 <div class="instrument_params">
   <h2>{{title}}</h2>
   <div id="q_range_inputs">
-    <div class="param" v-for="(param, key) in instrument_params" :key="key" class="instrument-section" >
+    <div class="param, instrument-section" v-for="(param, key) in instrument_params_local" :key="key" >
         <label :for="key">{{param.name}}:&nbsp;</label>
         <select v-if="param.type == 'select'" v-model.string="param.default" :id="key" @change="onChangeValue">
             <option v-for="option in param.options" :key="option" :value="option">{{option}}</option>
@@ -23,12 +23,12 @@ export default {
   },
   methods: {
    onChangeValue (event) {
-       this.$emit('valueChange', this.instrument_params);
+       this.$emit('valueChange', this.instrument_params_local);
    }
   },
   data() {
     return {
-      instrument_params: {
+      instrument_params_local: {
         'q_min_vertical': {
           name: 'Q Min Vertical',
           default: -0.3,
@@ -99,7 +99,7 @@ export default {
     }
   },
   mounted(){
-    this.$emit('valueChange', this.instrument_params);
+    this.$emit('valueChange', this.instrument_params_local);
   },
   template: template,
 }

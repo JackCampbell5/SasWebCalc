@@ -32,7 +32,9 @@ export default {
       },
       shapes: {
           handler(newValue, oldValue) {
-              this.update2DChart();
+              if (Object.keys(this.data_2d).length > 0) {
+                  this.update2DChart();
+              }
           }
       },
       offsetTraces: {
@@ -126,16 +128,10 @@ export default {
           };
         this.frozen_data.push(dataSet);
         this.scaleFrozenDataSets();
-        this.emitFrozenData();
     },
     unfreezeCalculations() {
         this.frozen_data = [];
         this.update1DChart();
-        this.emitFrozenData();
-    },
-    emitFrozenData() {
-       this.$emit('freeze', this.frozen_data);
-       this.$emit('offsetTraces', this.offsetTraces);
     },
     scaleFrozenDataSets() {
         let scale = 1.0;

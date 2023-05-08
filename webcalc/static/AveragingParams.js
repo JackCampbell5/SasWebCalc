@@ -81,7 +81,10 @@ export default {
   },
   methods: {
       watchForChanges() {
-        this.makeAveragingShapes();
+        // Only call the shape creation if data is initialized
+        if (Object.keys(this.data_2d).length > 0) {
+            this.makeAveragingShapes();
+        }
         this.$emit('changeAveParams', this.averagingParams);
         this.$emit('changeShapes', this.shapes);
       },
@@ -97,16 +100,10 @@ export default {
       let dPhi = parseFloat(this.averagingParams['dPhi']) * Math.PI / 180;
       let halves = this.averagingParams['detectorHalves'];
       let aspectRatio = parseFloat(this.averagingParams['aspectRatio']);
-      let maxQx = 1.0;
-      let minQx = -1.0;
-      let maxQy = 1.0;
-      let minQy = -1.0;
-      if (this.data_2d != null) {
-          maxQx = this.getMax(this.data_2d['qxValues']);
-          minQx = this.getMin(this.data_2d['qxValues']);
-          maxQy = this.getMax(this.data_2d['qyValues']);
-          minQy = this.getMin(this.data_2d['qyValues']);
-      }
+      let maxQx = this.getMax(this.data_2d['qxValues']);
+      let minQx = this.getMin(this.data_2d['qxValues']);
+      let maxQy = this.getMax(this.data_2d['qyValues']);
+      let minQy = this.getMin(this.data_2d['qyValues']);
       switch (type) {
           default: case 'Circular':
             // No shapes needed for a circular or empty slicer

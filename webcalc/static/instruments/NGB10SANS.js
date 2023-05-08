@@ -39,7 +39,9 @@ export default {
   methods: {
     onChangeValue(event) {
       this.updateSecondaryElements(event.target);
-      this.$emit('valueChange', this.instrument_params);
+      if (!event.target.disabled) {
+        this.$emit('valueChange', this.instrument_params_local);
+      }
     },
     updateSecondaryElements(target) {
       if (target.id === "ngb10GuideConfig") {
@@ -47,23 +49,23 @@ export default {
       }
       else if (target.id === "ngb10WavelengthSpread") {
         let range = this.wavelength_ranges[target.value];
-        this.instrument_params['ngb10WavelengthInput'].min = range[0];
-        this.instrument_params['ngb10WavelengthInput'].max = range[1];
+        this.instrument_params_local['ngb10WavelengthInput'].min = range[0];
+        this.instrument_params_local['ngb10WavelengthInput'].max = range[1];
       }
       else if (target.id === "ngb10SampleAperture") {
-        this.instrument_params['ngb10CustomAperture'].hidden = !(target.value === 'Custom');
+        this.instrument_params_local['ngb10CustomAperture'].hidden = !(target.value === 'Custom');
       }
       else if (target.id === "ngb10SDDInputBox") {
-        this.instrument_params['ngb10SDDDefaults'].default = this.instrument_params['ngb10SDDInputBox'].default;
+        this.instrument_params_local['ngb10SDDDefaults'].default = this.instrument_params_local['ngb10SDDInputBox'].default;
       }
       else if (target.id === "ngb10SDDDefaults") {
-        this.instrument_params['ngb10SDDInputBox'].default = this.instrument_params['ngb10SDDDefaults'].default;
+        this.instrument_params_local['ngb10SDDInputBox'].default = this.instrument_params_local['ngb10SDDDefaults'].default;
       }
       else if (target.id === "ngb10OffsetInputBox") {
-        this.instrument_params['ngb10OffsetDefaults'].default = this.instrument_params['ngb10OffsetInputBox'].default;
+        this.instrument_params_local['ngb10OffsetDefaults'].default = this.instrument_params_local['ngb10OffsetInputBox'].default;
       }
       else if (target.id === "ngb10OffsetDefaults") {
-        this.instrument_params['ngb10OffsetInputBox'].default = this.instrument_params['ngb10OffsetDefaults'].default;
+        this.instrument_params_local['ngb10OffsetInputBox'].default = this.instrument_params_local['ngb10OffsetDefaults'].default;
       }
     },
     updateApertureOptions(target) {
@@ -76,17 +78,17 @@ export default {
         aperture.disabled = toggle;
         aperture.hidden = toggle;
         if (!toggle) {
-          this.instrument_params['ngb10SourceAperture'].default = aperture.value;
+          this.instrument_params_local['ngb10SourceAperture'].default = aperture.value;
         }
       }
     }
   },
   computed: {
     item_in_category: function () {
-      return Object.keys(this.instrument_params)
-        .filter(key => this.instrument_params[key].category === this.active_category).
+      return Object.keys(this.instrument_params_local)
+        .filter(key => this.instrument_params_local[key].category === this.active_category).
         reduce((obj, key) => {
-          obj[key] = this.instrument_params[key];
+          obj[key] = this.instrument_params_local[key];
         return obj;
         }, {});
     },
@@ -111,7 +113,7 @@ export default {
         14: ['3.0', '20.0'],
         25: ['3.0', '20.0']
       },
-      instrument_params: {
+      instrument_params_local: {
         'ngb10WavelengthInput': {
           name: 'Wavelength',
           default: 6.0,
@@ -279,14 +281,14 @@ export default {
     }
   },
   mounted(){
-    this.$emit('valueChange', this.instrument_params);
+    this.$emit('valueChange', this.instrument_params_local);
   },
   watch: {
     pythonParams: function (value){
       let instName = "ngb10";
 
       for (const name in value){
-        this.instrument_params[instName+name].default = value;
+        this.instrument_params_local[instName+name].default = value;
       }
     }
 
