@@ -1122,6 +1122,14 @@ class Instrument:
         return encode_json(python_return)
 
     def calculate_instrument_parameters(self):
+        """Uses the many functions to calculate all the necessary parameters necessary for an instrument
+
+        * This function is usually called by the sas calc function
+        * Calculates beam stop diameter, beam flux, figure of merit, attenuator number, slicer array values, sdd, and min and max q values
+
+        :return: It returns nothing as each function sets the value it calculates
+        :rtype: None
+        """
         # Calculate the beam stop diameter
         self.calculate_beam_stop_diameter()
         # Calculate the estimated beam flux
@@ -1134,12 +1142,21 @@ class Instrument:
         self.calculate_sample_to_detector_distance()
         self.data.calculate_min_and_max_q()
         # TODO Figure out point of this
-        # for index in range(len(self.detectors) - 1):
+        # for index in range(len(self.detectors) -
+        # 1):
         #     self.data.calculate_min_and_max_q(index)
         #     # TODO: This might not be needed here...
         #     self.slicer.calculate_q_range_slicer(index)
 
     def calculate_attenuation_factor(self, index=0):
+        """Calulates the attenuation factors from te sample aperture diameter and returns the calculated value
+
+        * Usually run by the calculate attenuator number function
+
+        :param index: The index of the value to fin in the detectors array
+        :return: Returns the float value of the calculated attenuation factor
+        :rtype: Float
+        """
         a2 = self.get_sample_aperture_diam()  # Good
         beam_diam = self.get_beam_diameter(index)
         # Start 3/29 fix beam diameter
@@ -1152,6 +1169,13 @@ class Instrument:
         return self.wavelength.attenuation_factor
 
     def calculate_attenuator_number(self):
+        """ Calculates the number of attenuators present based on the attenuation factor and wavelength
+
+        * Usually run by calculate_instrument_parameters and runs calculate_attenuation_factor
+
+        :return: The number of attenuators
+        :rtype: int
+        """
         self.calculate_attenuation_factor()
         atten = self.get_attenuation_factor()
         if atten:
@@ -1166,6 +1190,15 @@ class Instrument:
         return num_atten
 
     def calculate_beam_diameter(self, index=0, direction='maximum'):
+        """ Calulates the beam diameter from the ssad and ssd among other values
+
+        + Usually run by calculate_instrument_parameters
+
+        :param index: The index in the detector array
+        :param direction: Calculates the beam diameter based on the directory given
+        :return: Nothing as it just sets the value
+        :rtype: None
+        """
         # CAF Needs function to be fixed
 
         # Update all instrument calculations needed for beam diameter
@@ -1208,6 +1241,14 @@ class Instrument:
         self.beam_stops[index]["beam_diameter"] = beam_diam
 
     def calculate_beam_stop_diameter(self, index=0):
+        """ Calculates the beam stop diameter
+
+        + Runs calculate beam diameter
+
+        :param int index: The index in the detector array
+        :return: Nothing as it just sets the values
+        :rtype: None
+        """
         self.calculate_beam_diameter(index, 'maximum')
         beam_diam = self.get_beam_diameter(index)
         for i in self.beam_stops:
@@ -1221,6 +1262,12 @@ class Instrument:
                 'beam_stop_diameter']
 
     def calculate_beam_stop_projection(self, index=0):
+        """ Calculates the projection of the beam stop TODO DOCS add more here
+
+        :param int index: The index in the detector array
+        :return: The calculated projection
+        :rtype: Float
+        """
         self.get_sample_to_detector_distance(index)
         self.calculate_beam_diameter(index)
         self.calculate_beam_stop_diameter(index)
@@ -1231,12 +1278,23 @@ class Instrument:
         return bs_diam + (bs_diam + sample_aperture) * l_beam_stop / (l2 - l_beam_stop)  # Return in cm
 
     def calculate_figure_of_merit(self):
+        """ Calculates the figure of merit from the wavelength and beam flux value
+
+        :return: An integer form of the figure of merit
+        :rtype: int
+        """
         # FOM This would work if beam flux is right
         # TODO replace when beam flux works
         figure_of_merit = math.pow(self.get_wavelength(), 2) * self.get_beam_flux()
         return int(figure_of_merit)
 
     def calculate_sample_to_detector_distance(self, index=0):
+        """ Calculates the SDD(Sample to Detector Distance) value
+
+        :param index: The index in the detector array
+        :return: the SDD value that was just calculated
+        :rtype: float
+        """
         try:
             detector = self.detectors[index]
         except IndexError:
@@ -1245,13 +1303,24 @@ class Instrument:
         return detector.get_sdd()
 
     # Various class updaters
-    def update_wavelength(self, run_sas_calc=True):
+    def update_wavelength(self):
+        """Runs the wavelength function that calculates the wavelength range
+
+        :return: Nothing as it just runs a function
+        :rtype: None
+        """
         self.wavelength.calculate_wavelength_range()
 
     # Various class getter functions
     # Use these to be sure units are correct
 
     def calculate_slicer(self, index=0):
+        """ Creates a dictionary of slicer parameter
+
+        :param index: The index in the detector array
+        :return: It returns nothing as the parameters it calculates are referenced in the return
+        :rtype: None
+        """
         slicer_params = self.slicer_params
 
         # Import averaging_params
@@ -1294,15 +1363,32 @@ class Instrument:
             self.slicer = Circular(slicer_params)
         return
 
+    # TODO Fix these run functions and should just be getting values
     def get_attenuation_factor(self):
+        """ Gets the attenuation factor
+
+        :return: The result of calculate attenuation factor
+        :rtype: Float
+        """
         # TODO Fix The attenuation factor value calculated based on the number of attenuators
         return self.calculate_attenuation_factor()
 
     def get_attenuator_number(self):
+        """Runs the calculation for attenuator number
+
+        :return: The result of the calculate attenuator number
+        :rtype: Int
+        """
+
         # Number of attenuators in the beam
         return self.calculate_attenuator_number()
 
     def get_beam_flux(self):
+        """ Gets the beam flux value from the data class
+
+        :return: Returns the value of the
+        :rtype: int
+        """
         # Beam flux in cm^-2-s^-1
         return self.data.get_beam_flux()
 
