@@ -860,7 +860,7 @@ class Instrument:
 
     :param String self.averaging_type: The averaging type for slicer
     :param  self.slicer_params: Parameters for slicer
-    :param Slicer self.slicer: A slicer object for the calculation of the perdicted data
+    :param Slicer self.slicer: A slicer object for the calculation of the predicted data
     :param Converter self.d_converter: A distance converter object, typically in CM
     :param Converter self.t_converter: A time converter object, typically in s
     :param Data self.data: A Data object that contains more parameters
@@ -912,6 +912,11 @@ class Instrument:
 
     @params.setter
     def params(self, params):
+        """Runs the load params method when params is originally set
+
+        :param params:
+        :return:
+        """
         self.load_params(params)
 
     def load_params(self, params):
@@ -1149,7 +1154,7 @@ class Instrument:
         #     self.slicer.calculate_q_range_slicer(index)
 
     def calculate_attenuation_factor(self, index=0):
-        """Calulates the attenuation factors from te sample aperture diameter and returns the calculated value
+        """Calculates the attenuation factors from te sample aperture diameter and returns the calculated value
 
         * Usually run by the calculate attenuator number function
 
@@ -1190,7 +1195,7 @@ class Instrument:
         return num_atten
 
     def calculate_beam_diameter(self, index=0, direction='maximum'):
-        """ Calulates the beam diameter from the ssad and ssd among other values
+        """ Calculates the beam diameter from the ssad and ssd among other values
 
         + Usually run by calculate_instrument_parameters
 
@@ -1393,15 +1398,33 @@ class Instrument:
         return self.data.get_beam_flux()
 
     def get_beam_diameter(self, index=0):
+        """ Gets the beam diameter value from the bea stops class at the specified index
+
+        :param index: The index in the beam stops array
+        :return: Returns the value of the beam diameter
+        :rtype: int
+        """
         # Beam diameter in centimeters
         return self.beam_stops[index].get("beam_diameter")
 
     def get_beam_stop_diameter(self, index=0):
+        """ Gets the beam stop diameter value from the beam stops class at the specified index
+
+        :param index: The index in the beam stops array
+        :return: Returns the value of the beam stop diameter
+        :rtype: int
+        """
         # Beam stop diameter in inches
         # TODO: Convert to centimeters
         return self.beam_stops[index]["beam_stop_diameter"]
 
     def get_number_of_guides(self):
+        """Gets the value for the number of guides from the collimation class
+
+        :return: the int value of the guides
+        :rtype: Int
+        """
+
         # Number of neutron guides in the beam
         guides = self.collimation.guides.number_of_guides
         if guides == "LENS":
@@ -1411,22 +1434,48 @@ class Instrument:
         return guides
 
     def get_sample_aperture_size(self):
+        """The sample aperture radius from the collimation clas
+
+        :return: The float value for the sample aperture size(Radius)
+        :rtype: Float
+        """
         # Sample Aperture radius in centimeters
         return self.collimation.get_sample_aperture_radius()
 
     def get_source_aperture_size(self):
+        """The source aperture radius from the collimation clas
+
+        :return: The float value for the source aperture size(Radius)
+        :rtype: Float
+        """
         # Source Aperture radius in centimeters
         return self.collimation.get_source_aperture_radius()
 
     def get_sample_aperture_diam(self):
+        """The sample aperture diameter from the collimation clas
+
+        :return: The float value for the sample aperture size(Diameter)
+        :rtype: Float
+        """
         # Sample Aperture diameter in centimeters
         return self.collimation.get_sample_aperture_diameter()
 
     def get_source_aperture_diam(self):
+        """The source aperture diameter from the collimation clas
+
+        :return: The float value for the source aperture size(Diameter)
+        :rtype: Float
+        """
         # Source Aperture diameter in centimeters
         return self.collimation.get_source_aperture_diameter()
 
     def get_sample_aperture_to_detector_distance(self, index=0):
+        """The sample aperture to detector distance value from the detector class
+
+        :param index: The index in the beam stops array
+        :return: The float value of the SADD value
+        :rtype: Float
+        """
         # SADD in centimeters
         try:
             detector = self.detectors[index]
@@ -1435,9 +1484,20 @@ class Instrument:
         return detector.get_sadd()
 
     def get_sample_aperture_offset(self):
+        """Gets the sample aperture offset from the collimation class
+
+        :return: The float value of the sample aperture offset
+        :rtype: Float
+        """
         return self.collimation.get_sample_aperture_offset()
 
     def get_sample_to_detector_distance(self, index=0):
+        """Gets the sample to detector distance from the detector class
+
+        :param index: The index in the beam stops array
+        :return: The float value of the sdd
+        :rtype: Float
+        """
         # SDD in centimeters
         try:
             detector = self.detectors[index]
@@ -1446,6 +1506,12 @@ class Instrument:
         return detector.get_sdd()
 
     def get_detector_offset(self, index=0):
+        """Gets the detector offset from the detector class
+
+        :param index: The index in the beam stops array
+        :return: The float value of the detector offset
+        :rtype: Float
+        """
         # Detector offset in centimeters
         try:
             detector = self.detectors[index]
@@ -1454,22 +1520,47 @@ class Instrument:
         return detector.get_offset()
 
     def get_source_to_sample_distance(self):
+        """Gets the source to sample distance from the collimation class
+
+        :return: The float value of the ssd
+        :rtype: Float
+        """
         # SSD in centimeters
         return self.collimation.get_ssd()
 
     def get_source_to_sample_aperture_distance(self):
+        """Gets the source to sample aperture distance from the collimation class
+
+        :return: The float value of the ssad
+        :rtype: Float
+        """
         # SSAD in centimeters
         return self.collimation.get_ssad()
 
     def get_wavelength(self):
+        """Gets the wavelength value from the wavelength class
+
+        :return: The float value of the wavelength in angstroms
+        :rtype: Float
+        """
         # Wavelength in Angstroms
         return self.wavelength.get_wavelength()
 
     def get_wavelength_spread(self):
+        """Gets the wavelength spread from the wavelength class
+
+        :return: The float value of the wavelength spread
+        :rtype: Float
+        """
         # Wavelength spread in percent
         return self.wavelength.wavelength_spread
 
     def calculate_source_to_sample_aperture_distance(self):
+        """Calculates and returns the source to sample aperture distance
+
+        :return: The float value of the SSAD
+        :rtype: Float
+        """
         return self.collimation.calculate_source_to_sample_aperture_distance()
 
 
