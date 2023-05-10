@@ -945,20 +945,8 @@ class Instrument:
 
         # Start 3/14 update the parameters with if statements
         params = {}
-        # params["average_type"] =
-        params["beamStops"] = {}
-        params["beamStops"]["diameter_unit"] = old_params[name + "BeamDiameter"]["unit"] if \
-            old_params[name + "BeamDiameter"][
-                "unit"] != "" else None
-        params["beamStops"]["diameter"] = old_params[name + "BeamDiameter"]["default"] if \
-            old_params[name + "BeamDiameter"][
-                "default"] != "" else None
-        params["beamStops"]["stop_diameter"] = old_params[name + "BeamStopSize"]["default"] if \
-            old_params[name + "BeamStopSize"][
-                "default"] != "" else None
-        params["beamStops"]["stop_size"] = old_params[name + "BeamStopSize"]["unit"] if \
-            old_params[name + "BeamStopSize"][
-                "unit"] != "" else None
+        beam_stops = old_params.get(name + "BeamStopSizes", {})
+        params["beam_stops"] = beam_stops.get("options", [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
         params["collimation"] = {}
         params["collimation"]["guides"] = {}
         params["collimation"]["guides"]["lenses"] = self.guide_lens_config(old_params[name + "GuideConfig"]["default"],
