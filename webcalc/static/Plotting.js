@@ -45,10 +45,6 @@ export default {
   },
   methods: {
     update1DChart() {
-        let qMin = Math.log10(this.getMin(this.data_2d.qxValues));
-        let qMax = Math.log10(this.getMax(this.data_2d.qxValues));
-        let iMin = Math.log10(this.getMin(this.data_2d.qyValues));
-        let iMax = Math.log10(this.getMax(this.data_2d.qyValues));
       let dataSet = {
         x: this.data_1d.qValues,
         y: this.data_1d.intensity,
@@ -68,13 +64,11 @@ export default {
         xaxis: {
             exponentformat: 'power',
             title: "Q (Å^-1)",
-            range: [qMin, qMax],
             type: 'log'
         },
         yaxis: {
             exponentformat: 'power',
             title: 'Relative Intensity (Au)',
-            range: [iMin, iMax],
             type: 'log'
         },
       };
@@ -84,10 +78,6 @@ export default {
       Plotly.newPlot('sasCalc1DChart', dataSets, layout);
     },
     update2DChart() {
-        let qxMin = this.getMin(this.data_2d.qxValues);
-        let qxMax = this.getMax(this.data_2d.qxValues);
-        let qyMin = this.getMin(this.data_2d.qyValues);
-        let qyMax = this.getMax(this.data_2d.qyValues);
       let dataSet = {
         x: this.data_2d.qxValues,
         y: this.data_2d.qyValues,
@@ -99,12 +89,10 @@ export default {
         title: "SASCALC 2D Plot",
         xaxis: {
             title: "Qx (Å^-1)",
-            range: [qxMin, qxMax],
             constrain: 'domain',
         },
         yaxis: {
             title: "Qy (Å^-1)",
-            range: [qyMin, qyMax],
         },
         shapes: this.shapes,
       };
