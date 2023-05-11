@@ -12,11 +12,6 @@ from .slicers import Elliptical
 from .helpers import encode_json
 
 
-# TODO: Replace all nodes with Instrument parameters
-# TODO: Call slicer directly using known parameters
-
-# TODO Doc      Add args to top if instrument package html
-
 def calculate_instrument(instrument: str, params: dict) -> dict:
     """ The base calculation script. Creates an instrument class, calculates the instrumental resolution for the
     configuration, and returns two list of intensities
@@ -25,7 +20,6 @@ def calculate_instrument(instrument: str, params: dict) -> dict:
     :param dict params: A dictionary of parameters inputted by the user in the JavaScript
     :return: The python return dictionary
     :rtype: dict
-    # TODO: JRK Note - This is what is currently being passed and will need to be parsed properly.
     Args:
         instrument: String defining instrument name
         params: Dictionary containing the following information:
@@ -945,20 +939,8 @@ class Instrument:
 
         # Start 3/14 update the parameters with if statements
         params = {}
-        # params["average_type"] =
-        params["beamStops"] = {}
-        params["beamStops"]["diameter_unit"] = old_params[name + "BeamDiameter"]["unit"] if \
-            old_params[name + "BeamDiameter"][
-                "unit"] != "" else None
-        params["beamStops"]["diameter"] = old_params[name + "BeamDiameter"]["default"] if \
-            old_params[name + "BeamDiameter"][
-                "default"] != "" else None
-        params["beamStops"]["stop_diameter"] = old_params[name + "BeamStopSize"]["default"] if \
-            old_params[name + "BeamStopSize"][
-                "default"] != "" else None
-        params["beamStops"]["stop_size"] = old_params[name + "BeamStopSize"]["unit"] if \
-            old_params[name + "BeamStopSize"][
-                "unit"] != "" else None
+        beam_stops = old_params.get(name + "BeamStopSizes", {})
+        params["beam_stops"] = beam_stops.get("options", [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
         params["collimation"] = {}
         params["collimation"]["guides"] = {}
         params["collimation"]["guides"]["lenses"] = self.guide_lens_config(old_params[name + "GuideConfig"]["default"],
@@ -1075,8 +1057,6 @@ class Instrument:
         self.averaging_type = params.get("average_type", "ERROR")
         self.slicer_params = params.get('slicer', {})
 
-        # TODO move this function to sas_calc function
-        # self.slicer.calculate_q_range_slicer()
         self.calculate_sample_to_detector_distance()
         self.data.calculate_min_and_max_q()
 
@@ -1366,7 +1346,6 @@ class Instrument:
             self.slicer = Elliptical(slicer_params)
         else:
             self.slicer = Circular(slicer_params)
-        return
 
     # TODO Fix these run functions and should just be getting values
     def get_attenuation_factor(self):

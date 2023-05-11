@@ -122,6 +122,15 @@ export default {
         22.1: ['4.0', '20.0']
       },
       instrument_params_local: {
+        'ng7BeamStopSizes': {
+          default: 2.54,
+          options: [
+              {'beam_stop_diameter': 2.54, 'beam_diameter': 2.54},
+              {'beam_stop_diameter': 5.08, 'beam_diameter': 5.08},
+              {'beam_stop_diameter': 7.62, 'beam_diameter': 7.62},
+              {'beam_stop_diameter': 10.16, 'beam_diameter': 10.16},
+          ]
+        },
         'ng7SampleTable': {
           name: 'Sample Table',
           default: "Chamber",
