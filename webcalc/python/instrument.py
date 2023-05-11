@@ -1565,8 +1565,26 @@ class Instrument:
 
 
 class NoInstrument(Instrument):
+    """A class for storing and manipulating The No Instrument related data.
+
+    :param int self.n_pts: The number of points from the points dictionary class
+    :param str self.spacing:
+    :param float self.q_min:
+    :param float self.dq:
+    :param float self.q_max:
+    :param float self._q_max_horizon:
+    :param float self._q_max_vert:
+    :param float self._q_min_horizon:
+    :param float self._q_min_vert:
+    :param  self.params:
+    """
     # Constructor for the pseudo instrument with user-defined Q ranges and instrument resolutions
     def __init__(self, name, params):
+        """
+
+        :param name:
+        :param params:
+        """
         self.name = name if name else "Q Range"
         super().__init__(name, params)
         self.n_pts = 0
@@ -1662,15 +1680,32 @@ class NoInstrument(Instrument):
 
 
 class NG7SANS(Instrument):
+    """ A class to manipulate NG7SANS as a subclass of the instrument class
+
+    :param  self.name: The name of the instrument
+    """
 
     # Constructor for the NG7SANS instrument
     def __init__(self, name, params):
+        """The constructor method that creates the necessary parameters and runs the instrument classes constructor
+
+        :param str name: The name of the instrument
+        :param dict params: A dictionary of the parameters passed from the calculate instrument method
+        :return: Nothing just runs the message
+        :rtype: None
+        """
         self.name = "ng7"
         params = self.param_restructure(params)
         # Super is the Instrument class
         super().__init__(name, params)
 
     def load_params(self, params):
+        """A method that loads the constants of the NG7SANS Instrument
+
+        :param dict params: The dictionary of parameters from the __init__ statement
+        :return: Nothing, just runs the instrument load objects method
+        :rtype: None
+        """
         print("NG7SANS Load Params")
         params["collimation"]["guides"]["gap_at_start"] = 188
         params["collimation"]["guides"]["guide_width"] = 5
@@ -1709,6 +1744,11 @@ class NG7SANS(Instrument):
         super().load_objects(params)
 
     def calculate_instrument_parameters(self):
+        """Calculates the instrument parameters including beam stop diameter, beam flux, figure of merit, and number of attenuators
+
+        :return: Nothing just runs the calculation
+        :rtype: None
+        """
         super().calculate_instrument_parameters()
         # # Calculate the beam stop diameter
         # self.calculate_beam_stop_diameter()
@@ -1729,13 +1769,30 @@ class NG7SANS(Instrument):
 
 
 class NGB30SANS(Instrument):
+    """ A class to manipulate NGB10SANS as a subclass of the instrument class
+
+    :param  self.name: The name of the instrument
+    """
     # Class for the NGB 30m SANS instrument
     def __init__(self, name, params):
+        """The constructor method that creates the necessary parameters and runs the instrument classes constructor
+
+        :param str name: The name of the instrument
+        :param dict params: A dictionary of the parameters passed from the calculate instrument method
+        :return: Nothing just runs the message
+        :rtype: None
+        """
         self.name = "ngb30"
         params = self.param_restructure(params)
         super().__init__(name, params)
 
     def load_params(self, params):
+        """A method that loads the constants of the NG7SANS Instrument
+
+        :param dict params: The dictionary of parameters from the __init__ statement
+        :return: Nothing, just runs the instrument load objects method
+        :rtype: None
+        """
         print("NGB30SANS Load Params")
         params["data"] = {}
         params["data"]["bs_factor"] = 1.05
@@ -1774,6 +1831,11 @@ class NGB30SANS(Instrument):
         super().load_objects(params)
 
     def calculate_instrument_parameters(self):
+        """Calculates the instrument parameters including beam stop diameter, beam flux, figure of merit, and number of attenuators
+
+        :return: Nothing just runs the calculation
+        :rtype: None
+        """
         super().calculate_instrument_parameters(self)
         # # Calculate the beam stop diameter
         # self.calculate_beam_stop_diameter()
@@ -1794,13 +1856,30 @@ class NGB30SANS(Instrument):
 
 
 class NGB10SANS(Instrument):
+    """ A class to manipulate NGB10SANS as a subclass of the instrument class
+
+    :param  self.name: The name of the instrument
+    """
     # Class for the NGB 10m SANS instrument
     def __init__(self, name, params):
+        """The constructor method that creates the necessary parameters and runs the instrument classes constructor
+
+        :param str name: The name of the instrument
+        :param dict params: A dictionary of the parameters passed from the calculate instrument method
+        :return: Nothing just runs the message
+        :rtype: None
+        """
         self.name = "ngb10"
         params = self.param_restructure(params)
         super().__init__(name, params)
 
     def load_params(self, params):
+        """A method that loads the constants of the NG7SANS Instrument
+
+        :param dict params: The dictionary of parameters from the __init__ statement
+        :return: Nothing, just runs the instrument load objects method
+        :rtype: None
+        """
         print("NGB10SANS Load Params")
         params["data"] = {}
         params["data"]["bs_factor"] = 1.05
@@ -1840,6 +1919,11 @@ class NGB10SANS(Instrument):
         super().load_objects(params)
 
     def calculate_instrument_parameters(self):
+        """Calculates the instrument parameters including beam stop diameter, beam flux, figure of merit, and number of attenuators
+
+        :return: Nothing just runs the calculation
+        :rtype: None
+        """
         super().calculate_instrument_parameters(self)
         # # Calculate the beam stop diameter
         # self.calculate_beam_stop_diameter()
@@ -1859,6 +1943,11 @@ class NGB10SANS(Instrument):
         # #     self.slicer.calculate_q_range_slicer(index)
 
     def calculate_source_to_sample_aperture_distance(self):
+        """Calculates the source to sample aperture distance from the guide values and space offset
+
+        :return: The value of the SSAD
+        :rtype: None
+        """
         # TODO: This runs way to many times
         ssd_temp = self.collimation.guides.get_maximum_length() - self.collimation.space_offset
         if self.collimation.guides.number_of_guides != 0:
