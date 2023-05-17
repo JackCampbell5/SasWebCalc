@@ -67,6 +67,9 @@ export default {
       else if (target.id === "ng7OffsetDefaults") {
         this.instrument_params_local['ng7OffsetInputBox'].default = this.instrument_params_local['ng7OffsetDefaults'].default;
       }
+      else if (target.id === "ng7SampleTable") {
+        this.instrument_params_local['ng7SDD'].default += this.instrument_params_local['ng7SDD'].default === 'Chamber' ? 0.0 : 54.0;
+      }
     },
     updateApertureOptions(target) {
       // Update the allowed aperture values based on the number of guides selected

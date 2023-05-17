@@ -140,6 +140,7 @@ class Aperture:
         """
         float_params = ["diameter", "offset"]
         set_params(self, params, float_params)
+        self.diameter *= 2.54
 
     def get_diameter(self):
         """ Gets diameter value of the Aperture object
@@ -387,6 +388,7 @@ class Detector:
         self.sadd_unit = 'cm'
         self.sdd = 0.0
         self.sdd_unit = 'cm'
+        self.aperture_offset = 5.0
         self.offset = 0.0
         self.offset_unit = 'cm'
         self.pixel_size_x = 0.0  # aPixel in constants.js
@@ -503,7 +505,8 @@ class Detector:
         :return:The converted value of the sadd
         :rtype: float
         """
-        return self.parent.d_converter(self.sadd, self.sadd_unit)
+        self.sadd = self.sdd + self.aperture_offset
+        return self.sadd
 
     def get_offset(self):
         """Gets the offset attribute from the Detector object and converts it for distance with its unit
@@ -511,7 +514,7 @@ class Detector:
         :return:The converted value of the offset
         :rtype: float
         """
-        return self.parent.d_converter(self.offset, self.offset_unit)
+        return self.offset
 
     def calculate_distance_from_beam_center(self, coefficient):
         """Calculates the distance from the beams center to the point in question
@@ -818,20 +821,24 @@ class Data:
         sdd = self.parent.get_sample_to_detector_distance()
         offset = self.parent.get_detector_offset()
         wave = self.parent.get_wavelength()
-        pixel_size = self.parent.detectors[index].get_pixel_size_x()
-        det_width = pixel_size * self.parent.detectors[index].pixel_no_x
-        bs_projection = self.parent.calculate_beam_stop_projection()
+        pixel_size_x = self.parent.detectors[index].get_pixel_size_x()
+        pixel_size_y = self.parent.detectors[index].get_pixel_size_y()
+        det_width = pixel_size_x * self.parent.detectors[index].pixel_no_x / 100
+        bs_projection = math.fabs(self.parent.calculate_beam_stop_projection())
+        print(bs_projection)
         # Calculate Q-maximum and populate the page
         radial = math.sqrt(math.pow(0.5 * det_width, 2) + math.pow((0.5 * det_width) + offset, 2))
-        self.q_max = 4 * (math.pi / wave) * math.sin(0.5 * math.atan(radial / sdd))
+        pi_over_lambda = math.pi / wave
+        four_pi_wave = 4 * pi_over_lambda
+        self.q_max = four_pi_wave * math.sin(0.5 * math.atan(radial / sdd))
         # Calculate Q-minimum and populate the page
-        self.q_min = (math.pi / wave) * (bs_projection + pixel_size + pixel_size) / sdd  # Working correctly
+        self.q_min = pi_over_lambda * (bs_projection + pixel_size_x + pixel_size_y) / sdd  # Working correctly
         # Calculate Q-maximum and populate the page
         theta = math.atan(((det_width / 2.0) + offset) / sdd)
-        self.q_max_horizon = 4 * (math.pi / wave) * math.sin(0.5 * theta)
+        self.q_max_horizon = four_pi_wave * math.sin(0.5 * theta)
         # Calculate Q-maximum and populate the page
         theta = math.atan(((det_width / 2.0) / sdd))
-        self.q_max_vert = 4 * (math.pi / wave) * math.sin(0.5 * theta)
+        self.q_max_vert = four_pi_wave * math.sin(0.5 * theta)
 
     def get_beam_flux(self):
         """Gets the beam_flux attribute from the Data object and rounds it
@@ -961,8 +968,8 @@ class Instrument:
         params["collimation"]["source_aperture"]["diameter"] = old_params[name + "SourceAperture"]["default"] if \
             old_params[name + "SourceAperture"]["default"] != "" else None
         params["collimation"]["0"] = {}
-        params["collimation"]["0"]["detector_distance"] = old_params[name + "SDDInputBox"]["default"] if \
-            old_params[name + "SDDInputBox"]["default"] != "" else None
+        params["collimation"]["0"]["detector_distance"] = old_params[name + "SDD"]["default"] if \
+            old_params[name + "SDD"]["default"] != "" else None
         if name + "SampleTable" in old_params.values():
             params["collimation"]["0"]["sample_space"] = old_params[name + "SampleTable"]["default"] if \
                 old_params[name + "SampleTable"][
@@ -977,7 +984,8 @@ class Instrument:
                                                                                        "default"] != "" else None
         params["detectors"] = [None]
         params["detectors"][0] = {}
-        if name + "OffsetInputBox" in old_params.values():
+        offset_params = old_params.get(name + "OffsetInputBox", {})
+        if any(offset_params):
             params["detectors"][0]["offset_unit"] = old_params[name + "OffsetInputBox"]["unit"] if \
                 old_params[name + "OffsetInputBox"]["unit"] != "" else None
             params["detectors"][0]["offset"] = old_params[name + "OffsetInputBox"]["default"] if \
@@ -1042,9 +1050,7 @@ class Instrument:
         #       (This is not a part of load params so instrument can have default values if necessary)
 
         # CAF Beam stop defined
-        # TODO Create Beam stop object(Its just set to an dict right now)
         self.beam_stops = params.get('beam_stops', [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
-        # TODO Implement current_beamstop object
         self.detectors = [Detector(self, detector_params) for detector_params in params.get('detectors', [{}])]
         self.collimation = Collimation(self, params.get('collimation', {}))
         self.wavelength = Wavelength(self, params.get('wavelength', {}))
@@ -1075,8 +1081,6 @@ class Instrument:
         self.calculate_instrument_parameters()
 
         # Final output returned to the JS
-        # FIXME: What values need to be returned?
-        # TODO Return Values
         python_return = {}
         python_return["user_inaccessible"] = {}
         python_return["user_inaccessible"]["BeamFlux"] = self.data.get_beam_flux()
@@ -1126,12 +1130,6 @@ class Instrument:
         self.calculate_slicer()
         self.calculate_sample_to_detector_distance()
         self.data.calculate_min_and_max_q()
-        # TODO Figure out point of this
-        # for index in range(len(self.detectors) -
-        # 1):
-        #     self.data.calculate_min_and_max_q(index)
-        #     # TODO: This might not be needed here...
-        #     self.slicer.calculate_q_range_slicer(index)
 
     def calculate_attenuation_factor(self, index=0):
         """Calculates the attenuation factors from te sample aperture diameter and returns the calculated value
@@ -1268,8 +1266,6 @@ class Instrument:
         :return: An integer form of the figure of merit
         :rtype: int
         """
-        # FOM This would work if beam flux is right
-        # TODO replace when beam flux works
         figure_of_merit = math.pow(self.get_wavelength(), 2) * self.get_beam_flux()
         return int(figure_of_merit)
 
@@ -1308,15 +1304,6 @@ class Instrument:
         """
         slicer_params = self.slicer_params
 
-        # Import averaging_params
-        # averaging_params = slicer_params.get("averaging_params", [])
-        # slicer_params["phi"] = (math.pi / 180) * averaging_params[0]
-        # slicer_params["d_phi"] = (math.pi / 180) * averaging_params[1]
-        # slicer_params["detector_sections"] = averaging_params[2]
-        # slicer_params["q_center"] = averaging_params[3]
-        # slicer_params["q_width"] = averaging_params[4]
-        # slicer_params["aspect_ratio"] = averaging_params[5]
-
         # QUESTION      [0] Do I need to run a loop here? how does this work with multiple detectors
         self.detectors[index].calculate_beam_center_x()
         self.detectors[index].calculate_beam_center_y()
@@ -1331,12 +1318,11 @@ class Instrument:
         slicer_params["lens"] = self.collimation.guides.lenses
         # QUESTION      Is it get_source_aperture_size or get_source_aperture the javascript defines sourceAperture
         # and sampleAperture differently
-        slicer_params["source_aperture"] = self.get_source_aperture_size() * 0.5
-        slicer_params["sample_aperture"] = self.get_sample_aperture_size() * 0.5
+        slicer_params["source_aperture"] = self.get_source_aperture_size()
+        slicer_params["sample_aperture"] = self.get_sample_aperture_size()
         slicer_params["beam_stop_size"] = self.get_beam_stop_diameter() * 2.54
         slicer_params["SSD"] = self.calculate_source_to_sample_aperture_distance()
         slicer_params["SDD"] = self.calculate_sample_to_detector_distance()
-        # del slicer_params["averaging_params"]
         averaging_type = self.averaging_type
         if averaging_type == "sector":
             self.slicer = Sector(slicer_params)
@@ -1459,6 +1445,7 @@ class Instrument:
         try:
             detector = self.detectors[index]
         except IndexError:
+            print("IndexError")
             return 0.0
         return detector.get_sadd()
 
@@ -1722,30 +1709,6 @@ class NG7SANS(Instrument):
 
         super().load_objects(params)
 
-    def calculate_instrument_parameters(self):
-        """Calculates the instrument parameters including beam stop diameter, beam flux, figure of merit, and number of attenuators
-
-        :return: Nothing just runs the calculation
-        :rtype: None
-        """
-        super().calculate_instrument_parameters()
-        # # Calculate the beam stop diameter
-        # self.calculate_beam_stop_diameter()
-        # # Calculate the estimated beam flux
-        # self.data.calculate_beam_flux()
-        # # Calculate the figure of merit
-        # self.calculate_figure_of_merit()
-        # # Calculate the number of attenuators
-        # self.calculate_attenuator_number()
-        # # Do Circular Average of an array of 1s
-        #
-        # # TODO Figure out point of this
-        # # for index in range(len(self.detectors) - 1):
-        # #     self.data.calculate_min_and_max_q(index)
-        # #     # TODO: This might not be needed here...
-        # #     # TODO J    This method does not exist
-        # #     self.slicer.calculate_q_range_slicer(index)
-
 
 class NGB30SANS(Instrument):
     """ A class to manipulate NGB10SANS as a subclass of the instrument class
@@ -1808,30 +1771,6 @@ class NGB30SANS(Instrument):
         params["temp"]["serverName"] = "ngb30sans.ncnr.nist.gov"
 
         super().load_objects(params)
-
-    def calculate_instrument_parameters(self):
-        """Calculates the instrument parameters including beam stop diameter, beam flux, figure of merit, and number of attenuators
-
-        :return: Nothing just runs the calculation
-        :rtype: None
-        """
-        super().calculate_instrument_parameters(self)
-        # # Calculate the beam stop diameter
-        # self.calculate_beam_stop_diameter()
-        # # Calculate the estimated beam flux
-        # self.data.calculate_beam_flux()
-        # # Calculate the figure of merit
-        # self.calculate_figure_of_merit()
-        # # Calculate the number of attenuators
-        # self.calculate_attenuator_number()
-        # # Do Circular Average of an array of 1s
-        #
-        # # TODO Figure out point of this
-        # # for index in range(len(self.detectors) - 1):
-        # #     self.data.calculate_min_and_max_q(index)
-        # #     # TODO: This might not be needed here...
-        # #     # TODO J    This method does not exist
-        # #     self.slicer.calculate_q_range_slicer(index)
 
 
 class NGB10SANS(Instrument):
@@ -1896,30 +1835,6 @@ class NGB10SANS(Instrument):
         params["temp"] = {}
         params["temp"]["serverName"] = "ngbsans.ncnr.nist.gov"
         super().load_objects(params)
-
-    def calculate_instrument_parameters(self):
-        """Calculates the instrument parameters including beam stop diameter, beam flux, figure of merit, and number of attenuators
-
-        :return: Nothing just runs the calculation
-        :rtype: None
-        """
-        super().calculate_instrument_parameters(self)
-        # # Calculate the beam stop diameter
-        # self.calculate_beam_stop_diameter()
-        # # Calculate the estimated beam flux
-        # self.data.calculate_beam_flux()
-        # # Calculate the figure of merit
-        # self.calculate_figure_of_merit()
-        # # Calculate the number of attenuators
-        # self.calculate_attenuator_number()
-        # # Do Circular Average of an array of 1s
-        #
-        # # TODO Figure out point of this
-        # # for index in range(len(self.detectors) - 1):
-        # #     self.data.calculate_min_and_max_q(index)
-        # #     # TODO: This might not be needed here...
-        # #     # TODO J    This method does not exist
-        # #     self.slicer.calculate_q_range_slicer(index)
 
     def calculate_source_to_sample_aperture_distance(self):
         """Calculates the source to sample aperture distance from the guide values and space offset
