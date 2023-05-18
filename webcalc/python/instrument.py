@@ -13,7 +13,7 @@ from .helpers import encode_json
 
 
 def calculate_instrument(instrument: str, params: dict) -> dict:
-    """ The base calculation script. Creates an instrument class, calculates the instrumental resolution for the
+    """The base calculation script. Creates an instrument class, calculates the instrumental resolution for the
     configuration, and returns two list of intensities
 
     :param str instrument: The instrument that we're doing the calculations based off of

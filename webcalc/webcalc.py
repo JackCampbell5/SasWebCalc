@@ -3,15 +3,20 @@ import json
 import sys
 
 import numpy
-import numpy as np
 from flask import Flask, render_template, request
 
 # import specific methods from python files
-from python.link_to_sasmodels import get_model_list, get_params
-from python.link_to_sasmodels import calculate_model as calculate_m
-from python.instrument import calculate_instrument as calculate_i
-from python.helpers import decode_json, encode_json
-
+try:
+    from python.link_to_sasmodels import get_model_list, get_params
+    from python.link_to_sasmodels import calculate_model as calculate_m
+    from python.instrument import calculate_instrument as calculate_i
+    from python.helpers import decode_json, encode_json
+except ModuleNotFoundError:
+    # Runs the imports from webcalc only when auto-doc runs to remove errors
+    from webcalc.python.link_to_sasmodels import get_model_list, get_params
+    from webcalc.python.link_to_sasmodels import calculate_model as calculate_m
+    from webcalc.python.instrument import calculate_instrument as calculate_i
+    from webcalc.python.helpers import decode_json, encode_json
 
 def create_app():
     app = Flask(__name__)

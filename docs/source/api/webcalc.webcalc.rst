@@ -2,6 +2,6 @@ webcalc\.webcalc
 ================
 
 .. automodule:: webcalc.webcalc
-    :members: create_app
+    :members:
     :undoc-members:
     :show-inheritance:
