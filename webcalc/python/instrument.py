@@ -241,11 +241,10 @@ class Collimation:
         :param dict params: A dictionary mapping <param_name>: <value>
         """
         self.parent = parent
-        self.source_aperture = Aperture(parent, params.get('source_aperture', {}))
-        self.sample_aperture = Aperture(parent, params.get('sample_aperture', {}))
-        self.guides = Guide(parent, params.get('guides', {}))
+        self.source_aperture = Aperture(parent, params.pop('source_aperture', {}))
+        self.sample_aperture = Aperture(parent, params.pop('sample_aperture', {}))
+        self.guides = Guide(parent, params.pop('guides', {}))
         # Sets the params array to main values without aperture array
-        params = params['0']
         self.ssd = 0.0
         self.ssd_unit = 'cm'
         self.ssad = 0.0
@@ -497,7 +496,7 @@ class Detector:
         :return:The converted value of the sdd
         :rtype: float
         """
-        return self.parent.d_converter(self.sdd, self.sdd_unit)
+        return self.sdd
 
     def get_sadd(self):
         """Gets the sample to aperture detector distance attribute from the Detector object and converts it for distance with its unit
@@ -825,7 +824,6 @@ class Data:
         pixel_size_y = self.parent.detectors[index].get_pixel_size_y()
         det_width = pixel_size_x * self.parent.detectors[index].pixel_no_x / 100
         bs_projection = math.fabs(self.parent.calculate_beam_stop_projection())
-        print(bs_projection)
         # Calculate Q-maximum and populate the page
         radial = math.sqrt(math.pow(0.5 * det_width, 2) + math.pow((0.5 * det_width) + offset, 2))
         pi_over_lambda = math.pi / wave
@@ -958,8 +956,6 @@ class Instrument:
             True) if old_params[name + "GuideConfig"][
                          "default"] != "" else None
         params["collimation"]["sample_aperture"] = {}
-        # TODO Fix: Gives errors if you give inches as units
-        # params["collimation"]["sample_aperture"]["diameter_unit"] = old_params[name+"SampleAperture"]["unit"] if old_params[name+"SampleAperture"]["unit"] != "" else None
         params["collimation"]["sample_aperture"]["diameter"] = old_params[name + "SampleAperture"]["default"] * 2.54 if \
             old_params[name + "SampleAperture"]["default"] != "" else None
         params["collimation"]["source_aperture"] = {}
@@ -967,20 +963,19 @@ class Instrument:
             old_params[name + "SourceAperture"]["unit"] != "" else None
         params["collimation"]["source_aperture"]["diameter"] = old_params[name + "SourceAperture"]["default"] if \
             old_params[name + "SourceAperture"]["default"] != "" else None
-        params["collimation"]["0"] = {}
-        params["collimation"]["0"]["detector_distance"] = old_params[name + "SDD"]["default"] if \
-            old_params[name + "SDD"]["default"] != "" else None
+        params["collimation"]["detector_distance"] = old_params[name + "SDDInputBox"]["default"] if \
+            old_params[name + "SDDInputBox"]["default"] != "" else None
         if name + "SampleTable" in old_params.values():
-            params["collimation"]["0"]["sample_space"] = old_params[name + "SampleTable"]["default"] if \
+            params["collimation"]["sample_space"] = old_params[name + "SampleTable"]["default"] if \
                 old_params[name + "SampleTable"][
                     "default"] != "" else None
-        params["collimation"]["0"]["ssad_unit"] = old_params[name + "SSD"]["unit"] if old_params[name + "SSD"][
+        params["collimation"]["ssad_unit"] = old_params[name + "SSD"]["unit"] if old_params[name + "SSD"][
                                                                                           "unit"] != "" else None
-        params["collimation"]["0"]["ssad"] = old_params[name + "SSD"]["default"] if old_params[name + "SSD"][
+        params["collimation"]["ssad"] = old_params[name + "SSD"]["default"] if old_params[name + "SSD"][
                                                                                         "default"] != "" else None
-        params["collimation"]["0"]["ssd_unit"] = old_params[name + "SSD"]["unit"] if old_params[name + "SSD"][
+        params["collimation"]["ssd_unit"] = old_params[name + "SSD"]["unit"] if old_params[name + "SSD"][
                                                                                          "unit"] != "" else None
-        params["collimation"]["0"]["ssd"] = old_params[name + "SSD"]["default"] if old_params[name + "SSD"][
+        params["collimation"]["ssd"] = old_params[name + "SSD"]["default"] if old_params[name + "SSD"][
                                                                                        "default"] != "" else None
         params["detectors"] = [None]
         params["detectors"][0] = {}
@@ -990,9 +985,9 @@ class Instrument:
                 old_params[name + "OffsetInputBox"]["unit"] != "" else None
             params["detectors"][0]["offset"] = old_params[name + "OffsetInputBox"]["default"] if \
                 old_params[name + "OffsetInputBox"]["default"] != "" else None
-        params["detectors"][0]["sdd_unit"] = old_params[name + "SDD"]["unit"] if old_params[name + "SDD"][
+        params["detectors"][0]["sdd_unit"] = old_params[name + "SDDInputBox"]["unit"] if old_params[name + "SDDInputBox"][
                                                                                      "unit"] != "" else None
-        params["detectors"][0]["sdd"] = old_params[name + "SDD"]["default"] if old_params[name + "SDD"][
+        params["detectors"][0]["sdd"] = old_params[name + "SDDInputBox"]["default"] if old_params[name + "SDDInputBox"][
                                                                                    "default"] != "" else None
         params["slicer"] = {}
         # params["slicer"]["averaging_params"] =
@@ -1087,7 +1082,7 @@ class Instrument:
         python_return["user_inaccessible"]["FigureOfMerit"] = self.calculate_figure_of_merit()
         python_return["user_inaccessible"]["Attenuators"] = self.get_attenuator_number()
         python_return["user_inaccessible"]["SSD"] = self.collimation.ssd
-        python_return["user_inaccessible"]["SDDInputBox"] = self.detectors[0].sdd
+        python_return["user_inaccessible"]["SDD"] = self.detectors[0].get_sdd()
         python_return["user_inaccessible"]["BeamDiameter"] = int(self.get_beam_diameter() * 10000) / 10000
         python_return["user_inaccessible"]["BeamStopSize"] = self.get_beam_stop_diameter()
         python_return["user_inaccessible"]["AttenuationFactor"] = self.get_attenuation_factor()
@@ -1257,7 +1252,7 @@ class Instrument:
         bs_diam = self.get_beam_stop_diameter(index)
         sample_aperture = self.get_sample_aperture_size()
         l2 = self.get_sample_aperture_to_detector_distance()  # Question why do we no longer need aperture offset
-        l_beam_stop = 20.1 + 1.61 * self.get_beam_stop_diameter()  # distance in cm from beam stop to anode plane
+        l_beam_stop = 20.1 + 1.61 * bs_diam  # distance in cm from beam stop to anode plane (empirical calculation)
         return bs_diam + (bs_diam + sample_aperture) * l_beam_stop / (l2 - l_beam_stop)  # Return in cm
 
     def calculate_figure_of_merit(self):
@@ -1692,7 +1687,7 @@ class NG7SANS(Instrument):
         params["detectors"][0]["pixel_size_y_unit"] = "mm"
         params["detectors"][0]["pixel_no_x"] = 128
         params["detectors"][0]["pixel_no_y"] = 128
-        params["collimation"]["0"]["aperture_offset"] = 5
+        params["collimation"]["aperture_offset"] = 5
         params["slicer"]["coeff"] = 10000
         params["slicer"]["x_pixels"] = 128
         params["slicer"]["y_pixels"] = 128

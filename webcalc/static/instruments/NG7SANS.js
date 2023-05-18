@@ -67,9 +67,6 @@ export default {
       else if (target.id === "ng7OffsetDefaults") {
         this.instrument_params_local['ng7OffsetInputBox'].default = this.instrument_params_local['ng7OffsetDefaults'].default;
       }
-      else if (target.id === "ng7SampleTable") {
-        this.instrument_params_local['ng7SDD'].default += this.instrument_params_local['ng7SDD'].default === 'Chamber' ? 0.0 : 54.0;
-      }
     },
     updateApertureOptions(target) {
       // Update the allowed aperture values based on the number of guides selected
@@ -160,7 +157,6 @@ export default {
           type: "select",
           category: 'ng7Wavelength',
           unit: '',
-          //TODO Question: where is 11.5 and why is 15 here
           options: [9.7, 13.9, 15, 22.1],
         },
         'ng7BeamFlux': {
@@ -335,9 +331,11 @@ export default {
   },
   watch: {
     pythonParams: function (value){
+      console.log("Updating Python Params")
       let instName = "ng7";
 
       for (const name in value){
+        console.log("name: " + instName + name);
         this.instrument_params_local[instName+name].default = value[name];
       }
     }
