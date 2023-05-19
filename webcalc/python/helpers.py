@@ -1,27 +1,15 @@
-"""
-This python file has a series of helper methods for passing values between the front end javascript
-and the backend python.
 
-Methods:
-
-encode_json(value)
-    Convert 'value' to a JSON string, if possible, otherwise return an error.
-
-decode_json(value)
-    Convert 'value' JSON string to a python object, if possible, otherwise return an error.
-"""
 import json
 from json import JSONDecodeError
 
 
 def encode_json(value=None):
-    """
-    Convert value to a JSON string so it can be passed the the front-end
+    """Convert value to a JSON string so it can be passed the front-end
 
-    Arguments:
-    value -- Any value that can be converted to a JSON string. This includes dict, list, tuple, string, int, float, bool, none, amongst others.
+    :param dict, list, tuple, string, int, float, bool, none value: - Any value that can be converted to a JSON string. This includes dict, list, tuple, string, int, float, bool, none, amongst others.
 
-    Returns a JSON-encoded string, if successful, otherwise an error related to the object type passed to the method.
+    :return: A JSON-encoded string, if successful, otherwise an error related to the object type passed to the method.
+    :rtype: str
     """
     try:
         return json.dumps(value)
@@ -30,13 +18,12 @@ def encode_json(value=None):
 
 
 def decode_json(value=''):
-    """
-    Convert value from a JSON encoded string to a python object
+    """Convert value from a JSON encoded string to a python object
 
-    Arguments:
-    value -- A string that can be converted to a python object.
+    :param str value:  string that can be converted to a python object.
 
-    Returns a tuple (Object, String) where the object is the decoded python object and the string value is the type of object returned.
+    :return: A tuple (Object, String) where the object is the decoded python object and the string value is the type of object returned.
+    :rtype: Object or String
     """
     try:
         decoded = json.loads(value)
