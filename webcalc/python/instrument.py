@@ -1750,7 +1750,7 @@ class NGB30SANS(Instrument):
         params["collimation"]["guides"]["gap_at_start"] = 100
         params["collimation"]["guides"]["guide_width"] = 6.0
         params["collimation"]["guides"]["transmission_per_guide"] = 0.924
-        params["collimation"]["0"]["aperture_offset"] = 5
+        params["collimation"]["aperture_offset"] = 5
         params["slicer"]["coeff"] = 10000
         params["slicer"]["x_pixels"] = 128
         params["slicer"]["y_pixels"] = 128
@@ -1817,7 +1817,7 @@ class NGB10SANS(Instrument):
         if params["collimation"]["guides"]["number_of_guides"] != 0:
             params["collimation"]["guides"]["length_per_guide"] = 150 + (
                     61.9 / params["collimation"]["guides"]["number_of_guides"])
-        params["collimation"]["0"]["aperture_offset"] = 5
+        params["collimation"]["aperture_offset"] = 5
         params["slicer"]["coeff"] = 10000
         params["slicer"]["x_pixels"] = 128
         params["slicer"]["y_pixels"] = 128
