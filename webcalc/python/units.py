@@ -13,13 +13,17 @@ in the NeXus definition files.
 Unlike other units packages, this package does not carry the units along with
 the value but merely provides a conversion function for transforming values.
 
-Usage example::
+Usage example:
+
+.. code-block:: python
 
     import nxsunit
     u = nxsunit.Converter('mili*metre')  # Units stored in mm
     v = u(3000,'m')  # Convert the value 3000 mm into meters
 
-NeXus example::
+NeXus example:
+
+.. code-block:: python
 
     # Load sample orientation in radians regardless of how it is stored.
     # 1. Open the path
@@ -39,6 +43,13 @@ cannot tell what the correct interpretation is without knowing something
 about the fields themselves.  If this becomes an issue, we will need to
 allow the application to set the dimension for the unit rather than
 inferring the dimension from an example unit.
+
+Imports
+-------
++ Math
++ Re
+
+
 """
 
 import math
@@ -53,8 +64,7 @@ AMBIGUITIES = {}  # type: Dict[str, str]
 # Maybe want to do full units handling with e.g., pyre's
 # unit class. For now lets keep it simple.  Note that
 def _build_metric_units(unit, abbr):
-    """
-    Construct standard SI names for the given unit.
+    """Construct standard SI names for the given unit.
     Builds e.g.,
         s, ns
         second, nanosecond, nano*second
@@ -64,7 +74,10 @@ def _build_metric_units(unit, abbr):
     Ack! Allows, e.g., Coulomb and coulomb even though Coulomb is not
     a unit because some NeXus files store it that way!
 
-    Returns a dictionary of names and scales.
+    :param str unit: The unit to standardize
+    :param str abbr: TODO docs what does this do
+    :return: A dictionary of names and scales.
+    :rtype: Dict
     """
     prefix = dict(peta=1e15, tera=1e12, giga=1e9, mega=1e6, kilo=1e3, deci=1e-1, centi=1e-2, milli=1e-3, mili=1e-3,
                   micro=1e-6, nano=1e-9, pico=1e-12, femto=1e-15)
@@ -80,8 +93,11 @@ def _build_metric_units(unit, abbr):
 
 
 def _build_plural_units(**kw):
-    """
-    Construct names for the given units.  Builds singular and plural form.
+    """Construct names for the given units.  Builds singular and plural form.
+
+    :param PyModel kw: The units to create and name for
+    :return: The map of the names for the given units
+    :rtype: Dict
     """
     map = {}
     map.update([(name, scale) for name, scale in kw.items()])
@@ -90,10 +106,14 @@ def _build_plural_units(**kw):
 
 
 def _build_degree_units(name, symbol, conversion):
-    # type: (str, str, ConversionType) -> Dict[str, ConversionType]
-    """
-    Builds variations on the temperature unit name, including the degree
+    """Builds variations on the temperature unit name, including the degree
     symbol or the word degree.
+
+    :param str name: The name ot build the variations off of
+    :param str symbol: THe symbol to build conversions off of
+    :param ConversionType conversion: The type of the conversion that is passed into the result dictionary
+    :return: A dictionary containing a string array of the converted values and the Conversion Type
+    :rtype: Dict[str, ConversionType]
     """
     map = {}  # type: Dict[str, ConversionType]
     map[symbol] = conversion
@@ -111,9 +131,12 @@ def _build_degree_units(name, symbol, conversion):
 
 
 def _build_inv_units(names, conversion):
-    # type: (Sequence[str], ConversionType) -> Dict[str, ConversionType]
-    """
-    Builds variations on inverse units, including 1/x, invx and x^-1.
+    """Builds variations on inverse units, including 1/x, invx and x^-1.
+
+    :param Sequence[str] names:
+    :param ConversionType conversion:
+    :return:
+    :rtype: Dict[str, ConversionType]
     """
     map = {}  # type: Dict[str, ConversionType]
     for s in names:
