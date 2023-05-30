@@ -1,0 +1,5 @@
+.. _contact:
+
+Contact Us
+==========
+
