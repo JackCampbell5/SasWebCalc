@@ -115,7 +115,7 @@ class Aperture:
     :param str self.offset_unit: The units of the offset used for converter
     """
 
-    def __init__(self, parent, params):
+    def __init__(self, parent, name, params):
         """Creates object parameters for BeamStop class and runs set params method
         Sets object parameters parent, diameter, diameter_unit, offset, and offset_unit
 
@@ -125,6 +125,7 @@ class Aperture:
         :rtype: None
         """
         self.parent = parent
+        self.name = name
         self.diameter = 0.0
         self.diameter_unit = 'cm'
         self.offset = 0.0
@@ -140,7 +141,8 @@ class Aperture:
         """
         float_params = ["diameter", "offset"]
         set_params(self, params, float_params)
-        self.diameter *= 2.54
+        if self.name == "sample_aperture":
+            self.diameter *= 2.54
 
     def get_diameter(self):
         """ Gets diameter value of the Aperture object
@@ -942,7 +944,6 @@ class Instrument:
         self.beam_flux = old_params[name + "BeamFlux"]["default"] if old_params[name + "BeamFlux"][
                                                                          "default"] != "" else None
 
-        # Start 3/14 update the parameters with if statements
         params = {}
         beam_stops = old_params.get(name + "BeamStopSizes", {})
         params["beam_stops"] = beam_stops.get("options", [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
@@ -956,8 +957,9 @@ class Instrument:
             True) if old_params[name + "GuideConfig"][
                          "default"] != "" else None
         params["collimation"]["sample_aperture"] = {}
-        params["collimation"]["sample_aperture"]["diameter"] = old_params[name + "SampleAperture"]["default"] * 2.54 if \
+        params["collimation"]["sample_aperture"]["diameter"] = old_params[name + "SampleAperture"]["default"] if \
             old_params[name + "SampleAperture"]["default"] != "" else None
+        # FIX ME Can not set sample aperture unit otherwise creates errors
         params["collimation"]["source_aperture"] = {}
         params["collimation"]["source_aperture"]["diameter_unit"] = old_params[name + "SourceAperture"]["unit"] if \
             old_params[name + "SourceAperture"]["unit"] != "" else None
@@ -970,13 +972,13 @@ class Instrument:
                 old_params[name + "SampleTable"][
                     "default"] != "" else None
         params["collimation"]["ssad_unit"] = old_params[name + "SSD"]["unit"] if old_params[name + "SSD"][
-                                                                                          "unit"] != "" else None
+                                                                                     "unit"] != "" else None
         params["collimation"]["ssad"] = old_params[name + "SSD"]["default"] if old_params[name + "SSD"][
-                                                                                        "default"] != "" else None
+                                                                                   "default"] != "" else None
         params["collimation"]["ssd_unit"] = old_params[name + "SSD"]["unit"] if old_params[name + "SSD"][
-                                                                                         "unit"] != "" else None
+                                                                                    "unit"] != "" else None
         params["collimation"]["ssd"] = old_params[name + "SSD"]["default"] if old_params[name + "SSD"][
-                                                                                       "default"] != "" else None
+                                                                                  "default"] != "" else None
         params["detectors"] = [None]
         params["detectors"][0] = {}
         offset_params = old_params.get(name + "OffsetInputBox", {})
@@ -985,10 +987,11 @@ class Instrument:
                 old_params[name + "OffsetInputBox"]["unit"] != "" else None
             params["detectors"][0]["offset"] = old_params[name + "OffsetInputBox"]["default"] if \
                 old_params[name + "OffsetInputBox"]["default"] != "" else None
-        params["detectors"][0]["sdd_unit"] = old_params[name + "SDDInputBox"]["unit"] if old_params[name + "SDDInputBox"][
-                                                                                     "unit"] != "" else None
+        params["detectors"][0]["sdd_unit"] = old_params[name + "SDDInputBox"]["unit"] if \
+        old_params[name + "SDDInputBox"][
+            "unit"] != "" else None
         params["detectors"][0]["sdd"] = old_params[name + "SDDInputBox"]["default"] if old_params[name + "SDDInputBox"][
-                                                                                   "default"] != "" else None
+                                                                                           "default"] != "" else None
         params["slicer"] = {}
         # params["slicer"]["averaging_params"] =
         params["average_type"] = calculate_params["slicer"]
@@ -1539,6 +1542,7 @@ class NoInstrument(Instrument):
     :param float self._q_min_vert:
     :param  self.params:
     """
+
     # Constructor for the pseudo instrument with user-defined Q ranges and instrument resolutions
     def __init__(self, name, params):
         """
@@ -1710,6 +1714,7 @@ class NGB30SANS(Instrument):
 
     :param  self.name: The name of the instrument
     """
+
     # Class for the NGB 30m SANS instrument
     def __init__(self, name, params):
         """The constructor method that creates the necessary parameters and runs the instrument classes constructor
@@ -1773,6 +1778,7 @@ class NGB10SANS(Instrument):
 
     :param  self.name: The name of the instrument
     """
+
     # Class for the NGB 10m SANS instrument
     def __init__(self, name, params):
         """The constructor method that creates the necessary parameters and runs the instrument classes constructor
