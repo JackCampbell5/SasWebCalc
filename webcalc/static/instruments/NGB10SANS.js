@@ -288,7 +288,7 @@ export default {
       let instName = "ngb10";
 
       for (const name in value){
-        this.instrument_params_local[instName+name].default = value;
+        this.instrument_params_local[instName+name].default = value[name];
       }
     }
 

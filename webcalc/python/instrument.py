@@ -243,8 +243,8 @@ class Collimation:
         :param dict params: A dictionary mapping <param_name>: <value>
         """
         self.parent = parent
-        self.source_aperture = Aperture(parent, params.pop('source_aperture', {}))
-        self.sample_aperture = Aperture(parent, params.pop('sample_aperture', {}))
+        self.source_aperture = Aperture(parent, "source_aperture", params.pop('source_aperture', {}))
+        self.sample_aperture = Aperture(parent, "sample_aperture", params.pop('sample_aperture', {}))
         self.guides = Guide(parent, params.pop('guides', {}))
         # Sets the params array to main values without aperture array
         self.ssd = 0.0

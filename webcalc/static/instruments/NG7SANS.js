@@ -335,7 +335,6 @@ export default {
       let instName = "ng7";
 
       for (const name in value){
-        console.log("name: " + instName + name);
         this.instrument_params_local[instName+name].default = value[name];
       }
     }
