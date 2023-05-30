@@ -2,7 +2,7 @@
 import json
 import sys
 
-import numpy
+import numpy as np
 from flask import Flask, render_template, request
 
 # import specific methods from python files
@@ -72,17 +72,17 @@ def create_app():
 
         # Get q in proper format
         params = decode_json(instrument)[0]
-        q_1d = numpy.asarray(params.get('qValues', []))
-        q_2d = numpy.asarray(params.get('q2DValues', []))
+        q_1d = np.asarray(params.get('qValues', []))
+        q_2d = np.asarray(params.get('q2DValues', []))
 
         # Calculate the 1D model
         model_1d = decode_json(calculate_model(model, model_params, q_1d))
-        comb_1d = numpy.asarray(model_1d[0]) * numpy.asarray(params.get('fSubs', []))
+        comb_1d = np.asarray(model_1d[0]) * np.asarray(params.get('fSubs', []))
         params['fSubs'] = comb_1d.tolist()
         # Calculate the 2D model
         model_2d = decode_json(calculate_model(model, model_params, q_2d))
-        i_2d = numpy.asarray(params.get('intensity2D', []))
-        comb_2d = numpy.asarray(model_2d[0]).reshape(i_2d.shape) * i_2d
+        i_2d = np.asarray(params.get('intensity2D', []))
+        comb_2d = np.asarray(model_2d[0]).reshape(i_2d.shape) * i_2d
         params['intensity2D'] = comb_2d.tolist()
 
         # Return all data
@@ -93,7 +93,7 @@ def create_app():
         data = decode_json(request.data) if model_params is None else model_params
         param_names = list(data.keys())
         param_values = [v['default'] for v in data.values()]
-        q = numpy.asarray(decode_json(request.data)[0]).flatten() if instrument_data is None else instrument_data
+        q = np.asarray(decode_json(request.data)[0]).flatten() if instrument_data is None else instrument_data
         params = {param_names[i]: param_values[i] for i in range(len(param_values))}
         return calculate_m(model_name, [q.flatten()], params)
 
