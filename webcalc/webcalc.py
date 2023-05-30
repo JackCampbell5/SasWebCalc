@@ -74,7 +74,7 @@ def create_app():
         calculate_params = {"instrument_params": instrument_params, "slicer": slicer, "slicer_params": slicer_params}
 
         # Calculate the instrument and slicer
-        instrument = calculate_instrument(instrument, calculate_params)
+        instrument = _calculate_instrument(instrument, calculate_params)
 
         # Get q in proper format
         params = decode_json(instrument)[0]
@@ -121,11 +121,18 @@ def create_app():
         return calculate_m(model_name, [q.flatten()], model_params)
 
     @app.route('/calculate/instrument/<instrument_name>', methods=['POST'])
-    def calculate_instrument(instrument_name, params=None):
-        if params is None:
-            # Decodes the data received from javascript
-            params = decode_json(request.data)
+    def calculate_instrument(instrument_name: str) -> str:
+        params = decode_json(request.data)
         # Calculates all the values and returns them
+        return _calculate_instrument(instrument_name, params)
+
+    def _calculate_instrument(instrument_name: str, params: Dict[str, Union[Number, str]]) -> str:
+        """
+
+        :param instrument_name: The string representation of the instrument name.
+        :param params: A dictionary of parameters mapping the param name to the value.
+        :return: A json-like string representation of the following values:
+        """
         return calculate_i(instrument_name, params)
 
     return app

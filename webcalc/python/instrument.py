@@ -12,7 +12,7 @@ from .slicers import Elliptical
 from .helpers import encode_json
 
 
-def calculate_instrument(instrument: str, params: dict) -> dict:
+def calculate_instrument(instrument: str, params: dict) -> str:
     """The base calculation script. Creates an instrument class, calculates the instrumental resolution for the
     configuration, and returns two list of intensities
 
@@ -37,7 +37,7 @@ def calculate_instrument(instrument: str, params: dict) -> dict:
                 ...
             }
 
-    Returns: {
+    Returns: A json-like string representation of the following dictionary {
         Qx: [],
         dQx: [],
         Qy: [],
