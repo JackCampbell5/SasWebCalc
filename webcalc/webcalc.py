@@ -95,7 +95,7 @@ def create_app():
         return encode_json(params)
 
     @app.route('/calculate/model/<model_name>', methods=['POST'])
-    def calculate_model() -> str:
+    def calculate_model(model_name: str) -> str:
         """Directly call the model calculation using a pre-defined API
         :return: A json-like string representation of a list of intensities.
         """
@@ -103,10 +103,9 @@ def create_app():
         json_like = json.loads(data)
 
         # Gets the model and model params out of the dict
-        model = json_like.get('model', '')
         model_params = json_like.get('model_params', {})
 
-        return _calculate_model(model, model_params, None)
+        return _calculate_model(model_name, model_params, None)
 
     def _calculate_model(model_name: str, model_params: Dict[str: Union[Number, str]],
                          q: Optional[np.ndarray] = None) -> str:
