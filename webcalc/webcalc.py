@@ -43,6 +43,7 @@ def create_app():
 
     @app.route('/calculate/', methods=['POST'])
     def calculate():
+        # TODO: Clean this all up
         data = decode_json(request.data)[0]
         json_like = json.loads(data)
 
@@ -94,8 +95,10 @@ def create_app():
         return encode_json(params)
 
     @app.route('/calculate/model/<model_name>', methods=['POST'])
-    def calculate_model() -> List[Number]:
-        """Directly call the model calculation using a pre-defined API"""
+    def calculate_model() -> str:
+        """Directly call the model calculation using a pre-defined API
+        :return: A json-like string representation of a list of intensities.
+        """
         data = decode_json(request.data)[0]
         json_like = json.loads(data)
 
@@ -106,11 +109,12 @@ def create_app():
         return _calculate_model(model, model_params, None)
 
     def _calculate_model(model_name: str, model_params: Dict[str: Union[Number, str]],
-                         q: Optional[np.ndarray] = None) -> List[Number]:
+                         q: Optional[np.ndarray] = None) -> str:
         """Private method to directly call the model calculator
         :param model_name: The string representation of the model name used by sasmodels.
         :param model_params: A dictionary mapping the sasmodel parameter name to the parameter value.
         :param q: An n-dimensional array of Q values.
+        :return: A json-like string representation of a list of intensities.
         """
         if not q:
             # If no instrument data sent, use a default Q range of 0.0001 to 1.0 A^-1

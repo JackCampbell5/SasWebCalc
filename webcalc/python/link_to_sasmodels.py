@@ -89,7 +89,7 @@ def calculate_model(model_string, q, params):
     :param q:
     :param list params: THe list of params probably passed from a previous method
     :return: A list of calculated data from the model
-    :rtype: list
+    :rtype: A json-like string representation of a list of intensities.
     """
     kernel_model = get_model(model_string)
     kernel = kernel_model.make_kernel(q)
