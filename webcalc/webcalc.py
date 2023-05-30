@@ -2,6 +2,8 @@
 import json
 import sys
 
+from typing import Optional, Union, Dict, List
+
 import numpy as np
 from flask import Flask, render_template, request
 
@@ -17,6 +19,9 @@ except ModuleNotFoundError:
     from webcalc.python.link_to_sasmodels import calculate_model as calculate_m
     from webcalc.python.instrument import calculate_instrument as calculate_i
     from webcalc.python.helpers import decode_json, encode_json
+
+Number = Union[float, int]
+
 
 def create_app():
     app = Flask(__name__)
@@ -46,7 +51,7 @@ def create_app():
         instrument_params = json_like.get('instrument_params', {})
 
         # Gets the model and model params out of the dict
-        model = json_like.get('model', '')
+        model = str(json_like.get('model', ''))
         model_params = json_like.get('model_params', {})
 
         # Gets slicer and Slicer params out of dict
@@ -76,11 +81,11 @@ def create_app():
         q_2d = np.asarray(params.get('q2DValues', []))
 
         # Calculate the 1D model
-        model_1d = decode_json(calculate_model(model, model_params, q_1d))
+        model_1d = decode_json(_calculate_model(model, model_params, q_1d))
         comb_1d = np.asarray(model_1d[0]) * np.asarray(params.get('fSubs', []))
         params['fSubs'] = comb_1d.tolist()
         # Calculate the 2D model
-        model_2d = decode_json(calculate_model(model, model_params, q_2d))
+        model_2d = decode_json(_calculate_model(model, model_params, q_2d))
         i_2d = np.asarray(params.get('intensity2D', []))
         comb_2d = np.asarray(model_2d[0]).reshape(i_2d.shape) * i_2d
         params['intensity2D'] = comb_2d.tolist()
@@ -89,13 +94,28 @@ def create_app():
         return encode_json(params)
 
     @app.route('/calculate/model/<model_name>', methods=['POST'])
-    def calculate_model(model_name, model_params=None, instrument_data=None):
-        data = decode_json(request.data) if model_params is None else model_params
-        param_names = list(data.keys())
-        param_values = [v['default'] for v in data.values()]
-        q = np.asarray(decode_json(request.data)[0]).flatten() if instrument_data is None else instrument_data
-        params = {param_names[i]: param_values[i] for i in range(len(param_values))}
-        return calculate_m(model_name, [q.flatten()], params)
+    def calculate_model() -> List[Number]:
+        """Directly call the model calculation using a pre-defined API"""
+        data = decode_json(request.data)[0]
+        json_like = json.loads(data)
+
+        # Gets the model and model params out of the dict
+        model = json_like.get('model', '')
+        model_params = json_like.get('model_params', {})
+
+        return _calculate_model(model, model_params, None)
+
+    def _calculate_model(model_name: str, model_params: Dict[str: Union[Number, str]],
+                         q: Optional[np.ndarray] = None) -> List[Number]:
+        """Private method to directly call the model calculator
+        :param model_name: The string representation of the model name used by sasmodels.
+        :param model_params: A dictionary mapping the sasmodel parameter name to the parameter value.
+        :param q: An n-dimensional array of Q values.
+        """
+        if not q:
+            # If no instrument data sent, use a default Q range of 0.0001 to 1.0 A^-1
+            q = np.logspace(0.0001, 1.0, 125)
+        return calculate_m(model_name, [q.flatten()], model_params)
 
     @app.route('/calculate/instrument/<instrument_name>', methods=['POST'])
     def calculate_instrument(instrument_name, params=None):
