@@ -16,7 +16,6 @@ def get_model_list(category=None):
     :return: A list of the model list
     :rtype: List
     """
-    print(encode_json(list_models(category)))
     return encode_json(list_models(category))
 
 
@@ -27,7 +26,6 @@ def get_model(model_string):
     :return: A PyModel object that contains
     :rtype: PyModel
     """
-    print(load_model(model_string))
     if not model_string:
         return None
     return load_model(model_string)
