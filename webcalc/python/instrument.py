@@ -945,8 +945,8 @@ class Instrument:
                                                                          "default"] != "" else None
 
         params = {}
-        beam_stops = old_params.get(name + "BeamStopSizes", {})
-        params["beam_stops"] = beam_stops.get("options", [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
+        params["beam_stops"] = old_params.get(name + "BeamStopSizes", {}).get("options", [
+            {'beam_stop_diameter': 1.0, 'diameter': 1.0}])
         params["collimation"] = {}
         params["collimation"]["guides"] = {}
         params["collimation"]["guides"]["lenses"] = self.guide_lens_config(old_params[name + "GuideConfig"]["default"],
@@ -957,8 +957,9 @@ class Instrument:
             True) if old_params[name + "GuideConfig"][
                          "default"] != "" else None
         params["collimation"]["sample_aperture"] = {}
-        params["collimation"]["sample_aperture"]["diameter"] = old_params[name + "SampleAperture"]["default"] if \
-            old_params[name + "SampleAperture"]["default"] != "" else None
+        # Better arrangement for the get statements below - missing  else None from Jeff's changes
+        params["collimation"]["sample_aperture"]["diameter"] = old_params.get(name + "SampleAperture", {}).get(
+            "default", None)
         # FIX ME Can not set sample aperture unit otherwise creates errors
         params["collimation"]["source_aperture"] = {}
         params["collimation"]["source_aperture"]["diameter_unit"] = old_params[name + "SourceAperture"]["unit"] if \
@@ -988,8 +989,8 @@ class Instrument:
             params["detectors"][0]["offset"] = old_params[name + "OffsetInputBox"]["default"] if \
                 old_params[name + "OffsetInputBox"]["default"] != "" else None
         params["detectors"][0]["sdd_unit"] = old_params[name + "SDDInputBox"]["unit"] if \
-        old_params[name + "SDDInputBox"][
-            "unit"] != "" else None
+            old_params[name + "SDDInputBox"][
+                "unit"] != "" else None
         params["detectors"][0]["sdd"] = old_params[name + "SDDInputBox"]["default"] if old_params[name + "SDDInputBox"][
                                                                                            "default"] != "" else None
         params["slicer"] = {}
@@ -1048,7 +1049,8 @@ class Instrument:
         #       (This is not a part of load params so instrument can have default values if necessary)
 
         # CAF Beam stop defined
-        self.beam_stops = params.get('beam_stops', [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])
+        self.beam_stops = [BeamStop(self, beamstop_params) for beamstop_params in
+                           params.get('beam_stops', [{'beam_stop_diameter': 1.0, 'beam_diameter': 1.0}])]
         self.detectors = [Detector(self, detector_params) for detector_params in params.get('detectors', [{}])]
         self.collimation = Collimation(self, params.get('collimation', {}))
         self.wavelength = Wavelength(self, params.get('wavelength', {}))
@@ -1220,7 +1222,7 @@ class Instrument:
             beam_diam = bm_bs
         else:
             beam_diam = bm
-        self.beam_stops[index]["beam_diameter"] = beam_diam
+        self.beam_stops[index].beam_diameter = beam_diam
 
     def calculate_beam_stop_diameter(self, index=0):
         """ Calculates the beam stop diameter
@@ -1235,13 +1237,12 @@ class Instrument:
         beam_diam = self.get_beam_diameter(index)
         for i in self.beam_stops:
             beam_stop_dict = i
-            if beam_stop_dict.get("beam_stop_diameter") >= beam_diam:
-                self.beam_stops[index]["beam_stop_diameter"] = beam_stop_dict["beam_stop_diameter"]
+            if beam_stop_dict.beam_stop_diameter >= beam_diam:
+                self.beam_stops[index].beam_stop_diameter = beam_stop_dict.beam_stop_diameter
                 return
         else:
             # If this is reached, that means the beam diameter is larger than the largest known beam stop
-            self.beam_stops[index]['beam_stop_diameter'] = self.beam_stops[len(self.beam_stops) - 1][
-                'beam_stop_diameter']
+            self.beam_stops[index].beam_stop_diameter = self.beam_stops[len(self.beam_stops) - 1].beam_stop_diameter
 
     def calculate_beam_stop_projection(self, index=0):
         """ Calculates the projection of the beam stop TODO DOCS add more here
@@ -1369,7 +1370,7 @@ class Instrument:
         :rtype: int
         """
         # Beam diameter in centimeters
-        return self.beam_stops[index].get("beam_diameter")
+        return self.beam_stops[index].beam_diameter
 
     def get_beam_stop_diameter(self, index=0):
         """ Gets the beam stop diameter value from the beam stops class at the specified index
@@ -1380,7 +1381,7 @@ class Instrument:
         """
         # Beam stop diameter in inches
         # TODO: Convert to centimeters
-        return self.beam_stops[index]["beam_stop_diameter"]
+        return self.beam_stops[index].beam_stop_diameter
 
     def get_number_of_guides(self):
         """Gets the value for the number of guides from the collimation class
