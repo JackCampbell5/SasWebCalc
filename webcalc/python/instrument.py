@@ -174,11 +174,11 @@ class BeamStop:
     """ A class for storing and manipulating BeamStop related data.
 
     :param Instrument self.parent: The parent instrument object
-    :param float self.diameter:
-    :param str self.diameter_unit:
+    :param float self.diameter: The diameter of the beam(Calculated)
+    :param str self.diameter_unit: The unit for diameter of the beam(Usually CM)
     :param float self.offset: The beam stop offset
     :param str self.offset_unit: The unit for the beam stop offset
-    :param float self.beam_stop_size:  The beam stop size
+    :param float self.beam_stop_size:  The size of the beam stop (Calculated)
     :param int self.beam_stop_diameter: The beam stop diameter
     """
 
@@ -194,12 +194,12 @@ class BeamStop:
         :rtype: None
         """
         self.parent = parent
-        self.diameter = 0.0
-        self.diameter_unit = 'cm'
-        self.offset = 0.0
-        self.offset_unit = 'cm'
-        self.beam_stop_size = 0.0
-        self.beam_stop_diameter = 0.0
+        self._diameter = 0.0
+        self._diameter_unit = 'cm'
+        self.offset = 0.0  # Not in use right now
+        self.offset_unit = 'cm'  # Not in use right now
+        self.beam_stop_size = 0.0  # Not in use right now
+        self._beam_stop_diameter = 0.0
         self.set_params(params)
 
     def set_params(self, params=None):
@@ -212,6 +212,30 @@ class BeamStop:
         """
         float_params = ["diameter", "offset", "beam_stop_size", "beam_stop_diameter"]
         set_params(self, params, float_params)
+
+    @property
+    def diameter(self):
+        return self._diameter
+
+    @diameter.setter
+    def diameter(self, value):
+        self._diameter = value
+
+    @property
+    def diameter_unit(self):
+        return self._diameter_unit
+
+    @diameter_unit.setter
+    def diameter_unit(self, value):
+        self._diameter_unit = value
+
+    @property
+    def beam_stop_diameter(self):
+        return self._beam_stop_diameter
+
+    @beam_stop_diameter.setter
+    def beam_stop_diameter(self, value):
+        self._beam_stop_diameter = value
 
 
 class Collimation:
