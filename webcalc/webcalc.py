@@ -42,17 +42,22 @@ def create_app():
         return get_params(model_name)
 
     @app.route('/calculate/', methods=['POST'])
-    def calculate():
-        # TODO: Clean this all up
+    def calculate() -> str:
+        """
+        The primary method for calculating the neutron scattering for a particular model/instrument combination.
+        Calls the instrument to get Q, dQ, and relative intensities.
+        Calls the model to get real intensities for the Q range(s) calculated by the instrument.
+        :return: A json-like string representation of all the data
+        """
         data = decode_json(request.data)[0]
         json_like = json.loads(data)
 
-        # Gets ine instrument and instrument params out of the dict
+        # Get instrument and instrument params out of the dict
         instrument = json_like.get('instrument', '')
         instrument_params = json_like.get('instrument_params', {})
 
         # Gets the model and model params out of the dict
-        model = str(json_like.get('model', ''))
+        model = json_like.get('model', '')
         model_params = json_like.get('model_params', {})
 
         # Gets slicer and Slicer params out of dict
@@ -62,7 +67,7 @@ def create_app():
         # Returns if array is empty
         if instrument_params == {}:
             print("Returning Blank")
-            return {}
+            return encode_json({})
 
         # Make slicer circular if none given
         if not slicer:
@@ -74,10 +79,8 @@ def create_app():
         calculate_params = {"instrument_params": instrument_params, "slicer": slicer, "slicer_params": slicer_params}
 
         # Calculate the instrument and slicer
-        instrument = _calculate_instrument(instrument, calculate_params)
-
+        params = _calculate_instrument(instrument, calculate_params)
         # Get q in proper format
-        params = decode_json(instrument)[0]
         q_1d = np.asarray(params.get('qValues', []))
         q_2d = np.asarray(params.get('q2DValues', []))
 
@@ -124,14 +127,15 @@ def create_app():
     def calculate_instrument(instrument_name: str) -> str:
         params = decode_json(request.data)
         # Calculates all the values and returns them
-        return _calculate_instrument(instrument_name, params)
+        return encode_json(_calculate_instrument(instrument_name, params))
 
-    def _calculate_instrument(instrument_name: str, params: Dict[str, Union[Number, str]]) -> str:
+    def _calculate_instrument(instrument_name: str, params: Dict[str, Union[Number, str]]) ->\
+            Dict[str, Union[Number, str, List[Union[Number, str]]]]:
         """
 
         :param instrument_name: The string representation of the instrument name.
         :param params: A dictionary of parameters mapping the param name to the value.
-        :return: A json-like string representation of the following values:
+        :return: A dictionary of calculated instrument values including Q (1D and 2D),
         """
         return calculate_i(instrument_name, params)
 
