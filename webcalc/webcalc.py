@@ -85,13 +85,13 @@ def create_app():
         q_2d = np.asarray(params.get('q2DValues', []))
 
         # Calculate the 1D model
-        model_1d = decode_json(_calculate_model(model, model_params, q_1d))
-        comb_1d = np.asarray(model_1d[0]) * np.asarray(params.get('fSubs', []))
+        model_1d = _calculate_model(model, model_params, q_1d)
+        comb_1d = np.asarray(model_1d) * np.asarray(params.get('fSubs', []))
         params['fSubs'] = comb_1d.tolist()
         # Calculate the 2D model
-        model_2d = decode_json(_calculate_model(model, model_params, q_2d))
+        model_2d = _calculate_model(model, model_params, q_2d)
         i_2d = np.asarray(params.get('intensity2D', []))
-        comb_2d = np.asarray(model_2d[0]).reshape(i_2d.shape) * i_2d
+        comb_2d = np.asarray(model_2d).reshape(i_2d.shape) * i_2d
         params['intensity2D'] = comb_2d.tolist()
 
         # Return all data
@@ -108,10 +108,10 @@ def create_app():
         # Gets the model and model params out of the dict
         model_params = json_like.get('model_params', {})
 
-        return _calculate_model(model_name, model_params, None)
+        return encode_json(_calculate_model(model_name, model_params, None))
 
     def _calculate_model(model_name: str, model_params: Dict[str: Union[Number, str]],
-                         q: Optional[np.ndarray] = None) -> str:
+                         q: Optional[np.ndarray] = None) -> List[Number]:
         """Private method to directly call the model calculator
         :param model_name: The string representation of the model name used by sasmodels.
         :param model_params: A dictionary mapping the sasmodel parameter name to the parameter value.
