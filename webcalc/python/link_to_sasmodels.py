@@ -94,13 +94,12 @@ def calculate_model(model_string: str, q: List[np.ndarray], params: Dict[str, fl
     """
     kernel_model = get_model(model_string)
     kernel = kernel_model.make_kernel(q)
-    i_q = call_kernel(kernel, params).tolist()
-    for i, item in np.ndenumerate(i_q):
-        if item == np.inf:
-            i_q[i] = 9999999
-        elif item == np.NAN:
-            i_q[i] = 8888888
-    return i_q
+    i_q = call_kernel(kernel, params)
+    # Use built-in numpy.where for value replacement
+    i_q = np.where(i_q == np.inf, 9999999, i_q)
+    i_q = np.where(i_q == np.NAN, 8888888, i_q)
+    # Return a list representation of the numpy array
+    return i_q.tolist()
 
 
 if __name__ == '__main__':
