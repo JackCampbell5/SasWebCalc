@@ -59,6 +59,7 @@ def create_app():
         # Gets the model and model params out of the dict
         model = json_like.get('model', '')
         model_params = json_like.get('model_params', {})
+        model_params = {key: value.get('default', 0.0) for key, value in model_params.items()}
 
         # Gets slicer and Slicer params out of dict
         slicer = json_like.get('averaging_type', '')
@@ -110,7 +111,7 @@ def create_app():
 
         return encode_json(_calculate_model(model_name, model_params, None))
 
-    def _calculate_model(model_name: str, model_params: Dict[str: Union[Number, str]],
+    def _calculate_model(model_name: str, model_params: Dict[str, Union[Number, str]],
                          q: Optional[np.ndarray] = None) -> List[Number]:
         """Private method to directly call the model calculator
         :param model_name: The string representation of the model name used by sasmodels.
@@ -118,7 +119,7 @@ def create_app():
         :param q: An n-dimensional array of Q values.
         :return: A json-like string representation of a list of intensities.
         """
-        if not q:
+        if q is None:
             # If no instrument data sent, use a default Q range of 0.0001 to 1.0 A^-1
             q = np.logspace(0.0001, 1.0, 125)
         return calculate_m(model_name, [q.flatten()], model_params)

@@ -85,11 +85,11 @@ def get_params(model_string, all=False):
     return encode_params(params)
 
 
-def calculate_model(model_string: str, q: List[np.ndarray], params: Dict[str: Union[Number, str]]) -> List[Number]:
+def calculate_model(model_string: str, q: List[np.ndarray], params: Dict[str, float]) -> List[Number]:
     """ Takes the model and runs a sequence of code to calculate it
 
     :param str model_string: The string name of the model
-    :param q: A list of Q values that will be used to calculate the model function
+    :param q: A list of numpy arrays with Q values that will be used to calculate the model function
     :param params: The list of params probably passed from a previous method
     :return: A list of calculated data from the model
     :rtype: A json-like string representation of a list of intensities.
@@ -97,7 +97,7 @@ def calculate_model(model_string: str, q: List[np.ndarray], params: Dict[str: Un
     kernel_model = get_model(model_string)
     kernel = kernel_model.make_kernel(q)
     i_q = call_kernel(kernel, params).tolist()
-    for i, item in enumerate(i_q):
+    for i, item in np.ndenumerate(i_q):
         if item == np.inf:
             i_q[i] = 9999999
         elif item == np.NAN:
