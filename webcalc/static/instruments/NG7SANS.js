@@ -123,12 +123,11 @@ export default {
       },
       instrument_params_local: {
         'ng7BeamStopSizes': {
-          default: 2.54,
           options: [
-              {'beam_stop_diameter': 2.54, 'beam_diameter': 2.54},
-              {'beam_stop_diameter': 5.08, 'beam_diameter': 5.08},
-              {'beam_stop_diameter': 7.62, 'beam_diameter': 7.62},
-              {'beam_stop_diameter': 10.16, 'beam_diameter': 10.16},
+              {'beam_stop_diameter': 2.54, 'diameter': 2.54},
+              {'beam_stop_diameter': 5.08, 'diameter': 5.08},
+              {'beam_stop_diameter': 7.62, 'diameter': 7.62},
+              {'beam_stop_diameter': 10.16, 'diameter': 10.16},
           ]
         },
         'ng7SampleTable': {
