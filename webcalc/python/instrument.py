@@ -9,10 +9,11 @@ from .slicers import Circular
 from .slicers import Sector
 from .slicers import Rectangular
 from .slicers import Elliptical
-from .helpers import encode_json
+
+Number = Union[float, int]
 
 
-def calculate_instrument(instrument: str, params: dict) -> dict:
+def calculate_instrument(instrument: str, params: dict) -> Dict[str, Union[Number, str, List[Union[Number, str]]]]:
     """The base calculation script. Creates an instrument class, calculates the instrumental resolution for the
     configuration, and returns two list of intensities
 
@@ -37,7 +38,7 @@ def calculate_instrument(instrument: str, params: dict) -> dict:
                 ...
             }
 
-    Returns: {
+    Returns: The following dictionary {
         Qx: [],
         dQx: [],
         Qy: [],
@@ -47,7 +48,6 @@ def calculate_instrument(instrument: str, params: dict) -> dict:
         dq: [],
         Iq: [],
         beamflux: float,
-
     }
     """
     # i_class is the python object for the interment
@@ -1064,7 +1064,7 @@ class Instrument:
         self.calculate_sample_to_detector_distance()
         self.data.calculate_min_and_max_q()
 
-    def sas_calc(self):
+    def sas_calc(self) -> Dict[str, Union[Number, str, List[Union[Number, str]]]]:
         """ The main function that runs all the calculation and returns the results
 
         Makes a user inaccessible sub dictionary witch contains the results to be sent back to the instrument JS
@@ -1105,8 +1105,9 @@ class Instrument:
         python_return["intensity2D"] = self.slicer.intensity_2D.tolist()
         python_return["qValues"] = self.slicer.q_values.tolist()
         python_return["slicer_params"] = self.slicer.slicer_return()
-        # Can return encode JSON just not a python dictionary
-        return encode_json(python_return)
+        # Return bare dictionary to allow easier access to data upstream
+        #  Note - this forces JSON encoding upstream
+        return python_return
 
     def calculate_instrument_parameters(self):
         """Uses the many functions to calculate all the necessary parameters necessary for an instrument

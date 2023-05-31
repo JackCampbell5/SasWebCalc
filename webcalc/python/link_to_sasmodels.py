@@ -1,5 +1,6 @@
 import json
 import sys
+from typing import Union, Dict, List
 
 import numpy as np
 
@@ -7,6 +8,8 @@ from sasmodels.core import list_models, load_model
 from sasmodels.direct_model import call_kernel
 
 from .helpers import encode_json
+
+Number = Union[float, int]
 
 
 def get_model_list(category=None):
@@ -80,20 +83,24 @@ def get_params(model_string, all=False):
     return encode_params(params)
 
 
-def calculate_model(model_string, q, params):
+def calculate_model(model_string: str, q: List[np.ndarray], params: Dict[str, float]) -> List[Number]:
     """ Takes the model and runs a sequence of code to calculate it
 
     :param str model_string: The string name of the model
-    :param q:
-    :param list params: THe list of params probably passed from a previous method
+    :param q: A list of numpy arrays with Q values that will be used to calculate the model function
+    :param params: The list of params probably passed from a previous method
     :return: A list of calculated data from the model
-    :rtype: list
+    :rtype: A json-like string representation of a list of intensities.
     """
     kernel_model = get_model(model_string)
     kernel = kernel_model.make_kernel(q)
-    Iq = call_kernel(kernel, params)
-    iq_string = json.dumps(Iq.tolist())
-    return iq_string.replace('Infinity', '9999999').replace('NaN', '8888888')
+    i_q = call_kernel(kernel, params).tolist()
+    for i, item in np.ndenumerate(i_q):
+        if item == np.inf:
+            i_q[i] = 9999999
+        elif item == np.NAN:
+            i_q[i] = 8888888
+    return i_q
 
 
 if __name__ == '__main__':
