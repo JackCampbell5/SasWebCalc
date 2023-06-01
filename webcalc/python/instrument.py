@@ -824,7 +824,7 @@ class Data:
         wave = self.parent.get_wavelength()
         pixel_size_x = self.parent.detectors[index].get_pixel_size_x()
         pixel_size_y = self.parent.detectors[index].get_pixel_size_y()
-        det_width = pixel_size_x * self.parent.detectors[index].pixel_no_x / 100
+        det_width = pixel_size_x * self.parent.detectors[index].pixel_no_x
         bs_projection = math.fabs(self.parent.calculate_beam_stop_projection())
         # Calculate Q-maximum and populate the page
         radial = math.sqrt(math.pow(0.5 * det_width, 2) + math.pow((0.5 * det_width) + offset, 2))

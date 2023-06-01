@@ -271,11 +271,11 @@ class Slicer:
         # Calculate Qx and Qy values
         x_pixels = np.array([i for i in range(self.x_pixels)])
         x_distances = calculate_distance_from_beam_center(x_pixels, self.x_center, self.pixel_size, self.coeff)
-        theta_x = np.arctan(x_distances / (float(self.detector_distance)*10.0)) / 2.0
+        theta_x = np.arctan(x_distances / self.detector_distance) / 2.0
         self.qx_values = (4 * math.pi / self.lambda_val) * np.sin(theta_x)
         y_pixels = np.array([i for i in range(self.y_pixels)])
         y_distances = calculate_distance_from_beam_center(y_pixels, self.y_center, self.pixel_size, self.coeff)
-        theta_y = np.arctan(y_distances / (self.detector_distance*10)) / 2
+        theta_y = np.arctan(y_distances / self.detector_distance) / 2
         self.qy_values = (4 * math.pi / self.lambda_val) * np.sin(theta_y)
         qx_2d = np.full((self.x_pixels, self.y_pixels), self.qx_values)
         qy_2d = np.transpose(np.full((self.y_pixels, self.x_pixels), self.qy_values))
