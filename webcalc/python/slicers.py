@@ -178,6 +178,8 @@ class Slicer:
                     n_d_sqr = nd
                     for el in range(1, nd):
                         corrected_dy = y_distances[i][j] + (el - center[i][j]) * self.pixel_size / el
+                        if not self.include_pixel(corrected_dx, corrected_dy, self.mask[i][j]):
+                            continue
                         i_radius = self.get_i_radius(corrected_dx, corrected_dy)
                         self.n_cells[i_radius] += 1 / n_d_sqr
                         self.ave_intensity[i_radius] = (0 if self.n_cells[i] == 0 or math.isnan(self.n_cells[i])
@@ -277,7 +279,10 @@ class Slicer:
         self.qy_values = (4 * math.pi / self.lambda_val) * np.sin(theta_y)
         qx_2d = np.full((self.x_pixels, self.y_pixels), self.qx_values)
         qy_2d = np.transpose(np.full((self.y_pixels, self.x_pixels), self.qy_values))
-        self.q_2d_values = qx_2d * qy_2d
+        self.q_2d_values = np.sqrt(qx_2d * qx_2d + qy_2d * qy_2d)
+        min_theta = math.tan(self.beam_stop_size / (2 * self.detector_distance))
+        min_q = (4 * math.pi / self.lambda_val) * math.sin(min_theta / 2)
+        self.intensity_2D = np.where(abs(self.q_2d_values) > min_q, self.intensity_2D, 1e-10)
         self.calculate()
 
     def generate_ones_data(self):
