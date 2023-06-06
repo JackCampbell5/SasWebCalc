@@ -82,8 +82,16 @@ def create_app():
         # Calculate the instrument and slicer
         params = _calculate_instrument(instrument, calculate_params)
         # Get q in proper format
-        q_1d = np.asarray(params.get('qValues', []))
-        q_2d = np.asarray(params.get('q2DValues', []))
+        q_1d = [np.asarray(params.get('qValues', []))]
+        # qx and qy values are 1D arrays of base values -> Need to create 2D arrays for each
+        qx = np.asarray(params.get('qxValues', []))
+        qy = np.asarray(params.get('qyValues', []))
+        # Need size of 1D arrays for 2D array sizes
+        len_x = len(qx)
+        len_y = len(qy)
+        qx = np.tile(qx, [len_y, 1])
+        qy = np.transpose(np.tile(qy, [len_x, 1])[::-1])
+        q_2d = [qx, qy]
 
         # Calculate the 1D model
         model_1d = _calculate_model(model, model_params, q_1d)
@@ -112,7 +120,7 @@ def create_app():
         return encode_json(_calculate_model(model_name, model_params, None))
 
     def _calculate_model(model_name: str, model_params: Dict[str, Union[Number, str]],
-                         q: Optional[np.ndarray] = None) -> List[Number]:
+                         q: Optional[List[np.ndarray]] = None) -> List[Number]:
         """Private method to directly call the model calculator
         :param model_name: The string representation of the model name used by sasmodels.
         :param model_params: A dictionary mapping the sasmodel parameter name to the parameter value.
@@ -122,7 +130,7 @@ def create_app():
         if q is None:
             # If no instrument data sent, use a default Q range of 0.0001 to 1.0 A^-1
             q = np.logspace(0.0001, 1.0, 125)
-        return calculate_m(model_name, [q.flatten()], model_params)
+        return calculate_m(model_name, [q_i.flatten() for q_i in q], model_params)
 
     @app.route('/calculate/instrument/<instrument_name>', methods=['POST'])
     def calculate_instrument(instrument_name: str) -> str:

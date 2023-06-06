@@ -474,7 +474,7 @@ class Detector:
         :return:The converted value of the pixel_size_x
         :rtype: float
         """
-        return self.parent.d_converter(self.pixel_size_x, self.pixel_size_x_unit)
+        return self.pixel_size_x
 
     def get_pixel_size_y(self):
         """Gets the pixel_size_y attribute from the Detector object and converts it for distance with its unit
@@ -824,7 +824,7 @@ class Data:
         wave = self.parent.get_wavelength()
         pixel_size_x = self.parent.detectors[index].get_pixel_size_x()
         pixel_size_y = self.parent.detectors[index].get_pixel_size_y()
-        det_width = pixel_size_x * self.parent.detectors[index].pixel_no_x / 100
+        det_width = pixel_size_x * self.parent.detectors[index].pixel_no_x
         bs_projection = math.fabs(self.parent.calculate_beam_stop_projection())
         # Calculate Q-maximum and populate the page
         radial = math.sqrt(math.pow(0.5 * det_width, 2) + math.pow((0.5 * det_width) + offset, 2))
@@ -1686,10 +1686,10 @@ class NG7SANS(Instrument):
         params["data"]["trans_1"] = 0.63
         params["data"]["trans_2"] = 0.7
         params["data"]["trans_3"] = 0.75
-        params["detectors"][0]["pixel_size_x"] = 5.08
-        params["detectors"][0]["pixel_size_y"] = 5.08
-        params["detectors"][0]["pixel_size_x_unit"] = "mm"
-        params["detectors"][0]["pixel_size_y_unit"] = "mm"
+        params["detectors"][0]["pixel_size_x"] = 0.508
+        params["detectors"][0]["pixel_size_y"] = 0.508
+        params["detectors"][0]["pixel_size_x_unit"] = "cm"
+        params["detectors"][0]["pixel_size_y_unit"] = "cm"
         params["detectors"][0]["pixel_no_x"] = 128
         params["detectors"][0]["pixel_no_y"] = 128
         params["collimation"]["aperture_offset"] = 5
@@ -1747,10 +1747,10 @@ class NGB30SANS(Instrument):
         params["data"]["trans_1"] = 0.63
         params["data"]["trans_2"] = 1.0
         params["data"]["trans_3"] = 0.75
-        params["detectors"][0]["pixel_size_x"] = 5.08
-        params["detectors"][0]["pixel_size_y"] = 5.08
-        params["detectors"][0]["pixel_size_x_unit"] = "mm"
-        params["detectors"][0]["pixel_size_y_unit"] = "mm"
+        params["detectors"][0]["pixel_size_x"] = 0.508
+        params["detectors"][0]["pixel_size_y"] = 0.508
+        params["detectors"][0]["pixel_size_x_unit"] = "cm"
+        params["detectors"][0]["pixel_size_y_unit"] = "cm"
         params["detectors"][0]["pixel_no_x"] = 128
         params["detectors"][0]["pixel_no_y"] = 128
         params["collimation"]["guides"]["gap_at_start"] = 100
@@ -1811,10 +1811,10 @@ class NGB10SANS(Instrument):
         params["data"]["trans_1"] = 0.63
         params["data"]["trans_2"] = 1.0
         params["data"]["trans_3"] = 0.75
-        params["detectors"][0]["pixel_size_x"] = 5.08
-        params["detectors"][0]["pixel_size_y"] = 5.08
-        params["detectors"][0]["pixel_size_x_unit"] = "mm"
-        params["detectors"][0]["pixel_size_y_unit"] = "mm"
+        params["detectors"][0]["pixel_size_x"] = 0.508
+        params["detectors"][0]["pixel_size_y"] = 0.508
+        params["detectors"][0]["pixel_size_x_unit"] = "cm"
+        params["detectors"][0]["pixel_size_y_unit"] = "cm"
         params["detectors"][0]["pixel_no_x"] = 128
         params["detectors"][0]["pixel_no_y"] = 128
         params["collimation"]["guides"]["gap_at_start"] = 165
