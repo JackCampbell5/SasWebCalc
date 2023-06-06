@@ -359,11 +359,12 @@ class Detector:
     :param  str self.pixel_size_y_unit: The unit for the size of the detector in the y direction (Typically centimeters)
     :param  float self.pixel_size_z: The size of the detector in the z direction
     :param  str self.pixel_size_z_unit: The unit for the size of the detector in the z direction (Typically centimeters)
-    :param  float self.pixel_no_x:  TODO DOCS figure out the point of this
-    :param  float self.pixel_no_y:
-    :param  float self.pixel_no_z:
-    :param  float self.per_pixel_max_flux:
-    :param  float self.dead_time:
+    :param  float self.pixel_no_x: The number of pixels on the detector in the horizontal direction
+    :param  float self.pixel_no_y: The number of pixels on the detector in the vertical direction
+    :param  float self.pixel_no_z: The number of pixels on the detector along the beam direction
+    :param  float self.per_pixel_max_flux: The maximum neutron flux each pixel can safely accept, in n/s
+    :param  float self.dead_time: A time constant related to the minimum time between neutron interactions that
+        the detector can properly interpret.
     :param  float self.beam_center_x: The location of the center of the beam in the x direction
     :param  float self.beam_center_y: The location of the center of the beam in the y direction
     :param  float self.beam_center_z: The location of the center of the beam in the z direction
@@ -536,7 +537,7 @@ class Guide:
     :param Instrument self.parent: A parent object that has all the objects
     :param float self.guide_width: Thw width of the guides
     :param str self.guide_width_unit: The unit for the width of the guides
-    :param float self.transmission_per_guide: TODO DOCS  - Ask what this is for
+    :param float self.transmission_per_guide: The percent of neutrons that pass through each neutron guide.
     :param float self.length_per_guide: The length of each evidential guides
     :param float self.length_per_guide_unit: The unit for the length of each evidential guides
     :param float self.number_of_guides: The number of guides set by the user
@@ -623,12 +624,13 @@ class Wavelength:
     :param float self.wavelength_min: The maximum wavelength(Calculated from wavelength_constants)
     :param float self.wavelength_max: The minimum wavelength(Calculated from wavelength_constants)
     :param float self.wavelength_unit: The unit for all the wavelengths(Typically nm)
-    :param float self.wavelength_spread: TODO DOCS Ask what this is for
+    :param float self.wavelength_spread: The percent variation in the neutron wavelength.
     :param float self.wavelength_spread_unit: The unit for wavelength spread(Typically %)
     :param tuple self.wavelength_constants: An array of wavelength constants
     :param tuple self.rpm_range: The range of revolutions per minute
-    :param float self.number_of_attenuators: TODO DOCS Ask what this is for
-    :param float self.attenuation_factor: TODO DOCS Ask what this is for
+    :param float self.number_of_attenuators: The calculated number of attenuators needed for a transmission measurement
+    :param float self.attenuation_factor: The minimum attenuation factor required to bring the neutron flux below the
+        detector safety threshold.
     :param Converter self.d_converter: A converter with values for wavelength units
     """
 
@@ -717,10 +719,11 @@ class Data:
     :param  Instrument self.parent: The parent instrument object
     :param float self.peak_flux: The maximum beam flux
     :param float self.peak_wavelength: The maximum wavelength
-    :param float self.bs_factor: TODO docs ask what this is for
-    :param float self.trans_1: TODO docs ask what this is for
-    :param float self.trans_2: TODO docs ask what this is for
-    :param float self.trans_3: TODO docs ask what this is for
+    :param float self.bs_factor: The minimum factor that should be applied to the calculated beam size to ensure the
+        beam stop is large enough to fully cover the direct beam
+    :param float self.trans_1: Empirical transmission factor of the velocity selector area
+    :param float self.trans_2: Empirical transmission factor correction
+    :param float self.trans_3: Empirical transmission factor of the sample area
     :param float self.beta: The beta value or B
     :param float self.charlie: The charlie value or c
     :param float self.q_max: The maximum Q value (calculated from slicer)
@@ -1244,10 +1247,11 @@ class Instrument:
                 'beam_stop_diameter']
 
     def calculate_beam_stop_projection(self, index=0):
-        """ Calculates the projection of the beam stop TODO DOCS add more here
+        """ The beam stop casts a shadow based on the distance the beam stop is from the detector, creating a
+        larger projection than the nominal size of the beam stop. This method calculates that shadow.
 
         :param int index: The index in the detector array
-        :return: The calculated projection
+        :return: The calculated size of the projected beam stop
         :rtype: Float
         """
         self.get_sample_to_detector_distance(index)
