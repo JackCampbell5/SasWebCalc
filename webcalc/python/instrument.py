@@ -970,7 +970,7 @@ class Instrument:
 
         params = {}
         params["beam_stops"] = old_params.get(name + "BeamStopSizes", {}).get("options", [
-            {'beam_stop_diameter': 1.0, 'diameter': 1.0}])
+            {'beam_stop_diameter': 1.0}])
         params["collimation"] = {}
         params["collimation"]["guides"] = {}
         params["collimation"]["guides"]["lenses"] = self.guide_lens_config(old_params[name + "GuideConfig"]["default"],
