@@ -74,8 +74,8 @@ def _build_metric_units(unit, abbr):
     Ack! Allows, e.g., Coulomb and coulomb even though Coulomb is not
     a unit because some NeXus files store it that way!
 
-    :param str unit: The unit to standardize
-    :param str abbr: TODO docs what does this do
+    :param str unit: The full unit string (e.g. meter)
+    :param str abbr: The common abbreviated string associated with the unit
     :return: A dictionary of names and scales.
     :rtype: Dict
     """
