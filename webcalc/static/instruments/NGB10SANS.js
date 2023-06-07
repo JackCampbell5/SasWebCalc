@@ -115,12 +115,7 @@ export default {
       },
       instrument_params_local: {
         'ngb10BeamStopSizes': {
-          options: [
-              {'beam_stop_diameter': 2.54, 'diameter': 2.54},
-              {'beam_stop_diameter': 3.81, 'diameter': 3.81},
-              {'beam_stop_diameter': 5.08, 'diameter': 5.08},
-              {'beam_stop_diameter': 7.62, 'diameter': 7.62},
-          ]
+          options: [2.54, 3.81, 5.08, 7.62]
         },
         'ngb10WavelengthInput': {
           name: 'Wavelength',
