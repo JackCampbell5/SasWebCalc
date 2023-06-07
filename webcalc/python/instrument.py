@@ -889,9 +889,6 @@ class Data:
         :return: The rounded value of beam_flux
         :rtype: int
         """
-        self.calculate_beam_flux()
-        # Round up for integer value
-        # Question: be sure we want that
         self.flux = round(self.flux)
         # TODO  fix this calculation
         # return (math.pow(self.parent.d_converter(self.flux, self.flux_size_unit), -2)
@@ -1128,9 +1125,6 @@ class Instrument:
         self.averaging_type = params.get("average_type", "ERROR")
         self.slicer_params = params.get('slicer', {})
 
-        self.calculate_sample_to_detector_distance()
-        self.data.calculate_min_and_max_q()
-
     def sas_calc(self) -> Dict[str, Union[Number, str, List[Union[Number, str]]]]:
         """ The main function that runs all the calculation and returns the results
 
@@ -1185,8 +1179,7 @@ class Instrument:
         :return: It returns nothing as each function sets the value it calculates
         :rtype: None
         """
-        # Calculate the beam stop diameter
-        self.calculate_beam_stop_diameter()
+        self.calculate_sample_to_detector_distance()
         # Calculate the estimated beam flux
         self.data.calculate_beam_flux()
         # Calculate the figure of merit
@@ -1194,7 +1187,6 @@ class Instrument:
         # Calculate the number of attenuators
         self.calculate_attenuator_number()
         self.calculate_slicer()
-        self.calculate_sample_to_detector_distance()
         self.data.calculate_min_and_max_q()
 
     def calculate_attenuation_factor(self, index=0):
@@ -1408,7 +1400,7 @@ class Instrument:
         """
 
         # Number of attenuators in the beam
-        return self.calculate_attenuator_number()
+        return self.wavelength.number_of_attenuators
 
     def get_beam_flux(self):
         """ Gets the beam flux value from the data class
