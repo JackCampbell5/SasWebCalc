@@ -123,6 +123,9 @@ export default {
         25.6: ['3.0', '20.0']
       },
       instrument_params_local: {
+        'ngb30BeamStopSizes': {
+          options: [2.54, 5.08, 7.62, 10.16]
+        },
         'ngb30SampleTable': {
           name: 'Sample Table',
           default: "Chamber",
@@ -271,7 +274,7 @@ export default {
           name: 'Beam Diameter',
           default: '',
           type: "number",
-          unit: "inch",
+          unit: "cm",
           category: 'ngb30Detector',
           readonly: true,
         },
@@ -279,7 +282,7 @@ export default {
           name: 'Beam Stop Diameter',
           default: '',
           type: "number",
-          unit: "inch",
+          unit: "cm",
           category: 'ngb30Detector',
           readonly: true,
         },

@@ -114,6 +114,9 @@ export default {
         25: ['3.0', '20.0']
       },
       instrument_params_local: {
+        'ngb10BeamStopSizes': {
+          options: [2.54, 3.81, 5.08, 7.62]
+        },
         'ngb10WavelengthInput': {
           name: 'Wavelength',
           default: 6.0,
@@ -233,7 +236,7 @@ export default {
           name: 'Beam Diameter',
           default: '',
           type: "number",
-          unit: "inch",
+          unit: "cm",
           category: 'ngb10Detector',
           readonly: true,
         },
@@ -241,7 +244,7 @@ export default {
           name: 'Beam Stop Diameter',
           default: '',
           type: "number",
-          unit: "inch",
+          unit: "cm",
           category: 'ngb10Detector',
           readonly: true,
         },
