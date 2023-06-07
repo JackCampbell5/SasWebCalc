@@ -195,11 +195,6 @@ class BeamStop:
         """
         # TODO Figure out how many of these parameters are Actually necessary
         self.parent = parent
-        self._diameter = 0.0  # Not in use right now (I think)
-        self._diameter_unit = 'cm'  # Not in use right now(I think)
-        self.offset = 0.0  # Not in use right now
-        self.offset_unit = 'cm'  # Not in use right now
-        self.beam_stop_size = 0.0  # Not in use right now
         self._beam_stop_diameter = 0.0
         self.set_params(params)
 
@@ -213,22 +208,6 @@ class BeamStop:
         """
         float_params = ["diameter", "offset", "beam_stop_size", "beam_stop_diameter"]
         set_params(self, params, float_params)
-
-    @property
-    def diameter(self):
-        return self._diameter
-
-    @diameter.setter
-    def diameter(self, value):
-        self._diameter = value
-
-    @property
-    def diameter_unit(self):
-        return self._diameter_unit
-
-    @diameter_unit.setter
-    def diameter_unit(self, value):
-        self._diameter_unit = value
 
     @property
     def beam_stop_diameter(self):
