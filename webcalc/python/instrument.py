@@ -949,7 +949,7 @@ class Instrument:
                                                                          "default"] != "" else None
 
         params = {}
-        params["beam_stops"] = old_params.get(name + "BeamStopSizes", [2.54]).get("options", [2.54])
+        params["beam_stops"] = old_params.get(name + "BeamStopSizes", {}).get("options", [2.54])
         params["beam_stops"].sort()
         params["beam_stops"] = [{"beam_stop_diameter": beam_stop} for beam_stop in params.get("beam_stops", 2.54)]
         params["collimation"] = {}
