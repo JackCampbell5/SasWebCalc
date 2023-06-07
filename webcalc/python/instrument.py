@@ -937,6 +937,12 @@ class Instrument:
         # raise NotImplementedError(f"Instrument {self.name} has not implemented the `load_params` method.")
         self.load_objects(params)
 
+    def param_help(self, params, sub_dict,default_value = None):
+        try:
+            return params.get(sub_dict, default_value)
+        except AttributeError:
+            return None
+
     def param_restructure(self, calculate_params):
         """ A method that takes the list of params from the Javascript and assigns it to a dictionary allowing the python to assign variables to objects
 
@@ -948,8 +954,9 @@ class Instrument:
         old_params = calculate_params["instrument_params"]
         name = self.name
         # Instrument class parameters
-        self.beam_flux = old_params[name + "BeamFlux"]["default"] if old_params[name + "BeamFlux"][
-                                                                         "default"] != "" else None
+        # For Review
+        self.beam_flux = self.param_help(params=old_params.get(name + "BeamFlux", {}), sub_dict="default")
+        # self.beam_flux = old_params.get(name + "BeamFlux", {}).get("default", None)
 
         params = {}
         params["beam_stops"] = old_params.get(name + "BeamStopSizes", {}).get("options", [2.54])
@@ -1019,6 +1026,21 @@ class Instrument:
         params["wavelength"]["wavelength"] = old_params[name + "WavelengthInput"]["default"] if \
             old_params[name + "WavelengthInput"][
                 "default"] != "" else None
+
+        # For Review
+        # Remove parameters set to None
+        remove_array = [[], []]
+        for param in params:
+            if type(params[param]) == dict:
+                for mini_param in params[param]:
+                    if params[param][mini_param] is None:
+                        remove_array[0].append([param, mini_param])
+                    continue
+                continue
+            if params[param] is None:
+                remove_array[1].append([param])
+        for what in remove_array[0]:
+            del params[what[0]][what[1]]
         return params
 
     def guide_lens_config(self, value, guide_param):
