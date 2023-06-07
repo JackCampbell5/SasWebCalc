@@ -1231,7 +1231,7 @@ class Instrument:
         if self.collimation.guides.lenses:
             # If LENS configuration, the beam size is the source aperture size
             # FIXed: This is showing -58 cm... Why?!?! - it wa snot returning afterward
-            self.beam_stops[index]["beam_diameter"] = source_aperture  # Made beam diameter and returned
+            self.beam_stops[index].beam_diameter = source_aperture  # Made beam diameter and returned
             return
         # Calculate beam width on the detector
         try:
