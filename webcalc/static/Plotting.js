@@ -93,6 +93,8 @@ export default {
         },
         yaxis: {
             title: "Qy (Å^-1)",
+            scaleanchor: "x",
+            scaleratio: 1,
         },
         shapes: this.shapes,
       };
