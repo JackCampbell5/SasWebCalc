@@ -772,6 +772,7 @@ class Data:
         self.q_values = []
         self.intensity = []
         # Flux should be in cm^-2*s^-1
+        self.figure_of_merit = 0.0
         self.flux = 0.0
         self.flux_size_unit = 'cm'
         self.flux_time_unit = 's'
@@ -846,6 +847,23 @@ class Data:
         # Calculate Q-maximum and populate the page
         theta = math.atan(((det_width / 2.0) / sdd))
         self.q_max_vert = four_pi_wave * math.sin(0.5 * theta)
+
+    def calculate_figure_of_merit(self):
+        """ Calculates the figure of merit from the wavelength and beam flux value
+
+        :return: An integer form of the figure of merit
+        :rtype: int
+        """
+        self.figure_of_merit = math.pow(self.parent.wavelength.get_wavelength(), 2) * self.get_beam_flux()
+        return int(self.figure_of_merit)
+
+    def get_figure_of_merit(self):
+        """Gets the figure of merit attribute from the Data object and rounds it
+
+        :return: The rounded value of the figure of merit
+        :rtype: int
+        """
+        return int(self.figure_of_merit)
 
     def get_beam_flux(self):
         """Gets the beam_flux attribute from the Data object and rounds it
@@ -1113,7 +1131,7 @@ class Instrument:
         python_return = {}
         python_return["user_inaccessible"] = {}
         python_return["user_inaccessible"]["BeamFlux"] = self.data.get_beam_flux()
-        python_return["user_inaccessible"]["FigureOfMerit"] = self.calculate_figure_of_merit()
+        python_return["user_inaccessible"]["FigureOfMerit"] = self.data.get_figure_of_merit()
         python_return["user_inaccessible"]["Attenuators"] = self.get_attenuator_number()
         python_return["user_inaccessible"]["SSD"] = self.collimation.ssd
         python_return["user_inaccessible"]["SDD"] = self.detectors[0].get_sdd()
@@ -1154,7 +1172,7 @@ class Instrument:
         # Calculate the estimated beam flux
         self.data.calculate_beam_flux()
         # Calculate the figure of merit
-        self.calculate_figure_of_merit()
+        self.data.calculate_figure_of_merit()
         # Calculate the number of attenuators
         self.calculate_attenuator_number()
         self.calculate_slicer()
@@ -1289,15 +1307,6 @@ class Instrument:
         l2 = self.get_sample_aperture_to_detector_distance()  # Question why do we no longer need aperture offset
         l_beam_stop = 20.1 + 1.61 * bs_diam  # distance in cm from beam stop to anode plane (empirical calculation)
         return bs_diam + (bs_diam + sample_aperture) * l_beam_stop / (l2 - l_beam_stop)  # Return in cm
-
-    def calculate_figure_of_merit(self):
-        """ Calculates the figure of merit from the wavelength and beam flux value
-
-        :return: An integer form of the figure of merit
-        :rtype: int
-        """
-        figure_of_merit = math.pow(self.get_wavelength(), 2) * self.get_beam_flux()
-        return int(figure_of_merit)
 
     def calculate_sample_to_detector_distance(self, index=0):
         """ Calculates the SDD(Sample to Detector Distance) value
