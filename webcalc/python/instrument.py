@@ -196,6 +196,8 @@ class BeamStop:
         # TODO Figure out how many of these parameters are Actually necessary
         self.parent = parent
         self._beam_stop_diameter = 0.0
+        self._diameter = 0.0  # Not in use right now (I think)
+        self._diameter_unit = 'cm'
         self.set_params(params)
 
     def set_params(self, params=None):
@@ -216,6 +218,22 @@ class BeamStop:
     @beam_stop_diameter.setter
     def beam_stop_diameter(self, value):
         self._beam_stop_diameter = value
+
+    @property
+    def diameter(self):
+        return self._diameter
+
+    @diameter.setter
+    def diameter(self, value):
+        self._diameter = value
+
+    @property
+    def diameter_unit(self):
+        return self._diameter_unit
+
+    @diameter_unit.setter
+    def diameter_unit(self, value):
+        self._diameter_unit = value
 
 
 class Collimation:
@@ -1409,7 +1427,7 @@ class Instrument:
         :rtype: int
         """
         # Beam diameter in centimeters
-        return self.beam_stops[index].beam_diameter
+        return self.beam_stops[index].diameter
 
     def get_beam_stop_diameter(self, index=0):
         """ Gets the beam stop diameter value from the beam stops class at the specified index
