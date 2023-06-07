@@ -310,7 +310,6 @@ class Collimation:
         :return: The ssd value
         :rtype: float
         """
-        self.calculate_source_to_sample_distance()
         return self.parent.d_converter(self.ssd, self.ssd_unit)
 
     def get_ssad(self):
@@ -424,8 +423,6 @@ class Detector:
                         "pixel_no_x", "pixel_no_y", "pixel_no_z", "beam_center_x", "beam_center_y", "beam_center_z"]
         set_params(self, params, float_params)
 
-        # Calculate all beam centers using existing values
-        self.calculate_all_beam_centers()
 
     def calculate_all_beam_centers(self):
         """ Call the functions that calculates the x, y, and z centers
@@ -799,14 +796,16 @@ class Data:
         :return: Nothing as it sets and calculates the beam_flux value
         :rtype: None
         """
-        # Beam Flux Calculations now correct
+        # Run calculation methods
+        self.parent.calculate_source_to_sample_aperture_distance()
+        self.parent.collimation.calculate_source_to_sample_distance()
+        self.parent.get_source_to_sample_aperture_distance()
+        self.parent.get_source_to_sample_distance()
 
         # Variable definition
         guide_loss = self.parent.collimation.guides.transmission_per_guide
         source_aperture = self.parent.get_source_aperture_diam()
         sample_aperture = self.parent.get_sample_aperture_diam()
-        self.parent.calculate_source_to_sample_aperture_distance()
-        self.parent.collimation.calculate_source_to_sample_distance()
         SSD = self.parent.collimation.get_ssd()
         wave = self.parent.get_wavelength()
         lambda_spread = self.parent.get_wavelength_spread()
@@ -1339,7 +1338,7 @@ class Instrument:
         except IndexError:
             detector = self.detectors[0]
         detector.sdd = self.collimation.detector_distance + self.collimation.space_offset
-        return detector.get_sdd()
+        return detector
 
     # Various class updaters
     def update_wavelength(self):
@@ -1363,8 +1362,7 @@ class Instrument:
         slicer_params = self.slicer_params
 
         # QUESTION      [0] Do I need to run a loop here? how does this work with multiple detectors
-        self.detectors[index].calculate_beam_center_x()
-        self.detectors[index].calculate_beam_center_y()
+        self.detectors[index].calculate_all_beam_centers()
         slicer_params["x_center"] = self.detectors[index].beam_center_x
         slicer_params["y_center"] = self.detectors[index].beam_center_y
         slicer_params["pixel_size"] = self.detectors[index].pixel_size_x
@@ -1379,8 +1377,8 @@ class Instrument:
         slicer_params["source_aperture"] = self.get_source_aperture_size()
         slicer_params["sample_aperture"] = self.get_sample_aperture_size()
         slicer_params["beam_stop_size"] = self.get_beam_stop_diameter() * 2.54
-        slicer_params["SSD"] = self.calculate_source_to_sample_aperture_distance()
-        slicer_params["SDD"] = self.calculate_sample_to_detector_distance()
+        slicer_params["SSD"] = self.get_source_to_sample_aperture_distance()
+        slicer_params["SDD"] = self.get_sample_to_detector_distance()
         averaging_type = self.averaging_type
         if averaging_type == "sector":
             self.slicer = Sector(slicer_params)
@@ -1399,7 +1397,7 @@ class Instrument:
         :rtype: Float
         """
         # TODO Fix The attenuation factor value calculated based on the number of attenuators
-        return self.calculate_attenuation_factor()
+        return self.wavelength.attenuation_factor
 
     def get_attenuator_number(self):
         """Runs the calculation for attenuator number
