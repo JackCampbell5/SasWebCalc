@@ -196,8 +196,6 @@ class BeamStop:
         # TODO Figure out how many of these parameters are Actually necessary
         self.parent = parent
         self._beam_stop_diameter = 0.0
-        self._diameter = 0.0  # Not in use right now (I think)
-        self._diameter_unit = 'cm'
         self.set_params(params)
 
     def set_params(self, params=None):
@@ -218,22 +216,6 @@ class BeamStop:
     @beam_stop_diameter.setter
     def beam_stop_diameter(self, value):
         self._beam_stop_diameter = value
-
-    @property
-    def diameter(self):
-        return self._diameter
-
-    @diameter.setter
-    def diameter(self, value):
-        self._diameter = value
-
-    @property
-    def diameter_unit(self):
-        return self._diameter_unit
-
-    @diameter_unit.setter
-    def diameter_unit(self, value):
-        self._diameter_unit = value
 
 
 class Collimation:
@@ -739,6 +721,9 @@ class Data:
     """A class for storing and manipulating Data related data.
 
     :param  Instrument self.parent: The parent instrument object
+    :param float self.beam_diameter: The diameter of the beam that was calculated
+    :param str self.beam_diameter_unit: The unit of the diameter of the beam
+    :param float self.calculated_beam_stop_diameter: The calculated beam stop diameter value
     :param float self.peak_flux: The maximum beam flux
     :param float self.peak_wavelength: The maximum wavelength
     :param float self.bs_factor: The minimum factor that should be applied to the calculated beam size to ensure the
@@ -754,6 +739,7 @@ class Data:
     :param str self.q_unit: The unit for the q values
     :param float self.q_min: The overall minimum value
     :param list self.q_values: An array of q values
+    :param float self.figure_of_merit: The calculated figure of merit value
     :param list self.intensity: The list of values for q intensity
     :param float self.flux: The beam flux values
     :param str  self.flux_size_unit: The size unit for beam flux(Usually cm)
@@ -774,6 +760,9 @@ class Data:
         :rtype: None
         """
         self.parent = parent
+        self.beam_diameter = 0.0
+        self.beam_diameter_unit = 'cm'
+        self.calculated_beam_stop_diameter = 0.0
         self.peak_flux = np.inf  # peakFlux in constants.js
         self.peak_wavelength = 0.0  # peakLambda in constants.js
         self.bs_factor = 0.0  # BSFactor in constants.js
@@ -875,6 +864,73 @@ class Data:
         self.figure_of_merit = math.pow(self.parent.wavelength.get_wavelength(), 2) * self.get_beam_flux()
         return int(self.figure_of_merit)
 
+    def calculate_beam_diameter(self, index=0, direction='maximum'):
+        """ Calculates the beam diameter from the ssad and ssd among other values
+
+        + Usually run by calculate_instrument_parameters
+
+        :param index: The index in the detector array
+        :param direction: Calculates the beam diameter based on the directory given
+        :return: Nothing as it just sets the value
+        :rtype: None
+        """
+
+        # Get instrumental values
+        source_aperture = self.parent.get_source_aperture_diam()  # Correct if diam
+        sample_aperture = self.parent.get_sample_aperture_diam()  # Correct if diam
+        ssd = self.parent.get_source_to_sample_distance()  # Correct if ssd not SSAD
+        sdd = self.parent.get_sample_to_detector_distance(index)  # Correct when sdd not sadd(as SADD DNE)
+
+        wavelength = self.parent.get_wavelength()  # lambda
+        wavelength_spread = self.parent.get_wavelength_spread()  # lambda delta
+
+        # Parameters above this point correct
+
+        if self.parent.collimation.guides.lenses:
+            # If LENS configuration, the beam size is the source aperture size
+            # FIXed: This is showing -58 cm... Why?!?! - it wa snot returning afterward
+            self.beam_diameter = source_aperture  # Made beam diameter and returned
+            return
+        # Calculate beam width on the detector
+        try:
+            beam_width = source_aperture * sdd / ssd + sample_aperture * (ssd + sdd) / ssd  # Correct calculation
+        except ZeroDivisionError:
+            beam_width = 0.0
+        # Beam height due to gravity
+        bv3 = ((ssd + sdd) * sdd) * wavelength ** 2
+        bv4 = bv3 * wavelength_spread
+        bv = beam_width + 0.0000000125 * bv4  # 0.0000125 != 0.0000000125 Changed to 1.25e-8
+        # Larger of the width*safetyFactor and height
+        bm_bs = self.bs_factor * beam_width
+        bm = bm_bs if bm_bs > bv else bv
+        if direction == 'vertical':
+            beam_diam = bv
+        elif direction == 'horizontal':
+            beam_diam = bm_bs
+        else:
+            beam_diam = bm
+        self.beam_diameter = beam_diam
+
+    def calculate_beam_stop_diameter(self, index=0):
+        """ Calculates the beam stop diameter
+
+        + Runs calculate beam diameter
+
+        :param int index: The index in the detector array
+        :return: Nothing as it just sets the values
+        :rtype: None
+        """
+        self.calculate_beam_diameter(index, 'maximum')
+        beam_diam = self.get_beam_diameter()
+        for i in self.parent.beam_stops:
+            beam_stop_dict = i
+            if beam_stop_dict.beam_stop_diameter >= beam_diam:
+                self.calculated_beam_stop_diameter = beam_stop_dict.beam_stop_diameter
+                return
+        else:
+            # If this is reached, that means the beam diameter is larger than the largest known beam stop
+            self.beam_stops.calculated_beam_stop_diameter = self.beam_stops[len(self.beam_stops) - 1].beam_stop_diameter
+
     def get_figure_of_merit(self):
         """Gets the figure of merit attribute from the Data object and rounds it
 
@@ -894,6 +950,23 @@ class Data:
         # return (math.pow(self.parent.d_converter(self.flux, self.flux_size_unit), -2)
         #         * math.pow(self.parent.t_converter(self.flux, self.flux_time_unit),-1))
         return self.flux
+
+    def get_beam_diameter(self):
+        """ Gets the beam_diameter from the data class
+
+        :return: The value of the beam_diameter
+        :rtype: float
+        """
+
+        return self.beam_diameter
+
+    def get_calculated_beam_stop_diameter(self):
+        """ Gets the calculated_beam_stop_diameter from the data class
+
+        :return: The value of the calculated_beam_stop_diameter
+        :rtype: float
+        """
+        return self.calculated_beam_stop_diameter
 
 
 class Instrument:
@@ -1011,6 +1084,14 @@ class Instrument:
         params["collimation"]["source_aperture"] = {}
         params["collimation"]["source_aperture"]["diameter_unit"] = self._param_get_helper(params=old_params.get(name + "SourceAperture", {}), key="unit")
         params["collimation"]["source_aperture"]["diameter"] = self._param_get_helper(params=old_params.get(name + "SourceAperture", {}), key="default")
+
+        # Data
+        params["data"] = {}
+        params["data"]["beam_diameter"] = self._param_get_helper(params=old_params.get(name + "BeamDiameter", {}), key="default")
+        params["data"]["beam_diameter_unit"]= self._param_get_helper(params=old_params.get(name + "BeamDiameter", {}), key="unit")
+        params["data"]["calculated_beam_stop_diameter"] = self._param_get_helper(params=old_params.get(name + "BeamStopSize", {}), key="default")
+        params["data"]["figure_of_merit"] = self._param_get_helper(params=old_params.get(name + "FigureOfMerit", {}), key="default")
+        params["data"]["flux"] = self._param_get_helper(params=old_params.get(name + "BeamFlux", {}), key="default")
 
         # Detectors
         params["detectors"] = [None]
@@ -1230,77 +1311,6 @@ class Instrument:
         self.wavelength.number_of_attenuators = num_atten
         return num_atten
 
-    def calculate_beam_diameter(self, index=0, direction='maximum'):
-        """ Calculates the beam diameter from the ssad and ssd among other values
-
-        + Usually run by calculate_instrument_parameters
-
-        :param index: The index in the detector array
-        :param direction: Calculates the beam diameter based on the directory given
-        :return: Nothing as it just sets the value
-        :rtype: None
-        """
-        # CAF Needs function to be fixed
-
-        # Update all instrument calculations needed for beam diameter
-        self.collimation.get_ssad()
-        self.get_sample_to_detector_distance(index)
-
-        # Get instrumental values
-        source_aperture = self.get_source_aperture_diam()  # Correct if diam
-        sample_aperture = self.get_sample_aperture_diam()  # Correct if diam
-        ssd = self.get_source_to_sample_distance()  # Correct if ssd not SSAD
-        sdd = self.get_sample_to_detector_distance(index)  # Correct when sdd not sadd(as SADD DNE)
-        wavelength = self.get_wavelength()  # lambda
-        wavelength_spread = self.get_wavelength_spread()  # lambda delta
-
-        # Parameters above this point correct
-
-        if self.collimation.guides.lenses:
-            # If LENS configuration, the beam size is the source aperture size
-            # FIXed: This is showing -58 cm... Why?!?! - it wa snot returning afterward
-            self.beam_stops[index].beam_diameter = source_aperture  # Made beam diameter and returned
-            return
-        # Calculate beam width on the detector
-        try:
-            beam_width = source_aperture * sdd / ssd + sample_aperture * (ssd + sdd) / ssd  # Correct calculation
-        except ZeroDivisionError:
-            beam_width = 0.0
-        # Beam height due to gravity
-        bv3 = ((ssd + sdd) * sdd) * wavelength ** 2
-        bv4 = bv3 * wavelength_spread
-        bv = beam_width + 0.0000000125 * bv4  # 0.0000125 != 0.0000000125 Changed to 1.25e-8
-        # Larger of the width*safetyFactor and height
-        bm_bs = self.data.bs_factor * beam_width
-        bm = bm_bs if bm_bs > bv else bv
-        if direction == 'vertical':
-            beam_diam = bv
-        elif direction == 'horizontal':
-            beam_diam = bm_bs
-        else:
-            beam_diam = bm
-        self.beam_stops[index].beam_diameter = beam_diam
-
-    def calculate_beam_stop_diameter(self, index=0):
-        """ Calculates the beam stop diameter
-
-        + Runs calculate beam diameter
-
-        :param int index: The index in the detector array
-        :return: Nothing as it just sets the values
-        :rtype: None
-        """
-        self.calculate_beam_diameter(index, 'maximum')
-        beam_diam = self.get_beam_diameter(index)
-        for i in self.beam_stops:
-            beam_stop_dict = i
-            if beam_stop_dict.beam_stop_diameter >= beam_diam:
-                self.beam_stops[index].beam_stop_diameter = beam_stop_dict.beam_stop_diameter
-                return
-        else:
-            # If this is reached, that means the beam diameter is larger than the largest known beam stop
-            self.beam_stops[index].beam_stop_diameter = self.beam_stops[len(self.beam_stops) - 1].beam_stop_diameter
-
     def calculate_beam_stop_projection(self, index=0):
         """ The beam stop casts a shadow based on the distance the beam stop is from the detector, creating a
         larger projection than the nominal size of the beam stop. This method calculates that shadow.
@@ -1310,8 +1320,7 @@ class Instrument:
         :rtype: Float
         """
         self.get_sample_to_detector_distance(index)
-        self.calculate_beam_diameter(index)
-        self.calculate_beam_stop_diameter(index)
+        self.data.calculate_beam_stop_diameter(index)
         bs_diam = self.get_beam_stop_diameter(index)
         sample_aperture = self.get_sample_aperture_size()
         l2 = self.get_sample_aperture_to_detector_distance()  # Question why do we no longer need aperture offset
@@ -1419,7 +1428,7 @@ class Instrument:
         :rtype: int
         """
         # Beam diameter in centimeters
-        return self.beam_stops[index].diameter
+        return self.data.beam_diameter
 
     def get_beam_stop_diameter(self, index=0):
         """ Gets the beam stop diameter value from the beam stops class at the specified index
@@ -1726,7 +1735,6 @@ class NG7SANS(Instrument):
         params["collimation"]["guides"]["gap_at_start"] = 188
         params["collimation"]["guides"]["guide_width"] = 5
         params["collimation"]["guides"]["transmission_per_guide"] = 0.974
-        params["data"] = {}
         params["data"]["bs_factor"] = 1.05
         params["detectors"][0]["per_pixel_max_flux"] = 100
         params["data"]["peak_flux"] = 25500000000000
