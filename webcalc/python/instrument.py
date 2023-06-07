@@ -951,7 +951,7 @@ class Instrument:
         params = {}
         params["beam_stops"] = old_params.get(name + "BeamStopSizes", {}).get("options", [2.54])
         params["beam_stops"].sort()
-        params["beam_stops"] = [{"beam_stop_diameter": beam_stop} for beam_stop in params.get("beam_stops", 1.0)]
+        params["beam_stops"] = [{"beam_stop_diameter": beam_stop} for beam_stop in params.get("beam_stops", 2.54)]
         params["collimation"] = {}
         params["collimation"]["guides"] = {}
         params["collimation"]["guides"]["lenses"] = self.guide_lens_config(old_params[name + "GuideConfig"]["default"],
@@ -1055,7 +1055,7 @@ class Instrument:
 
         # CAF Beam stop defined
         self.beam_stops = [BeamStop(self, beamstop_params) for beamstop_params in
-                           params.get('beam_stops', [{'beam_stop_diameter': 1.0}])]
+                           params.get('beam_stops', [{'beam_stop_diameter': 2.54}])]
         self.detectors = [Detector(self, detector_params) for detector_params in params.get('detectors', [{}])]
         self.collimation = Collimation(self, params.get('collimation', {}))
         self.wavelength = Wavelength(self, params.get('wavelength', {}))
