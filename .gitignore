@@ -10,5 +10,6 @@
 /.vs/*
 /.idea/*
 build/
+SasWebCalc.egg-info/
 /.docs/build/*
 *package-lock.json*
