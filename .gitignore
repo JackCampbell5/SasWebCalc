@@ -9,7 +9,6 @@
 /bld/Debug/winrtrefs
 /.vs/*
 /.idea/*
-/.SasWebCalc.egg-info/*
-/.build/*
+build/
 /.docs/build/*
 *package-lock.json*
