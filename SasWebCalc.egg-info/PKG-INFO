@@ -1,7 +1,0 @@
-Metadata-Version: 2.1
-Name: SasWebCalc
-Version: 0.1.0
-Summary: A web-based small-angle scattering (SAS) tool for calculating theoretical I vs. Q and 2D scattering patterns based off an instrumental configuration and SAS model.
-Home-page: https://github.com/mypackage.git
-Author: Jeffery Krzywon and Jack Campbell
-Author-email: jeffery.krzywon@nist.gov
