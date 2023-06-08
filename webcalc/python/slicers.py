@@ -391,6 +391,16 @@ class Annular(Slicer):
         return mask == 0 or q_out_of_range
 
 
+# A predefined map to use for
+SLICER_MAP = {
+    'annular': Annular,
+    'circular': Circular,
+    'sector': Sector,
+    'rectangular': Rectangular,
+    'elliptical': Elliptical,
+}
+
+
 if __name__ == '__main__':
     # Quick test to ensure
     params = {
