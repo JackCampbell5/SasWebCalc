@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  nginx:
+    hostname: webcalc.ncnr.nist.gov
+    ports:
+      - 80:80
+    depends_on:
+      - magsans
+    image: nginx:latest
+    restart: always
+
+  magsans:
+    image: krzywon/magsans:latest
+    volumes:
+      - /polbeam/magsans/uploads:/polbeam/uploads:z
+    ports:
+      - 5000:5000
+    restart: always
