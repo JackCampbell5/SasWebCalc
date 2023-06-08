@@ -1,5 +1,3 @@
-# TODO: Create slicer class and child slicers
-# built-in imports
 import math
 from typing import Union
 
@@ -389,16 +387,6 @@ class Annular(Slicer):
         max_q = self.q_width + self.q_center
         q_out_of_range = q > max_q or min_q > q
         return mask == 0 or q_out_of_range
-
-
-# A predefined map to use for
-SLICER_MAP = {
-    'annular': Annular,
-    'circular': Circular,
-    'sector': Sector,
-    'rectangular': Rectangular,
-    'elliptical': Elliptical,
-}
 
 
 if __name__ == '__main__':
