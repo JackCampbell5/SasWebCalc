@@ -5,10 +5,7 @@ from typing import Dict, List, Union
 
 from .units import Converter
 from .constants import Constants
-from .slicers import Circular
-from .slicers import Sector
-from .slicers import Rectangular
-from .slicers import Elliptical
+from .slicers import Circular, SLICER_MAP
 
 Number = Union[float, int]
 
@@ -1380,14 +1377,9 @@ class Instrument:
         slicer_params["SSD"] = self.get_source_to_sample_aperture_distance()
         slicer_params["SDD"] = self.get_sample_to_detector_distance()
         averaging_type = self.averaging_type
-        if averaging_type == "sector":
-            self.slicer = Sector(slicer_params)
-        elif averaging_type == "rectangular":
-            self.slicer = Rectangular(slicer_params)
-        elif averaging_type == "elliptical":
-            self.slicer = Elliptical(slicer_params)
-        else:
-            self.slicer = Circular(slicer_params)
+        # SLICER_MAP
+        self.slicer = SLICER_MAP.get(averaging_type, Circular)
+        self.slicer(slicer_params)
 
     # TODO Fix these run functions and should just be getting values
     def get_attenuation_factor(self):
