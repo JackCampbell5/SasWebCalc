@@ -61,3 +61,7 @@ div.parameter > div, span.parameter, ul.parameter > li {
     margin: 5px;
     white-space: nowrap;
 }
+
+div.section_footer{
+    text-align: center;
+}
