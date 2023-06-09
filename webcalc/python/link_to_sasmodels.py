@@ -96,8 +96,8 @@ def calculate_model(model_string: str, q: List[np.ndarray], params: Dict[str, fl
     kernel = kernel_model.make_kernel(q)
     i_q = call_kernel(kernel, params)
     # Use built-in numpy.where for value replacement
-    i_q = np.where(i_q == np.inf, 9999999, i_q)
-    i_q = np.where(i_q == np.NAN, 8888888, i_q)
+    i_q = np.where(i_q != np.inf, i_q, 9999999)
+    i_q = np.where(i_q != np.NAN, i_q, 8888888)
     # Return a list representation of the numpy array
     return i_q.tolist()
 
