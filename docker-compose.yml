@@ -2,18 +2,20 @@ version: "3"
 
 services:
   nginx:
-    hostname: webcalc.ncnr.nist.gov
+    # TODO: Replace this with the real server name once it is up
+    hostname: 127.0.0.1
     ports:
-      - 80:80
+      - 5000:5000
     depends_on:
-      - magsans
+      - webcalc
     image: nginx:latest
     restart: always
 
-  magsans:
-    image: krzywon/magsans:latest
+  webcalc:
+    # TODO: Put the real docker image name here
+    image: krzywon/webcalc:latest
     volumes:
-      - /polbeam/magsans/uploads:/polbeam/uploads:z
+      - /SasWebCalc:z
     ports:
       - 5000:5000
     restart: always
