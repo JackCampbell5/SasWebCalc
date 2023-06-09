@@ -1,5 +1,5 @@
 import math
-from typing import Union
+from typing import Union, Dict
 
 import numpy as np
 from scipy.special import gamma, gammainc, erf
@@ -12,7 +12,10 @@ def calculate_distance_from_beam_center(pixel_value, pixel_center, pixel_size, c
     return coeff * np.tan((pixel_value - pixel_center) * pixel_size / coeff)
 
 
-def set_params(instance, params):
+ParameterType = Dict[str, Union[str, float, int, Dict]]
+
+
+def set_params(instance, params: ParameterType):
     """
     Set class attributes based on a dictionary of values. The dict should map <param_name> -> <value>.
     Args:
@@ -37,16 +40,9 @@ def set_params(instance, params):
             print(f"The parameter {key} is not a known {instance} attribute. Unable to set it to {value}.")
 
 
-def add_at_location(array, location):
-    pass
-
-
 class Slicer:
 
-    def __init__(self, params):
-
-        # Import all parameters for slicer class
-
+    def __init__(self, params: ParameterType):
         self.average_type = "Default"
 
         # Params needed for calculate_q_range_slicer
@@ -84,7 +80,6 @@ class Slicer:
         self.aspect_ratio: float = 1.0
 
         # Instrumental Parameters
-        # TODO: Maybe pass the instrument class as a parameter...
         self.lambda_val: float = 6.0
         self.lambda_width: float = 0.14
         self.guides: int = 0
@@ -95,7 +90,6 @@ class Slicer:
         self.beam_stop_size: float = 5.08
         self.SSD: float = 1627
         self.SDD: float = 1530
-        # TODO: not all pixels are square => differentiate pixel_size_x from pixel_size_y
         self.pixel_size = 5.08
         self.coeff: float = 10000
         self.x_center: float = 64.5
@@ -112,7 +106,6 @@ class Slicer:
         self.phi_to_lr_corner: float = 0.0
 
         # set params
-        # TODO: set_params should be a class method
         set_params(self, params)
         self.calculate_q_range_slicer()
         self.set_values()
@@ -386,6 +379,15 @@ class Annular(Slicer):
         max_q = self.q_width + self.q_center
         q_out_of_range = q > max_q or min_q > q
         return mask == 1 or q_out_of_range
+
+
+SLICER_MAP = {
+    'circular': Circular,
+    'annular': Annular,
+    'sector': Sector,
+    'elliptical': Elliptical,
+    'rectangular': Rectangular,
+}
 
 
 if __name__ == '__main__':
