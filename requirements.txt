@@ -1,0 +1,8 @@
+numpy
+scipy
+sasmodels
+flask
+setuptools
+docutils
+sphinx
+tinycc
