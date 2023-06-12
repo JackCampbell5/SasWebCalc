@@ -1065,8 +1065,7 @@ class Instrument:
         params["collimation"]["guides"]["number_of_guides"] = self.guide_lens_config(
             self._param_get_helper(params=old_params.get(name + "GuideConfig", {}), key="default"), True)
         params["collimation"]["detector_distance"] = self._param_get_helper(params=old_params.get(name + "SDDInputBox", {}), key="default")
-        if name + "SampleTable" in old_params.values():
-            params["collimation"]["sample_space"] = self._param_get_helper(params=old_params.get(name + "SampleTable", {}), key="default")
+        params["collimation"]["sample_space"] = self._param_get_helper(params=old_params.get(name + "SampleTable", {}), key="default")
         params["collimation"]["ssad_unit"] = self._param_get_helper(params=old_params.get(name + "SSD", {}), key="unit")
         params["collimation"]["ssad"] = self._param_get_helper(params=old_params.get(name + "SSD", {}), key="default")
         params["collimation"]["ssd_unit"] = self._param_get_helper(params=old_params.get(name + "SSD", {}), key="unit")
@@ -1076,7 +1075,6 @@ class Instrument:
         params["collimation"]["sample_aperture"] = {}
         # Better arrangement for the get statements below - missing  else None from Jeff's changes
         params["collimation"]["sample_aperture"]["diameter"] = self._param_get_helper(params=old_params.get(name + "SampleAperture", {}), key="default")
-        # FIXME Can not set sample aperture unit otherwise creates errors
         params["collimation"]["source_aperture"] = {}
         params["collimation"]["source_aperture"]["diameter_unit"] = self._param_get_helper(params=old_params.get(name + "SourceAperture", {}), key="unit")
         params["collimation"]["source_aperture"]["diameter"] = self._param_get_helper(params=old_params.get(name + "SourceAperture", {}), key="default")
@@ -1101,6 +1099,12 @@ class Instrument:
 
         # Slicer
         params["slicer"] = {}
+        slicer_repl_map = {"Phi": "phi", "dPhi": "d_phi", "aspectRatio": "aspect_ratio",
+                           "qCenter": "q_center", "qWidth": "q_width", "qHeight": "q_height",
+                           "detectorHalves": "detector_sections"}
+        for key, value in calculate_params["slicer_params"].items():
+            if key in slicer_repl_map.keys():
+                params['slicer'][slicer_repl_map.get(key)] = value
         params["average_type"] = calculate_params["slicer"]
 
         # Wavelength
@@ -1378,6 +1382,7 @@ class Instrument:
         slicer_params["SDD"] = self.get_sample_to_detector_distance()
         averaging_type = str(self.averaging_type).lower()
         slicer_class = SLICER_MAP.get(averaging_type, Circular)
+        print(slicer_params)
         self.slicer = slicer_class(params=slicer_params)
 
     def get_attenuation_factor(self):
@@ -1743,7 +1748,7 @@ class NG7SANS(Instrument):
         params["slicer"]["y_pixels"] = 128
         params["collimation"]["guides"]["maximum_length"] = 1632
         params["collimation"]["guides"]["length_per_guide"] = 155
-        if params.get("collimation").get("sample_space", "Huber") == "Huber":
+        if params.get("collimation").get("sample_space", "Chamber") == "Huber":
             params["collimation"]["space_offset"] = 54.8  # HuberOffset
         else:
             params["collimation"]["space_offset"] = 0.0  # ChamberOffset
@@ -1807,7 +1812,7 @@ class NGB30SANS(Instrument):
         params["slicer"]["y_pixels"] = 128
         params["collimation"]["guides"]["maximum_length"] = 1632
         params["collimation"]["guides"]["length_per_guide"] = 155
-        if params.get("collimation").get("sample_space", "Huber") == "Huber":
+        if params.get("collimation").get("sample_space", "Chamber") == "Huber":
             params["collimation"]["space_offset"] = 54.8  # HuberOffset
         else:
             params["collimation"]["space_offset"] = 0  # ChamberOffset
@@ -1873,7 +1878,7 @@ class NGB10SANS(Instrument):
         params["slicer"]["coeff"] = 10000
         params["slicer"]["x_pixels"] = 128
         params["slicer"]["y_pixels"] = 128
-        if params.get("collimation").get("sample_space", "Huber") == "Huber":
+        if params.get("collimation").get("sample_space", "Chamber") == "Huber":
             params["collimation"]["space_offset"] = 0  # HuberOffset
         else:
             params["collimation"]["space_offset"] = 0  # ChamberOffset
