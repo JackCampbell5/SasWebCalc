@@ -172,7 +172,7 @@ class Slicer:
                     n_d_sqr = nd
                     for el in range(1, nd):
                         corrected_dy = y_distances[i][j] + (el - center[i][j]) * self.pixel_size / el
-                        if self.include_pixel(corrected_dx, corrected_dy, self.mask[i][j]):
+                        if self.include_pixel(self.qx_values[i], self.qy_values[j], self.mask[i][j]):
                             i_radius = self.get_i_radius(corrected_dx, corrected_dy)
                             self.n_cells[i_radius] += 1 / n_d_sqr
                             self.ave_intensity[i_radius] = (0 if self.n_cells[i] == 0 or math.isnan(self.n_cells[i])
@@ -290,7 +290,7 @@ class Slicer:
                       for i in range(self.x_pixels)] for j in range(self.y_pixels)]
 
     def include_pixel(self, x_val, y_val, mask):
-        return mask == 1
+        return mask == 0
 
     # Slicer recturn method for all the values need to return to slicer
     def slicer_return(self):
@@ -334,7 +334,7 @@ class Sector(Slicer):
         both = self.detector_sections == "both" and (mirror or forward)
         left = self.detector_sections == "left" and mirror
         right = self.detector_sections == "right" and forward
-        return (both or left or right) and (mask == 1)
+        return (both or left or right) and (mask == 0)
 
 
 class Rectangular(Slicer):
@@ -351,7 +351,7 @@ class Rectangular(Slicer):
         b = self.detector_sections == "both"
         c = self.detector_sections == "left" and dot_product >= 0
         d = self.detector_sections == "right" and dot_product < 0
-        return a and (b or c or d) and (mask == 1)
+        return a and (b or c or d) and (mask == 0)
 
 
 class Elliptical(Slicer):
@@ -378,10 +378,7 @@ class Annular(Slicer):
 
     def include_pixel(self, x_val, y_val, mask):
         q = math.sqrt(x_val * x_val + y_val * y_val)
-        min_q = self.q_center - self.q_width if self.q_center - self.q_width >= 0. else 0.0
-        max_q = self.q_width + self.q_center
-        q_out_of_range = q > max_q or min_q > q
-        return mask == 1 or q_out_of_range
+        return mask == 0 and self.q_range_min <= q <= self.q_range_max
 
 
 SLICER_MAP = {
