@@ -77,6 +77,7 @@ class Slicer:
         self.d_phi: float = math.pi / 2
         self.q_center: float = 0.0
         self.q_width: float = 0.3
+        self.q_height: float = 0.3
         self.aspect_ratio: float = 1.0
 
         # Instrumental Parameters
@@ -107,6 +108,8 @@ class Slicer:
 
         # set params
         set_params(self, params)
+        self.q_range_min = self.q_center - self.q_width if self.q_width < self.q_center else 0.0
+        self.q_range_max = self.q_center + self.q_width
         self.calculate_q_range_slicer()
         self.set_values()
 
@@ -120,7 +123,7 @@ class Slicer:
         self.min_qy = 0.0 if len(self.qy_values) == 0 else min(self.qy_values)
 
         # Calculated parameters
-        self.phi_upper = self.phi * self.d_phi
+        self.phi_upper = self.phi + self.d_phi
         self.phi_lower = self.phi - self.d_phi
         self.phi_x = math.cos(self.phi)
         self.phi_y = math.sin(self.phi)
