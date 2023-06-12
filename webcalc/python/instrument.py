@@ -1382,7 +1382,7 @@ class Instrument:
         slicer_params["SDD"] = self.get_sample_to_detector_distance()
         averaging_type = str(self.averaging_type).lower()
         slicer_class = SLICER_MAP.get(averaging_type, Circular)
-        print(slicer_params)
+        slicer_class = SLICER_MAP.get(averaging_type, Circular)
         self.slicer = slicer_class(params=slicer_params)
 
     def get_attenuation_factor(self):
