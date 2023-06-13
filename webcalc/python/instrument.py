@@ -48,18 +48,7 @@ def calculate_instrument(instrument: str, params: dict) -> Dict[str, Union[Numbe
     }
     """
     # i_class is the python object for the interment
-    if instrument == 'ng7':
-        # Creates NG7SANS object if instrument is ng7
-        i_class = NG7SANS(instrument, params)
-    elif instrument == 'ngb30':
-        # Creates NGB30SANS object if instrument is ngb30
-        i_class = NGB30SANS(instrument, params)
-    elif instrument == 'ngb10':
-        # Creates NG7B10SANS object if instrument is ngb10
-        i_class = NGB10SANS(instrument, params)
-    else:
-        # Create a user-defined Q-range instrument
-        i_class = NoInstrument(instrument, params)
+    i_class = get_instrument_by_name(instrument, params)
     # Runs the SasCalc function and returns the python return array
     return i_class.sas_calc()
 
@@ -1907,3 +1896,23 @@ class NGB10SANS(Instrument):
 #     def load_params(self, params):
 #         print("VSANS Load Params")
 #         super().load_objects(params)
+
+
+# A map of instrument names to classes -> This will be dynamically populated in the future.
+INSTRUMENT_MAP = {
+    'ng7': NG7SANS,
+    'ngb30': NGB30SANS,
+    'ngb10': NGB10SANS
+}
+
+
+def get_instrument_by_name(name: str, params: dict) -> Instrument:
+    """A helper method that creates and returns an Instrument instance based on the name passed to the method.
+
+    :param name: A string that relates to a specific instrument
+    :param params: A dictionary mapping the initial property names to their respective values.
+    :return: An Instrument instance that has been instantiated.
+    """
+    class_type = INSTRUMENT_MAP.get(name, NoInstrument)
+    i_class = class_type(params)
+    return i_class
