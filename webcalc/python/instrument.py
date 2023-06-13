@@ -987,10 +987,9 @@ class Instrument:
     """
     isReal = False
 
-    def __init__(self, name="", params=None):
+    def __init__(self, params=None):
         """Creates object parameters for Instrument class and runs set the params parameter which runs the load params methods
 
-        :param str name: The instrument name
         :param dict params: The dictionary of params
         :return: None as it just sets the parameters
         :rtype: None
@@ -1012,7 +1011,6 @@ class Instrument:
         if not params:
             params = {}
             # Only store values used for calculations in Instrument class
-        self.name = name
         self.constants = Constants()
         self.params = params
 
@@ -1703,10 +1701,9 @@ class NG7SANS(Instrument):
     """
 
     # Constructor for the NG7SANS instrument
-    def __init__(self, name, params):
+    def __init__(self, params):
         """The constructor method that creates the necessary parameters and runs the instrument classes constructor
 
-        :param str name: The name of the instrument
         :param dict params: A dictionary of the parameters passed from the calculate instrument method
         :return: Nothing just runs the message
         :rtype: None
@@ -1714,7 +1711,7 @@ class NG7SANS(Instrument):
         self.name = "ng7"
         params = self.param_restructure(params)
         # Super is the Instrument class
-        super().__init__(name, params)
+        super().__init__(params)
 
     def load_params(self, params):
         """A method that loads the constants of the NG7SANS Instrument
@@ -1767,17 +1764,16 @@ class NGB30SANS(Instrument):
     """
 
     # Class for the NGB 30m SANS instrument
-    def __init__(self, name, params):
+    def __init__(self, params):
         """The constructor method that creates the necessary parameters and runs the instrument classes constructor
 
-        :param str name: The name of the instrument
         :param dict params: A dictionary of the parameters passed from the calculate instrument method
         :return: Nothing just runs the message
         :rtype: None
         """
         self.name = "ngb30"
         params = self.param_restructure(params)
-        super().__init__(name, params)
+        super().__init__(params)
 
     def load_params(self, params):
         """A method that loads the constants of the NG7SANS Instrument
@@ -1831,7 +1827,7 @@ class NGB10SANS(Instrument):
     """
 
     # Class for the NGB 10m SANS instrument
-    def __init__(self, name, params):
+    def __init__(self, params):
         """The constructor method that creates the necessary parameters and runs the instrument classes constructor
 
         :param str name: The name of the instrument
@@ -1841,7 +1837,7 @@ class NGB10SANS(Instrument):
         """
         self.name = "ngb10"
         params = self.param_restructure(params)
-        super().__init__(name, params)
+        super().__init__(params)
 
     def load_params(self, params):
         """A method that loads the constants of the NG7SANS Instrument
