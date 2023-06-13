@@ -165,14 +165,14 @@ class Slicer:
 
         for i in range(self.x_pixels):
             for j in range(self.y_pixels):
-                data_px = self.intensity_2D[i][j]
-                nd = int(num_dimensions[i][j])
-                for k in range(1, nd):
-                    corrected_dx = x_distances[i][j] + (k - center[i][j]) * self.pixel_size / k
-                    n_d_sqr = nd
-                    for el in range(1, nd):
-                        corrected_dy = y_distances[i][j] + (el - center[i][j]) * self.pixel_size / el
-                        if self.include_pixel(self.qx_values[i], self.qy_values[j], self.mask[i][j]):
+                if self.include_pixel(self.qx_values[i], self.qy_values[j], self.mask[i][j]):
+                    data_px = self.intensity_2D[i][j]
+                    nd = int(num_dimensions[i][j])
+                    for k in range(1, nd):
+                        corrected_dx = x_distances[i][j] + (k - center[i][j]) * self.pixel_size / k
+                        n_d_sqr = nd * nd
+                        for el in range(1, nd):
+                            corrected_dy = y_distances[i][j] + (el - center[i][j]) * self.pixel_size / el
                             i_radius = self.get_i_radius(corrected_dx, corrected_dy)
                             self.n_cells[i_radius] += 1 / n_d_sqr
                             self.ave_intensity[i_radius] = (0 if self.n_cells[i] == 0 or math.isnan(self.n_cells[i])
@@ -340,6 +340,7 @@ class Sector(Slicer):
 class Rectangular(Slicer):
     def __init__(self, params):
         super().__init__(params)
+        # FIXME: This should perform a scan across the detector.
         self.average_type = "rectangular"
 
     def include_pixel(self, x_val, y_val, mask):
