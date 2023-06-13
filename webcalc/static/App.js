@@ -21,6 +21,9 @@ const template = `
     <a href="https://gitlab.nist.gov/gitlab/jkrzywon/saswebcalc/-/issues/new">
       <button class="top-level-button" title="Bug submission tool">!</button>
     </a>
+    <a href="/docs">
+      <button class="top-level-button" title="Docs Access">?</button>
+    </a>
 </div>
 </header>
 <main>
