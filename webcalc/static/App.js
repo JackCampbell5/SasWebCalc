@@ -17,9 +17,9 @@ const template = `
 </header>
 <header class="title">
 <h1>SASCALC on the Web</h1>
- <div class = "section_footer">
+ <div class = "section_subheader">
     <a href="https://gitlab.nist.gov/gitlab/jkrzywon/saswebcalc/-/issues/new">
-      <button style="font-size: 2vw">? Bug</button>
+      <button style="font-size: 2vw; font-weight: bold">Bug?</button>
     </a>
 </div>
 </header>

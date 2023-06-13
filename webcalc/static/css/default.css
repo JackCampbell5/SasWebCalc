@@ -5,8 +5,9 @@
 header.title {
     font-family: 'Source Sans Pro', sans-serif;
     display: flex;
-    vertical-align: center;
     margin:auto;
+    align-items: center;
+    justify-content: center;
 }
 
 main {
@@ -64,9 +65,9 @@ div.parameter > div, span.parameter, ul.parameter > li {
     white-space: nowrap;
 }
 
-div.section_footer{
+div.section_subheader{
     margin-top: 1em;
     margin-bottom: 1em;
     margin-left: 20px;
-    margin-right: 20px
+    margin-right: 20px;
 }
