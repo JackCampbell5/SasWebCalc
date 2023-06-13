@@ -17,6 +17,11 @@ const template = `
 </header>
 <header class="title">
 <h1>SASCALC on the Web</h1>
+ <div class = "section_footer">
+    <a href="https://gitlab.nist.gov/gitlab/jkrzywon/saswebcalc/-/issues/new">
+      <button style="font-size: 2vw">? Bug</button>
+    </a>
+</div>
 </header>
 <main>
 <div class="centered-column" id="preamble">
@@ -48,11 +53,6 @@ const template = `
     <component v-if="active_instrument != ''" :is="active_instrument" :title="instruments[active_instrument]" :pythonParams="pythonParams"
         @value-change="onInstrumentParamChange"/>
   </div>
-  <div class = "section_footer">
-    <a href="https://gitlab.nist.gov/gitlab/jkrzywon/saswebcalc/-/issues/new">
-      <button style="font-size: 16px">Submit Bug/Feature Request</button>
-    </a>
-</div>
 </div>
 </main>
 `;

@@ -4,7 +4,9 @@
 
 header.title {
     font-family: 'Source Sans Pro', sans-serif;
-    text-align: center;
+    display: flex;
+    vertical-align: center;
+    margin:auto;
 }
 
 main {
@@ -63,5 +65,8 @@ div.parameter > div, span.parameter, ul.parameter > li {
 }
 
 div.section_footer{
-    text-align: center;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    margin-left: 20px;
+    margin-right: 20px
 }
