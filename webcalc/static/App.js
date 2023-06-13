@@ -17,6 +17,11 @@ const template = `
 </header>
 <header class="title">
 <h1>SASCALC on the Web</h1>
+ <div class = "section_subheader">
+    <a href="https://gitlab.nist.gov/gitlab/jkrzywon/saswebcalc/-/issues/new">
+      <button class="top-level-button" title="Bug submission tool">!</button>
+    </a>
+</div>
 </header>
 <main>
 <div class="centered-column" id="preamble">
