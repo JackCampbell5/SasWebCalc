@@ -1,6 +1,7 @@
 from typing import Optional, Union, List, Dict
 
 from sasmodels.kernel import KernelModel
+from sasmodels.direct_model import call_kernel
 
 from .instrument import Instrument, Data
 from .slicers import Slicer
@@ -23,9 +24,10 @@ class Calculator:
         # The class to hold all calculated data
         self.data = Data(self.instrument, {})
 
-    def calculate(self):
+    def calculate(self, model_params: Dict[str, Union[int, float]]):
         """
         The primary calculation routine.
+        :param model_params: The model calculator uses the params at the time of the call, not instantiation.
         """
         # Calculate the as-viewed scattering pattern from the instrument without applying any model calculation
         #   This should calculate the resolution per point, and uncertainty in intensity.
@@ -37,7 +39,7 @@ class Calculator:
         # Calculate the as-viewed scattering pattern using the model, assuming the resolution and information from
         #   the instrument class
         kernel = self.model.make_kernel(self.instrument.data.q_values)
-        # TODO: call kernel.Iq() with parameters
+        self.data.intensity = call_kernel(kernel, model_params)
         # Calculate the averaged representation of the data
         self.averaging.calculate()
 
