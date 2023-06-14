@@ -9,16 +9,22 @@ from flask import Flask, render_template, request
 
 # import specific methods from python files
 try:
-    from python.link_to_sasmodels import get_model_list, get_params
+    from python.link_to_sasmodels import get_model_list, get_params, get_model
     from python.link_to_sasmodels import calculate_model as calculate_m
     from python.instrument import calculate_instrument as calculate_i
     from python.helpers import decode_json, encode_json
+    from python.instrument import get_instrument_by_name
+    from python.slicers import SLICER_MAP, Circular
+    from python.calculator import Calculator
 except ModuleNotFoundError:
     # Runs the imports from webcalc only when auto-doc runs to remove errors
-    from webcalc.python.link_to_sasmodels import get_model_list, get_params
+    from webcalc.python.link_to_sasmodels import get_model_list, get_params, get_model
     from webcalc.python.link_to_sasmodels import calculate_model as calculate_m
     from webcalc.python.instrument import calculate_instrument as calculate_i
     from webcalc.python.helpers import decode_json, encode_json
+    from webcalc.python.instrument import get_instrument_by_name
+    from webcalc.python.slicers import SLICER_MAP, Circular
+    from webcalc.python.calculator import Calculator
 
 Number = Union[float, int]
 
@@ -53,58 +59,31 @@ def create_app():
         json_like = json.loads(data)
 
         # Get instrument and instrument params out of the dict
-        instrument = json_like.get('instrument', '')
+        instrument_name = json_like.get('instrument', '')
         instrument_params = json_like.get('instrument_params', {})
-
-        # Gets the model and model params out of the dict
-        model = json_like.get('model', '')
-        model_params = json_like.get('model_params', {})
-        model_params = {key: value.get('default', 0.0) for key, value in model_params.items()}
-
-        # Gets slicer and Slicer params out of dict
-        slicer = json_like.get('averaging_type', '')
-        slicer_params = json_like.get('averaging_params', {})
-
         # Returns if array is empty
         if instrument_params == {}:
             print("Returning Blank")
             return encode_json({})
+        instrument = get_instrument_by_name(instrument_name, instrument_params)
 
-        # Make slicer circular if none given
-        if not slicer:
-            slicer = 'Circular'
+        # Gets the model and model params out of the dict
+        model_name = json_like.get('model', '')
+        model_params = json_like.get('model_params', {})
+        model_params = {key: value.get('default', 0.0) for key, value in model_params.items()}
+        model = get_model(model_name)
 
-        # Run the functions based on the data
+        # Gets slicer and Slicer params out of dict
+        slicer_name = json_like.get('averaging_type', '')
+        slicer_params = json_like.get('averaging_params', {})
+        slicer_class = SLICER_MAP.get(slicer_name, Circular)
+        slicer = slicer_class(slicer_params)
 
-        # Creates params for calculation from all the params
-        calculate_params = {"instrument_params": instrument_params, "slicer": slicer, "slicer_params": slicer_params}
-
-        # Calculate the instrument and slicer
-        params = _calculate_instrument(instrument, calculate_params)
-        # Get q in proper format
-        q_1d = [np.asarray(params.get('qValues', []))]
-        # qx and qy values are 1D arrays of base values -> Need to create 2D arrays for each
-        qx = np.asarray(params.get('qxValues', []))
-        qy = np.asarray(params.get('qyValues', []))
-        # Need size of 1D arrays for 2D array sizes
-        len_x = len(qx)
-        len_y = len(qy)
-        qx = np.tile(qx, [len_y, 1])
-        qy = np.transpose(np.tile(qy, [len_x, 1])[::-1])
-        q_2d = [qx, qy]
-
-        # Calculate the 1D model
-        model_1d = _calculate_model(model, model_params, q_1d)
-        comb_1d = np.asarray(model_1d) * np.asarray(params.get('fSubs', []))
-        params['fSubs'] = comb_1d.tolist()
-        # Calculate the 2D model
-        model_2d = _calculate_model(model, model_params, q_2d)
-        i_2d = np.asarray(params.get('intensity2D', []))
-        comb_2d = np.asarray(model_2d).reshape(i_2d.shape) * i_2d
-        params['intensity2D'] = comb_2d.tolist()
+        calculator = Calculator(instrument, model, slicer)
+        calculator.calculate(model_params)
 
         # Return all data
-        return encode_json(params)
+        return encode_json(calculator.format_data_for_return())
 
     @app.route('/calculate/model/<model_name>', methods=['POST'])
     def calculate_model(model_name: str) -> str:
