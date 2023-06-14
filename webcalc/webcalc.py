@@ -25,7 +25,6 @@ Number = Union[float, int]
 
 def create_app():
     app = Flask(__name__)
-    # app = Flask(__name__, template_folder="../docs/build/html", static_url_path='/', static_folder='docs/build/html/')
 
     # Launches the main program based on a basic link
     @app.route('/', methods=['GET', 'POST'])
@@ -36,27 +35,27 @@ def create_app():
     # The documentation flask calls to get the documentation site to appear
     @app.route("/docs/<name>", methods=['GET', 'POST'])
     def docs_main(name):
-        return render_template("docs/build/html/"+name)
+        return render_template(f"docs/build/html/{name}")
 
     @app.route("/docs/api/<name>", methods=['GET', 'POST'])
     def docs_api(name):
-        return render_template("docs/build/html/api/" + name)
+        return render_template(f"docs/build/html/api/{name}")
 
     @app.route("/docs/_static/<name>", methods=['GET', 'POST'])
     def docs_static(name):
-        return send_file("templates/docs/build/html/_static/" + name)
+        return send_file(f"templates/docs/build/html/_static/{name}")
 
     @app.route("/docs/_static/css/<name>", methods=['GET', 'POST'])
     def docs_css(name):
-        return send_file("templates/docs/build/html/_static/css/" + name)
+        return send_file(f"templates/docs/build/html/_static/css/{name}")
 
     @app.route("/docs/_static/js/<name>", methods=['GET', 'POST'])
     def docs_js(name):
-        return send_file("templates/docs/build/html/_static/js/" + name)
+        return send_file(f"templates/docs/build/html/_static/js/{name}")
 
     @app.route("/docs/_static/css/fonts/<name>", methods=['GET', 'POST'])
     def docs_css_fonts(name):
-        return send_file("templates/docs/build/html/_static/css/fonts/" + name)
+        return send_file(f"templates/docs/build/html/_static/css/fonts/{name}")
 
     @app.route('/get/models/', methods=['GET'])
     def get_all_models():
