@@ -12,6 +12,11 @@ RUN pip install --trusted-host pypi.python.org --trusted-host files.pythonhosted
 COPY . .
 RUN python3 -m pip install /SasWebCalc/
 
+COPY docs/build/html webcalc/templates
+COPY docs/build/doctrees webcalc/static/doctrees
+COPY docs/build/html/_sources webcalc/static/_sources
+COPY docs/build/html/_static webcalc/static_static
+
 EXPOSE 5000
 
 CMD [ "python3", "-m" , "flask", "run", "--host=0.0.0.0"]

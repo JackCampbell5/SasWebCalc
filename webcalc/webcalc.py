@@ -25,12 +25,17 @@ Number = Union[float, int]
 
 def create_app():
     app = Flask(__name__)
+    # app = Flask(__name__, template_folder="../docs/build/html", static_url_path='/', static_folder='docs/build/html/')
 
     # Launches the main program based on a basic link
     @app.route('/', methods=['GET', 'POST'])
     @app.route('/saswebcalc/', methods=['GET', 'POST'])
     def root():
         return render_template("index.html")
+
+    @app.route("/docs/", methods=['GET', 'POST'])
+    def docs():
+        return render_template("index_doc.html")
 
     @app.route('/get/models/', methods=['GET'])
     def get_all_models():
@@ -138,7 +143,7 @@ def create_app():
         # Calculates all the values and returns them
         return encode_json(_calculate_instrument(instrument_name, params))
 
-    def _calculate_instrument(instrument_name: str, params: Dict[str, Union[Number, str]]) ->\
+    def _calculate_instrument(instrument_name: str, params: Dict[str, Union[Number, str]]) -> \
             Dict[str, Union[Number, str, List[Union[Number, str]]]]:
         """
 
