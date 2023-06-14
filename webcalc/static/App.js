@@ -18,9 +18,11 @@ const template = `
 <header class="title">
 <h1>SASCALC on the Web</h1>
  <div class = "section_subheader">
-    <a href="https://gitlab.nist.gov/gitlab/jkrzywon/saswebcalc/-/issues/new">
+    <a href="https://gitlab.nist.gov/gitlab/jkrzywon/saswebcalc/-/issues/new"  target="_blank">
       <button class="top-level-button" title="Bug submission tool">!</button>
     </a>
+      <button class="top-level-button" title="Docs Access" @click="docsDisplay">?</button>
+
 </div>
 </header>
 <main>
@@ -41,6 +43,9 @@ const template = `
           {{averaging}}</option>
       </select>
     </div>
+  </div>
+  <div class="documentation" v-show="documentation_shown">
+  <iframe src="/docs/index.html" title="SasWebCalc Documentation"  width="100%" height="500" style="border:1px solid black;"></iframe>
   </div>
   <plotting ref="plotting" :data_1d="data_1d" :data_2d="data_2d" :shapes="shapes"/>
   <div class="instrument-section" id="modelAndAveragingParams">
@@ -98,6 +103,7 @@ export default {
     shapes: [],
     instruments,
     pythonParams: {},
+    documentation_shown: false,
   }),
   methods: {
     async populateModelParams() {
@@ -178,6 +184,9 @@ export default {
       this.active_averaging_type = localStorage.getItem("active_averaging_type") || "Circular";
       this.active_model = localStorage.getItem("active_model") || "";
     },
+    docsDisplay(){
+      this.documentation_shown = !this.documentation_shown
+    }
   },
   async beforeMount() {
     const fetch_result = await fetch("/get/models/");

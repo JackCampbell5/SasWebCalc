@@ -6,3 +6,4 @@ setuptools
 docutils
 sphinx
 tinycc
+sphinx_rtd_theme

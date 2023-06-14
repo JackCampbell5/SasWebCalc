@@ -5,7 +5,7 @@ import sys
 from typing import Optional, Union, Dict, List
 
 import numpy as np
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_file
 
 # import specific methods from python files
 try:
@@ -31,6 +31,31 @@ def create_app():
     @app.route('/saswebcalc/', methods=['GET', 'POST'])
     def root():
         return render_template("index.html")
+
+    # The documentation flask calls to get the documentation site to appear
+    @app.route("/docs/<name>", methods=['GET', 'POST'])
+    def docs_main(name):
+        return render_template(f"docs/build/html/{name}")
+
+    @app.route("/docs/api/<name>", methods=['GET', 'POST'])
+    def docs_api(name):
+        return render_template(f"docs/build/html/api/{name}")
+
+    @app.route("/docs/_static/<name>", methods=['GET', 'POST'])
+    def docs_static(name):
+        return send_file(f"templates/docs/build/html/_static/{name}")
+
+    @app.route("/docs/_static/css/<name>", methods=['GET', 'POST'])
+    def docs_css(name):
+        return send_file(f"templates/docs/build/html/_static/css/{name}")
+
+    @app.route("/docs/_static/js/<name>", methods=['GET', 'POST'])
+    def docs_js(name):
+        return send_file(f"templates/docs/build/html/_static/js/{name}")
+
+    @app.route("/docs/_static/css/fonts/<name>", methods=['GET', 'POST'])
+    def docs_css_fonts(name):
+        return send_file(f"templates/docs/build/html/_static/css/fonts/{name}")
 
     @app.route('/get/models/', methods=['GET'])
     def get_all_models():
@@ -138,7 +163,7 @@ def create_app():
         # Calculates all the values and returns them
         return encode_json(_calculate_instrument(instrument_name, params))
 
-    def _calculate_instrument(instrument_name: str, params: Dict[str, Union[Number, str]]) ->\
+    def _calculate_instrument(instrument_name: str, params: Dict[str, Union[Number, str]]) -> \
             Dict[str, Union[Number, str, List[Union[Number, str]]]]:
         """
 
