@@ -5,7 +5,7 @@ import sys
 from typing import Optional, Union, Dict, List
 
 import numpy as np
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_file
 
 # import specific methods from python files
 try:
@@ -33,9 +33,30 @@ def create_app():
     def root():
         return render_template("index.html")
 
-    @app.route("/docs/", methods=['GET', 'POST'])
-    def docs():
-        return render_template("index_doc.html")
+    # The documentation flask calls to get the documentation site to appear
+    @app.route("/docs/<name>", methods=['GET', 'POST'])
+    def docs_main(name):
+        return render_template("docs/build/html/"+name)
+
+    @app.route("/docs/api/<name>", methods=['GET', 'POST'])
+    def docs_api(name):
+        return render_template("docs/build/html/api/" + name)
+
+    @app.route("/docs/_static/<name>", methods=['GET', 'POST'])
+    def docs_static(name):
+        return send_file("templates/docs/build/html/_static/" + name)
+
+    @app.route("/docs/_static/css/<name>", methods=['GET', 'POST'])
+    def docs_css(name):
+        return send_file("templates/docs/build/html/_static/css/" + name)
+
+    @app.route("/docs/_static/js/<name>", methods=['GET', 'POST'])
+    def docs_js(name):
+        return send_file("templates/docs/build/html/_static/js/" + name)
+
+    @app.route("/docs/_static/css/fonts/<name>", methods=['GET', 'POST'])
+    def docs_css_fonts(name):
+        return send_file("templates/docs/build/html/_static/css/fonts/" + name)
 
     @app.route('/get/models/', methods=['GET'])
     def get_all_models():
