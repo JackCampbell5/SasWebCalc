@@ -8,14 +8,13 @@ RUN python3 -m pip install --trusted-host pypi.python.org --trusted-host files.p
 COPY requirements.txt requirements.txt
 RUN pip install --trusted-host pypi.python.org --trusted-host files.pythonhosted.org --trusted-host pypi.org --upgrade pip -r requirements.txt
 
+
 # Bundle app source
 COPY . .
-RUN python3 -m pip install /SasWebCalc/
 
-COPY docs/build/html webcalc/templates
-COPY docs/build/doctrees webcalc/static/doctrees
-COPY docs/build/html/_sources webcalc/static/_sources
-COPY docs/build/html/_static webcalc/static_static
+# Move the documentation to the correct location
+COPY docs webcalc/templates/docs
+RUN python3 -m pip install /SasWebCalc/
 
 EXPOSE 5000
 
