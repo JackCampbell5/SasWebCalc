@@ -403,9 +403,9 @@ class Detector:
         self.pixel_size_z = 0.0
         self.pixel_size_z_unit = 'cm'
         # TODO import these as constants (128 is just temporary to make nice numbers)
-        self.pixel_no_x = 128
-        self.pixel_no_y = 128
-        self.pixel_no_z = 128
+        self.pixel_no_x = 0
+        self.pixel_no_y = 0
+        self.pixel_no_z = 0
         self.per_pixel_max_flux = 1e40
         self.dead_time = 0
         self.beam_center_x = 0.0
@@ -1748,6 +1748,7 @@ class NG7SANS(Instrument):
         params["detectors"][0]["pixel_size_y_unit"] = "cm"
         params["detectors"][0]["pixel_no_x"] = 128
         params["detectors"][0]["pixel_no_y"] = 128
+        params["detectors"][0]["pixel_no_z"] = 128
         params["collimation"]["aperture_offset"] = 5
         params["slicer"]["coeff"] = 10000
         params["slicer"]["x_pixels"] = 128
@@ -1809,6 +1810,7 @@ class NGB30SANS(Instrument):
         params["detectors"][0]["pixel_size_y_unit"] = "cm"
         params["detectors"][0]["pixel_no_x"] = 128
         params["detectors"][0]["pixel_no_y"] = 128
+        params["detectors"][0]["pixel_no_z"] = 128
         params["collimation"]["guides"]["gap_at_start"] = 100
         params["collimation"]["guides"]["guide_width"] = 6.0
         params["collimation"]["guides"]["transmission_per_guide"] = 0.924
@@ -1873,6 +1875,7 @@ class NGB10SANS(Instrument):
         params["detectors"][0]["pixel_size_y_unit"] = "cm"
         params["detectors"][0]["pixel_no_x"] = 128
         params["detectors"][0]["pixel_no_y"] = 128
+        params["detectors"][0]["pixel_no_z"] = 128
         params["collimation"]["guides"]["gap_at_start"] = 165
         params["collimation"]["guides"]["guide_width"] = 5
         params["collimation"]["guides"]["transmission_per_guide"] = 0.974
