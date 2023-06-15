@@ -77,3 +77,14 @@ button.top-level-button {
     border-radius: 50%;
     margin-left: 1em;
 }
+div.calculatingText{
+    margin-left: 20px;
+    margin-right: 20px;
+    font-weight: bolder;
+    color: #01a514;
+    font-size: 22px;
+}
+#calculating_bottom{
+    text-align: center;
+    margin: 1em 20px;
+}
