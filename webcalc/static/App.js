@@ -24,9 +24,6 @@ const template = `
       <button class="top-level-button" title="Docs Access" @click="docsDisplay">?</button>
 
 </div>
-      <div class="calculatingText" v-show="calculating_shown">
-      <p id="calculating_top">Calculating</p>
-      </div>
 </header>
 <main>
 <div class="centered-column" id="preamble">
@@ -47,13 +44,14 @@ const template = `
       </select>
     </div>
   </div>
+  <div class="calculatingText" v-show="calculating_shown">
+    <p id="calculating">Calculating</p>
+  </div> 
   <div class="documentation" v-show="documentation_shown">
   <iframe src="/docs/index.html" title="SasWebCalc Documentation"  width="100%" height="500" style="border:1px solid black;"></iframe>
   </div>
   <plotting ref="plotting" :data_1d="data_1d" :data_2d="data_2d" :shapes="shapes"/>
-      <div class="calculatingText" v-show="calculating_shown">
-      <p id="calculating_bottom">Calculating</p>
-      </div>  
+ 
   <div class="instrument-section" id="modelAndAveragingParams">
     <averaging-params ref="averaging_params" :active_averaging_type="active_averaging_type" :data_1d="data_1d"
         :data_2d="data_2d" @change-shapes="onShapeChange" @change-ave-params="onAveragingChange"/>
