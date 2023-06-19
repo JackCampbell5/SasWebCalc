@@ -35,7 +35,11 @@ def create_app():
     # The documentation flask calls to get the documentation site to appear
     @app.route("/docs/<name>", methods=['GET', 'POST'])
     def docs_main(name):
-        return render_template(f"docs/build/html/{name}")
+        try:
+            return render_template(f"docs/build/html/{name}")
+        except Exception as e:
+            print("Documentation Not Loaded ",str(e))
+            return "Documentation Not Loaded Correctly"
 
     @app.route("/docs/api/<name>", methods=['GET', 'POST'])
     def docs_api(name):
