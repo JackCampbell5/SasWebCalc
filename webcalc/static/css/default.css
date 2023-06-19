@@ -77,3 +77,33 @@ button.top-level-button {
     border-radius: 50%;
     margin-left: 1em;
 }
+div.calculatingText{
+    margin-left: 20px;
+    margin-right: 20px;
+    font-weight: bolder;
+    color: #01a514;
+    font-size: 22px;
+}
+#calculating:after, #calculating:before {
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: bottom;
+  -webkit-animation: ellipsis steps(4,end) 750ms infinite;
+  animation: ellipsis steps(4,end) 750ms infinite;
+  content: "\2026"; /* ascii code for the ellipsis character */
+  width: 0px;
+}
+#calculating {
+    text-align: center;
+    margin: 1em 20px;
+}
+@keyframes ellipsis {
+  to {
+    width: 1.25em;
+  }
+}
+@-webkit-keyframes ellipsis {
+  to {
+    width: 1.25em;
+  }
+}
