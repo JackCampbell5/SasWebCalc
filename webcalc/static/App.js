@@ -134,7 +134,7 @@ export default {
     async onChange() {
       //Does not run the function if the instrument or model is blank
       // This is so when the python objects are created they have the correct data
-      if(this.active_instrument !== "" && this.active_model !== "") {
+      if(this.active_model !== "") {
         let location = `/calculate/`;
         this.persist();
         let data = JSON.stringify({
@@ -146,9 +146,13 @@ export default {
           'averaging_params': this.averaging_params,
         });
         let results = await this.fetch_with_data(location, data);
-        this.pythonParams = results["user_inaccessible"];
-        this.data_1d = {qValues:results["qValues"],intensity:results["fSubs"]};
-        this.data_2d = {qxValues:results["qxValues"],qyValues:results["qyValues"],intensity2D: results["intensity2D"]};
+        if (this.active_instrument !==""){
+          this.pythonParams = results["user_inaccessible"];
+          this.data_1d = {qValues:results["qValues"],intensity:results["fSubs"]};
+          this.data_2d = {qxValues:results["qxValues"],qyValues:results["qyValues"],intensity2D: results["intensity2D"]};
+        }
+        this.model_params = results["model_params"];
+        console.log(this.active_instrument)
 
       }//End if statement to check instrument existence
 

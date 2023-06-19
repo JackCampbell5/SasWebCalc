@@ -34,7 +34,7 @@ def get_model(model_string):
     return load_model(model_string)
 
 
-def encode_params(params):
+def encode_params(params,encode = True):
     """Encodes the parameters gotten from sasmodels as a dictionary
 
     :param PyModel params: The pymodel object that contains the params
@@ -49,7 +49,10 @@ def encode_params(params):
         param_dict['lower_limit'] = str(param.limits[0])
         param_dict['upper_limit'] = str(param.limits[1])
         return_params[param.name] = param_dict.copy()
-    return encode_json(return_params)
+    if encode:
+        return encode_json(return_params)
+    else:
+        return return_params
 
 
 def get_all_params(model_string):
@@ -62,9 +65,10 @@ def get_all_params(model_string):
     return get_params(model_string, True)
 
 
-def get_params(model_string, all=False):
+def get_params(model_string, all=False, encode = True):
     """Gets most of the params by passing False to the get params method
 
+    :param boolean encode: Whether the result is encoded
     :param str model_string: The string name of the model
     :param all: whether it is all the params or not
     :return: The list of the params encoded
@@ -73,14 +77,14 @@ def get_params(model_string, all=False):
     model = get_model(model_string) if model_string else None
     if all and model:
         model = get_model(model_string)
-        # Calls paramaters from sasmodels
+        # Calls parameters from sasmodels
         params = model.info.parameters.call_parameters
     elif model:
         params = model.info.parameters.common_parameters
         params.extend(model.info.parameters.kernel_parameters)
     else:
         params = []
-    return encode_params(params)
+    return encode_params(params,encode=encode)
 
 
 def calculate_model(model_string: str, q: List[np.ndarray], params: Dict[str, float]) -> List[Number]:

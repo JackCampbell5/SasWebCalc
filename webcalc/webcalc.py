@@ -38,7 +38,7 @@ def create_app():
         try:
             return render_template(f"docs/build/html/{name}")
         except Exception as e:
-            print("Documentation Not Loaded ",str(e))
+            print("Documentation Not Loaded ", str(e))
             return "Documentation Not Loaded Correctly"
 
     @app.route("/docs/api/<name>", methods=['GET', 'POST'])
@@ -78,6 +78,36 @@ def create_app():
         Calls the model to get real intensities for the Q range(s) calculated by the instrument.
         :return: A json-like string representation of all the data
         """
+
+        def update_model_params():
+            original_model_params = get_params(model, encode=False)
+            new_model_params = {x:js_model_params[x] for x in js_model_params}
+
+            # Remove all the SLD related values from the array
+            sld_remove_dict = []
+            for name in js_model_params:
+                if 'sld' in name:
+                    sld_remove_dict.append(name)
+            for name in sld_remove_dict:
+                new_model_params.pop(name)
+
+            # Find SLD values in the original dictionary(For less confusion)
+            sld_dict = {}
+            for name in original_model_params:
+                if 'sld' in name:
+                    sld_dict[name] = original_model_params[name]
+
+            # Add the correct number of SLD values back to the result array
+
+            for num in range(int(js_model_params["scale"]["default"])):
+                for value in sld_dict:
+                    if value in js_model_params:
+                        new_model_params[value+"["+str(num)+"]"] = js_model_params[value]
+                    else:
+                        new_model_params[value + "[" + str(num) + "]"] = original_model_params[value]
+
+            return new_model_params
+
         data = decode_json(request.data)[0]
         json_like = json.loads(data)
 
@@ -87,13 +117,16 @@ def create_app():
 
         # Gets the model and model params out of the dict
         model = json_like.get('model', '')
-        model_params = json_like.get('model_params', {})
-        model_params = {key: value.get('default', 0.0) for key, value in model_params.items()}
+        js_model_params = json_like.get('model_params', {})
+        model_params = {key: value.get('default', 0.0) for key, value in js_model_params.items()}
 
         # Gets slicer and Slicer params out of dict
         slicer = json_like.get('averaging_type', '')
         slicer_params = json_like.get('averaging_params', {})
 
+        if instrument == '':
+            updated_model_params = update_model_params()
+            return updated_model_params
         # Returns if array is empty
         if instrument_params == {}:
             print("Returning Blank")
@@ -132,7 +165,10 @@ def create_app():
         comb_2d = np.asarray(model_2d).reshape(i_2d.shape) * i_2d
         params['intensity2D'] = comb_2d.tolist()
 
+        params['model_params'] = update_model_params()
+
         # Return all data
+
         return encode_json(params)
 
     @app.route('/calculate/model/<model_name>', methods=['POST'])
