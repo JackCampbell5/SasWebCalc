@@ -22,6 +22,14 @@ def get_model_list(category=None):
     return encode_json(list_models(category))
 
 
+def get_structure_list(category=None):
+    # models = list_models(category)
+    # TODO find a way to get the models that have stucture factor, right now it is just found from the SasModels documentation
+    structure_list = ["hardsphere","hayter_msa","squarewell","stickyhardsphere"]
+    structure_list.insert(0,"None")
+    return encode_json(structure_list)
+
+
 def get_model(model_string):
     """Loads model params for the specified model
 
