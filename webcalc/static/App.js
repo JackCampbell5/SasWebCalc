@@ -37,6 +37,10 @@ const template = `
       <select id="model" v-model="active_model" @change="populateModelParams">
         <option v-for="model_name in model_names" :key="model_name" :value="model_name">{{model_name}}</option>
       </select>
+      <label id="structureLabel" for="model">Structure Factor: </label>
+      <select id="structure" v-model="active_structure" @change="populateStructureParams">
+        <option v-for="structure_name in structure_names" :key="structure_name" :value="structure_name">{{structure_name}}</option>
+      </select>
       <label id="averagingTypeLabel" for="averagingType">Averaging Method: </label>
       <select id="averagingType" v-model="active_averaging_type">
         <option v-for="averaging in averaging_types" :key="averaging" :value="averaging">
@@ -92,6 +96,8 @@ export default {
       'elliptical': 'Elliptical',
     },
     active_model: "",
+    active_structure: "",
+    structure_names: [],
     model_names: [],
     model_params: {},
     instrument_params: {},
@@ -109,6 +115,9 @@ export default {
     async populateModelParams() {
       const fetch_result = await fetch(`/get/params/model/${this.active_model}`);
       this.model_params = await fetch_result.json();
+      await this.onChange();
+    },
+    async populateStructureParams() {
       await this.onChange();
     },
     async onModelParamChange() {
@@ -142,6 +151,7 @@ export default {
           'instrument_params': this.instrument_params,
           'model': this.active_model,
           'model_params': this.model_params,
+          'structure_factor': this.active_structure,
           'averaging_type': this.active_averaging_type,
           'averaging_params': this.averaging_params,
         });
@@ -173,6 +183,7 @@ export default {
       localStorage.setItem("active_instrument", this.active_instrument);
       localStorage.setItem("active_averaging_type", this.active_averaging_type);
       localStorage.setItem("active_model", this.active_model);
+      localStorage.setItem("active_structure",this.active_structure);
       localStorage.setItem(this.active_model + "_model_params", JSON.stringify(this.model_params));
       localStorage.setItem(this.active_instrument + "_instrument_params", JSON.stringify(this.instrument_params));
       localStorage.setItem(this.active_averaging_type + "_averaging_params", JSON.stringify(this.averaging_params));
@@ -191,6 +202,9 @@ export default {
   async beforeMount() {
     const fetch_result = await fetch("/get/models/");
     this.model_names = await fetch_result.json();
+    const fetch_result_structure = await fetch("/get/structures/");
+    this.structure_names = await fetch_result_structure.json();
+    this.active_structure = this.structure_names[0]
   },
   mounted() {
     // Sets the dropdowns to automatically choose for testing
