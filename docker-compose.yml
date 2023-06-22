@@ -2,20 +2,16 @@ version: "3"
 
 services:
   nginx:
-    # TODO: Replace this with the real server name once it is up
     hostname: 127.0.0.1
     ports:
-      - 5000:5000
+      - 80:80
     depends_on:
       - webcalc
     image: nginx:latest
     restart: always
 
   webcalc:
-    # TODO: Put the real docker image name here
     image: krzywon/webcalc:latest
-    volumes:
-      - /SasWebCalc:z
     ports:
       - 5000:5000
     restart: always

@@ -17,6 +17,13 @@ const template = `
 </header>
 <header class="title">
 <h1>SASCALC on the Web</h1>
+ <div class = "section_subheader">
+    <a href="https://gitlab.nist.gov/gitlab/jkrzywon/saswebcalc/-/issues/new"  target="_blank">
+      <button class="top-level-button" title="Bug submission tool">!</button>
+    </a>
+      <button class="top-level-button" title="Docs Access" @click="docsDisplay">?</button>
+
+</div>
 </header>
 <main>
 <div class="centered-column" id="preamble">
@@ -37,7 +44,14 @@ const template = `
       </select>
     </div>
   </div>
+  <div class="calculatingText" v-show="calculating_shown">
+    <p id="calculating">Calculating</p>
+  </div> 
+  <div class="documentation" v-show="documentation_shown">
+  <iframe src="/docs/index.html" title="SasWebCalc Documentation"  width="100%" height="500" style="border:1px solid black;"></iframe>
+  </div>
   <plotting ref="plotting" :data_1d="data_1d" :data_2d="data_2d" :shapes="shapes"/>
+ 
   <div class="instrument-section" id="modelAndAveragingParams">
     <averaging-params ref="averaging_params" :active_averaging_type="active_averaging_type" :data_1d="data_1d"
         :data_2d="data_2d" @change-shapes="onShapeChange" @change-ave-params="onAveragingChange"/>
@@ -93,6 +107,8 @@ export default {
     shapes: [],
     instruments,
     pythonParams: {},
+    documentation_shown: false,
+    calculating_shown: false,
   }),
   methods: {
     async populateModelParams() {
@@ -124,6 +140,7 @@ export default {
       //Does not run the function if the instrument or model is blank
       // This is so when the python objects are created they have the correct data
       if(this.active_instrument !== "" && this.active_model !== "") {
+        this.calculating_shown = true;
         let location = `/calculate/`;
         this.persist();
         let data = JSON.stringify({
@@ -138,6 +155,7 @@ export default {
         this.pythonParams = results["user_inaccessible"];
         this.data_1d = {qValues:results["qValues"],intensity:results["fSubs"]};
         this.data_2d = {qxValues:results["qxValues"],qyValues:results["qyValues"],intensity2D: results["intensity2D"]};
+        this.calculating_shown = false;
 
       }//End if statement to check instrument existence
 
@@ -173,6 +191,9 @@ export default {
       this.active_averaging_type = localStorage.getItem("active_averaging_type") || "Circular";
       this.active_model = localStorage.getItem("active_model") || "";
     },
+    docsDisplay(){
+      this.documentation_shown = !this.documentation_shown
+    }
   },
   async beforeMount() {
     const fetch_result = await fetch("/get/models/");
