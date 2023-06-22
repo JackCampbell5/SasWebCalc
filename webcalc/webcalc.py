@@ -78,10 +78,22 @@ def create_app():
 
         # Gets the model and model params out of the dict
         model = json_like.get('model', '')
+        # Gets the model parameters form the JS
         js_model_params = json_like.get('model_params', {})
-
-        original_model_params = get_params(model, encode=False)
+        # A duplicate array of js_model_params
         new_model_params = {x: js_model_params[x] for x in js_model_params}
+
+        # gets the original names of model parameters from SasModels
+        original_model_params = get_params(model, encode=False)
+
+        # A list of just the name of model parameters
+        model_params = [key for key in js_model_params]
+        for name in model_params:
+            if name.find('[') != -1:
+                print(name)
+
+        # Find if it even has an array
+        print(model_params)
 
         # Remove all the SLD related values from the array
         sld_remove_dict = []
@@ -105,7 +117,7 @@ def create_app():
                     new_model_params[value + "[" + str(num) + "]"] = js_model_params[value]
                 else:
                     new_model_params[value + "[" + str(num) + "]"] = original_model_params[value]
-        params = {"model_params":new_model_params}
+        params = {"model_params": new_model_params}
         return encode_json(params)
 
     @app.route('/calculate/', methods=['POST'])
@@ -116,7 +128,6 @@ def create_app():
         Calls the model to get real intensities for the Q range(s) calculated by the instrument.
         :return: A json-like string representation of all the data
         """
-
 
         data = decode_json(request.data)[0]
         json_like = json.loads(data)
