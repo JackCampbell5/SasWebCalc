@@ -127,7 +127,8 @@ def create_app():
 
         # Gets the model and model params out of the dict
         model = json_like.get('model', '')
-        model_params = {key: value.get('default', 0.0) for key, value in model.items()}
+        model_params = json_like.get('model_params', {})
+        model_params = {key: value.get('default', 0.0) for key, value in model_params.items()}
 
         # Gets slicer and Slicer params out of dict
         slicer = json_like.get('averaging_type', '')
