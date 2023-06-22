@@ -98,6 +98,7 @@ export default {
     active_model: "",
     active_structure: "",
     structure_names: [],
+    structure_names_original: [],
     model_names: [],
     model_params: {},
     instrument_params: {},
@@ -113,6 +114,17 @@ export default {
   }),
   methods: {
     async populateModelParams() {
+      for(let a =1; a<this.structure_names_original.length; a++){
+        if (this.structure_names_original[a] ===this.active_model) {
+          let where = this.structure_names.indexOf(this.active_model);
+          if (where !== -1) {
+          this.structure_names.splice(where, where);
+          this.active_structure = this.structure_names[0]
+        }// End where -1 if statement
+        }else if (this.structure_names.indexOf(this.structure_names_original[a])=== -1){
+          this.structure_names.push(this.structure_names_original[a]);
+        }// End fi statement for if the structure is missing and neede
+      }// End for loop for all the original structures
       const fetch_result = await fetch(`/get/params/model/${this.active_model}`);
       this.model_params = await fetch_result.json();
       await this.onChange();
@@ -203,8 +215,9 @@ export default {
     const fetch_result = await fetch("/get/models/");
     this.model_names = await fetch_result.json();
     const fetch_result_structure = await fetch("/get/structures/");
-    this.structure_names = await fetch_result_structure.json();
-    this.active_structure = this.structure_names[0]
+    this.structure_names_original = await fetch_result_structure.json();
+    this.structure_names = Array.from(this.structure_names_original);
+    this.active_structure = this.structure_names[0];
   },
   mounted() {
     // Sets the dropdowns to automatically choose for testing
