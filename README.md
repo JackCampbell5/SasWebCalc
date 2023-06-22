@@ -10,37 +10,43 @@ The latest iteration runs using python Flask. To run saswebcalc from source, cre
 
        $ python -m venv saswebcalc
        $ .\saswebcalc\Scripts\activate (Windows) -or- source saswebcalc/bin/activate (Mac/Linux)
-       (saswebcalc) $ python -m pip install numpy flask
+       (saswebcalc) $ python -m pip requirements.txt
        (saswebcalc) $ python /path/to/saswebcalc/webcalc.py <port>
  
  - Using [miniconda](https://docs.conda.io/en/latest/miniconda.html)
 or [anaconda](https://www.anaconda.com/)::
    
-       $ conda create -n saswebcalc -c conda-forge numpy flask
+       $ conda create -n saswebcalc
        $ conda activate saswebcalc
+       (saswebcalc) $ python -m pip requirements.txt
        (saswebcalc) $ python /path/to/saswebcalc/webcalc.py <port>
 
 ## References
 - [Flow diagram of code](https://mm.tt/map/2428513537)
+
 ## Feature Set, Current and Planned
 
 ### Current features:
-- Calculate estimated I vs. Q for standard SANS instrument configurations
-- Modify model parameters for the Debye or Sphere models to better estimate the scattering
+- Calculate estimated I vs. Q based on the SANS instrument configurations
+- Select and modify form factor model parameters to estimate scattering using a model selection tool based off of [sasmodels](https://github.com/SasView/sasmodels)
 - Freeze configuration/model combinations
-- Plot I vs. Q of any number of configuration/model combinations
-- 2D heatmap of I(Q) for the most recent calculation
-- Send frozen configurations directly to the desired instrument
+- Plot I vs. Q for any number of configuration/model combinations with or without offsetting values
+- Plot a 2D heatmap of I(Q) for the most recent calculation
+- Inline help files and documentation
+- Bug submission tool
 
-## Features actively being worked on and known issues:
-- Values loaded from instrument only used to populate wavelength spread (so far)
-- Only circular averaging is available until the following issues can be fixed with other averaging types
+### Features and issues actively being worked on for v1.0:
+- Allow structure factor@form factor calculations
+- Layered models do not add additional layers when the number is changed
+- Only circular averaging is working until the following issues can be fixed with other averaging types
  - Plotted slicers and calculations do not match
- - Plotted slicers often off scale of plot when detector is offset
- - Calculated Q values for non-circular averaging methods not correct
-- No incomplete gamma function available in javascript, so resolution calculations are not correct
+ - Plotted slicers sometimes off scale of plot causing plot region to expand
+- Inputting a Q range not linked to an instrument is not fully working
 
-## Anticipated features:
-- Option of inputting a Q range and model only, with no instrumental resolution calculations
-- Model selection tool based off of [sasmodels] (https://github.com/SasView/sasmodels)
-
+### Anticipated features:
+- VSANS instrument with both a 1D and 2D data representation (v1.1)
+- Enable polydispersity and magnetic calculations (v1.2)
+- Allow user to enter sample thickness, transmission, and counting time (v1.2)
+- Send frozen configurations directly to the desired instrument (v1.3)
+- Call instrument server to load real instrument values (v1.3)
+- Optimize suggested counting time using [molgroups](https://github.com/criosx/molgroups) (v1.4)
