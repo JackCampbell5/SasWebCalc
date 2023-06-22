@@ -4,7 +4,7 @@ from typing import Union, Dict, List
 
 import numpy as np
 
-from sasmodels.core import list_models, load_model
+from sasmodels.core import list_models, load_model,load_model_info
 from sasmodels.direct_model import call_kernel
 
 from .helpers import encode_json
@@ -22,11 +22,20 @@ def get_model_list(category=None):
     return encode_json(list_models(category))
 
 
-def get_structure_list(category=None):
-    # models = list_models(category)
-    # TODO find a way to get the models that have stucture factor, right now it is just found from the SasModels documentation
-    structure_list = ["hardsphere","hayter_msa","squarewell","stickyhardsphere"]
-    structure_list.insert(0,"None")
+def get_structure_list():
+    """Gets a list of all of the models defined as a structure factor with None at the start
+
+    To do this is goes through all the models, loads the model info, gets the structure factor and if it is a structure factor adds the model to an array
+    :return: An encoded json list of the structures
+    :rtype: Json
+    """
+    structure_list = []
+    all_models = list_models()
+    for model in all_models:
+        is_structure_factor = load_model_info(model).structure_factor
+        if is_structure_factor:
+            structure_list.append(model)
+    structure_list.insert(0, "None")
     return encode_json(structure_list)
 
 
