@@ -38,7 +38,7 @@ const template = `
         <option v-for="model_name in model_names" :key="model_name" :value="model_name">{{model_name}}</option>
       </select>
       <label id="structureLabel" for="model">Structure Factor: </label>
-      <select id="structure" v-model="active_structure" @change="populateStructureParams">
+      <select id="structure" v-model="active_structure" @change="onStructureParamsChange">
         <option v-for="structure_name in structure_names" :key="structure_name" :value="structure_name">{{structure_name}}</option>
       </select>
       <label id="averagingTypeLabel" for="averagingType">Averaging Method: </label>
@@ -124,7 +124,7 @@ export default {
       this.model_params = await fetch_result.json();
       await this.onChange();
     },
-    async populateStructureParams() {
+    async onStructureParamsChange() {
       await this.onChange();
     },
     async onModelParamChange() {
