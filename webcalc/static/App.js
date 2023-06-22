@@ -112,6 +112,25 @@ export default {
       await this.onChange();
     },
     async onModelParamChange() {
+      console.log("Test1")
+      let location = `/modelParamsUpdate/`;
+        this.persist();
+        let data = JSON.stringify({
+          'instrument': this.active_instrument,
+          'model': this.active_model,
+          'model_params': this.model_params,
+          'averaging_type': this.active_averaging_type,
+          'averaging_params': this.averaging_params,
+        });
+        let results = await this.fetch_with_data(location, data);
+        if (this.active_instrument !==""){
+          this.pythonParams = results["user_inaccessible"];
+          this.data_1d = {qValues:results["qValues"],intensity:results["fSubs"]};
+          this.data_2d = {qxValues:results["qxValues"],qyValues:results["qyValues"],intensity2D: results["intensity2D"]};
+        }
+        this.model_params = results["model_params"];
+        console.log(this.active_instrument)
+
       await this.onChange();
     },
     async onInstrumentParamChange(params) {
@@ -134,7 +153,8 @@ export default {
     async onChange() {
       //Does not run the function if the instrument or model is blank
       // This is so when the python objects are created they have the correct data
-      if(this.active_model !== "") {
+      if(this.active_instrument !== "" && this.active_model !== "") {
+        this.calculating_shown = true;
         let location = `/calculate/`;
         this.persist();
         let data = JSON.stringify({
@@ -146,13 +166,10 @@ export default {
           'averaging_params': this.averaging_params,
         });
         let results = await this.fetch_with_data(location, data);
-        if (this.active_instrument !==""){
-          this.pythonParams = results["user_inaccessible"];
-          this.data_1d = {qValues:results["qValues"],intensity:results["fSubs"]};
-          this.data_2d = {qxValues:results["qxValues"],qyValues:results["qyValues"],intensity2D: results["intensity2D"]};
-        }
-        this.model_params = results["model_params"];
-        console.log(this.active_instrument)
+        this.pythonParams = results["user_inaccessible"];
+        this.data_1d = {qValues:results["qValues"],intensity:results["fSubs"]};
+        this.data_2d = {qxValues:results["qxValues"],qyValues:results["qyValues"],intensity2D: results["intensity2D"]};
+        this.calculating_shown = false;
 
       }//End if statement to check instrument existence
 
