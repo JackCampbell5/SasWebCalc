@@ -71,8 +71,8 @@ def create_app():
         return get_params(model_name)
 
     @app.route('/modelParamsUpdate/', methods=['POST'])
-    def modelParamsUpdate() -> str:
-
+    def model_params_update() -> str:
+        print("Model Params Started")
         data = decode_json(request.data)[0]
         json_like = json.loads(data)
 
@@ -105,8 +105,8 @@ def create_app():
                     new_model_params[value + "[" + str(num) + "]"] = js_model_params[value]
                 else:
                     new_model_params[value + "[" + str(num) + "]"] = original_model_params[value]
-
-        return new_model_params
+        params = {"model_params":new_model_params}
+        return encode_json(params)
 
     @app.route('/calculate/', methods=['POST'])
     def calculate() -> str:
