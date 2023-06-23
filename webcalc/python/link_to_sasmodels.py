@@ -29,11 +29,7 @@ def get_structure_list():
     :return: An encoded json list of the structures
     :rtype: Json
     """
-    structure_list = []
-    for model in list_models():
-        is_structure_factor = getattr(load_model_info(model), "structure_factor", False)
-        if is_structure_factor:
-            structure_list.append(model)
+    structure_list = [model for model in list_models() if getattr(load_model_info(model), "structure_factor", False)]
     structure_list.insert(0, "None")
     return structure_list
 
@@ -118,10 +114,7 @@ def get_params(model_string, all=False, encode=True):
         params.extend(model.info.parameters.kernel_parameters)
     else:
         params = []
-    if encode:
-        return encode_params(params)
-    else:
-        return params
+    return encode_params(params) if encode else params
 
 
 def calculate_model(model_string: str, q: List[np.ndarray], params: Dict[str, float]) -> List[Number]:
