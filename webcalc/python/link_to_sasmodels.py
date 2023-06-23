@@ -48,6 +48,7 @@ def encode_params(params,encode = True):
         find = param.name.find('[')
         if find != -1:
             param_keyword = param.name[find + 1:param.name.find(']')]
+            break
     for param in params:
         param_dict['units'] = str(param.units)
         param_dict['default'] = str(param.default)

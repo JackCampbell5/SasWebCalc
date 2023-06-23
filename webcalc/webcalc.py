@@ -73,7 +73,7 @@ def create_app():
 
     @app.route('/modelParamsUpdate/', methods=['POST'])
     def model_params_update(js_data=True, model="", js_model_params={}) -> str:
-        print("Model Params Started")
+
         # Checks the params out differently if it is coming from the JS or the function
         if js_data:
             data = decode_json(request.data)[0]
@@ -84,19 +84,13 @@ def create_app():
             # Gets the model parameters form the JS
             js_model_params = json_like.get('model_params', {})
 
-        # A duplicate array of js_model_params
-        new_model_params = {x: js_model_params[x] for x in js_model_params}
+        # Necessary Parameters
+        new_model_params = {x: js_model_params[x] for x in js_model_params}  # A duplicate array of js_model_params
+        param_keyword = ""  # The keyword that changes:
+        first_run = True  # Is this the first run of the code
+        model_params = [key for key in js_model_params]  # A list of just the name of model parameters
 
-        # gets the original names of model parameters from SasModels
-        original_model_params = get_params(model, encode=False)
-
-        # The keyword that changes:
-        param_keyword = ""
-        first_run = True
-        # A list of just the name of model parameters
-        model_params = [key for key in js_model_params]
-
-        # FInd the keyword
+        # Find the keyword
         for num in range(len(model_params)):
             find = model_params[num].find('[')
             if find != -1:
@@ -110,7 +104,7 @@ def create_app():
         if param_keyword == "":
             return js_model_params
 
-        # Remove all the SLD related values from the array
+        # Remove all the params changed by the multiplicity models from the array
         sld_remove_dict = []
         for name in js_model_params:
             if 'sld' in name or (param_keyword in name and param_keyword != name) or '[' in name:
@@ -118,41 +112,39 @@ def create_app():
         for name in sld_remove_dict:
             new_model_params.pop(name)
 
-        # Move the param keyword to the bottom
+        # Move the param keyword to after all the non multiplicity model parameters
         new_model_params.pop(param_keyword)
         new_model_params[param_keyword] = js_model_params[param_keyword]
 
+        # Finds the params and adds/removes them based on the param_keyword
         if first_run:
-            # Find SLD values in the original dictionary(For less confusion)
+            # Find the multiplicity model params
             sld_dict = []
             for name in js_model_params:
                 if 'sld' in name or (param_keyword in name and param_keyword != name):
                     sld_dict.append(name)
 
-            # Add the correct number of SLD values back to the result array
+            # Add the correct number of multiplicity model params back to the result array
             for value in sld_dict:
                 for num in range(int(js_model_params[param_keyword]["default"])):
                     value_updated = value[0:value.find('[')] + '[' + str(num) + ']'
                     new_model_params[value_updated] = js_model_params[value]
         else:
-            # Find SLD values in the original dictionary(For less confusion)
+            # Find the multiplicity model params
             sld_dict = []
             for name in js_model_params:
                 if '[' in name:
                     found = name.find('[')
-                    if found != -1:
-                        sld_dict.append(name[0:found])
-                    else:
-                        sld_dict.append(name)
+                    sld_dict.append(name[0:found])
 
-            # Add the correct number of SLD values back to the result array
+            # Add the correct number of multiplicity model params back to the result array
             for value in sld_dict:
                 for num in range(int(js_model_params[param_keyword]["default"])):
-                    value_updated = value+'['+str(num)+']'
+                    value_updated = value + '[' + str(num) + ']'
                     if value_updated in js_model_params:
-                        new_model_params[value_updated]= js_model_params[value_updated]
+                        new_model_params[value_updated] = js_model_params[value_updated]
                     else:
-                        new_model_params[value_updated] = js_model_params[value+"[0]"]
+                        new_model_params[value_updated] = js_model_params[value + "[0]"]
         return encode_json(new_model_params)
 
     @app.route('/calculate/', methods=['POST'])
@@ -226,7 +218,7 @@ def create_app():
         model_params = {key: value.get('default', 0.0) for key, value in model_params.items()}
         results_dict = {}
         for key in model_params:
-            if '[' in key :
+            if '[' in key:
                 result_key = key[0:key.find('[')]
                 if not result_key in results_dict:
                     results_dict[result_key] = [key]
