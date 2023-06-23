@@ -34,11 +34,11 @@ const template = `
         <option v-for="(label, alias, index) in instruments" :key="alias" :value="alias">{{label}}</option>
       </select>
       <label id="modelLabel" for="model">Model: </label>
-      <select id="model" v-model="active_model" @change="populateModelParams">
+      <select id="model" v-model="active_model" @change="onModelChange">
         <option v-for="model_name in model_names" :key="model_name" :value="model_name">{{model_name}}</option>
       </select>
       <label id="structureLabel" for="model">Structure Factor: </label>
-      <select id="structure" v-model="active_structure" @change="onStructureParamsChange">
+      <select id="structure" v-model="active_structure" @change="onStructureChange">
         <option v-for="structure_name in structure_names" :key="structure_name" :value="structure_name">{{structure_name}}</option>
       </select>
       <label id="averagingTypeLabel" for="averagingType">Averaging Method: </label>
@@ -99,6 +99,7 @@ export default {
     active_structure: "",
     structure_names: [],
     structure_names_original: [],
+    multiplicity_models: [],
     model_names: [],
     model_params: {},
     instrument_params: {},
@@ -114,17 +115,31 @@ export default {
   }),
   methods: {
     async populateModelParams() {
-        if (this.structure_names_original.includes(this.active_model)) {
-          this.structure_names = [this.structure_names_original[0]]
-          this.active_structure = this.structure_names[0]
-        }else if (this.structure_names.indexOf(this.structure_names_original[1])=== -1){
-          this.structure_names = this.structure_names_original
-        }// End fi statement for if the structure is missing and neede
-      const fetch_result = await fetch(`/get/params/model/${this.active_model}`);
-      this.model_params = await fetch_result.json();
+      if(this.active_model !== ""){
+      const fetch_result = await fetch(`/get/params/model/${this.active_model+'-'+this.active_structure}`);
+      let result  = await fetch_result.json();
+      if(result === "wrongType"){
+        this.active_structure = this.structure_names[0];
+        this.structure_names= this.structure_names[0];
+        this.populateModelParams();
+      }else {
+        this.model_params = result;
+      }
+      }//End if statement
+      },
+    async onModelChange() {
+      console.log(this.multiplicity_models)
+        if (this.structure_names_original.includes(this.active_model)||this.multiplicity_models.includes(this.active_model)) {
+          this.structure_names = [this.structure_names_original[0]];
+          this.active_structure = this.structure_names[0];
+        }else {
+          this.structure_names = this.structure_names_original;
+        }// End fi statement for if the structure is missing and needed
+        await this.populateModelParams();
       await this.onChange();
     },
-    async onStructureParamsChange() {
+    async onStructureChange() {
+      await this.populateModelParams()
       await this.onChange();
     },
     async onModelParamChange() {
@@ -207,12 +222,14 @@ export default {
     }
   },
   async beforeMount() {
-    const fetch_result = await fetch("/get/models/");
-    this.model_names = await fetch_result.json();
-    const fetch_result_structure = await fetch("/get/structures/");
-    this.structure_names_original = await fetch_result_structure.json();
+    const fetch_result_structure = await fetch("/get/onLoad/");
+    let structures_result = await fetch_result_structure.json()
+    console.log(structures_result)
+    this.structure_names_original = structures_result["structures"];
     this.structure_names = Array.from(this.structure_names_original);
     this.active_structure = this.structure_names[0];
+    this.multiplicity_models = structures_result["multiplicity_models"];
+    this.model_names = structures_result["models"];
   },
   mounted() {
     // Sets the dropdowns to automatically choose for testing

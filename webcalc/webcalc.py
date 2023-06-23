@@ -9,13 +9,13 @@ from flask import Flask, render_template, request, send_file
 
 # import specific methods from python files
 try:
-    from python.link_to_sasmodels import get_model_list, get_params, get_structure_list
+    from python.link_to_sasmodels import get_model_list, get_params, get_structure_list,get_multiplicity_models
     from python.link_to_sasmodels import calculate_model as calculate_m
     from python.instrument import calculate_instrument as calculate_i
     from python.helpers import decode_json, encode_json
 except ModuleNotFoundError:
     # Runs the imports from webcalc only when auto-doc runs to remove errors
-    from webcalc.python.link_to_sasmodels import get_model_list, get_params, get_structure_list
+    from webcalc.python.link_to_sasmodels import get_model_list, get_params, get_structure_list,get_multiplicity_models
     from webcalc.python.link_to_sasmodels import calculate_model as calculate_m
     from webcalc.python.instrument import calculate_instrument as calculate_i
     from webcalc.python.helpers import decode_json, encode_json
@@ -57,17 +57,23 @@ def create_app():
     def docs_css_fonts(name):
         return send_file(f"templates/docs/build/html/_static/css/fonts/{name}")
 
-    @app.route('/get/models/', methods=['GET'])
-    def get_all_models():
-        return get_model_list()
+    @app.route('/get/onLoad/', methods=['GET'])
+    def get_all_onload():
+        return_array = {}
+        return_array["structures"] = get_structure_list()
+        return_array["multiplicity_models"] = get_multiplicity_models()
+        return_array["models"] = get_model_list()
+        return encode_json(return_array)
 
-    @app.route('/get/structures/', methods=['GET'])
-    def get_all_structures():
-        return get_structure_list()
+    @app.route('/get/params/<js_data>', methods=['GET'])
+    @app.route('/get/params/model/<js_data>', methods=['GET'])
+    def get_model_params(js_data):
+        structure_factor = js_data[js_data.find('-') + 1:len(js_data)]
+        model_name = js_data[0:js_data.find('-')]
 
-    @app.route('/get/params/<model_name>', methods=['GET'])
-    @app.route('/get/params/model/<model_name>', methods=['GET'])
-    def get_model_params(model_name):
+        # If there is a structure factor, add it
+        if structure_factor != "None":
+            model_name = model_name + "@" + structure_factor
         return get_params(model_name)
 
     @app.route('/calculate/', methods=['POST'])
@@ -86,11 +92,11 @@ def create_app():
         instrument_params = json_like.get('instrument_params', {})
 
         # Gets the model and model params out of the dict
-        structure_factor = json_like.get('structure_factor','None')
+        structure_factor = json_like.get('structure_factor', 'None')
         is_structure_factor = True if structure_factor != 'None' else False
         model = json_like.get('model', '')
         if is_structure_factor:
-            model = model+"@"+structure_factor
+            model = model + "@" + structure_factor
         model_params = json_like.get('model_params', {})
         model_params = {key: value.get('default', 0.0) for key, value in model_params.items()}
 
