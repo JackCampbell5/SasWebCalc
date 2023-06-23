@@ -43,11 +43,18 @@ def encode_params(params,encode = True):
     """
     return_params = {}
     param_dict = {}
+    param_keyword = ""
+    for param in params:
+        find = param.name.find('[')
+        if find != -1:
+            param_keyword = param.name[find + 1:param.name.find(']')]
     for param in params:
         param_dict['units'] = str(param.units)
         param_dict['default'] = str(param.default)
         param_dict['lower_limit'] = str(param.limits[0])
         param_dict['upper_limit'] = str(param.limits[1])
+        if param.name ==param_keyword:
+            param_dict['lower_limit'] = str(1.0)
         return_params[param.name] = param_dict.copy()
     if encode:
         return encode_json(return_params)

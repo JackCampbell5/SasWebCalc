@@ -68,57 +68,92 @@ def create_app():
     @app.route('/get/params/<model_name>', methods=['GET'])
     @app.route('/get/params/model/<model_name>', methods=['GET'])
     def get_model_params(model_name):
-        return get_params(model_name)
+        params = get_params(model_name, encode=False)
+        return model_params_update(False, model_name, params)
 
     @app.route('/modelParamsUpdate/', methods=['POST'])
-    def model_params_update() -> str:
+    def model_params_update(js_data=True, model="", js_model_params={}) -> str:
         print("Model Params Started")
-        data = decode_json(request.data)[0]
-        json_like = json.loads(data)
+        # Checks the params out differently if it is coming from the JS or the function
+        if js_data:
+            data = decode_json(request.data)[0]
+            json_like = json.loads(data)
 
-        # Gets the model and model params out of the dict
-        model = json_like.get('model', '')
-        # Gets the model parameters form the JS
-        js_model_params = json_like.get('model_params', {})
+            # Gets the model and model params out of the dict
+            model = json_like.get('model', '')
+            # Gets the model parameters form the JS
+            js_model_params = json_like.get('model_params', {})
+
         # A duplicate array of js_model_params
         new_model_params = {x: js_model_params[x] for x in js_model_params}
 
         # gets the original names of model parameters from SasModels
         original_model_params = get_params(model, encode=False)
 
+        # The keyword that changes:
+        param_keyword = ""
+        first_run = True
         # A list of just the name of model parameters
         model_params = [key for key in js_model_params]
-        for name in model_params:
-            if name.find('[') != -1:
-                print(name)
 
-        # Find if it even has an array
-        print(model_params)
+        # FInd the keyword
+        for num in range(len(model_params)):
+            find = model_params[num].find('[')
+            if find != -1:
+                param_keyword = model_params[num][find + 1:model_params[num].find(']')]
+                if param_keyword == '0':
+                    param_keyword = model_params[num - 1]
+                    first_run = False
+                break
+
+        # Return the array if there is no special keyword
+        if param_keyword == "":
+            return js_model_params
 
         # Remove all the SLD related values from the array
         sld_remove_dict = []
         for name in js_model_params:
-            if 'sld' in name:
+            if 'sld' in name or (param_keyword in name and param_keyword != name) or '[' in name:
                 sld_remove_dict.append(name)
         for name in sld_remove_dict:
             new_model_params.pop(name)
 
-        # Find SLD values in the original dictionary(For less confusion)
-        sld_dict = {}
-        for name in original_model_params:
-            if 'sld' in name:
-                sld_dict[name] = original_model_params[name]
+        # Move the param keyword to the bottom
+        new_model_params.pop(param_keyword)
+        new_model_params[param_keyword] = js_model_params[param_keyword]
 
-        # Add the correct number of SLD values back to the result array
+        if first_run:
+            # Find SLD values in the original dictionary(For less confusion)
+            sld_dict = []
+            for name in js_model_params:
+                if 'sld' in name or (param_keyword in name and param_keyword != name):
+                    sld_dict.append(name)
 
-        for num in range(int(js_model_params["scale"]["default"])):
+            # Add the correct number of SLD values back to the result array
             for value in sld_dict:
-                if value in js_model_params:
-                    new_model_params[value + "[" + str(num) + "]"] = js_model_params[value]
-                else:
-                    new_model_params[value + "[" + str(num) + "]"] = original_model_params[value]
-        params = {"model_params": new_model_params}
-        return encode_json(params)
+                for num in range(int(js_model_params[param_keyword]["default"])):
+                    value_updated = value[0:value.find('[')] + '[' + str(num) + ']'
+                    new_model_params[value_updated] = js_model_params[value]
+        else:
+            # Find SLD values in the original dictionary(For less confusion)
+            sld_dict = []
+            for name in js_model_params:
+                if '[' in name:
+                    found = name.find('[')
+                    if found != -1:
+                        sld_dict.append(name[0:found])
+                    else:
+                        sld_dict.append(name)
+
+            # Add the correct number of SLD values back to the result array
+            for value in sld_dict:
+                for num in range(int(js_model_params[param_keyword]["default"])):
+                    value_updated = value+'['+str(num)+']'
+                    if value_updated in js_model_params:
+                        new_model_params[value_updated]= js_model_params[value_updated]
+                    else:
+                        new_model_params[value_updated] = js_model_params[value+"[0]"]
+        return encode_json(new_model_params)
 
     @app.route('/calculate/', methods=['POST'])
     def calculate() -> str:
@@ -139,7 +174,7 @@ def create_app():
         # Gets the model and model params out of the dict
         model = json_like.get('model', '')
         model_params = json_like.get('model_params', {})
-        model_params = {key: value.get('default', 0.0) for key, value in model_params.items()}
+        model_params = model_params_restructure(model_params)
 
         # Gets slicer and Slicer params out of dict
         slicer = json_like.get('averaging_type', '')
@@ -186,6 +221,27 @@ def create_app():
         # Return all data
 
         return encode_json(params)
+
+    def model_params_restructure(model_params):
+        model_params = {key: value.get('default', 0.0) for key, value in model_params.items()}
+        results_dict = {}
+        for key in model_params:
+            if '[' in key :
+                result_key = key[0:key.find('[')]
+                if not result_key in results_dict:
+                    results_dict[result_key] = [key]
+                else:
+                    results_dict[result_key].append(key)
+        if results_dict == {}:
+            return model_params
+
+        for key in results_dict:
+            model_params[key] = []
+            for item in results_dict[key]:
+                model_params[key].append(model_params[item])
+                model_params.pop(item)
+
+        return model_params
 
     @app.route('/calculate/model/<model_name>', methods=['POST'])
     def calculate_model(model_name: str) -> str:

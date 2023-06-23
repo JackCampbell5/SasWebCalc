@@ -120,7 +120,7 @@ export default {
           'model_params': this.model_params,
         });
         let results = await this.fetch_with_data(location, data);
-        this.model_params = results["model_params"];
+        this.model_params = results;
 
       await this.onChange();
     },
