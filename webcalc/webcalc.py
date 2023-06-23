@@ -65,15 +65,9 @@ def create_app():
         return_array["models"] = get_model_list()
         return encode_json(return_array)
 
-    @app.route('/get/params/<js_data>', methods=['GET'])
-    @app.route('/get/params/model/<js_data>', methods=['GET'])
-    def get_model_params(js_data):
-        structure_factor = js_data[js_data.find('-') + 1:len(js_data)]
-        model_name = js_data[0:js_data.find('-')]
-
-        # If there is a structure factor, add it
-        if structure_factor != "None":
-            model_name = model_name + "@" + structure_factor
+    @app.route('/get/params/<model_name>', methods=['GET'])
+    @app.route('/get/params/model/<model_name>', methods=['GET'])
+    def get_model_params(model_name):
         return get_params(model_name)
 
     @app.route('/calculate/', methods=['POST'])

@@ -116,15 +116,9 @@ export default {
   methods: {
     async populateModelParams() {
       if(this.active_model !== ""){
-      const fetch_result = await fetch(`/get/params/model/${this.active_model+'-'+this.active_structure}`);
-      let result  = await fetch_result.json();
-      if(result === "wrongType"){
-        this.active_structure = this.structure_names[0];
-        this.structure_names= this.structure_names[0];
-        this.populateModelParams();
-      }else {
-        this.model_params = result;
-      }
+        let model_name = this.active_structure !== this.structure_names[0] ? this.active_model+'@'+this.active_structure :  this.active_model
+        const fetch_result = await fetch(`/get/params/model/${model_name}`);
+        this.model_params = await fetch_result.json();
       }//End if statement
       },
     async onModelChange() {
