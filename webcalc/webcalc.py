@@ -72,7 +72,7 @@ def create_app():
     @app.route('/get/params/<model_name>', methods=['GET'])
     @app.route('/get/params/model/<model_name>', methods=['GET'])
     def get_model_params(model_name):
-        params = get_params(model_name, encode=False)
+        params = get_params(model_name, json_encode=False)
         return model_params_update(False, model_name, params)
 
     @app.route('/modelParamsUpdate/', methods=['POST'])
