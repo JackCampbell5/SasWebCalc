@@ -243,24 +243,12 @@ def create_app():
         :rtype: Dict
         """
         model_params = {key: value.get('default', 0.0) for key, value in model_params.items()}
-        results_dict = {}
-        for key in model_params:
-            if '[' in key:
-                result_key = key[0:key.find('[')]
-                if not result_key in results_dict:
-                    results_dict[result_key] = [key]
-                else:
-                    results_dict[result_key].append(key)
-        if results_dict == {}:
-            return model_params
-
+        results_dict = {x: model_params[x] for x in model_params}
         for key in results_dict:
-            model_params[key] = []
-            for item in results_dict[key]:
-                # TODO Update when we figure out what form the SasModels takes
-                model_params[key].append(model_params[item])
-                model_params.pop(item)
-
+            if '[' in key:
+                new_name = key[0:key.find('[')]+key[key.find('[')+1:key.find(']')]
+                model_params[new_name] = model_params[key]
+                model_params.pop(key)
         return model_params
 
     @app.route('/calculate/model/<model_name>', methods=['POST'])
