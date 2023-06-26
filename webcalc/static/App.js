@@ -34,8 +34,12 @@ const template = `
         <option v-for="(label, alias, index) in instruments" :key="alias" :value="alias">{{label}}</option>
       </select>
       <label id="modelLabel" for="model">Model: </label>
-      <select id="model" v-model="active_model" @change="populateModelParams">
+      <select id="model" v-model="active_model" @change="onModelChange">
         <option v-for="model_name in model_names" :key="model_name" :value="model_name">{{model_name}}</option>
+      </select>
+      <label id="structureLabel" for="model">Structure Factor: </label>
+      <select id="structure" v-model="active_structure" @change="onStructureChange">
+        <option v-for="structure_name in structure_names" :key="structure_name" :value="structure_name">{{structure_name}}</option>
       </select>
       <label id="averagingTypeLabel" for="averagingType">Averaging Method: </label>
       <select id="averagingType" v-model="active_averaging_type">
@@ -44,10 +48,14 @@ const template = `
       </select>
     </div>
   </div>
+  <div class="calculatingText" v-show="calculating_shown">
+    <p id="calculating">Calculating</p>
+  </div> 
   <div class="documentation" v-show="documentation_shown">
   <iframe src="/docs/index.html" title="SasWebCalc Documentation"  width="100%" height="500" style="border:1px solid black;"></iframe>
   </div>
   <plotting ref="plotting" :data_1d="data_1d" :data_2d="data_2d" :shapes="shapes"/>
+ 
   <div class="instrument-section" id="modelAndAveragingParams">
     <averaging-params ref="averaging_params" :active_averaging_type="active_averaging_type" :data_1d="data_1d"
         :data_2d="data_2d" @change-shapes="onShapeChange" @change-ave-params="onAveragingChange"/>
@@ -92,6 +100,10 @@ export default {
       'elliptical': 'Elliptical',
     },
     active_model: "",
+    active_structure: "",
+    structure_names: [],
+    structure_names_original: [],
+    multiplicity_models: [],
     model_names: [],
     model_params: {},
     instrument_params: {},
@@ -104,11 +116,29 @@ export default {
     instruments,
     pythonParams: {},
     documentation_shown: false,
+    calculating_shown: false,
   }),
   methods: {
     async populateModelParams() {
-      const fetch_result = await fetch(`/get/params/model/${this.active_model}`);
-      this.model_params = await fetch_result.json();
+      if(this.active_model !== ""){
+        let model_name = this.active_structure !== this.structure_names[0] ? this.active_model+'@'+this.active_structure :  this.active_model
+        const fetch_result = await fetch(`/get/params/model/${model_name}`);
+        this.model_params = await fetch_result.json();
+      }//End if statement
+      },
+    async onModelChange() {
+      console.log(this.multiplicity_models)
+        if (this.structure_names_original.includes(this.active_model)||this.multiplicity_models.includes(this.active_model)) {
+          this.structure_names = [this.structure_names_original[0]];
+          this.active_structure = this.structure_names[0];
+        }else {
+          this.structure_names = this.structure_names_original;
+        }// End fi statement for if the structure is missing and needed
+        await this.populateModelParams();
+      await this.onChange();
+    },
+    async onStructureChange() {
+      await this.populateModelParams()
       await this.onChange();
     },
     async onModelParamChange() {
@@ -153,6 +183,7 @@ export default {
           'instrument_params': this.instrument_params,
           'model': this.active_model,
           'model_params': this.model_params,
+          'structure_factor': this.active_structure,
           'averaging_type': this.active_averaging_type,
           'averaging_params': this.averaging_params,
         });
@@ -160,6 +191,8 @@ export default {
         this.pythonParams = results["user_inaccessible"];
         this.data_1d = {qValues:results["qValues"],intensity:results["fSubs"]};
         this.data_2d = {qxValues:results["qxValues"],qyValues:results["qyValues"],intensity2D: results["intensity2D"]};
+        this.calculating_shown = false;
+
       }//End if statement to check instrument existence
 
     },
@@ -183,6 +216,7 @@ export default {
       localStorage.setItem("active_instrument", this.active_instrument);
       localStorage.setItem("active_averaging_type", this.active_averaging_type);
       localStorage.setItem("active_model", this.active_model);
+      localStorage.setItem("active_structure",this.active_structure);
       localStorage.setItem(this.active_model + "_model_params", JSON.stringify(this.model_params));
       localStorage.setItem(this.active_instrument + "_instrument_params", JSON.stringify(this.instrument_params));
       localStorage.setItem(this.active_averaging_type + "_averaging_params", JSON.stringify(this.averaging_params));
@@ -199,8 +233,14 @@ export default {
     }
   },
   async beforeMount() {
-    const fetch_result = await fetch("/get/models/");
-    this.model_names = await fetch_result.json();
+    const fetch_result_structure = await fetch("/get/onLoad/");
+    let structures_result = await fetch_result_structure.json()
+    console.log(structures_result)
+    this.structure_names_original = structures_result["structures"];
+    this.structure_names = Array.from(this.structure_names_original);
+    this.active_structure = this.structure_names[0];
+    this.multiplicity_models = structures_result["multiplicity_models"];
+    this.model_names = structures_result["models"];
   },
   mounted() {
     // Sets the dropdowns to automatically choose for testing
