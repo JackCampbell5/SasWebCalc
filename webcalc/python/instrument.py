@@ -1582,6 +1582,7 @@ class NoInstrument(Instrument):
         """
         self.name = name if name else "Q Range"
         self.n_pts = 0
+        self.arm_to_point = 25 / 0.3
         self.spacing = 'lin'
         self.q_min = 0.0
         self.dq = 0.0
@@ -1590,8 +1591,9 @@ class NoInstrument(Instrument):
         self._q_max_vert = 6.0
         self._q_min_horizon = -6.0
         self._q_min_vert = -6.0
-        self.params = params
-        super().__init__(name, params)
+        self._params = params
+
+        self.load_params(params)
         self.calculate_instrument_parameters()
 
     @property
@@ -1672,15 +1674,56 @@ class NoInstrument(Instrument):
         dqx_vals = qx_values * self.dq
         dqy_vals = qy_values * self.dq
         i_vals = np.ones_like(self.n_pts)
+        f_sub_s = self.create_f_sub_s()
+        intensity2d = self.create_intensity2d()
         # FIXME: Set points where q_2d_vals < self.q_min to 0
         i_2d_vals = np.ones_like((self.n_pts, self.n_pts))
-        # TODO: Populate this
-        # TODO question NEED DI and FSUBs
-        # TODO question Do I sue 2d or 1d?
-        # TODO Question Do not have a Intensity's 2D
-        self.one_dimensional = {"I": i_vals, "dI": None, "Q": q_vals, "dQ": dq_vals, "fSubS": None}
-        self.two_dimensional = {"I": i_2d_vals, "dI": None, "Qx": qx_values, "dQx": dqx_vals, "Qy": qy_values, "dQy": dqx_vals, "fSubS": None}
-        return json.dumps(self.params)
+        self.one_dimensional = {"I": i_vals, "dI": None, "Q": q_vals, "dQ": dq_vals, "fSubS": f_sub_s}
+        self.two_dimensional = {"I": i_2d_vals, "dI": None, "Qx": qx_values, "dQx": dqx_vals, "Qy": qy_values, "dQy": dqy_vals, "intensity2D": intensity2d}
+        return self.python_return()
+
+    def create_f_sub_s(self):
+        # Creation of variables
+        f_sub_s = np.ones(self.n_pts)  # The f_sub_s array
+        size_points = round(self.arm_to_point * self.q_min)  # How many points to take out of the center
+        center = round(self.n_pts / 2)  # The center of the array
+
+        # If numbers don't align to be center, add a point to make it even
+        if (self.n_pts % 2 == 1 and size_points % 2 == 0) or (size_points % 2 == 1 and self.n_pts % 2 == 0):
+            size_points = size_points + 1
+
+        # Loops adds the 0's at the correct size points
+        if size_points % 2 == 0:
+            f_sub_s[center - 1] = 0
+            f_sub_s[center] = 0
+            if size_points > 2:
+                for num in range(int(size_points / 2) - 1):
+                    print(num)
+                    f_sub_s[center + num + 1] = 0
+                    f_sub_s[center - num - 2] = 0
+        else:
+            f_sub_s[center] = 0
+            if size_points > 1:
+                for num in range(int(size_points / 2)):
+                    f_sub_s[center + num + 1] = 0
+                    f_sub_s[center - num - 1] = 0
+        return f_sub_s
+
+    def create_intensity2d(self):
+        # TODO finish intensity 2D
+        intensity2d = [[np.ones(self.n_pts)] for num2 in range(self.n_pts)]
+        return intensity2d
+
+    def python_return(self):
+        python_return = {}
+        python_return["fSubs"] = self.one_dimensional.get("fSubS", {}).tolist()
+        python_return["qxValues"] = self.two_dimensional.get("Qx", {}).tolist()
+        python_return["qyValues"] = self.two_dimensional.get("Qy", {}).tolist()
+        # python_return["q2DValues"] =
+        python_return["intensity2D"] = self.two_dimensional.get("intensity2D", {})
+        python_return["qValues"] = self.one_dimensional.get("Q", {}).tolist()
+        print("Returning")
+        return python_return
 
 
 class NG7SANS(Instrument):

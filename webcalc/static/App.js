@@ -177,7 +177,9 @@ export default {
           'averaging_params': this.averaging_params,
         });
         let results = await this.fetch_with_data(location, data);
-        this.pythonParams = results["user_inaccessible"];
+        if("user_inaccessible" in results){
+          this.pythonParams = results["user_inaccessible"];
+        }
         this.data_1d = {qValues:results["qValues"],intensity:results["fSubs"]};
         this.data_2d = {qxValues:results["qxValues"],qyValues:results["qyValues"],intensity2D: results["intensity2D"]};
         this.calculating_shown = false;
