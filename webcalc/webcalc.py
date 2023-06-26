@@ -9,13 +9,13 @@ from flask import Flask, render_template, request, send_file
 
 # import specific methods from python files
 try:
-    from python.link_to_sasmodels import get_model_list, get_params, get_structure_list,get_multiplicity_models
+    from python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
     from python.link_to_sasmodels import calculate_model as calculate_m
     from python.instrument import calculate_instrument as calculate_i
     from python.helpers import decode_json, encode_json
 except ModuleNotFoundError:
     # Runs the imports from webcalc only when auto-doc runs to remove errors
-    from webcalc.python.link_to_sasmodels import get_model_list, get_params, get_structure_list,get_multiplicity_models
+    from webcalc.python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
     from webcalc.python.link_to_sasmodels import calculate_model as calculate_m
     from webcalc.python.instrument import calculate_instrument as calculate_i
     from webcalc.python.helpers import decode_json, encode_json
@@ -73,20 +73,33 @@ def create_app():
     @app.route('/get/params/model/<model_name>', methods=['GET'])
     def get_model_params(model_name):
         params = get_params(model_name, json_encode=False)
-        return model_params_update(False, model_name, params)
+        return _update_model_params(js_model_params=params)
 
     @app.route('/modelParamsUpdate/', methods=['POST'])
-    def model_params_update(js_data=True, model="", js_model_params={}) -> str:
-
+    def model_params_update() -> dict:
         # Checks the params out differently if it is coming from the JS or the function
-        if js_data:
-            data = decode_json(request.data)[0]
-            json_like = json.loads(data)
+        data = decode_json(request.data)[0]
+        json_like = json.loads(data)
 
-            # Gets the model and model params out of the dict
-            model = json_like.get('model', '')
-            # Gets the model parameters form the JS
-            js_model_params = json_like.get('model_params', {})
+        # Gets the model and model params out of the dict
+        model = json_like.get('model', '')
+        # Gets the model parameters form the JS
+        js_model_params = json_like.get('model_params', {})
+        if js_model_params is not dict:
+            get_model_params(model_name=model)
+        return _update_model_params(js_model_params=js_model_params)
+
+    def _update_model_params(js_model_params=None):
+        """Updates the model params to increasings the number of inputs if there is a multiplicity model
+
+        :param dict js_model_params: A dictionary containing the parameters from the JS
+        :return: An updated dictionary of the model params
+        :rtype: Dict
+        """
+
+        if js_model_params is None:
+            print("No Model Params")
+            js_model_params = {}
 
         # Necessary Parameters
         new_model_params = {x: js_model_params[x] for x in js_model_params}  # A duplicate array of js_model_params
@@ -174,7 +187,7 @@ def create_app():
         if is_structure_factor:
             model = model + "@" + structure_factor
         model_params = json_like.get('model_params', {})
-        model_params = model_params_restructure(model_params)
+        model_params = _model_params_restructure(model_params)
 
         # Gets slicer and Slicer params out of dict
         slicer = json_like.get('averaging_type', '')
@@ -222,7 +235,13 @@ def create_app():
 
         return encode_json(params)
 
-    def model_params_restructure(model_params):
+    def _model_params_restructure(model_params):
+        """Restructures the parameters for the model calculations
+
+        :param dict model_params: The model params to restructure
+        :return: The restructured directory
+        :rtype: Dict
+        """
         model_params = {key: value.get('default', 0.0) for key, value in model_params.items()}
         results_dict = {}
         for key in model_params:
@@ -238,6 +257,7 @@ def create_app():
         for key in results_dict:
             model_params[key] = []
             for item in results_dict[key]:
+                # TODO Update when we figure out what form the SasModels takes
                 model_params[key].append(model_params[item])
                 model_params.pop(item)
 
