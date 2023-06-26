@@ -4,7 +4,7 @@ from typing import Union, Dict, List
 
 import numpy as np
 
-from sasmodels.core import list_models, load_model
+from sasmodels.core import list_models, load_model, load_model_info
 from sasmodels.direct_model import call_kernel
 
 from .helpers import encode_json
@@ -19,7 +19,41 @@ def get_model_list(category=None):
     :return: A list of the model list
     :rtype: List
     """
-    return encode_json(list_models(category))
+    return list_models(category)
+
+
+def get_structure_list():
+    """Gets a list of all of the models defined as a structure factor with None at the start
+
+    To do this is goes through all the models, loads the model info, gets the structure factor and if it is a structure factor adds the model to an array
+    :return: An encoded json list of the structures
+    :rtype: Json
+    """
+    structure_list = [model for model in list_models() if getattr(load_model_info(model), "structure_factor", False)]
+    structure_list.insert(0, "None")
+    return structure_list
+
+
+def get_multiplicity_models():
+    """Gets a list of all of the Multiplicity Models defined as a structure factor with None at the start
+
+    To do this is goes through all the models, gets the parameters, checks to see if there is a multiplicity model and if it is a multiplicity models adds the
+    model to an array
+    :return: An encoded json list of the structures
+    :rtype: Json
+    """
+    return_array = []  # The return array
+    # Loop though all the models
+    for model in list_models():
+        model_params = get_params(model, encode=False)
+        simple_model_params = [key.name for key in model_params]  # A list of just the name of model parameters
+        # Find the keyword
+        for param in simple_model_params:
+            find = param.find('[')
+            if find != -1:
+                return_array.append(model)
+                break
+    return return_array
 
 
 def get_model(model_string):
@@ -62,7 +96,7 @@ def get_all_params(model_string):
     return get_params(model_string, True)
 
 
-def get_params(model_string, all=False):
+def get_params(model_string, all=False, encode=True):
     """Gets most of the params by passing False to the get params method
 
     :param str model_string: The string name of the model
@@ -80,7 +114,7 @@ def get_params(model_string, all=False):
         params.extend(model.info.parameters.kernel_parameters)
     else:
         params = []
-    return encode_params(params)
+    return encode_params(params) if encode else params
 
 
 def calculate_model(model_string: str, q: List[np.ndarray], params: Dict[str, float]) -> List[Number]:
