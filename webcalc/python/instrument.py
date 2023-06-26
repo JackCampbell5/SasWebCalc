@@ -395,7 +395,6 @@ class Detector:
                         "pixel_no_x", "pixel_no_y", "pixel_no_z", "beam_center_x", "beam_center_y", "beam_center_z"]
         set_params(self, params, float_params)
 
-
     def calculate_all_beam_centers(self):
         """ Call the functions that calculates the x, y, and z centers
 
@@ -1059,7 +1058,7 @@ class Instrument:
         # Data
         params["data"] = {}
         params["data"]["beam_diameter"] = self._param_get_helper(params=old_params.get(name + "BeamDiameter", {}), key="default")
-        params["data"]["beam_diameter_unit"]= self._param_get_helper(params=old_params.get(name + "BeamDiameter", {}), key="unit")
+        params["data"]["beam_diameter_unit"] = self._param_get_helper(params=old_params.get(name + "BeamDiameter", {}), key="unit")
         params["data"]["calculated_beam_stop_diameter"] = self._param_get_helper(params=old_params.get(name + "BeamStopSize", {}), key="default")
         params["data"]["figure_of_merit"] = self._param_get_helper(params=old_params.get(name + "FigureOfMerit", {}), key="default")
         params["data"]["flux"] = self._param_get_helper(params=old_params.get(name + "BeamFlux", {}), key="default")
@@ -1206,6 +1205,7 @@ class Instrument:
         python_return["user_inaccessible"]["MaximumHorizontalQ"] = self.data.q_max_horizon
         python_return["user_inaccessible"]["MaximumQ"] = self.data.q_max
         python_return["user_inaccessible"]["MinimumQ"] = self.data.q_min
+        # TODO Question: Do we even use half of thease
         python_return["nCells"] = self.slicer.n_cells.tolist()
         python_return["qsq"] = self.slicer.d_sq.tolist()
         python_return["sigmaAve"] = self.slicer.sigma_ave.tolist()
@@ -1581,7 +1581,6 @@ class NoInstrument(Instrument):
         :param params:
         """
         self.name = name if name else "Q Range"
-        super().__init__(name, params)
         self.n_pts = 0
         self.spacing = 'lin'
         self.q_min = 0.0
@@ -1592,6 +1591,7 @@ class NoInstrument(Instrument):
         self._q_min_horizon = -6.0
         self._q_min_vert = -6.0
         self.params = params
+        super().__init__(name, params)
         self.calculate_instrument_parameters()
 
     @property
@@ -1640,8 +1640,10 @@ class NoInstrument(Instrument):
         self.q_max = max(corners)
 
     def load_params(self, params: Dict[str, Dict[str, Union[float, int, str]]]):
+        print("No Instrument Load Params")
         values = {}
         # Simplify the parameters passed into a key:value pairing instead of a key: {sub_key: value} pairing
+        params = params.get('instrument_params', None)
         for name, value in params.items():
             def_value = 0.0 if value.get("type", "number") == "number" else "lin"
             values[name] = value.get("default", def_value)
@@ -1654,12 +1656,16 @@ class NoInstrument(Instrument):
         self.q_max_horizon = values.get('q_max_horizontal', self.q_max_horizon)
         self.q_min_horizon = values.get('q_min_horizontal', self.q_min_horizon)
 
+    def calculate_instrument_parameters(self):
+        pass
+
     def sas_calc(self):
         method = np.linspace if self.spacing == "lin" else np.logspace
         q_vals = method(self.q_min, self.q_max, self.n_pts)
         qx_values = method(self.q_min_horizon, self.q_max_horizon, self.n_pts)
         qy_values = method(self.q_min_vert, self.q_max_vert, self.n_pts)
         q_2d_vals = np.sqrt(qx_values * qx_values + qy_values * qy_values)
+        # TODO question Returns a value but not set to anything?
         np.broadcast_to(qx_values, (self.n_pts, len(qx_values)))
         np.broadcast_to(qy_values, (self.n_pts, len(qy_values)))
         dq_vals = q_vals * self.dq
@@ -1669,8 +1675,11 @@ class NoInstrument(Instrument):
         # FIXME: Set points where q_2d_vals < self.q_min to 0
         i_2d_vals = np.ones_like((self.n_pts, self.n_pts))
         # TODO: Populate this
-        self.one_dimensional = {"I": None, "dI": None, "Q": None, "dQ": None, "fSubS": None}
-        self.two_dimensional = {"I": None, "dI": None, "Qx": None, "dQx": None, "Qy": None, "dQy": None, "fSubS": None}
+        # TODO question NEED DI and FSUBs
+        # TODO question Do I sue 2d or 1d?
+        # TODO Question Do not have a Intensity's 2D
+        self.one_dimensional = {"I": i_vals, "dI": None, "Q": q_vals, "dQ": dq_vals, "fSubS": None}
+        self.two_dimensional = {"I": i_2d_vals, "dI": None, "Qx": qx_values, "dQx": dqx_vals, "Qy": qy_values, "dQy": dqx_vals, "fSubS": None}
         return json.dumps(self.params)
 
 
