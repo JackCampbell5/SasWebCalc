@@ -1,29 +1,17 @@
-.. SasWebCalc documentation master file, created by
-   sphinx-quickstart on Mon Feb 13 08:38:52 2023.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 SasWebCalc
 ==========
 
-TODO add a description of what SASWEBCALC is
-
-
-Citations
----------
-
-
+.. mdinclude:: ../../README.md
+    :start-line: 1
+    :end-line: 5
 
 External Resources
 ==================
 .. csv-table::
 
-    Source Code Repository,
-    Question/Issue Tracker,
-    Interactive Binder Tutorial,
-    Anaconda Cloud,
-    Python Package Index,
-
+    Source Code Repository, `Repo <https://gitlab.nist.gov/gitlab/jkrzywon/saswebcalc>`_
+    Question/Issue Tracker, `Tracker <https://gitlab.nist.gov/gitlab/jkrzywon/saswebcalc/-/issues>`_
+    New Issue/Bug, `Issue <https://gitlab.nist.gov/gitlab/jkrzywon/saswebcalc/-/issues/new>`_
 
 Table of Contents
 =================
@@ -42,18 +30,10 @@ Table of Contents
 
 .. toctree::
     :maxdepth: 2
-    :caption: Knowledgebase
-
-    faq
-
-.. toctree::
-    :maxdepth: 2
     :caption: Miscellaneous
 
 
-    contribute
     contact
-    legal
 
 .. toctree::
    :maxdepth: 2
@@ -61,3 +41,9 @@ Table of Contents
 
    genindex
    modindex
+
+Feature Set, Current and Planned
+================================
+.. mdinclude:: ../../README.md
+    :start-line: 28
+    :end-line: 53

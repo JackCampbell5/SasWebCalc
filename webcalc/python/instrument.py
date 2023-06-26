@@ -21,34 +21,6 @@ def calculate_instrument(instrument: str, params: dict) -> Dict[str, Union[Numbe
     :param dict params: A dictionary of parameters inputted by the user in the JavaScript
     :return: The python return dictionary
     :rtype: dict
-    Args:
-        instrument: String defining instrument name
-        params: Dictionary containing the following information:
-            {
-                "param_name_001" :
-                    {
-                        name: str,  # Display name for parameter
-                        default: Union[float, int, str],  # Current value
-                        type: Optional[str],  # input type, either ["string", "number", or "option"]
-                        min: Optional[Union[float, int, str]],
-                        max: Optional[Union[float, int, str]],
-                        options: Optional[List],
-                        unit: Optional[str],
-                    },
-                ...
-            }
-
-    Returns: The following dictionary {
-        Qx: [],
-        dQx: [],
-        Qy: [],
-        dQy: [],
-        Iqxy: [],
-        q: [],
-        dq: [],
-        Iq: [],
-        beamflux: float,
-    }
     """
     # i_class is the python object for the interment
     if instrument == 'ng7':

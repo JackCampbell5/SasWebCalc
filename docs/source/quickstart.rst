@@ -1,11 +1,10 @@
-.. _quickstart:
+Getting set up
+==============
 
-Quickstart Guide
-================
+.. mdinclude:: ../../README.md
+    :start-line: 7
+    :end-line: 26
 
-Setup
------
-
-**Requirements**
-
-    - 
+Python Packages Needed for Development
+--------------------------------------
+.. include:: ../../requirements.txt

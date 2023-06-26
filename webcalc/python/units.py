@@ -65,10 +65,11 @@ AMBIGUITIES = {}  # type: Dict[str, str]
 # unit class. For now lets keep it simple.  Note that
 def _build_metric_units(unit, abbr):
     """Construct standard SI names for the given unit.
+
     Builds e.g.,
-        s, ns
-        second, nanosecond, nano*second
-        seconds, nanoseconds
+    +s, ns
+    +second, nanosecond, nano*second
+    +seconds, nanoseconds
     Includes prefixes for femto through peta.
 
     Ack! Allows, e.g., Coulomb and coulomb even though Coulomb is not
@@ -148,8 +149,8 @@ def _build_inv_units(names, conversion):
 
 
 def _build_inv_metric_units(unit, abbr):
-    # type: (Sequence[str], ConversionType) -> Dict[str, ConversionType]
     """
+    # type: (Sequence[str], ConversionType) -> Dict[str, ConversionType]
     Using the return from _build_metric_units, build inverse variations on all units (1/x, invx, x^{-1} and x^-1)
     """
     map = {}  # type: Dict[str, ConversionType]
@@ -164,9 +165,9 @@ def _build_inv_metric_units(unit, abbr):
 
 
 def _build_inv_n_units(names, conversion, n=2):
-    # type: (Sequence[str], ConversionType) -> Dict[str, ConversionType]
     """
     Builds variations on inverse to the nth power units, including 1/x^n, invx^-n and x^-n.
+    # type: (Sequence[str], ConversionType) -> Dict[str, ConversionType]
     """
     map = {}  # type: Dict[str, ConversionType]
     n = int(n)
@@ -179,10 +180,10 @@ def _build_inv_n_units(names, conversion, n=2):
 
 
 def _build_inv_n_metric_units(unit, abbr, n=2):
-    # type: (Sequence[str], ConversionType) -> Dict[str, ConversionType]
     """
     Using the return from _build_metric_units, build inverse to the nth power variations on all units
     (1/x^n, invx^n, x^{-n} and x^-n)
+    # type: (Sequence[str], ConversionType) -> Dict[str, ConversionType]
     """
     map = {}  # type: Dict[str, ConversionType]
     meter_map = _build_metric_units(unit, abbr)
