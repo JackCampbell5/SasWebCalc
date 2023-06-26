@@ -1711,7 +1711,42 @@ class NoInstrument(Instrument):
 
     def create_intensity2d(self):
         # TODO finish intensity 2D
+        # Make Array of rows that need it and which ones that should be 0
+        # Go through all of them
+        # Creation of variables
         intensity2d = [[np.ones(self.n_pts)] for num2 in range(self.n_pts)]
+        what_points = []
+        size_points = round(self.arm_to_point * self.q_min)  # How many points to take out of the center
+        center = round(self.n_pts / 2)  # The center of the array
+
+        # If numbers don't align to be center, add a point to make it even
+        if (self.n_pts % 2 == 1 and size_points % 2 == 0) or (size_points % 2 == 1 and self.n_pts % 2 == 0):
+            size_points = size_points + 1
+
+        # Loops adds the 0's at the correct size points
+        if size_points % 2 == 0:
+            what_points.append(center - 1)
+            what_points.append(center)
+            if size_points > 2:
+                for num in range(int(size_points / 2) - 1):
+                    print(num)
+                    what_points.append(center + num + 1)
+                    what_points.append(center - num - 2)
+        else:
+            what_points.append(center)
+            if size_points > 1:
+                for num in range(int(size_points / 2)):
+                    what_points.append(center + num + 1)
+                    what_points.append(center - num - 1)
+        what_points.sort()
+        if what_points % 2 == 0:
+            # Remove in both center
+            pass
+
+        if what_points % 2 == 1:
+            # Remove the ones in center
+            pass
+        print(what_points)
         return intensity2d
 
     def python_return(self):
