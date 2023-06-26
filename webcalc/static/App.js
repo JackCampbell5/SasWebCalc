@@ -142,8 +142,7 @@ export default {
       await this.onChange();
     },
     async onModelParamChange() {
-      console.log("Test1")
-      let location = `/modelParamsUpdate/`;
+      let location = `/update/params/`;
         this.persist();
         let data = JSON.stringify({
           'model': this.active_model,

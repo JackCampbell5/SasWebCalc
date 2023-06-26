@@ -75,7 +75,7 @@ def create_app():
         params = get_params(model_name, json_encode=False)
         return _update_model_params(js_model_params=params)
 
-    @app.route('/modelParamsUpdate/', methods=['POST'])
+    @app.route('/update/params/', methods=['POST'])
     def model_params_update() -> dict:
         # Checks the params out differently if it is coming from the JS or the function
         data = decode_json(request.data)[0]
@@ -134,29 +134,23 @@ def create_app():
         new_model_params[param_keyword] = js_model_params[param_keyword]
 
         # Finds the params and adds/removes them based on the param_keyword
-        if first_run:
-            # Find the multiplicity model params
-            sld_dict = []
-            for name in js_model_params:
-                if 'sld' in name or (param_keyword in name and param_keyword != name):
-                    sld_dict.append(name)
-
-            # Add the correct number of multiplicity model params back to the result array
-            for value in sld_dict:
-                for num in range(int(js_model_params[param_keyword]["default"])):
-                    value_updated = value[0:value.find('[')] + '[' + str(num) + ']'
-                    new_model_params[value_updated] = js_model_params[value]
-        else:
-            # Find the multiplicity model params
-            sld_dict = []
-            for name in js_model_params:
+        # Find the multiplicity model params
+        sld_dict = []
+        for name in js_model_params:
+            if ('sld' in name or (param_keyword in name and param_keyword != name))and first_run:
+                sld_dict.append(name)
+            if not first_run:
                 if '[' in name:
                     found = name.find('[')
                     sld_dict.append(name[0:found])
 
-            # Add the correct number of multiplicity model params back to the result array
-            for value in sld_dict:
-                for num in range(int(js_model_params[param_keyword]["default"])):
+        # Add the correct number of multiplicity model params back to the result array
+        for value in sld_dict:
+            for num in range(int(js_model_params[param_keyword]["default"])):
+                if first_run:
+                    value_updated = value[0:value.find('[')] + '[' + str(num) + ']'
+                    new_model_params[value_updated] = js_model_params[value]
+                else:
                     value_updated = value + '[' + str(num) + ']'
                     if value_updated in js_model_params:
                         new_model_params[value_updated] = js_model_params[value_updated]
@@ -243,11 +237,11 @@ def create_app():
         :rtype: Dict
         """
         model_params = {key: value.get('default', 0.0) for key, value in model_params.items()}
-        results_dict = {x for x in model_params}
-        for key in results_dict:
+        results_dict = model_params.copy()
+        for key, value in results_dict.items():
             if '[' in key:
                 new_name = key[0:key.find('[')]+key[key.find('[')+1:key.find(']')]
-                model_params[new_name] = model_params[key]
+                model_params[new_name] = value
                 model_params.pop(key)
         return model_params
 
