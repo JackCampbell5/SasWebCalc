@@ -9,13 +9,13 @@ from flask import Flask, render_template, request, send_file
 
 # import specific methods from python files
 try:
-    from python.link_to_sasmodels import get_model_list, get_params, get_structure_list,get_multiplicity_models
+    from python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
     from python.link_to_sasmodels import calculate_model as calculate_m
     from python.instrument import calculate_instrument as calculate_i
     from python.helpers import decode_json, encode_json
 except ModuleNotFoundError:
     # Runs the imports from webcalc only when auto-doc runs to remove errors
-    from webcalc.python.link_to_sasmodels import get_model_list, get_params, get_structure_list,get_multiplicity_models
+    from webcalc.python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
     from webcalc.python.link_to_sasmodels import calculate_model as calculate_m
     from webcalc.python.instrument import calculate_instrument as calculate_i
     from webcalc.python.helpers import decode_json, encode_json
@@ -35,7 +35,11 @@ def create_app():
     # The documentation flask calls to get the documentation site to appear
     @app.route("/docs/<name>", methods=['GET', 'POST'])
     def docs_main(name):
-        return render_template(f"docs/build/html/{name}")
+        try:
+            return render_template(f"docs/build/html/{name}")
+        except Exception as e:
+            print("Documentation Not Loaded ", str(e))
+            return "Documentation Not Loaded Correctly"
 
     @app.route("/docs/api/<name>", methods=['GET', 'POST'])
     def docs_api(name):
@@ -68,7 +72,91 @@ def create_app():
     @app.route('/get/params/<model_name>', methods=['GET'])
     @app.route('/get/params/model/<model_name>', methods=['GET'])
     def get_model_params(model_name):
-        return get_params(model_name)
+        params = get_params(model_name, json_encode=False)
+        return _update_model_params(js_model_params=params)
+
+    @app.route('/update/params/', methods=['POST'])
+    def model_params_update() -> dict:
+        # Checks the params out differently if it is coming from the JS or the function
+        data = decode_json(request.data)[0]
+        json_like = json.loads(data)
+
+        # Gets the model and model params out of the dict
+        model = json_like.get('model', '')
+        # Gets the model parameters form the JS
+        js_model_params = json_like.get('model_params', {})
+        if js_model_params is not dict:
+            get_model_params(model_name=model)
+        return _update_model_params(js_model_params=js_model_params)
+
+    def _update_model_params(js_model_params=None):
+        """Updates the model params to increasings the number of inputs if there is a multiplicity model
+
+        :param dict js_model_params: A dictionary containing the parameters from the JS
+        :return: An updated dictionary of the model params
+        :rtype: Dict
+        """
+
+        if js_model_params is None:
+            print("No Model Params")
+            js_model_params = {}
+
+        # Necessary Parameters
+        new_model_params = {x: js_model_params[x] for x in js_model_params}  # A duplicate array of js_model_params
+        param_keyword = ""  # The keyword that changes:
+        first_run = True  # Is this the first run of the code
+        model_params = [key for key in js_model_params]  # A list of just the name of model parameters
+
+        # Find the keyword
+        for num in range(len(model_params)):
+            find = model_params[num].find('[')
+            if find != -1:
+                param_keyword = model_params[num][find + 1:model_params[num].find(']')]
+                if param_keyword == '0':
+                    param_keyword = model_params[num - 1]
+                    first_run = False
+                break
+
+        # Return the array if there is no special keyword
+        if param_keyword == "":
+            return js_model_params
+
+        # Remove all the params changed by the multiplicity models from the array
+        sld_remove_dict = []
+        for name in js_model_params:
+            if 'sld' in name or (param_keyword in name and param_keyword != name) or '[' in name:
+                sld_remove_dict.append(name)
+        for name in sld_remove_dict:
+            new_model_params.pop(name)
+
+        # Move the param keyword to after all the non multiplicity model parameters
+        new_model_params.pop(param_keyword)
+        new_model_params[param_keyword] = js_model_params[param_keyword]
+
+        # Finds the params and adds/removes them based on the param_keyword
+        # Find the multiplicity model params
+        sld_dict = []
+        for name in js_model_params:
+            if ('sld' in name or (param_keyword in name and param_keyword != name))and first_run:
+                sld_dict.append(name)
+            if not first_run:
+                if '[' in name:
+                    found = name.find('[')
+                    sld_dict.append(name[0:found])
+
+        # Add the correct number of multiplicity model params back to the result array
+        for value in sld_dict:
+            for num in range(int(js_model_params[param_keyword]["default"])):
+                if first_run:
+                    value_updated = value[0:value.find('[')] + '[' + str(num) + ']'
+                    new_model_params[value_updated] = js_model_params[value]
+                else:
+                    value_updated = value + '[' + str(num) + ']'
+                    if value_updated in js_model_params:
+                        new_model_params[value_updated] = js_model_params[value_updated]
+                    else:
+                        new_model_params[value_updated] = js_model_params[value + "[0]"]
+        return encode_json(new_model_params)
 
     @app.route('/calculate/', methods=['POST'])
     def calculate() -> str:
@@ -78,6 +166,7 @@ def create_app():
         Calls the model to get real intensities for the Q range(s) calculated by the instrument.
         :return: A json-like string representation of all the data
         """
+
         data = decode_json(request.data)[0]
         json_like = json.loads(data)
 
@@ -92,7 +181,7 @@ def create_app():
         if is_structure_factor:
             model = model + "@" + structure_factor
         model_params = json_like.get('model_params', {})
-        model_params = {key: value.get('default', 0.0) for key, value in model_params.items()}
+        model_params = _model_params_restructure(model_params)
 
         # Gets slicer and Slicer params out of dict
         slicer = json_like.get('averaging_type', '')
@@ -137,7 +226,24 @@ def create_app():
         params['intensity2D'] = comb_2d.tolist()
 
         # Return all data
+
         return encode_json(params)
+
+    def _model_params_restructure(model_params):
+        """Restructures the parameters for the model calculations
+
+        :param dict model_params: The model params to restructure
+        :return: The restructured directory
+        :rtype: Dict
+        """
+        model_params = {key: value.get('default', 0.0) for key, value in model_params.items()}
+        results_dict = model_params.copy()
+        for key, value in results_dict.items():
+            if '[' in key:
+                new_name = key[0:key.find('[')]+key[key.find('[')+1:key.find(']')]
+                model_params[new_name] = value
+                model_params.pop(key)
+        return model_params
 
     @app.route('/calculate/model/<model_name>', methods=['POST'])
     def calculate_model(model_name: str) -> str:

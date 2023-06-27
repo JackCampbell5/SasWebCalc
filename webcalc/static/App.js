@@ -142,6 +142,15 @@ export default {
       await this.onChange();
     },
     async onModelParamChange() {
+      let location = `/update/params/`;
+        this.persist();
+        let data = JSON.stringify({
+          'model': this.active_model,
+          'model_params': this.model_params,
+        });
+        let results = await this.fetch_with_data(location, data);
+        this.model_params = results;
+
       await this.onChange();
     },
     async onInstrumentParamChange(params) {

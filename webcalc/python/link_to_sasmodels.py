@@ -68,7 +68,7 @@ def get_model(model_string):
     return load_model(model_string)
 
 
-def encode_params(params):
+def encode_params(params,json_encode = True):
     """Encodes the parameters gotten from sasmodels as a dictionary
 
     :param PyModel params: The pymodel object that contains the params
@@ -77,13 +77,24 @@ def encode_params(params):
     """
     return_params = {}
     param_dict = {}
+    param_keyword = ""
+    for param in params:
+        find = param.name.find('[')
+        if find != -1:
+            param_keyword = param.name[find + 1:param.name.find(']')]
+            break
     for param in params:
         param_dict['units'] = str(param.units)
         param_dict['default'] = str(param.default)
         param_dict['lower_limit'] = str(param.limits[0])
         param_dict['upper_limit'] = str(param.limits[1])
+        if param.name ==param_keyword:
+            param_dict['lower_limit'] = str(1.0)
         return_params[param.name] = param_dict.copy()
-    return encode_json(return_params)
+    if json_encode:
+        return encode_json(return_params)
+    else:
+        return return_params
 
 
 def get_all_params(model_string):
@@ -96,9 +107,11 @@ def get_all_params(model_string):
     return get_params(model_string, True)
 
 
-def get_params(model_string, all=False, encode=True):
+def get_params(model_string, all=False, encode=True,json_encode=True):
     """Gets most of the params by passing False to the get params method
 
+    :param json_encode:
+    :param boolean encode: Whether the result is encoded
     :param str model_string: The string name of the model
     :param all: whether it is all the params or not
     :return: The list of the params encoded
@@ -107,14 +120,14 @@ def get_params(model_string, all=False, encode=True):
     model = get_model(model_string) if model_string else None
     if all and model:
         model = get_model(model_string)
-        # Calls paramaters from sasmodels
+        # Calls parameters from sasmodels
         params = model.info.parameters.call_parameters
     elif model:
         params = model.info.parameters.common_parameters
         params.extend(model.info.parameters.kernel_parameters)
     else:
         params = []
-    return encode_params(params) if encode else params
+    return encode_params(params,json_encode=json_encode) if encode else params
 
 
 def calculate_model(model_string: str, q: List[np.ndarray], params: Dict[str, float]) -> List[Number]:
