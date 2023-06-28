@@ -1674,7 +1674,7 @@ class NoInstrument(Instrument):
         dqx_vals = qx_values * self.dq
         dqy_vals = qy_values * self.dq
         i_vals = np.ones_like(self.n_pts)
-        f_sub_s = self.create_f_sub_s()
+        f_sub_s = self.create_f_sub_s(q_values=q_vals)
         intensity2d = self.create_intensity2d()
         # FIXME: Set points where q_2d_vals < self.q_min to 0
         i_2d_vals = np.ones_like((self.n_pts, self.n_pts))
@@ -1682,71 +1682,71 @@ class NoInstrument(Instrument):
         self.two_dimensional = {"I": i_2d_vals, "dI": None, "Qx": qx_values, "dQx": dqx_vals, "Qy": qy_values, "dQy": dqy_vals, "intensity2D": intensity2d}
         return self.python_return()
 
-    def create_f_sub_s(self):
-        # Creation of variables
+    def create_f_sub_s(self, q_values):
+        # Take out anything below the Q minimum
         f_sub_s = np.ones(self.n_pts)  # The f_sub_s array
-        size_points = round(self.arm_to_point * self.q_min)  # How many points to take out of the center
-        center = round(self.n_pts / 2)  # The center of the array
-
-        # If numbers don't align to be center, add a point to make it even
-        if (self.n_pts % 2 == 1 and size_points % 2 == 0) or (size_points % 2 == 1 and self.n_pts % 2 == 0):
-            size_points = size_points + 1
-
-        # Loops adds the 0's at the correct size points
-        if size_points % 2 == 0:
-            f_sub_s[center - 1] = 0
-            f_sub_s[center] = 0
-            if size_points > 2:
-                for num in range(int(size_points / 2) - 1):
-                    print(num)
-                    f_sub_s[center + num + 1] = 0
-                    f_sub_s[center - num - 2] = 0
-        else:
-            f_sub_s[center] = 0
-            if size_points > 1:
-                for num in range(int(size_points / 2)):
-                    f_sub_s[center + num + 1] = 0
-                    f_sub_s[center - num - 1] = 0
+        for num in range(len(q_values)):
+            if q_values[num] < self.q_min:
+                f_sub_s[num] = 0
         return f_sub_s
 
     def create_intensity2d(self):
-        # TODO finish intensity 2D
-        # Make Array of rows that need it and which ones that should be 0
-        # Go through all of them
-        # Creation of variables
-        intensity2d = [[np.ones(self.n_pts)] for num2 in range(self.n_pts)]
-        what_points = []
-        size_points = round(self.arm_to_point * self.q_min)  # How many points to take out of the center
-        center = round(self.n_pts / 2)  # The center of the array
+        stop_points = round(self.arm_to_point * self.q_min)  # How many points to take out of the center
+        what_points = []  # An array of The points that should be removed
+        odd_points = False  # Is the number of points odd or even?
+        center = self.n_pts / 2  # The center of the data
 
-        # If numbers don't align to be center, add a point to make it even
-        if (self.n_pts % 2 == 1 and size_points % 2 == 0) or (size_points % 2 == 1 and self.n_pts % 2 == 0):
-            size_points = size_points + 1
+        # If the # of points is less than the size of the beamstop then make all the points 0's
+        if self.n_pts <= stop_points:
+            return [np.zeros(self.n_pts) for num2 in range(self.n_pts)]
+        else:
+            intensity2d = [np.ones(self.n_pts) for num2 in range(self.n_pts)]
+
+        # If the number of points is odd make odd_points true and change the center
+        if self.n_pts % 2 == 1:
+            odd_points = True
+            center = center - .5  # The center of the array
+        center = int(center)
+
+        # If the beam stop in points is not length points to be center on the correct number of pixels add a point
+        if (odd_points and stop_points % 2 == 0) or (stop_points % 2 == 1 and not odd_points):
+            stop_points = stop_points + 1
 
         # Loops adds the 0's at the correct size points
-        if size_points % 2 == 0:
-            what_points.append(center - 1)
-            what_points.append(center)
-            if size_points > 2:
-                for num in range(int(size_points / 2) - 1):
-                    print(num)
-                    what_points.append(center + num + 1)
-                    what_points.append(center - num - 2)
+        if stop_points % 2 == 0:
+            for num in range(int(stop_points / 2) + 1):
+                what_points.append(center + num)
+                what_points.append(center - num - 1)
         else:
             what_points.append(center)
-            if size_points > 1:
-                for num in range(int(size_points / 2)):
+            if stop_points > 1:
+                for num in range(int(stop_points / 2 - 0.5)):
                     what_points.append(center + num + 1)
                     what_points.append(center - num - 1)
-        what_points.sort()
-        if what_points % 2 == 0:
-            # Remove in both center
-            pass
+        what_points.sort()  # Sort the points in order
 
-        if what_points % 2 == 1:
+        # If the points are uneven set the middle to be correctly
+        if len(what_points) % 2 == 1:
             # Remove the ones in center
-            pass
-        print(what_points)
+            center_array = what_points[int(len(what_points) / 2 - .5)]
+            for num in what_points:
+                intensity2d[center_array][num] = 0
+
+        half_len = math.ceil(len(what_points) / 2)
+        # Remove in both center
+        for num in range(half_len):
+            # Creates an array of the points that should be at this cross-section
+            if odd_points:
+                short_what_points = what_points[half_len - num - 1:half_len + num]
+            else:
+                short_what_points = what_points[half_len - num - 1:half_len + num + 1]
+            # Edit the Array for one side
+            for num2 in short_what_points:
+                intensity2d[what_points[0 + num]][num2] = 0
+            # Edit the array for the other side
+            for num2 in short_what_points:
+                intensity2d[what_points[len(what_points) - 1 - num]][num2] = 0
+
         return intensity2d
 
     def python_return(self):
