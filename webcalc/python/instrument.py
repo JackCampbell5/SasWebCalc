@@ -1679,10 +1679,10 @@ class NoInstrument(Instrument):
         :return: A dictionary of encoded parameters from python return
         :rtype: Dict
         """
-        method = np.linspace if self.spacing == "lin" else np.logspace
-        q_vals = method(self.q_min, self.q_max, self.n_pts)
-        qx_values = method(self.q_min_horizon, self.q_max_horizon, self.n_pts)
-        qy_values = method(self.q_min_vert, self.q_max_vert, self.n_pts)
+        q_vals = (np.linspace(self.q_min, self.q_max, self.n_pts) if self.spacing == 'lin' else
+                  np.logspace(math.log(self.q_min, 10), math.log(self.q_max, 10), self.n_pts))
+        qx_values = np.linspace(self.q_min_horizon, self.q_max_horizon, self.n_pts)
+        qy_values = np.linspace(self.q_min_vert, self.q_max_vert, self.n_pts)
         q_2d_vals = np.sqrt(qx_values * qx_values + qy_values * qy_values)
         np.broadcast_to(qx_values, (self.n_pts, len(qx_values)))
         np.broadcast_to(qy_values, (self.n_pts, len(qy_values)))
@@ -1691,7 +1691,6 @@ class NoInstrument(Instrument):
         dqy_vals = qy_values * self.dq
         f_sub_s = self.create_f_sub_s(q_values=q_vals)
         intensity2d = self.create_intensity2d()
-        # TODO Calculate and return DI
         self.one_dimensional = {"I": None, "dI": None, "Q": q_vals, "dQ": dq_vals, "fSubS": f_sub_s}
         self.two_dimensional = {"I": q_2d_vals, "dI": None, "Qx": qx_values, "dQx": dqx_vals, "Qy": qy_values, "dQy": dqy_vals, "intensity2D": intensity2d}
         return self.python_return()
