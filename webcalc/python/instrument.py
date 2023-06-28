@@ -1684,19 +1684,16 @@ class NoInstrument(Instrument):
         qx_values = method(self.q_min_horizon, self.q_max_horizon, self.n_pts)
         qy_values = method(self.q_min_vert, self.q_max_vert, self.n_pts)
         q_2d_vals = np.sqrt(qx_values * qx_values + qy_values * qy_values)
-        # TODO question Returns a value but not set to anything?
         np.broadcast_to(qx_values, (self.n_pts, len(qx_values)))
         np.broadcast_to(qy_values, (self.n_pts, len(qy_values)))
         dq_vals = q_vals * self.dq
         dqx_vals = qx_values * self.dq
         dqy_vals = qy_values * self.dq
-        i_vals = np.ones_like(self.n_pts)
         f_sub_s = self.create_f_sub_s(q_values=q_vals)
         intensity2d = self.create_intensity2d()
-        # FIXME: Set points where q_2d_vals < self.q_min to 0
-        i_2d_vals = np.ones_like((self.n_pts, self.n_pts))
-        self.one_dimensional = {"I": i_vals, "dI": None, "Q": q_vals, "dQ": dq_vals, "fSubS": f_sub_s}
-        self.two_dimensional = {"I": i_2d_vals, "dI": None, "Qx": qx_values, "dQx": dqx_vals, "Qy": qy_values, "dQy": dqy_vals, "intensity2D": intensity2d}
+        # TODO Calculate and return DI
+        self.one_dimensional = {"I": None, "dI": None, "Q": q_vals, "dQ": dq_vals, "fSubS": f_sub_s}
+        self.two_dimensional = {"I": q_2d_vals, "dI": None, "Qx": qx_values, "dQx": dqx_vals, "Qy": qy_values, "dQy": dqy_vals, "intensity2D": intensity2d}
         return self.python_return()
 
     def create_f_sub_s(self, q_values):
@@ -1726,9 +1723,9 @@ class NoInstrument(Instrument):
 
         # If the # of points is less than the size of the beamstop then make all the points 0's
         if self.n_pts <= stop_points:
-            return [np.zeros(self.n_pts) for num2 in range(self.n_pts)]
+            return np.zeros((self.n_pts, self.n_pts))
         else:
-            intensity2d = [np.ones(self.n_pts) for num2 in range(self.n_pts)]
+            intensity2d = np.ones((self.n_pts, self.n_pts))
 
         # If the number of points is odd make odd_points true and change the center
         if self.n_pts % 2 == 1:
@@ -1784,10 +1781,10 @@ class NoInstrument(Instrument):
         :rtype: Dict
         """
         python_return = {}
+        # TODO return the rest  of the calculated values when required by the js
         python_return["fSubs"] = self.one_dimensional.get("fSubS", {}).tolist()
         python_return["qxValues"] = self.two_dimensional.get("Qx", {}).tolist()
         python_return["qyValues"] = self.two_dimensional.get("Qy", {}).tolist()
-        # python_return["q2DValues"] =
         python_return["intensity2D"] = self.two_dimensional.get("intensity2D", {})
         python_return["qValues"] = self.one_dimensional.get("Q", {}).tolist()
         return python_return
