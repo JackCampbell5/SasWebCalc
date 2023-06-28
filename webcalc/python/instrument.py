@@ -1594,7 +1594,6 @@ class NoInstrument(Instrument):
         self._params = params
 
         self.load_params(params)
-        self.calculate_instrument_parameters()
 
     @property
     def q_max_vert(self):
@@ -1657,9 +1656,6 @@ class NoInstrument(Instrument):
         self.q_min_vert = values.get('q_min_vertical', self.q_min_vert)
         self.q_max_horizon = values.get('q_max_horizontal', self.q_max_horizon)
         self.q_min_horizon = values.get('q_min_horizontal', self.q_min_horizon)
-
-    def calculate_instrument_parameters(self):
-        pass
 
     def sas_calc(self):
         method = np.linspace if self.spacing == "lin" else np.logspace
