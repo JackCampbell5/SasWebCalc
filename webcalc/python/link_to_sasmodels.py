@@ -35,7 +35,7 @@ def get_structure_list():
 
 
 def get_multiplicity_models():
-    """Gets a list of all of the Multiplicity Models defined as a structure factor with None at the start
+    """Gets a list of all the Multiplicity Models defined as a structure factor with None at the start
 
     To do this is goes through all the models, gets the parameters, checks to see if there is a multiplicity model and if it is a multiplicity models adds the
     model to an array

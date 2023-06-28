@@ -127,7 +127,6 @@ export default {
       }//End if statement
       },
     async onModelChange() {
-      console.log(this.multiplicity_models)
         if (this.structure_names_original.includes(this.active_model)||this.multiplicity_models.includes(this.active_model)) {
           this.structure_names = [this.structure_names_original[0]];
           this.active_structure = this.structure_names[0];
@@ -187,7 +186,9 @@ export default {
           'averaging_params': this.averaging_params,
         });
         let results = await this.fetch_with_data(location, data);
-        this.pythonParams = results["user_inaccessible"];
+        if("user_inaccessible" in results){
+          this.pythonParams = results["user_inaccessible"];
+        }
         this.data_1d = {qValues:results["qValues"],intensity:results["fSubs"]};
         this.data_2d = {qxValues:results["qxValues"],qyValues:results["qyValues"],intensity2D: results["intensity2D"]};
         this.calculating_shown = false;
@@ -234,7 +235,6 @@ export default {
   async beforeMount() {
     const fetch_result_structure = await fetch("/get/onLoad/");
     let structures_result = await fetch_result_structure.json()
-    console.log(structures_result)
     this.structure_names_original = structures_result["structures"];
     this.structure_names = Array.from(this.structure_names_original);
     this.active_structure = this.structure_names[0];

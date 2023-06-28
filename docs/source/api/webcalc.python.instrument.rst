@@ -43,6 +43,7 @@ This is the overall organization of the variables in the instrument class
     webcalc.python.instrument.wavelength
     webcalc.python.instrument.data
     webcalc.python.instrument.instrument
+    webcalc.python.instrument.NoInstrument
     webcalc.python.instrument.ng7sans
     webcalc.python.instrument.ngb30sans
     webcalc.python.instrument.ngb10sans
