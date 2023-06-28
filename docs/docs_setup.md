@@ -3,6 +3,7 @@
 ## Necessary Packages
 + Sphinx 
 + sphinx_rtd_theme 
++ sphinx_mdinclude
 
 ## To create docs: 
 1. Install necessary packages

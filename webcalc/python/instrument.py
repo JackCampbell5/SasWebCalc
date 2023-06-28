@@ -1561,24 +1561,28 @@ class Instrument:
 class NoInstrument(Instrument):
     """A class for storing and manipulating The No Instrument related data.
 
-    :param int self.n_pts: The number of points from the points dictionary class
-    :param str self.spacing:
-    :param float self.q_min:
-    :param float self.dq:
-    :param float self.q_max:
-    :param float self._q_max_horizon:
-    :param float self._q_max_vert:
-    :param float self._q_min_horizon:
-    :param float self._q_min_vert:
-    :param  self.params:
+    :param str self.name: The name of the instrument
+    :param int self.n_pts: The number of points to calculate (n_pts for 1D and n_pts^2 for 2D)
+    :param float self.arm_to_point: The value of how many points are in an angstrom
+    :param str self.spacing: How the spacing of the points should be (Linear or Logarithmic)
+    :param float self.q_min: The minimum Q value
+    :param float self.dq: The Q resolution of the instrument
+    :param float self.q_max: The maximum Q value
+    :param float self._q_max_horizon: The maximum horizontal Q value
+    :param float self._q_max_vert: THe maximum vertical Q value
+    :param float self._q_min_horizon: The minimum horizontal Q value
+    :param float self._q_min_vert: The minimum vertical Q value
+    :param dict self._params: The dictionary of params passed from the calculate function in web calc
     """
 
     # Constructor for the pseudo instrument with user-defined Q ranges and instrument resolutions
     def __init__(self, name, params):
-        """
+        """The constructor method that creates the necessary parameters and runs the load_params method classes constructor
+         Sets object parameters self.name, self.n_pts, self.arm_to_point, self.spacing, self.q_min, self.dq, self.q_max, self._q_max_horizon,
+         self._q_max_vert, self._q_min_horizon, self._q_min_vert, and self._params
 
-        :param name:
-        :param params:
+        :param str name: The name of the instrument(Typically set to Q_Range)
+        :param dict params: A dictionary of the params
         """
         self.name = name if name else "Q Range"
         self.n_pts = 0
@@ -1632,6 +1636,11 @@ class NoInstrument(Instrument):
         self.set_q_max()
 
     def set_q_max(self):
+        """Creates an array of corners and sets the Q_max value to the one with the biggest calculates value
+
+        :return: No return just sets the q_max value
+        :rtype: None
+        """
         corners = [
             math.sqrt(self.q_max_vert ** 2 + self.q_max_horizon ** 2),
             math.sqrt(self.q_min_vert ** 2 + self.q_max_horizon ** 2),
@@ -1641,6 +1650,12 @@ class NoInstrument(Instrument):
         self.q_max = max(corners)
 
     def load_params(self, params: Dict[str, Dict[str, Union[float, int, str]]]):
+        """Loads the parameters from the parameters dictionary into the object values
+
+        :param dict params: A dictionary of parameters
+        :return: Nothing as it just sets values
+        :rtype: None
+        """
         print("No Instrument Load Params")
         values = {}
         # Simplify the parameters passed into a key:value pairing instead of a key: {sub_key: value} pairing
@@ -1658,6 +1673,12 @@ class NoInstrument(Instrument):
         self.q_min_horizon = values.get('q_min_horizontal', self.q_min_horizon)
 
     def sas_calc(self):
+        """Calculates the necessary values and arrays to return to the JS
+        Calls create_f_sub_s and create_intensity2d and sends the return value to python_return
+
+        :return: A dictionary of encoded parameters from python return
+        :rtype: Dict
+        """
         method = np.linspace if self.spacing == "lin" else np.logspace
         q_vals = method(self.q_min, self.q_max, self.n_pts)
         qx_values = method(self.q_min_horizon, self.q_max_horizon, self.n_pts)
@@ -1769,7 +1790,6 @@ class NoInstrument(Instrument):
         # python_return["q2DValues"] =
         python_return["intensity2D"] = self.two_dimensional.get("intensity2D", {})
         python_return["qValues"] = self.one_dimensional.get("Q", {}).tolist()
-        print("Returning")
         return python_return
 
 
