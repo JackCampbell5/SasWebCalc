@@ -1683,6 +1683,12 @@ class NoInstrument(Instrument):
         return self.python_return()
 
     def create_f_sub_s(self, q_values):
+        """Creates the f_sub_s array by looking at if there are any points with a q values less than the q_min value
+
+        :param array q_values: An array of the q values
+        :return: An array of the f_sub_s values
+        :rtype: Array
+        """
         # Take out anything below the Q minimum
         f_sub_s = np.ones(self.n_pts)  # The f_sub_s array
         for num in range(len(q_values)):
@@ -1691,6 +1697,11 @@ class NoInstrument(Instrument):
         return f_sub_s
 
     def create_intensity2d(self):
+        """Creates a 2D array of intensity values based on q_min and the number of points
+
+        :return: A 2-dimensional array containing the intensity2d values
+        :rtype: 2D Array
+        """
         stop_points = round(self.arm_to_point * self.q_min)  # How many points to take out of the center
         what_points = []  # An array of The points that should be removed
         odd_points = False  # Is the number of points odd or even?
@@ -1750,6 +1761,11 @@ class NoInstrument(Instrument):
         return intensity2d
 
     def python_return(self):
+        """Function that takes all the values calculated and puts them in a python return dictionary
+
+        :return: A dictionary of the python return
+        :rtype: Dict
+        """
         python_return = {}
         python_return["fSubs"] = self.one_dimensional.get("fSubS", {}).tolist()
         python_return["qxValues"] = self.two_dimensional.get("Qx", {}).tolist()
