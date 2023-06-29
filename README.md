@@ -34,17 +34,18 @@ or [anaconda](https://www.anaconda.com/)::
 - Plot a 2D heatmap of I(Q) for the most recent calculation
 - Inline help files and documentation
 - Bug submission tool
+- Selecting a structure factor@form factor for calculations
+- Layered models now add additional layers when the number is changed
+- User Defined Q-Range and Resolution fully working
 
-### Features and issues actively being worked on for v1.0:
-- Allow structure factor@form factor calculations
-- Layered models do not add additional layers when the number is changed
+### Features and issues actively being worked on for v1.1:
 - Only circular averaging is working until the following issues can be fixed with other averaging types
  - Plotted slicers and calculations do not match
  - Plotted slicers sometimes off scale of plot causing plot region to expand
-- Inputting a Q range not linked to an instrument is not fully working
+- VSANS instrument with a 1D data representation
 
 ### Anticipated features:
-- VSANS instrument with both a 1D and 2D data representation (v1.1)
+- VSANS instrument with both a 1D and 2D data representation (v1.2)
 - Enable polydispersity and magnetic calculations (v1.2)
 - Allow user to enter sample thickness, transmission, and counting time (v1.2)
 - Send frozen configurations directly to the desired instrument (v1.3)
