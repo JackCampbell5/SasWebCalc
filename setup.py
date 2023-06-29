@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='SasWebCalc',
-    version='1.0.0a3',
+    version='1.0.0',
     url='https://gitlab.nist.gov/gitlab/jkrzywon/saswebcalc.git',
     author='Jeffery Krzywon and Jack Campbell',
     author_email='jeffery.krzywon@nist.gov',
