@@ -1,6 +1,7 @@
 from ..instrument import Instrument
 import numpy as np
 from typing import Dict, Union
+import math
 
 
 class NoInstrument(Instrument):

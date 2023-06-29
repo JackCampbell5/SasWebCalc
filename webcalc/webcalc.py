@@ -11,8 +11,11 @@ from flask import Flask, render_template, request, send_file
 try:
     from python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
     from python.link_to_sasmodels import calculate_model as calculate_m
-    from python.instrument import calculate_instrument as calculate_i
     from python.helpers import decode_json, encode_json
+    from python.Instruments.NG7SANS import NG7SANS
+    from python.Instruments.NGB10SANS import NGB10SANS
+    from python.Instruments.NGB30SANS import NGB30SANS
+    from python.Instruments.NoInstrument import NoInstrument
 except ModuleNotFoundError:
     # Runs the imports from webcalc only when auto-doc runs to remove errors
     from webcalc.python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
@@ -137,7 +140,7 @@ def create_app():
         # Find the multiplicity model params
         sld_dict = []
         for name in js_model_params:
-            if ('sld' in name or (param_keyword in name and param_keyword != name))and first_run:
+            if ('sld' in name or (param_keyword in name and param_keyword != name)) and first_run:
                 sld_dict.append(name)
             if not first_run:
                 if '[' in name:
@@ -240,7 +243,7 @@ def create_app():
         results_dict = model_params.copy()
         for key, value in results_dict.items():
             if '[' in key:
-                new_name = key[0:key.find('[')]+key[key.find('[')+1:key.find(']')]
+                new_name = key[0:key.find('[')] + key[key.find('[') + 1:key.find(']')]
                 model_params[new_name] = value
                 model_params.pop(key)
         return model_params
@@ -277,15 +280,30 @@ def create_app():
         # Calculates all the values and returns them
         return encode_json(_calculate_instrument(instrument_name, params))
 
-    def _calculate_instrument(instrument_name: str, params: Dict[str, Union[Number, str]]) -> \
-            Dict[str, Union[Number, str, List[Union[Number, str]]]]:
-        """
+    def _calculate_instrument(instrument: str, params: dict) -> Dict[str, Union[Number, str, List[Union[Number, str]]]]:
+        """The base calculation script. Creates an instrument class, calculates the instrumental resolution for the
+        configuration, and returns two list of intensities
 
-        :param instrument_name: The string representation of the instrument name.
-        :param params: A dictionary of parameters mapping the param name to the value.
-        :return: A dictionary of calculated instrument values including Q (1D and 2D),
+        :param str instrument: The instrument that we're doing the calculations based off of
+        :param dict params: A dictionary of parameters inputted by the user in the JavaScript
+        :return: The python return dictionary
+        :rtype: dict
         """
-        return calculate_i(instrument_name, params)
+        # i_class is the python object for the interment
+        if instrument == 'ng7':
+            # Creates NG7SANS object if instrument is ng7
+            i_class = NG7SANS(instrument, params)
+        elif instrument == 'ngb30':
+            # Creates NGB30SANS object if instrument is ngb30
+            i_class = NGB30SANS(instrument, params)
+        elif instrument == 'ngb10':
+            # Creates NG7B10SANS object if instrument is ngb10
+            i_class = NGB10SANS(instrument, params)
+        else:
+            # Create a user-defined Q-range instrument
+            i_class = NoInstrument(instrument, params)
+        # Runs the SasCalc function and returns the python return array
+        return i_class.sas_calc()
 
     return app
 
