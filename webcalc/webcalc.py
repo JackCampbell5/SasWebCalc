@@ -12,16 +12,20 @@ try:
     from python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
     from python.link_to_sasmodels import calculate_model as calculate_m
     from python.helpers import decode_json, encode_json
-    from python.Instruments.NG7SANS import NG7SANS
-    from python.Instruments.NGB10SANS import NGB10SANS
-    from python.Instruments.NGB30SANS import NGB30SANS
-    from python.Instruments.NoInstrument import NoInstrument
+    from python.instruments.NG7SANS import NG7SANS
+    from python.instruments.NGB10SANS import NGB10SANS
+    from python.instruments.NGB30SANS import NGB30SANS
+    from python.instruments.NoInstrument import NoInstrument
 except ModuleNotFoundError:
     # Runs the imports from webcalc only when auto-doc runs to remove errors
     from webcalc.python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
     from webcalc.python.link_to_sasmodels import calculate_model as calculate_m
     from webcalc.python.instrument import calculate_instrument as calculate_i
     from webcalc.python.helpers import decode_json, encode_json
+    from webcalc.python.instruments.NG7SANS import NG7SANS
+    from webcalc.python.instruments.NGB10SANS import NGB10SANS
+    from webcalc.python.instruments.NGB30SANS import NGB30SANS
+    from webcalc.python.instruments.NoInstrument import NoInstrument
 
 Number = Union[float, int]
 
@@ -289,10 +293,12 @@ def create_app():
         :return: The python return dictionary
         :rtype: dict
         """
+        instrument_names ={'ng7':NG7SANS}
         # i_class is the python object for the interment
         if instrument == 'ng7':
             # Creates NG7SANS object if instrument is ng7
-            i_class = NG7SANS(instrument, params)
+            print(NG7SANS.name)
+            i_class = instrument_names[instrument](instrument, params)
         elif instrument == 'ngb30':
             # Creates NGB30SANS object if instrument is ngb30
             i_class = NGB30SANS(instrument, params)

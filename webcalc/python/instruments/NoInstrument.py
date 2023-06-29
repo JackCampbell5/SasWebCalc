@@ -3,7 +3,6 @@ import numpy as np
 from typing import Dict, Union
 import math
 
-
 class NoInstrument(Instrument):
     """A class for storing and manipulating The No Instrument related data.
 

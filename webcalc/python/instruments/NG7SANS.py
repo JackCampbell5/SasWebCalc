@@ -2,6 +2,7 @@ from ..instrument import Instrument
 
 
 class NG7SANS(Instrument):
+    name = "NG7SANS"
     """ A class to manipulate NG7SANS as a subclass of the instrument class
 
     :param  self.name: The name of the instrument
