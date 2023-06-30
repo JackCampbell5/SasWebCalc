@@ -70,16 +70,6 @@ def create_app():
         return_array["instruments"] = _get_all_instruments()
         return encode_json(return_array)
 
-    def _get_all_instruments():
-        instrument_list = {}
-        loaded_instruments = _import_instruments()
-        for instrument in loaded_instruments:
-            cls = loaded_instruments[instrument]
-            code_name = cls.class_name if hasattr(cls, "class_name") else str(cls)
-            front_name = cls.name_shown if hasattr(cls, "name_shown") else code_name
-            instrument_list[code_name] = front_name
-        return instrument_list
-
     @app.route('/get/params/<model_name>', methods=['GET'])
     @app.route('/get/params/model/<model_name>', methods=['GET'])
     def get_model_params(model_name):
