@@ -15,7 +15,7 @@ try:
     from python.link_to_sasmodels import calculate_model as calculate_m
     from python.helpers import decode_json, encode_json
 except ModuleNotFoundError:
-    # Runs the imports from webcalc only when auto-doc runs to remove errors
+    # If running in docker or for auto doc need to import from webcalc/python/instruments instead
     from webcalc.python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
     from webcalc.python.link_to_sasmodels import calculate_model as calculate_m
     from webcalc.python.helpers import decode_json, encode_json
@@ -300,14 +300,19 @@ def create_app():
         :rtype; Dict
         """
         # Specify the directory containing the classes
-        directory = 'python/instruments'
-
+        directory = 'python/instruments/'
         # Get a list of all Python files in the directory
-        files = [file[:-3] for file in os.listdir(directory) if file.endswith('.py')]
+        try:
+            files = [file[:-3] for file in os.listdir(directory) if file.endswith('.py')]
+        except FileNotFoundError:
+            # If running in docker or for auto doc need to import from webcalc/python/instruments instead
+            directory = "webcalc/" + directory
+            files = [file[:-3] for file in os.listdir(directory) if file.endswith('.py')]
+
         instruments_dict = {}
         # Import all classes from the files
         for file in files:
-            module = importlib.import_module("python.instruments." + file)
+            module = importlib.import_module(directory.replace("/", ".") + file)
             result = inspect.getmembers(module, inspect.isclass)
             for name, cls in result:
                 if hasattr(cls, "class_name"):
