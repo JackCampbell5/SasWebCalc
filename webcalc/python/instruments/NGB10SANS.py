@@ -6,6 +6,8 @@ class NGB10SANS(Instrument):
 
     :param  self.name: The name of the instrument
     """
+    class_name = "NGB10SANS"
+    name_shown = "NGB 10m SANS"
 
     # Class for the NGB 10m SANS instrument
     def __init__(self, name, params):
@@ -16,7 +18,7 @@ class NGB10SANS(Instrument):
         :return: Nothing just runs the message
         :rtype: None
         """
-        self.name = "ngb10"
+        self.name = name if name else "ngb10"
         params = self.param_restructure(params)
         super().__init__(name, params)
 

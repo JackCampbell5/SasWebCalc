@@ -1,9 +1,9 @@
-from ..instrument import Instrument
 import numpy as np
 from typing import Dict, Union
 import math
 
-class NoInstrument(Instrument):
+
+class NoInstrument:
     """A class for storing and manipulating The No Instrument related data.
 
     :param str self.name: The name of the instrument
@@ -19,6 +19,8 @@ class NoInstrument(Instrument):
     :param float self._q_min_vert: The minimum vertical Q value
     :param dict self._params: The dictionary of params passed from the calculate function in web calc
     """
+    class_name = "NoInstrument"
+    name_shown = "User-Defined Q-Range and Resolutions"
 
     # Constructor for the pseudo instrument with user-defined Q ranges and instrument resolutions
     def __init__(self, name, params):
@@ -137,7 +139,8 @@ class NoInstrument(Instrument):
         f_sub_s = self.create_f_sub_s(q_values=q_vals)
         intensity2d = self.create_intensity2d()
         self.one_dimensional = {"I": None, "dI": None, "Q": q_vals, "dQ": dq_vals, "fSubS": f_sub_s}
-        self.two_dimensional = {"I": q_2d_vals, "dI": None, "Qx": qx_values, "dQx": dqx_vals, "Qy": qy_values, "dQy": dqy_vals, "intensity2D": intensity2d}
+        self.two_dimensional = {"I": q_2d_vals, "dI": None, "Qx": qx_values, "dQx": dqx_vals, "Qy": qy_values,
+                                "dQy": dqy_vals, "intensity2D": intensity2d}
         return self.python_return()
 
     def create_f_sub_s(self, q_values):

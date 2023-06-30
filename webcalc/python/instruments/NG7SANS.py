@@ -2,11 +2,12 @@ from ..instrument import Instrument
 
 
 class NG7SANS(Instrument):
-    name = "NG7SANS"
     """ A class to manipulate NG7SANS as a subclass of the instrument class
 
     :param  self.name: The name of the instrument
     """
+    class_name = "NG7SANS"
+    name_shown = "NG7 SANS"
 
     # Constructor for the NG7SANS instrument
     def __init__(self, name, params):
@@ -17,7 +18,7 @@ class NG7SANS(Instrument):
         :return: Nothing just runs the message
         :rtype: None
         """
-        self.name = "ng7"
+        self.name = name if name else "ng7"
         params = self.param_restructure(params)
         # Super is the Instrument class
         super().__init__(name, params)

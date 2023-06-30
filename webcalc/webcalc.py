@@ -1,10 +1,12 @@
 ﻿# Decides what to do based on link given
 import json
 import sys
+import importlib
+import inspect
+import os
+import numpy as np
 
 from typing import Optional, Union, Dict, List
-
-import numpy as np
 from flask import Flask, render_template, request, send_file
 
 # import specific methods from python files
@@ -12,20 +14,11 @@ try:
     from python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
     from python.link_to_sasmodels import calculate_model as calculate_m
     from python.helpers import decode_json, encode_json
-    from python.instruments.NG7SANS import NG7SANS
-    from python.instruments.NGB10SANS import NGB10SANS
-    from python.instruments.NGB30SANS import NGB30SANS
-    from python.instruments.NoInstrument import NoInstrument
 except ModuleNotFoundError:
     # Runs the imports from webcalc only when auto-doc runs to remove errors
     from webcalc.python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
     from webcalc.python.link_to_sasmodels import calculate_model as calculate_m
-    from webcalc.python.instrument import calculate_instrument as calculate_i
     from webcalc.python.helpers import decode_json, encode_json
-    from webcalc.python.instruments.NG7SANS import NG7SANS
-    from webcalc.python.instruments.NGB10SANS import NGB10SANS
-    from webcalc.python.instruments.NGB30SANS import NGB30SANS
-    from webcalc.python.instruments.NoInstrument import NoInstrument
 
 Number = Union[float, int]
 
@@ -74,7 +67,18 @@ def create_app():
         return_array["structures"] = get_structure_list()
         return_array["multiplicity_models"] = get_multiplicity_models()
         return_array["models"] = get_model_list()
+        return_array["instruments"] = _get_all_instruments()
         return encode_json(return_array)
+
+    def _get_all_instruments():
+        instrument_list = {}
+        loaded_instruments = _import_instruments()
+        for instrument in loaded_instruments:
+            cls = loaded_instruments[instrument]
+            code_name = cls.class_name if hasattr(cls, "class_name") else str(cls)
+            front_name = cls.name_shown if hasattr(cls, "name_shown") else code_name
+            instrument_list[code_name] = front_name
+        return instrument_list
 
     @app.route('/get/params/<model_name>', methods=['GET'])
     @app.route('/get/params/model/<model_name>', methods=['GET'])
@@ -284,6 +288,22 @@ def create_app():
         # Calculates all the values and returns them
         return encode_json(_calculate_instrument(instrument_name, params))
 
+    def _import_instruments():
+        # Specify the directory containing the classes
+        directory = 'python/instruments'
+
+        # Get a list of all Python files in the directory
+        files = [file[:-3] for file in os.listdir(directory) if file.endswith('.py')]
+        instruments_dict = {}
+        # Import all classes from the files
+        for file in files:
+            module = importlib.import_module("python.instruments." + file)
+            result = inspect.getmembers(module, inspect.isclass)
+            for name, cls in result:
+                if hasattr(cls, "class_name"):
+                    instruments_dict[name] = cls
+        return instruments_dict
+
     def _calculate_instrument(instrument: str, params: dict) -> Dict[str, Union[Number, str, List[Union[Number, str]]]]:
         """The base calculation script. Creates an instrument class, calculates the instrumental resolution for the
         configuration, and returns two list of intensities
@@ -293,22 +313,15 @@ def create_app():
         :return: The python return dictionary
         :rtype: dict
         """
-        instrument_names ={'ng7':NG7SANS}
-        # i_class is the python object for the interment
-        if instrument == 'ng7':
-            # Creates NG7SANS object if instrument is ng7
-            print(NG7SANS.name)
-            i_class = instrument_names[instrument](instrument, params)
-        elif instrument == 'ngb30':
-            # Creates NGB30SANS object if instrument is ngb30
-            i_class = NGB30SANS(instrument, params)
-        elif instrument == 'ngb10':
-            # Creates NG7B10SANS object if instrument is ngb10
-            i_class = NGB10SANS(instrument, params)
+        loaded_instruments = _import_instruments()
+        if instrument in loaded_instruments:
+            loaded_instrument = loaded_instruments[instrument]
         else:
-            # Create a user-defined Q-range instrument
-            i_class = NoInstrument(instrument, params)
-        # Runs the SasCalc function and returns the python return array
+            print("Instrument Not on List")
+            return {}
+        # Temporary fix- TODO make the name of everything the same
+        instrument_name = instrument[0:instrument.find("S")].lower()
+        i_class = loaded_instrument(instrument_name, params)
         return i_class.sas_calc()
 
     return app
