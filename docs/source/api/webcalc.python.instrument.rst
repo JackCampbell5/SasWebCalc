@@ -1,5 +1,5 @@
-webcalc\.python\.instrument package
-===================================
+webcalc\.python\.instrument file
+================================
 This is the overall organization of the variables in the instrument class
 
 .. code:: python
@@ -43,15 +43,11 @@ This is the overall organization of the variables in the instrument class
     webcalc.python.instrument.wavelength
     webcalc.python.instrument.data
     webcalc.python.instrument.instrument
-    webcalc.python.instrument.NoInstrument
-    webcalc.python.instrument.ng7sans
-    webcalc.python.instrument.ngb30sans
-    webcalc.python.instrument.ngb10sans
 
 
 
 .. automodule:: webcalc.python.instrument
-    :members: calculate_instrument,set_params
+    :members: set_params
     :show-inheritance:
     :undoc-members:
 

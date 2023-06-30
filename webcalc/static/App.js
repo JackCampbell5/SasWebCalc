@@ -84,6 +84,7 @@ export default {
   data: () => ({
     active_instrument: "",
     active_averaging_type: "Circular",
+    available_instruments: ["NG7SANS","NGB10SANS","NGB30SANS","NoInstrument"],
     averaging_types: {
       'circular': 'Circular',
       // 'sector: ': 'Sector',
@@ -232,7 +233,12 @@ export default {
     this.active_structure = this.structure_names[0];
     this.multiplicity_models = structures_result["multiplicity_models"];
     this.model_names = structures_result["models"];
-    this.instruments = structures_result["instruments"]
+    let instrument_options = structures_result["instruments"]
+    for (let a in instrument_options){
+      if(this.available_instruments.includes(a)){
+        this.instruments[a] = instrument_options[a]
+      }
+    }
   },
   mounted() {
     // Sets the dropdowns to automatically choose for testing

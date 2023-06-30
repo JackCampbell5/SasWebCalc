@@ -71,6 +71,11 @@ def create_app():
         return encode_json(return_array)
 
     def _get_all_instruments():
+        """Gets a list of all the instruments that are in the python.instruments directory
+
+        :return: A dictionary of the structure that includes structure name and the user visible name
+        :rtype: Dict
+        """
         instrument_list = {}
         loaded_instruments = _import_instruments()
         for instrument in loaded_instruments:
@@ -289,6 +294,11 @@ def create_app():
         return encode_json(_calculate_instrument(instrument_name, params))
 
     def _import_instruments():
+        """Gets a list of the instruments in the python.instruments directory
+
+        :return: A dictionary that has the name and the object
+        :rtype; Dict
+        """
         # Specify the directory containing the classes
         directory = 'python/instruments'
 

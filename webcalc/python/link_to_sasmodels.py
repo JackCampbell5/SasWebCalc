@@ -39,8 +39,8 @@ def get_multiplicity_models():
 
     To do this is goes through all the models, gets the parameters, checks to see if there is a multiplicity model and if it is a multiplicity models adds the
     model to an array
-    :return: An encoded json list of the structures
-    :rtype: Json
+    :return: An encoded array of the structures
+    :rtype: Arrau
     """
     return_array = []  # The return array
     # Loop though all the models
