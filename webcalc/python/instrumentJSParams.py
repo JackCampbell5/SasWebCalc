@@ -22,6 +22,8 @@ def create_js(name=None, default=None, type=None, unit=None, readonly=None, opti
         js_array["type"] = type
     if unit is not None and unit != "":
         js_array["unit"] = unit
+    else:
+        js_array["unit"] = ''
     if readonly is not None and readonly != "":
         js_array["readonly"] = readonly
     if options is not None and options != "":
@@ -30,13 +32,31 @@ def create_js(name=None, default=None, type=None, unit=None, readonly=None, opti
     # Ones that are not none add to the array
 
 
-def generate_js_array():
+def create_wavelength_input(name='Wavelength', default=6.0, type='number', unit='nm', readonly=None, options=None,
+                            min=4.8, max=20, range_id=None, hidden=None, lower_limit=None, upper_limit=None):
+    return_array = {}
+    if name is not None: return_array["name"] = name
+    if default is not None: return_array["default"] = default
+    if type is not None: return_array["type"] = type
+    if unit is not None: return_array["unit"] = unit
+    if readonly is not None: return_array["readonly"] = readonly
+    if options is not None: return_array["options"] = options
+    if min is not None: return_array["min"] = min
+    if max is not None: return_array["max"] = max
+    if range_id is not None: return_array["range_id"] = range_id
+    if hidden is not None: return_array["hidden"] = hidden
+    if lower_limit is not None: return_array["lower_limit"] = lower_limit
+    if upper_limit is not None: return_array["upper_limit"] = upper_limit
+    return return_array
+
+
+def generate_js_array(name=True):
     output = {}
-    output["ng7Sample"] = {"name": "Sample Area Settings"}
-    output["ng7Wavelength"] = {"name": "Wavelength Settings"}
-    output["ng7Collimation"] = {"name": "Collimation Settings"}
-    output["ng7Detector"] = {"name": "Detector Settings"}
-    output["ng7QRange"] = {"name": "Calculated Q Range"}
+    output["Sample"] = {"name": "Sample Area Settings"} if name else {}
+    output["Wavelength"] = {"name": "Wavelength Settings"} if name else {}
+    output["Collimation"] = {"name": "Collimation Settings"} if name else {}
+    output["Detector"] = {"name": "Detector Settings"} if name else {}
+    output["QRange"] = {"name": "Calculated Q Range"} if name else {}
     return output
 
 
@@ -61,11 +81,9 @@ def create_python_helper(params=""):
             output.append("output_params[\"" + value[:value.find("'")] + "\"] = create_js_params(")
             continue
         if ':' in value:
-            print(value)
             if output[num][len(output[num]) - 1:] != ',' and output[num][len(output[num]) - 1:] != '(':
                 output[num] = output[num] + "]"
             output[num] = output[num] + " " + value[:value.find(':')] + "=" + value[value.find(':') + 1:]
-            print(" " + value[:value.find(':')] + "=" + value[value.find(':') + 1:])
             continue
         if '\'' in value:
             output[num] = output[num] + "\'" + value
@@ -79,8 +97,9 @@ def create_python_helper(params=""):
             val_num = value.find("category")
             value = value[:value.find('[')] + "[\"" + value[val_num + 11:value.find(",", val_num) - 1] + "\"]" + \
                     value[value.find('['):val_num - 2] + value[value.find("'", value.find("'", val_num) + 1) + 1:]
-        print(value)
         output[place] = value
+
+    # Next section
     return output
 
 

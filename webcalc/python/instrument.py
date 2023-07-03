@@ -9,6 +9,7 @@ from .slicers import Circular
 from .slicers import Sector
 from .slicers import Rectangular
 from .slicers import Elliptical
+from .instrumentJSParams import generate_js_array
 
 Number = Union[float, int]
 
@@ -1001,7 +1002,7 @@ class Instrument:
             for param, result in wrong_params[type_param].items():
                 old_params[param] = result
 
-        name = self.name
+        name = ''
         # Instrument class parameters
         self.beam_flux = self._param_get_helper(params=old_params.get(name + "BeamFlux", {}), key="default")
 
@@ -1187,19 +1188,19 @@ class Instrument:
 
         # Final output returned to the JS
         python_return = {}
-        python_return["user_inaccessible"] = {}
-        python_return["user_inaccessible"]["BeamFlux"] = self.data.get_beam_flux()
-        python_return["user_inaccessible"]["FigureOfMerit"] = self.data.get_figure_of_merit()
-        python_return["user_inaccessible"]["Attenuators"] = self.get_attenuator_number()
-        python_return["user_inaccessible"]["SSD"] = self.collimation.ssd
-        python_return["user_inaccessible"]["SDD"] = self.detectors[0].get_sdd()
-        python_return["user_inaccessible"]["BeamDiameter"] = int(self.get_beam_diameter() * 10000) / 10000
-        python_return["user_inaccessible"]["BeamStopSize"] = self.get_beam_stop_diameter()
-        python_return["user_inaccessible"]["AttenuationFactor"] = self.get_attenuation_factor()
-        python_return["user_inaccessible"]["MaximumVerticalQ"] = self.data.q_max_vert
-        python_return["user_inaccessible"]["MaximumHorizontalQ"] = self.data.q_max_horizon
-        python_return["user_inaccessible"]["MaximumQ"] = self.data.q_max
-        python_return["user_inaccessible"]["MinimumQ"] = self.data.q_min
+        python_return["user_inaccessible"] = generate_js_array(name=False)
+        python_return["user_inaccessible"]["Wavelength"]["BeamFlux"] = self.data.get_beam_flux()
+        python_return["user_inaccessible"]["Wavelength"]["FigureOfMerit"] = self.data.get_figure_of_merit()
+        python_return["user_inaccessible"]["Wavelength"]["Attenuators"] = self.get_attenuator_number()
+        python_return["user_inaccessible"]["Collimation"]["SSD"] = self.collimation.ssd
+        python_return["user_inaccessible"]["Detector"]["SDD"] = self.detectors[0].get_sdd()
+        python_return["user_inaccessible"]["Detector"]["BeamDiameter"] = int(self.get_beam_diameter() * 10000) / 10000
+        python_return["user_inaccessible"]["Detector"]["BeamStopSize"] = self.get_beam_stop_diameter()
+        python_return["user_inaccessible"]["Wavelength"]["AttenuationFactor"] = self.get_attenuation_factor()
+        python_return["user_inaccessible"]["QRange"]["MaximumVerticalQ"] = self.data.q_max_vert
+        python_return["user_inaccessible"]["QRange"]["MaximumHorizontalQ"] = self.data.q_max_horizon
+        python_return["user_inaccessible"]["QRange"]["MaximumQ"] = self.data.q_max
+        python_return["user_inaccessible"]["QRange"]["MinimumQ"]= self.data.q_min
         # TODO Question: Do we even use half of thease
         python_return["nCells"] = self.slicer.n_cells.tolist()
         python_return["qsq"] = self.slicer.d_sq.tolist()

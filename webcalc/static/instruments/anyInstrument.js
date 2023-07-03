@@ -1,14 +1,12 @@
 const template = `
 <div class="instrument_params">
   <h2>{{title}} Instrumental Parameters</h2>
-  <div id="ng7_inputs">
+  <div id="_inputs">
     <div v-for="(params,key) in instrument_params_local" :id="key" :key="key" class="instrument-section">
+      <h3>{{params.name}}:</h3>
       <ul class="parameter">
         <li v-for="(param, key) in params" :key="key" class="parameter" v-show="!param.hidden">
-          <div v-if="key == 'name'">
-             <h3>{{param}}:</h3>
-          </div>
-          <div v-else>
+          <div v-if="key != 'name'">
           <label :for="key" v-if="param.name != ''">{{param.name}}<span v-if="param.unit != ''"> (<span v-html="param.unit"></span>)</span>: </label>
           <select v-if="param.type == 'select'" v-model.string="param.default" :id="key" 
               :disabled="param.readonly" @change="onChangeValue">
@@ -40,6 +38,8 @@ export default {
     title: String,
     pythonParams: {},
     instrument_params_local: {},
+    source_apertures: {},
+    wavelength_ranges:{},
   },
   methods: {
     onChangeValue(event) {
@@ -49,33 +49,33 @@ export default {
       }
     },
     updateSecondaryElements(target) {
-      if (target.id === "ng7GuideConfig") {
+      if (target.id === "GuideConfig") {
         this.updateApertureOptions(target);
       }
-      else if (target.id === "ng7WavelengthSpread") {
+      else if (target.id === "WavelengthSpread") {
         let range = this.wavelength_ranges[target.value];
-        this.instrument_params_local['ng7WavelengthInput'].min = range[0];
-        this.instrument_params_local['ng7WavelengthInput'].max = range[1];
+        this.instrument_params_local['WavelengthInput'].min = range[0];
+        this.instrument_params_local['WavelengthInput'].max = range[1];
       }
-      else if (target.id === "ng7SampleAperture") {
-        this.instrument_params_local['ng7CustomAperture'].hidden = !(target.value === 'Custom');
+      else if (target.id === "SampleAperture") {
+        this.instrument_params_local['CustomAperture'].hidden = !(target.value === 'Custom');
       }
-      else if (target.id === "ng7SDDInputBox") {
-        this.instrument_params_local['ng7SDDDefaults'].default = this.instrument_params_local['ng7SDDInputBox'].default;
+      else if (target.id === "SDDInputBox") {
+        this.instrument_params_local['SDDDefaults'].default = this.instrument_params_local['SDDInputBox'].default;
       }
-      else if (target.id === "ng7SDDDefaults") {
-        this.instrument_params_local['ng7SDDInputBox'].default = this.instrument_params_local['ng7SDDDefaults'].default;
+      else if (target.id === "SDDDefaults") {
+        this.instrument_params_local['SDDInputBox'].default = this.instrument_params_local['SDDDefaults'].default;
       }
-      else if (target.id === "ng7OffsetInputBox") {
-        this.instrument_params_local['ng7OffsetDefaults'].default = this.instrument_params_local['ng7OffsetInputBox'].default;
+      else if (target.id === "OffsetInputBox") {
+        this.instrument_params_local['OffsetDefaults'].default = this.instrument_params_local['OffsetInputBox'].default;
       }
-      else if (target.id === "ng7OffsetDefaults") {
-        this.instrument_params_local['ng7OffsetInputBox'].default = this.instrument_params_local['ng7OffsetDefaults'].default;
+      else if (target.id === "OffsetDefaults") {
+        this.instrument_params_local['OffsetInputBox'].default = this.instrument_params_local['OffsetDefaults'].default;
       }
     },
     updateApertureOptions(target) {
       // Update the allowed aperture values based on the number of guides selected
-      let allApertureOptions = Object.values(document.getElementById("ng7SourceAperture").options);
+      let allApertureOptions = Object.values(document.getElementById("SourceAperture").options);
       let guideApertureOptions = this.source_apertures[target.value];
       for (let aperture of allApertureOptions) {
         let toggle = !guideApertureOptions.includes(parseFloat(aperture.value));
@@ -83,247 +83,9 @@ export default {
         aperture.disabled = toggle;
         aperture.hidden = toggle;
         if (!toggle) {
-          this.instrument_params_local['ng7SourceAperture'].default = aperture.value;
+          this.instrument_params_local['SourceAperture'].default = aperture.value;
         }
       }
-    }
-  },
-  computed: {
-    item_in_category: function () {
-      console.log("hi")
-      return Object.keys(this.instrument_params_local)
-        .filter(key => this.instrument_params_local[key].category === this.active_category).
-        reduce((obj, key) => {
-          obj[key] = this.instrument_params_local[key];
-        return obj;
-        }, {});
-    },
-  },
-  data() {
-    return {
-      active_category: "",
-      categories: {
-        "ng7Sample": {display_name: 'Sample Area Settings'},
-        "ng7Wavelength": {display_name: 'Wavelength Settings'},
-        "ng7Collimation": {display_name: 'Collimation Settings'},
-        "ng7Detector": {display_name: 'Detector Settings'},
-        "ng7QRange": {display_name: 'Calculated Q Range'},
-      },
-      source_apertures: {
-        0: [1.43, 2.54, 3.81],
-        1: [5.08],
-        2: [5.08],
-        3: [5.08],
-        4: [5.08],
-        5: [5.08],
-        6: [5.08],
-        7: [5.08],
-        8: [5.08],
-        'LENS': [1.43],
-      },
-      wavelength_ranges: {
-        9.7: ['6.5', '20.0'],
-        13.9: ['4.8', '20.0'],
-        15: ['4.5', '20.0'],
-        22.1: ['4.0', '20.0']
-      },
-      // instrument_params_local: {
-      //   'ng7BeamStopSizes': {
-      //     options: [2.54, 5.08, 7.62, 10.16]
-      //   },
-      //   'ng7SampleTable': {
-      //     name: 'Sample Table',
-      //     default: "Chamber",
-      //     type: "select",
-      //     options: [
-      //       'Chamber',
-      //       'Huber'
-      //     ],
-      //     unit: '',
-      //     category: 'ng7Sample',
-      //   },
-      //   'ng7WavelengthInput': {
-      //     name: 'Wavelength',
-      //     default: 6.0,
-      //     min: 4.8,
-      //     max: 20.0,
-      //     type: "number",
-      //     unit: 'nm;',
-      //     category: 'ng7Wavelength',
-      //   },
-      //   'ng7WavelengthSpread': {
-      //     name: 'Wavelength Spread',
-      //     default: 13.9,
-      //     type: "select",
-      //     category: 'ng7Wavelength',
-      //     unit: '',
-      //     options: [9.7, 13.9, 15, 22.1],
-      //   },
-      //   'ng7BeamFlux': {
-      //     name: 'Beam Flux',
-      //     default: '',
-      //     type: "number",
-      //     unit: 'n cm<sup>-2</sup> s<sup>-1</sup>',
-      //     category: 'ng7Wavelength',
-      //     readonly: true,
-      //   },
-      //   'ng7FigureOfMerit': {
-      //     name: 'Figure of merit',
-      //     default: '',
-      //     type: "number",
-      //     unit: '',
-      //     category: 'ng7Wavelength',
-      //     readonly: true,
-      //   },
-      //   'ng7Attenuators': {
-      //     name: 'Attenuators',
-      //     default: '',
-      //     type: "number",
-      //     unit: '',
-      //     category: 'ng7Wavelength',
-      //     readonly: true,
-      //   },
-      //   'ng7AttenuationFactor': {
-      //     name: 'Attenuation Factor',
-      //     default: '',
-      //     type: "number",
-      //     unit: '',
-      //     category: 'ng7Wavelength',
-      //     readonly: true,
-      //   },
-      //   'ng7GuideConfig': {
-      //     name: 'Guides',
-      //     default: 0,
-      //     type: "select",
-      //     category: 'ng7Collimation',
-      //     unit: '',
-      //     options: [0, 1, 2, 3, 4, 5, 6, 7, 8, 'LENS'],
-      //   },
-      //   'ng7SourceAperture': {
-      //     name: 'Source Aperture',
-      //     default: 1.43,
-      //     type: "select",
-      //     unit: 'cm',
-      //     category: 'ng7Collimation',
-      //     options: [1.43, 2.54, 3.81, 5.08],
-      //   },
-      //   'ng7SampleAperture': {
-      //     name: 'Sample Aperture',
-      //     default: 0.500,
-      //     type: "select",
-      //     unit: 'inch',
-      //     category: 'ng7Collimation',
-      //     options: [0.125, 0.25, 0.375, 0.125, 0.500, 0.625, 0.75, 0.875, 1.00, 'Custom'],
-      //   },
-      //   'ng7CustomAperture': {
-      //     name: 'Aperture Diameter',
-      //     default: 13,
-      //     type: "number",
-      //     unit: 'mm',
-      //     category: 'ng7Collimation',
-      //     hidden: true,
-      //   },
-      //   'ng7SSD': {
-      //     name: 'Source-To-Sample Distance',
-      //     default: 1627,
-      //     type: "number",
-      //     unit: 'cm',
-      //     category: 'ng7Collimation',
-      //     readonly: true,
-      //   },
-      //   'ng7SDDInputBox': {
-      //     name: 'Detector Distance',
-      //     default: 100,
-      //     type: "number",
-      //     unit: 'cm',
-      //     category: 'ng7Detector',
-      //   },
-      //   'ng7SDDDefaults': {
-      //     name: '',
-      //     default: 100,
-      //     type: "range",
-      //     category: 'ng7Detector',
-      //     range_id: 'ng7SDDDefaultRange',
-      //     unit: '',
-      //     lower_limit: 90,
-      //     upper_limit: 1532,
-      //     options: [100, 400, 1300, 1530],
-      //   },
-      //   'ng7OffsetInputBox': {
-      //     name: 'Detector Offset',
-      //     default: 0,
-      //     type: "number",
-      //     unit: 'cm',
-      //     category: 'ng7Detector',
-      //   },
-      //   'ng7OffsetDefaults': {
-      //     name: '',
-      //     default: 0,
-      //     type: "range",
-      //     category: 'ng7Detector',
-      //     range_id: 'ng7OffsetDefaultRange',
-      //     unit: '',
-      //     lower_limit: 0,
-      //     upper_limit: 25,
-      //     options: [0, 5, 10, 15, 20, 25],
-      //   },
-      //   'ng7SDD': {
-      //     name: 'Sample-To-Detector Distance',
-      //     default: 100,
-      //     type: "number",
-      //     unit: 'cm',
-      //     category: 'ng7Detector',
-      //     readonly: true,
-      //   },
-      //   'ng7BeamDiameter': {
-      //     name: 'Beam Diameter',
-      //     default: '',
-      //     type: "number",
-      //     unit: "cm",
-      //     category: 'ng7Detector',
-      //     readonly: true,
-      //   },
-      //   'ng7BeamStopSize': {
-      //     name: 'Beam Stop Diameter',
-      //     default: '',
-      //     type: "number",
-      //     unit: "cm",
-      //     category: 'ng7Detector',
-      //     readonly: true,
-      //   },
-      //   'ng7MinimumQ': {
-      //     name: 'Minimum Q',
-      //     default: '',
-      //     type: "number",
-      //     unit: "Å;<sup>-1</sup>",
-      //     category: 'ng7QRange',
-      //     readonly: true,
-      //   },
-      //   'ng7MaximumQ': {
-      //     name: 'Maximum Q',
-      //     default: '',
-      //     type: "number",
-      //     unit: "Å;<sup>-1</sup>",
-      //     category: 'ng7QRange',
-      //     readonly: true,
-      //   },
-      //   'ng7MaximumVerticalQ': {
-      //     name: 'Maximum Vertical Q',
-      //     default: '',
-      //     type: "number",
-      //     unit: "Å;<sup>-1</sup>",
-      //     category: 'ng7QRange',
-      //     readonly: true,
-      //   },
-      //   'ng7MaximumHorizontalQ': {
-      //     name: 'Maximum Horizontal Q',
-      //     default: '',
-      //     type: "number",
-      //     unit: "Å;<sup>-1</sup>",
-      //     category: 'ng7QRange',
-      //     readonly: true,
-      //   },
-      // }
     }
   },
   mounted(){
@@ -332,11 +94,11 @@ export default {
   watch: {
     pythonParams: function (value){
       console.log("Updating Python Params")
-      let instName = "ng7";
-
-      for (const name in value){
-        this.instrument_params_local[instName+name].default = value[name];
-      }
+      for (const type in value){
+        for (const param in value[type]) {
+          this.instrument_params_local[type][param].default = value[type][param];
+        }//End type for loop
+        }// End value or loop
     }
 
   },

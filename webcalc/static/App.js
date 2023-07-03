@@ -65,7 +65,7 @@ const template = `
   </div>
   <div class="instrument-section" id="instrumentParams">
     <anyInstrument v-if="active_instrument != ''" :is="active_instrument" :title="instruments[active_instrument]" :pythonParams="pythonParams"
-        :instrument_params_local="instrument_params_local" @value-change="onInstrumentParamChange"/>
+        :instrument_params_local="instrument_params" :source_apertures="source_apertures" :wavelength_ranges="wavelength_ranges" @value-change="onInstrumentParamChange"/>
   </div>
 </div>
 </main>
@@ -103,7 +103,8 @@ export default {
     model_names: [],
     model_params: {},
     instrument_params: {},
-    instrument_params_local: {},
+    source_apertures: {},
+    wavelength_ranges: {},
     data_1d: {},
     data_2d: {},
     frozen: [],
@@ -118,7 +119,10 @@ export default {
   methods: {
     async getParamsInstrument(){
       const fetch_result = await fetch(`/get/params/instrument/${this.active_instrument_change}`);
-      this.instrument_params_local = await fetch_result.json();
+      let result = await fetch_result.json();
+      this.instrument_params = result["params"]
+      this.source_apertures = result["source_apertures"]
+      this.wavelength_ranges = result["wavelength_ranges"]
       this.active_instrument = this.active_instrument_change
     },
     async populateModelParams() {
