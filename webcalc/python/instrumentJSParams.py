@@ -26,7 +26,6 @@ def create_js(name=None, default=None, type=None, unit=None, readonly=None, opti
         js_array["readonly"] = readonly
     if options is not None and options != "":
         js_array["options"] = options
-    print(js_array)
     return js_array
     # Ones that are not none add to the array
 
