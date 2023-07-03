@@ -4,6 +4,7 @@ import {default as NGB30SANS} from "./instruments/NGB30SANS.js";
 import {default as vsans} from "./instruments/VSANS.js";
 import {default as NoInstrument} from "./instruments/UserDefinedQRange.js";
 import {default as NGB10SANS} from "./instruments/NGB10SANS.js";
+import {default as anyInstrument} from "./instruments/anyInstrument.js";
 import {default as plotting} from "./Plotting.js";
 import {default as model} from "./ModelParams.js";
 
@@ -30,7 +31,7 @@ const template = `
   <div id="SASWEBCALC">
     <div class="instrument-section" title="Choose the instrument you plan to use.">
       <label for="instrumentSelector">Instrument: </label>
-      <select id="instrumentSelector" v-model="active_instrument">
+      <select id="instrumentSelector" v-model="active_instrument_change" @change = "getParamsInstrument">
         <option v-for="(label, alias, index) in instruments" :key="alias" :value="alias">{{label}}</option>
       </select>
       <label id="modelLabel" for="model">Model: </label>
@@ -63,8 +64,8 @@ const template = `
         @model-value-change="onModelParamChange" />
   </div>
   <div class="instrument-section" id="instrumentParams">
-    <component v-if="active_instrument != ''" :is="active_instrument" :title="instruments[active_instrument]" :pythonParams="pythonParams"
-        @value-change="onInstrumentParamChange"/>
+    <anyInstrument v-if="active_instrument != ''" :is="anyInstrument" :title="instruments[active_instrument]" :pythonParams="pythonParams"
+        :instrument_params_local="instrument_params_local" @value-change="onInstrumentParamChange"/>
   </div>
 </div>
 </main>
@@ -79,10 +80,12 @@ export default {
     "NGB30SANS": NGB30SANS,
     "NG7SANS": NG7SANS,
     "NGB10SANS": NGB10SANS,
-    "vsans": vsans
+    "vsans": vsans,
+    "anyInstrument": anyInstrument,
   },
   data: () => ({
     active_instrument: "",
+    active_instrument_change: "",
     active_averaging_type: "Circular",
     available_instruments: ["NG7SANS","NGB10SANS","NGB30SANS","NoInstrument"],
     averaging_types: {
@@ -100,6 +103,7 @@ export default {
     model_names: [],
     model_params: {},
     instrument_params: {},
+    instrument_params_local: {},
     data_1d: {},
     data_2d: {},
     frozen: [],
@@ -112,6 +116,11 @@ export default {
     calculating_shown: false,
   }),
   methods: {
+    async getParamsInstrument(){
+      const fetch_result = await fetch(`/get/params/instrument/${this.active_instrument_change}`);
+      this.instrument_params_local = await fetch_result.json();
+      this.active_instrument = this.active_instrument_change
+    },
     async populateModelParams() {
       if(this.active_model !== ""){
         let model_name = this.active_structure !== this.structure_names[0] ? this.active_model+'@'+this.active_structure :  this.active_model

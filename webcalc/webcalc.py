@@ -14,6 +14,7 @@ try:
     from python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
     from python.link_to_sasmodels import calculate_model as calculate_m
     from python.helpers import decode_json, encode_json
+    from python.instrumentJSParams import create_js_params
 except ModuleNotFoundError:
     # If running in docker or for auto doc need to import from webcalc/python/instruments instead
     from webcalc.python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
@@ -90,6 +91,11 @@ def create_app():
     def get_model_params(model_name):
         params = get_params(model_name, json_encode=False)
         return _update_model_params(js_model_params=params)
+
+    @app.route('/get/params/instrument/<instrument_name>', methods=['GET'])
+    def get_instrument_params(instrument_name):
+        loaded_instruments = _import_instruments()
+        return encode_json(create_js_params(instrument_name,loaded_instruments[instrument_name]))
 
     @app.route('/update/params/', methods=['POST'])
     def model_params_update() -> dict:

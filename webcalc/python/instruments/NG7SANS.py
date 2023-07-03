@@ -66,3 +66,9 @@ class NG7SANS(Instrument):
         params["temp"]["serverName"] = "ng7sans.ncnr.nist.gov"
 
         super().load_objects(params)
+
+    @staticmethod
+    def get_js_params():
+        js_params = {}
+
+        return js_params

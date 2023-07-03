@@ -35,6 +35,7 @@ export default {
   props: {
     title: String,
     pythonParams: {},
+    instrument_params_local: {},
   },
   methods: {
     onChangeValue(event) {
@@ -85,6 +86,7 @@ export default {
   },
   computed: {
     item_in_category: function () {
+      console.log("hi")
       return Object.keys(this.instrument_params_local)
         .filter(key => this.instrument_params_local[key].category === this.active_category).
         reduce((obj, key) => {
