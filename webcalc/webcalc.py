@@ -301,13 +301,11 @@ def create_app():
         """
         # Specify the directory containing the classes
         directory = 'python/instruments/'
+
         # Get a list of all Python files in the directory
-        try:
-            files = [file[:-3] for file in os.listdir(directory) if file.endswith('.py')]
-        except FileNotFoundError:
-            # If running in docker or for auto doc need to import from webcalc/python/instruments instead
-            directory = "webcalc/" + directory
-            files = [file[:-3] for file in os.listdir(directory) if file.endswith('.py')]
+        # If running in docker or for auto doc need to import from webcalc/python/instruments instead
+        directory = directory if os.path.exists(directory) else f"webcalc/{directory}"
+        files = [file[:-3] for file in os.listdir(directory) if file.endswith('.py')]
 
         instruments_dict = {}
         # Import all classes from the files
