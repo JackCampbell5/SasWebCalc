@@ -64,7 +64,7 @@ const template = `
         @model-value-change="onModelParamChange" />
   </div>
   <div class="instrument-section" id="instrumentParams">
-    <anyInstrument v-if="active_instrument != ''" :is="anyInstrument" :title="instruments[active_instrument]" :pythonParams="pythonParams"
+    <anyInstrument v-if="active_instrument != ''" :is="active_instrument" :title="instruments[active_instrument]" :pythonParams="pythonParams"
         :instrument_params_local="instrument_params_local" @value-change="onInstrumentParamChange"/>
   </div>
 </div>

@@ -2,10 +2,13 @@ const template = `
 <div class="instrument_params">
   <h2>{{title}} Instrumental Parameters</h2>
   <div id="ng7_inputs">
-    <div v-for="(category, cat_key) in categories" :id="cat_key" :key="cat_key" class="instrument-section" :set="active_category = cat_key">
-      <h3>{{category.display_name}}:</h3>
+    <div v-for="(params,key) in instrument_params_local" :id="key" :key="key" class="instrument-section">
       <ul class="parameter">
-        <li v-for="(param, key) in item_in_category" :key="key" class="parameter" v-show="!param.hidden">
+        <li v-for="(param, key) in params" :key="key" class="parameter" v-show="!param.hidden">
+          <div v-if="key == 'name'">
+             <h3>{{param}}:</h3>
+          </div>
+          <div v-else>
           <label :for="key" v-if="param.name != ''">{{param.name}}<span v-if="param.unit != ''"> (<span v-html="param.unit"></span>)</span>: </label>
           <select v-if="param.type == 'select'" v-model.string="param.default" :id="key" 
               :disabled="param.readonly" @change="onChangeValue">
@@ -24,6 +27,7 @@ const template = `
               :min="(param.lower_limit == '-inf') ? null : param.lower_limit"
               :max="(param.upper_limit == 'inf') ? null : param.upper_limit"
               :disabled="param.readonly"  @input="onChangeValue"/>
+        </div>
         </li>
       </ul>
     </div>

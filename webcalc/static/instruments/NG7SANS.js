@@ -105,7 +105,7 @@ export default {
         "ng7Detector": {display_name: 'Detector Settings'},
         "ng7QRange": {display_name: 'Calculated Q Range'},
       },
-      source_apertures: {
+        source_apertures: {
         0: [1.43, 2.54, 3.81],
         1: [5.08],
         2: [5.08],

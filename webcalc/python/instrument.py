@@ -12,6 +12,7 @@ from .slicers import Elliptical
 
 Number = Union[float, int]
 
+
 def set_params(instance, params, float_params=None):
     """ Set class attributes based on a dictionary of values. The dict should map <param_name> -> <value>.
 
@@ -993,17 +994,18 @@ class Instrument:
         :return: An array of the params
         :rtype: Dict
         """
-        old_params = calculate_params["instrument_params"]
+        wrong_params = calculate_params["instrument_params"]
+        # This is a temporary patch and the below code should be redone
+        old_params = {}
+        for type_param in wrong_params:
+            for param, result in wrong_params[type_param].items():
+                old_params[param] = result
+
         name = self.name
         # Instrument class parameters
         self.beam_flux = self._param_get_helper(params=old_params.get(name + "BeamFlux", {}), key="default")
 
         params = {}
-        # Beam Stops
-        params["beam_stops"] = self._param_get_helper(params=old_params.get(name + "BeamStopSizes", {}), key="options", default_value=2.54)
-        params["beam_stops"].sort()
-        params["beam_stops"] = [{"beam_stop_diameter": beam_stop} for beam_stop in params.get("beam_stops", 2.54)]
-
         # Collimation
         params["collimation"] = {}
         params["collimation"]["guides"] = {}
@@ -1011,9 +1013,11 @@ class Instrument:
             self._param_get_helper(params=old_params.get(name + "GuideConfig", {}), key="default"), False)
         params["collimation"]["guides"]["number_of_guides"] = self.guide_lens_config(
             self._param_get_helper(params=old_params.get(name + "GuideConfig", {}), key="default"), True)
-        params["collimation"]["detector_distance"] = self._param_get_helper(params=old_params.get(name + "SDDInputBox", {}), key="default")
+        params["collimation"]["detector_distance"] = self._param_get_helper(
+            params=old_params.get(name + "SDDInputBox", {}), key="default")
         if name + "SampleTable" in old_params.values():
-            params["collimation"]["sample_space"] = self._param_get_helper(params=old_params.get(name + "SampleTable", {}), key="default")
+            params["collimation"]["sample_space"] = self._param_get_helper(
+                params=old_params.get(name + "SampleTable", {}), key="default")
         params["collimation"]["ssad_unit"] = self._param_get_helper(params=old_params.get(name + "SSD", {}), key="unit")
         params["collimation"]["ssad"] = self._param_get_helper(params=old_params.get(name + "SSD", {}), key="default")
         params["collimation"]["ssd_unit"] = self._param_get_helper(params=old_params.get(name + "SSD", {}), key="unit")
@@ -1022,18 +1026,25 @@ class Instrument:
         # Collimation - sample_aperture
         params["collimation"]["sample_aperture"] = {}
         # Better arrangement for the get statements below - missing  else None from Jeff's changes
-        params["collimation"]["sample_aperture"]["diameter"] = self._param_get_helper(params=old_params.get(name + "SampleAperture", {}), key="default")
+        params["collimation"]["sample_aperture"]["diameter"] = self._param_get_helper(
+            params=old_params.get(name + "SampleAperture", {}), key="default")
         # FIXME Can not set sample aperture unit otherwise creates errors
         params["collimation"]["source_aperture"] = {}
-        params["collimation"]["source_aperture"]["diameter_unit"] = self._param_get_helper(params=old_params.get(name + "SourceAperture", {}), key="unit")
-        params["collimation"]["source_aperture"]["diameter"] = self._param_get_helper(params=old_params.get(name + "SourceAperture", {}), key="default")
+        params["collimation"]["source_aperture"]["diameter_unit"] = self._param_get_helper(
+            params=old_params.get(name + "SourceAperture", {}), key="unit")
+        params["collimation"]["source_aperture"]["diameter"] = self._param_get_helper(
+            params=old_params.get(name + "SourceAperture", {}), key="default")
 
         # Data
         params["data"] = {}
-        params["data"]["beam_diameter"] = self._param_get_helper(params=old_params.get(name + "BeamDiameter", {}), key="default")
-        params["data"]["beam_diameter_unit"] = self._param_get_helper(params=old_params.get(name + "BeamDiameter", {}), key="unit")
-        params["data"]["calculated_beam_stop_diameter"] = self._param_get_helper(params=old_params.get(name + "BeamStopSize", {}), key="default")
-        params["data"]["figure_of_merit"] = self._param_get_helper(params=old_params.get(name + "FigureOfMerit", {}), key="default")
+        params["data"]["beam_diameter"] = self._param_get_helper(params=old_params.get(name + "BeamDiameter", {}),
+                                                                 key="default")
+        params["data"]["beam_diameter_unit"] = self._param_get_helper(params=old_params.get(name + "BeamDiameter", {}),
+                                                                      key="unit")
+        params["data"]["calculated_beam_stop_diameter"] = self._param_get_helper(
+            params=old_params.get(name + "BeamStopSize", {}), key="default")
+        params["data"]["figure_of_merit"] = self._param_get_helper(params=old_params.get(name + "FigureOfMerit", {}),
+                                                                   key="default")
         params["data"]["flux"] = self._param_get_helper(params=old_params.get(name + "BeamFlux", {}), key="default")
 
         # Detectors
@@ -1041,10 +1052,14 @@ class Instrument:
         params["detectors"][0] = {}
         offset_params = old_params.get(name + "OffsetInputBox", {})
         if any(offset_params):
-            params["detectors"][0]["offset_unit"] = self._param_get_helper(params=old_params.get(name + "OffsetInputBox", {}), key="unit")
-            params["detectors"][0]["offset"] = self._param_get_helper(params=old_params.get(name + "OffsetInputBox", {}), key="default")
-        params["detectors"][0]["sdd_unit"] = self._param_get_helper(params=old_params.get(name + "SDDInputBox", {}), key="unit")
-        params["detectors"][0]["sdd"] = self._param_get_helper(params=old_params.get(name + "SDDInputBox", {}), key="default")
+            params["detectors"][0]["offset_unit"] = self._param_get_helper(
+                params=old_params.get(name + "OffsetInputBox", {}), key="unit")
+            params["detectors"][0]["offset"] = self._param_get_helper(
+                params=old_params.get(name + "OffsetInputBox", {}), key="default")
+        params["detectors"][0]["sdd_unit"] = self._param_get_helper(params=old_params.get(name + "SDDInputBox", {}),
+                                                                    key="unit")
+        params["detectors"][0]["sdd"] = self._param_get_helper(params=old_params.get(name + "SDDInputBox", {}),
+                                                               key="default")
 
         # Slicer
         params["slicer"] = {}
@@ -1052,12 +1067,19 @@ class Instrument:
 
         # Wavelength
         params["wavelength"] = {}
-        params["wavelength"]["attenuation_factor"] = self._param_get_helper(params=old_params.get(name + "AttenuationFactor", {}), key="default")
-        params["wavelength"]["number_of_attenuators"] = self._param_get_helper(params=old_params.get(name + "CustomAperture", {}), key="default")
-        params["wavelength"]["wavelength_spread_unit"] = self._param_get_helper(params=old_params.get(name + "WavelengthSpread", {}), key="unit")
-        params["wavelength"]["wavelength_spread"] = self._param_get_helper(params=old_params.get(name + "WavelengthSpread", {}), key="default", division=100)
-        params["wavelength"]["wavelength_unit"] = self._param_get_helper(params=old_params.get(name + "WavelengthInput", {}), key="unit")
-        params["wavelength"]["wavelength"] = self._param_get_helper(params=old_params.get(name + "WavelengthInput", {}), key="default")
+        print(old_params.get(name + "WavelengthSpread", {}))
+        params["wavelength"]["attenuation_factor"] = self._param_get_helper(
+            params=old_params.get(name + "AttenuationFactor", {}), key="default")
+        params["wavelength"]["number_of_attenuators"] = self._param_get_helper(
+            params=old_params.get(name + "CustomAperture", {}), key="default")
+        params["wavelength"]["wavelength_spread_unit"] = self._param_get_helper(
+            params=old_params.get(name + "WavelengthSpread", {}), key="unit")
+        params["wavelength"]["wavelength_spread"] = self._param_get_helper(
+            params=old_params.get(name + "WavelengthSpread", {}), key="default", division=100)
+        params["wavelength"]["wavelength_unit"] = self._param_get_helper(
+            params=old_params.get(name + "WavelengthInput", {}), key="unit")
+        params["wavelength"]["wavelength"] = self._param_get_helper(params=old_params.get(name + "WavelengthInput", {}),
+                                                                    key="default")
 
         # Removes the None values so they can be set to the default value
         return self._remove_nones(params)
@@ -1529,7 +1551,6 @@ class Instrument:
         :rtype: Float
         """
         return self.collimation.calculate_source_to_sample_aperture_distance()
-
 
     # class VSANS(Instrument):
 # TODO Implement VSANS
