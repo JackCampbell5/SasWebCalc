@@ -1068,7 +1068,6 @@ class Instrument:
 
         # Wavelength
         params["wavelength"] = {}
-        print(old_params.get(name + "WavelengthSpread", {}))
         params["wavelength"]["attenuation_factor"] = self._param_get_helper(
             params=old_params.get(name + "AttenuationFactor", {}), key="default")
         params["wavelength"]["number_of_attenuators"] = self._param_get_helper(

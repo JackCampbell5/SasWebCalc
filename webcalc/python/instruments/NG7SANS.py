@@ -1,5 +1,5 @@
 from ..instrument import Instrument
-from ..instrumentJSParams import create_js, generate_js_array
+from ..instrumentJSParams import *
 
 
 class NG7SANS(Instrument):
@@ -74,54 +74,29 @@ class NG7SANS(Instrument):
     def get_js_params():
         params = generate_js_array()
         # params["ng7BeamStopSizes"] = create_js(options=[2.54, 5.08, 7.62, 10.16])
-        params["Sample"]["SampleTable"] = create_js(name='Sample Table', default="Chamber", type="select",
-                                                    options=['Chamber', 'Huber'], unit='')
-        params["Wavelength"]["WavelengthInput"] = create_js(name='Wavelength', default=6.0, min=4.8, max=20.0,
-                                                            type="number", unit='nm;')
-        params["Wavelength"]["WavelengthSpread"] = create_js(name='Wavelength Spread', default=13.9, type="select",
-                                                             unit='', options=[9.7, 13.9, 15, 22.1])
-        params["Wavelength"]["BeamFlux"] = create_js(name='Beam Flux', default='', type="number",
-                                                     unit='n cm<sup>-2</sup> s<sup>-1</sup>', readonly=True)
-        params["Wavelength"]["FigureOfMerit"] = create_js(name='Figure of merit', default='', type="number", unit='',
-                                                          readonly=True)
-        params["Wavelength"]["Attenuators"] = create_js(name='Attenuators', default='', type="number", unit='',
-                                                        readonly=True)
-        params["Wavelength"]["AttenuationFactor"] = create_js(name='Attenuation Factor', default='', type="number",
-                                                              unit='', readonly=True)
-        params["Collimation"]["GuideConfig"] = create_js(name='Guides', default=0, type="select", unit='',
-                                                         options=[0, 1, 2, 3, 4, 5, 6, 7, 8, 'LENS'])
-        params["Collimation"]["SourceAperture"] = create_js(name='Source Aperture', default=1.43, type="select",
-                                                            unit='cm', options=[1.43, 2.54, 3.81, 5.08])
-        params["Collimation"]["SampleAperture"] = create_js(name='Sample Aperture', default=0.500, type="select",
-                                                            unit='inch',
-                                                            options=[0.125, 0.25, 0.375, 0.125, 0.500, 0.625, 0.75,
-                                                                     0.875, 1.00, 'Custom'])
-        params["Collimation"]["CustomAperture"] = create_js(name='Aperture Diameter', default=13, type="number",
-                                                            unit='mm', hidden=True)
-        params["Collimation"]["SSD"] = create_js(name='Source-To-Sample Distance', default=1627, type="number",
-                                                 unit='cm', readonly=True)
-        params["Detector"]["SDDInputBox"] = create_js(name='Detector Distance', default=100, type="number", unit='cm')
-        params["Detector"]["SDDDefaults"] = create_js(name='', default=100, type="range", range_id='SDDDefaultRange',
-                                                      unit='', lower_limit=90, upper_limit=1532,
-                                                      options=[100, 400, 1300, 1530])
-        params["Detector"]["OffsetInputBox"] = create_js(name='Detector Offset', default=0, type="number", unit='cm')
-        params["Detector"]["OffsetDefaults"] = create_js(name='', default=0, type="range",
-                                                         range_id='OffsetDefaultRange', unit='', lower_limit=0,
-                                                         upper_limit=25, options=[0, 5, 10, 15, 20, 25])
-        params["Detector"]["SDD"] = create_js(name='Sample-To-Detector Distance', default=100, type="number", unit='cm',
-                                              readonly=True)
-        params["Detector"]["BeamDiameter"] = create_js(name='Beam Diameter', default='', type="number", unit="cm",
-                                                       readonly=True)
-        params["Detector"]["BeamStopSize"] = create_js(name='Beam Stop Diameter', default='', type="number", unit="cm",
-                                                       readonly=True)
-        params["QRange"]["MinimumQ"] = create_js(name='Minimum Q', default='', type="number", unit="Å;<sup>-1</sup>",
-                                                 readonly=True)
-        params["QRange"]["MaximumQ"] = create_js(name='Maximum Q', default='', type="number", unit="Å;<sup>-1</sup>",
-                                                 readonly=True)
-        params["QRange"]["MaximumVerticalQ"] = create_js(name='Maximum Vertical Q', default='', type="number",
-                                                         unit="Å;<sup>-1</sup>", readonly=True)
-        params["QRange"]["MaximumHorizontalQ"] = create_js(name='Maximum Horizontal Q', default='', type="number",
-                                                           unit="Å;<sup>-1</sup>", readonly=True)
+        params["Sample"]["SampleTable"] = create_sample_table()
+        params["Wavelength"]["WavelengthInput"] =create_wavelength_input()
+        params["Wavelength"]["WavelengthSpread"] = create_wavelength_spread()
+        params["Wavelength"]["BeamFlux"] = create_beam_flux()
+        params["Wavelength"]["FigureOfMerit"] = create_figure_of_merit()
+        params["Wavelength"]["Attenuators"] = create_attenuators()
+        params["Wavelength"]["AttenuationFactor"] = create_attenuation_factor()
+        params["Collimation"]["GuideConfig"] = create_guide_config()
+        params["Collimation"]["SourceAperture"] = create_source_aperture()
+        params["Collimation"]["SampleAperture"] = create_sample_aperture()
+        params["Collimation"]["CustomAperture"] = create_custom_aperture()
+        params["Collimation"]["SSD"] = create_ssd()
+        params["Detector"]["SDDInputBox"] = create_ssd_input_box()
+        params["Detector"]["SDDDefaults"] = create_ssd_defaults()
+        params["Detector"]["OffsetInputBox"] = create_offset_input_box()
+        params["Detector"]["OffsetDefaults"] = create_offset_defaults()
+        params["Detector"]["SDD"] = create_sdd()
+        params["Detector"]["BeamDiameter"] = create_beam_diameter()
+        params["Detector"]["BeamStopSize"] = create_beam_stop_size()
+        params["QRange"]["MinimumQ"] = create_min_q()
+        params["QRange"]["MaximumQ"] = create_max_q()
+        params["QRange"]["MaximumVerticalQ"] = create_max_vertical_q()
+        params["QRange"]["MaximumHorizontalQ"] = create_maximum_horizontal_q()
         output = {"params": params, "other_params": {}}
         output["other_params"]["source_apertures"] = {'0': [1.43, 2.54, 3.81], '1': [5.08], '2': [5.08], '3': [5.08],
                                                       '4': [5.08], '5': [5.08], '6': [5.08], '7': [5.08], '8': [5.08],
