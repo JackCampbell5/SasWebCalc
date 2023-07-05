@@ -31,6 +31,8 @@ class NGB30SANS(Instrument):
         :rtype: None
         """
         print("NGB30SANS Load Params")
+        params["beam_stops"] = [2.54, 5.08, 7.62, 10.16]
+        params["beam_stops"] = [{"beam_stop_diameter": beam_stop} for beam_stop in params.get("beam_stops", 2.54)]
         params["data"] = {}
         params["data"]["bs_factor"] = 1.05
         params["detectors"][0]["per_pixel_max_flux"] = 100.0

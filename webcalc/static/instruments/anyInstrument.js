@@ -108,6 +108,13 @@ export default {
       }
     }
   },
+  watch: {
+    title: function (value){
+      this.first_run = true;
+    }
+
+  },
+
   mounted(){
     this.$emit('valueChange', this.instrument_params_local);
   },
