@@ -2,6 +2,7 @@
 import json
 import sys
 import importlib
+import pathlib
 import inspect
 import os
 import numpy as np
@@ -300,17 +301,24 @@ def create_app():
         :rtype; Dict
         """
         # Specify the directory containing the classes
-        directory = 'python/instruments/'
+        directory_base = '/python/instruments/'
+        directory_extended = f'/webcalc{directory_base}'
 
         # Get a list of all Python files in the directory
         # If running in docker or for auto doc need to import from webcalc/python/instruments instead
-        directory = directory if os.path.exists(directory) else f"webcalc/{directory}"
+        current_path = str(pathlib.Path(__file__).parent.resolve())
+        try_path = pathlib.Path(current_path + directory_base)
+        second_path = pathlib.Path(current_path + directory_extended)
+        directory = try_path if os.path.exists(try_path) else second_path
+        rel_path = directory_base if os.path.exists(try_path) else directory_extended
+        # Remove leading slash and replace remaining ones with periods for import
+        import_path = rel_path[1:].replace("/", ".")
         files = [file[:-3] for file in os.listdir(directory) if file.endswith('.py')]
 
         instruments_dict = {}
         # Import all classes from the files
         for file in files:
-            module = importlib.import_module(directory.replace("/", ".") + file)
+            module = importlib.import_module(f"{import_path}{file}")
             result = inspect.getmembers(module, inspect.isclass)
             for name, cls in result:
                 if hasattr(cls, "class_name"):
