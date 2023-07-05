@@ -874,7 +874,8 @@ class Data:
                 return
         else:
             # If this is reached, that means the beam diameter is larger than the largest known beam stop
-            self.beam_stops.calculated_beam_stop_diameter = self.beam_stops[len(self.beam_stops) - 1].beam_stop_diameter
+            self.calculated_beam_stop_diameter = self.parent.beam_stops[len(self.parent.beam_stops) -
+                                                                             1].beam_stop_diameter
 
     def get_figure_of_merit(self):
         """Gets the figure of merit attribute from the Data object and rounds it
