@@ -4,11 +4,11 @@ const template = `
   <div id="_inputs">
     <div v-for="(params,category_name) in instrument_params_local" :id="category_name" :key="category_name" class="instrument-section">
       <div v-if="category_name != 'hidden'">
-      <h3>{{params.name}}:</h3>
+      <span v-if="params.name !=' '"><h3>{{params.name}}:</h3></span>
       <ul class="parameter">
         <li v-for="(param, key) in params" :key="key" class="parameter" v-show="!param.hidden">
           <div v-if="key != 'name'">
-          <label :for="key" v-if="param.name != ''">{{param.name}}<span v-if="param.unit != ''"> (<span v-html="param.unit"></span>)</span>: </label>
+          <label :for="key" v-if="param.name != ' '">{{param.name}}<span v-if="param.unit != ''"> (<span v-html="param.unit"></span>)</span>: </label>
           <select v-if="param.type == 'select'" v-model.string="param.default" :id="key" 
               :disabled="param.readonly" @change="onChangeValue">
               <option v-for="option in param.options" :key="option" :value="option">{{option}}</option>
@@ -17,6 +17,7 @@ const template = `
             <input type="range" v-model.string="param.default" :disabled="param.readonly" :id="key" 
               :min="(param.lower_limit == '-inf') ? null : param.lower_limit"
               :max="(param.upper_limit == 'inf') ? null : param.upper_limit"
+              :step="(param.step!== undefined) ? param.step : null"
               :list="param.range_id" @change="onChangeValue" />
             <datalist :id="param.range_id">
               <option v-for="option in param.options" :key="option" :value="option">{{option}}</option>
@@ -25,6 +26,7 @@ const template = `
           <input v-else type="number" v-model.number="param.default" :id="key" class="fixed-width-input" 
               :min="(param.lower_limit == '-inf') ? null : param.lower_limit"
               :max="(param.upper_limit == 'inf') ? null : param.upper_limit"
+              :step="(param.step!== undefined) ? param.step : null"
               :disabled="param.readonly"  @input="onChangeValue"/>
         </div>
         </li>
@@ -45,20 +47,27 @@ export default {
     wavelength_ranges:{},
     secondary_elements:{},
     first_run: true,
+    run: true,
   }),
   methods: {
     onChangeValue(event) {
+      this.run= true;
       this.updateSecondaryElements(event.target);
-      if (!event.target.disabled) {
+      if (!event.target.disabled && this.run) {
         this.$emit('valueChange', this.instrument_params_local);
       }
     },
     updateSecondaryElements(target) {
-      if(this.first_run){
+      if (target.value === ''){
+        this.run = false;
+      }
+      if(this.first_run && "hidden" in this.instrument_params_local){
         this.source_apertures = this.instrument_params_local["hidden"]["source_apertures"];
         this.wavelength_ranges = this.instrument_params_local["hidden"]["wavelength_ranges"];
         this.secondary_elements = this.instrument_params_local["hidden"]["secondary_elements"];
         this.first_run = false;
+      }else if (!("hidden" in this.instrument_params_local)){
+        return;
       }
       if (target.id === "guideConfig") {
         this.updateApertureOptions(target);

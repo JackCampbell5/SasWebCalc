@@ -87,22 +87,27 @@ class NGB10SANS(Instrument):
 
     @staticmethod
     def get_js_params():
+        """
+        Parameters set by user: wavelengthInput, wavelengthSpread, guideConfig, sourceAperture, sampleAperture,
+        customAperture, sDDInputBox,and sDDDefaults
+        Read only parameters that can not be set by user beamFlux, figureOfMerit, attenuators, attenuationFactor,
+        sSD, sDD, beamDiameter, beamStopSize, minimumQ, maximumQ, maximumVerticalQ, maximumHorizontalQ, source_apertures, and wavelength_ranges
+        :return:
+        """
         params = generate_js_array()
-        params["Wavelength"]["wavelengthInput"] = create_wavelength_input(min_val=3.0, max_val=20.0)
-        params["Wavelength"]["wavelengthSpread"] = create_wavelength_spread(default=12,options=[9.2, 12, 14, 25])
+        params["Wavelength"]["wavelengthInput"] = create_wavelength_input(lower_limit=3.0)
+        params["Wavelength"]["wavelengthSpread"] = create_wavelength_spread(default=12, options=[9.2, 12, 14, 25])
         params["Wavelength"]["beamFlux"] = create_beam_flux()
         params["Wavelength"]["figureOfMerit"] = create_figure_of_merit()
         params["Wavelength"]["attenuators"] = create_attenuators()
         params["Wavelength"]["attenuationFactor"] = create_attenuation_factor()
         params["Collimation"]["guideConfig"] = create_guide_config(options=[0, 1, 2])
-        params["Collimation"]["sourceAperture"] = create_source_aperture()
+        params["Collimation"]["sourceAperture"] = create_source_aperture(default=1.3, options=[1.3, 2.5, 3.8, 5])
         params["Collimation"]["sampleAperture"] = create_sample_aperture()
         params["Collimation"]["customAperture"] = create_custom_aperture()
-        params["Collimation"]["sSD"] = create_ssd()
-        params["Detector"]["sDDInputBox"] = create_ssd_input_box()
-        params["Detector"]["sDDDefaults"] = create_ssd_defaults()
-        params["Detector"]["offsetInputBox"] = create_offset_input_box()
-        params["Detector"]["offsetDefaults"] = create_offset_defaults()
+        params["Collimation"]["sSD"] = create_ssd(default=513)
+        params["Detector"]["sDDInputBox"] = create_sdd_input_box()
+        params["Detector"]["sDDDefaults"] = create_sdd_defaults(lower_limit=77, upper_limit=415, options=[100, 400])
         params["Detector"]["sDD"] = create_sdd()
         params["Detector"]["beamDiameter"] = create_beam_diameter()
         params["Detector"]["beamStopSize"] = create_beam_stop_size()
@@ -110,7 +115,9 @@ class NGB10SANS(Instrument):
         params["QRange"]["maximumQ"] = create_max_q()
         params["QRange"]["maximumVerticalQ"] = create_max_vertical_q()
         params["QRange"]["maximumHorizontalQ"] = create_maximum_horizontal_q()
-        params["hidden"]["source_apertures"] = {}
-        params["hidden"]["wavelength_ranges"] = {}
-        params["hidden"]["secondary_elements"] = create_secondary_elements()
+        params["hidden"]["source_apertures"] = {'0': [1.3, 2.5, 3.8], '1': [5], '2': [5]}
+        params["hidden"]["wavelength_ranges"] = {'9.2': ['5.5', '20.0'], '12': ['4.0', '20.0'], '14': ['3.0', '20.0'],
+                                                 '25': ['3.0', '20.0']}
+        params["hidden"]["secondary_elements"] = create_secondary_elements(offset=False)
+        params = check_params(params=params)
         return params

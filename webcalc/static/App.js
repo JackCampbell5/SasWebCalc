@@ -118,6 +118,7 @@ export default {
       const fetch_result = await fetch(`/get/params/instrument/${this.active_instrument_change}`);
       this.instrument_params =  await fetch_result.json();
       this.active_instrument = this.active_instrument_change
+      await this.onChange();
     },
     async populateModelParams() {
       if(this.active_model !== ""){

@@ -85,8 +85,8 @@ class NG7SANS(Instrument):
         params["Collimation"]["sampleAperture"] = create_sample_aperture()
         params["Collimation"]["customAperture"] = create_custom_aperture()
         params["Collimation"]["sSD"] = create_ssd()
-        params["Detector"]["sDDInputBox"] = create_ssd_input_box()
-        params["Detector"]["sDDDefaults"] = create_ssd_defaults()
+        params["Detector"]["sDDInputBox"] = create_sdd_input_box()
+        params["Detector"]["sDDDefaults"] = create_sdd_defaults()
         params["Detector"]["offsetInputBox"] = create_offset_input_box()
         params["Detector"]["offsetDefaults"] = create_offset_defaults()
         params["Detector"]["sDD"] = create_sdd()
@@ -103,4 +103,5 @@ class NG7SANS(Instrument):
         params["hidden"]["wavelength_ranges"] = {"9.7": ['6.5', '20.0'], "13.9": ['4.8', '20.0'],
                                                  "15": ['4.5', '20.0'], "22.1": ['4.0', '20.0']}
         params["hidden"]["secondary_elements"] = create_secondary_elements()
+        params = check_params(params=params)
         return params
