@@ -1,4 +1,5 @@
 from ..instrument import Instrument
+from ..instrumentJSParams import *
 
 
 class NGB10SANS(Instrument):
@@ -31,6 +32,8 @@ class NGB10SANS(Instrument):
         """
         print("NGB10SANS Load Params")
         params["data"] = {}
+        params["beam_stops"] = [2.54, 3.81, 5.08, 7.62]
+        params["beam_stops"] = [{"beam_stop_diameter": beam_stop} for beam_stop in params.get("beam_stops", 2.54)]
         params["data"]["bs_factor"] = 1.05
         params["detectors"][0]["per_pixel_max_flux"] = 100.0
         params["data"]["peak_flux"] = 2.5e13
@@ -81,3 +84,33 @@ class NGB10SANS(Instrument):
                     self.collimation.guides.get_length_per_guide() * self.collimation.guides.number_of_guides)
         self.collimation.ssad = ssd_temp - self.collimation.get_sample_aperture_offset()
         return self.collimation.ssad
+
+    @staticmethod
+    def get_js_params():
+        params = generate_js_array()
+        params["Wavelength"]["wavelengthInput"] = create_wavelength_input(min_val=3.0, max_val=20.0)
+        params["Wavelength"]["wavelengthSpread"] = create_wavelength_spread(default=12,options=[9.2, 12, 14, 25])
+        params["Wavelength"]["beamFlux"] = create_beam_flux()
+        params["Wavelength"]["figureOfMerit"] = create_figure_of_merit()
+        params["Wavelength"]["attenuators"] = create_attenuators()
+        params["Wavelength"]["attenuationFactor"] = create_attenuation_factor()
+        params["Collimation"]["guideConfig"] = create_guide_config(options=[0, 1, 2])
+        params["Collimation"]["sourceAperture"] = create_source_aperture()
+        params["Collimation"]["sampleAperture"] = create_sample_aperture()
+        params["Collimation"]["customAperture"] = create_custom_aperture()
+        params["Collimation"]["sSD"] = create_ssd()
+        params["Detector"]["sDDInputBox"] = create_ssd_input_box()
+        params["Detector"]["sDDDefaults"] = create_ssd_defaults()
+        params["Detector"]["offsetInputBox"] = create_offset_input_box()
+        params["Detector"]["offsetDefaults"] = create_offset_defaults()
+        params["Detector"]["sDD"] = create_sdd()
+        params["Detector"]["beamDiameter"] = create_beam_diameter()
+        params["Detector"]["beamStopSize"] = create_beam_stop_size()
+        params["QRange"]["minimumQ"] = create_min_q()
+        params["QRange"]["maximumQ"] = create_max_q()
+        params["QRange"]["maximumVerticalQ"] = create_max_vertical_q()
+        params["QRange"]["maximumHorizontalQ"] = create_maximum_horizontal_q()
+        params["hidden"]["source_apertures"] = {}
+        params["hidden"]["wavelength_ranges"] = {}
+        params["hidden"]["secondary_elements"] = create_secondary_elements()
+        return params
