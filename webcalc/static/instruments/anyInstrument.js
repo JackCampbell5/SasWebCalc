@@ -38,7 +38,6 @@ const template = `
 export default {
   props: {
     title: String,
-    pythonParams: {},
     instrument_params_local: {},
   },
   data: () => ({
@@ -95,17 +94,6 @@ export default {
   },
   mounted(){
     this.$emit('valueChange', this.instrument_params_local);
-  },
-  watch: {
-    pythonParams: function (value){
-      console.log("Updating Python Params")
-      for (const type in value){
-        for (const param in value[type]) {
-          this.instrument_params_local[type][param].default = value[type][param];
-        }//End type for loop
-        }// End value or loop
-    }
-
   },
   template: template
 }

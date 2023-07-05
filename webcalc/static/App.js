@@ -64,7 +64,7 @@ const template = `
         @model-value-change="onModelParamChange" />
   </div>
   <div class="instrument-section" id="instrumentParams">
-    <anyInstrument v-if="active_instrument != ''" :is="active_instrument" :title="instruments[active_instrument]" :pythonParams="pythonParams"
+    <anyInstrument v-if="active_instrument != ''" :is="active_instrument" :title="instruments[active_instrument]"
         :instrument_params_local="instrument_params" @value-change="onInstrumentParamChange"/>
   </div>
 </div>
@@ -110,7 +110,6 @@ export default {
     averaging_params: {},
     shapes: [],
     instruments: {},
-    pythonParams: {},
     documentation_shown: false,
     calculating_shown: false,
   }),
@@ -188,7 +187,12 @@ export default {
         });
         let results = await this.fetch_with_data(location, data);
         if("user_inaccessible" in results){
-          this.pythonParams = results["user_inaccessible"];
+          let value = results["user_inaccessible"];
+          for (const type in value){
+            for (const param in value[type]) {
+              this.instrument_params[type][param].default = value[type][param];
+            }//End type for loop
+          }// End value or loop
         }
         this.data_1d = {qValues:results["qValues"],intensity:results["fSubs"]};
         this.data_2d = {qxValues:results["qxValues"],qyValues:results["qyValues"],intensity2D: results["intensity2D"]};
