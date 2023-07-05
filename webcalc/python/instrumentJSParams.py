@@ -499,7 +499,7 @@ def create_max_vertical_q(name='Maximum Vertical Q', default='', type_val='numbe
 
 
 def create_maximum_horizontal_q(name='Maximum Horizontal Q', default='', type_val='number', unit='Å;<sup>-1</sup>',
-                                readonly=True,options=None, min_val=None, max_val=None, hidden=None):
+                                readonly=True, options=None, min_val=None, max_val=None, hidden=None):
     """Takes in the appropriate parameters to set up the js dictionary for maximum_horizontal_q
 
     Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
@@ -519,6 +519,20 @@ def create_maximum_horizontal_q(name='Maximum Horizontal Q', default='', type_va
                      options=options, min_val=min_val, max_val=max_val, hidden=hidden)
 
 
+def create_secondary_elements(more_data=None):
+    if more_data is not None:
+        result = more_data
+    else:
+        result = {}
+    result["sDDInputBox"] = {"cat1": "Detector", "name1": "sDDDefaults", "cat2": "Detector", "name2": "sDDInputBox"}
+    result["sDDDefaults"] = {"cat1": "Detector", "name1": "sDDInputBox", "cat2": "Detector", "name2": "sDDDefaults"}
+    result["offsetInputBox"] = {"cat1": "Detector", "name1": "offsetDefaults", "cat2": "Detector",
+                                "name2": "offsetInputBox"}
+    result["offsetDefaults"] = {"cat1": "Detector", "name1": "offsetInputBox", "cat2": "Detector",
+                                "name2": "offsetDefaults"}
+    return result
+
+
 def generate_js_array(name=True):
     output = {}
     output["Sample"] = {"name": "Sample Area Settings"} if name else {}
@@ -526,7 +540,7 @@ def generate_js_array(name=True):
     output["Collimation"] = {"name": "Collimation Settings"} if name else {}
     output["Detector"] = {"name": "Detector Settings"} if name else {}
     output["QRange"] = {"name": "Calculated Q Range"} if name else {}
-    output["hidden"] = {"secondary_elements":{}}
+    output["hidden"] = {"secondary_elements": {}}
     return output
 
 
