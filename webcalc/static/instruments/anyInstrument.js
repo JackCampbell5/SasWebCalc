@@ -60,6 +60,7 @@ export default {
     updateSecondaryElements(target) {
       if (target.value === ''){
         this.run = false;
+        return;
       }
       if(this.first_run && "hidden" in this.instrument_params_local){
         this.source_apertures = this.instrument_params_local["hidden"]["source_apertures"];
@@ -74,8 +75,14 @@ export default {
       }
       else if (target.id === "wavelengthSpread") {
         let range = this.wavelength_ranges[target.value];
-        this.instrument_params_local['wavelength']['wavelengthInput'].min = range[0];
-        this.instrument_params_local['wavelength']['wavelengthInput'].max = range[1];
+        this.instrument_params_local['Wavelength']['wavelengthInput'].lower_limit = range[0];
+        this.instrument_params_local['Wavelength']['wavelengthInput'].upper_limit = range[1];
+
+        if (this.instrument_params_local['Wavelength']['wavelengthInput'].default<range[0]){
+          this.instrument_params_local['Wavelength']['wavelengthInput'].default = range[0];
+        }else if(this.instrument_params_local['Wavelength']['wavelengthInput'].default>range[1]){
+          this.instrument_params_local['Wavelength']['wavelengthInput'].default = range[1];
+        }
       }
       else if (target.id === "sampleAperture") {
         this.instrument_params_local['Collimation']['customAperture'].hidden = !(target.value === 'Custom');
