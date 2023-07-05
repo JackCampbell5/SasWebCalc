@@ -1,9 +1,5 @@
 import AveragingParams from './AveragingParams.js';
-import {default as NG7SANS} from "./instruments/NG7SANS.js";
-import {default as NGB30SANS} from "./instruments/NGB30SANS.js";
 import {default as vsans} from "./instruments/VSANS.js";
-import {default as NoInstrument} from "./instruments/UserDefinedQRange.js";
-import {default as NGB10SANS} from "./instruments/NGB10SANS.js";
 import {default as anyInstrument} from "./instruments/anyInstrument.js";
 import {default as plotting} from "./Plotting.js";
 import {default as model} from "./ModelParams.js";
@@ -76,10 +72,6 @@ export default {
     'averaging-params': AveragingParams,
     'model-params': model,
     'plotting': plotting,
-    'NoInstrument': NoInstrument,
-    "NGB30SANS": NGB30SANS,
-    "NG7SANS": NG7SANS,
-    "NGB10SANS": NGB10SANS,
     "vsans": vsans,
     "anyInstrument": anyInstrument,
   },
@@ -87,7 +79,6 @@ export default {
     active_instrument: "",
     active_instrument_change: "",
     active_averaging_type: "Circular",
-    available_instruments: ["NG7SANS","NGB10SANS","NGB30SANS","NoInstrument"],
     averaging_types: {
       'circular': 'Circular',
       // 'sector: ': 'Sector',
@@ -246,12 +237,7 @@ export default {
     this.active_structure = this.structure_names[0];
     this.multiplicity_models = structures_result["multiplicity_models"];
     this.model_names = structures_result["models"];
-    let instrument_options = structures_result["instruments"]
-    for (let a in instrument_options){
-      if(this.available_instruments.includes(a)){
-        this.instruments[a] = instrument_options[a]
-      }
-    }
+    this.instruments = structures_result["instruments"]
   },
   mounted() {
     // Sets the dropdowns to automatically choose for testing
