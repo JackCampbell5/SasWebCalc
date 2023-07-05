@@ -44,6 +44,7 @@ export default {
   data: () => ({
     source_apertures: {},
     wavelength_ranges:{},
+    secondary_elements:{},
     first_run: true,
   }),
   methods: {
@@ -57,6 +58,7 @@ export default {
       if(this.first_run){
         this.source_apertures = this.instrument_params_local["hidden"]["source_apertures"];
         this.wavelength_ranges = this.instrument_params_local["hidden"]["wavelength_ranges"];
+        this.secondary_elements = this.instrument_params_local["hidden"]["secondary_elements"];
         this.first_run = false;
       }
       if (target.id === "guideConfig") {
@@ -69,19 +71,12 @@ export default {
       }
       else if (target.id === "sampleAperture") {
         this.instrument_params_local['Collimation']['customAperture'].hidden = !(target.value === 'Custom');
+      }else if (Object.keys(this.secondary_elements).includes(target.id)){
+        let update_dict = this.secondary_elements[target.id];
+        this.instrument_params_local[update_dict["cat1"]][update_dict["name1"]].default =
+            this.instrument_params_local[update_dict["cat2"]][update_dict["name2"]].default;
       }
-      else if (target.id === "sDDInputBox") {
-        this.instrument_params_local['Detector']['sDDDefaults'].default = this.instrument_params_local['Detector']['sDDInputBox'].default;
-      }
-      else if (target.id === "sDDDefaults") {
-        this.instrument_params_local['Detector']['sDDInputBox'].default = this.instrument_params_local['Detector']['sDDDefaults'].default;
-      }
-      else if (target.id === "offsetInputBox") {
-        this.instrument_params_local['Detector']['offsetDefaults'].default = this.instrument_params_local['Detector']['offsetInputBox'].default;
-      }
-      else if (target.id === "offsetDefaults") {
-        this.instrument_params_local['Detector']['offsetInputBox'].default = this.instrument_params_local['Detector']['offsetDefaults'].default;
-      }
+
     },
     updateApertureOptions(target) {
       // Update the allowed aperture values based on the number of guides selected

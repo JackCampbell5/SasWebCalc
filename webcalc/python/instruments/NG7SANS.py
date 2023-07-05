@@ -75,7 +75,7 @@ class NG7SANS(Instrument):
         params = generate_js_array()
         # params["ng7BeamStopSizes"] = create_js(options=[2.54, 5.08, 7.62, 10.16])
         params["Sample"]["sampleTable"] = create_sample_table()
-        params["Wavelength"]["wavelengthInput"] =create_wavelength_input()
+        params["Wavelength"]["wavelengthInput"] = create_wavelength_input()
         params["Wavelength"]["wavelengthSpread"] = create_wavelength_spread()
         params["Wavelength"]["beamFlux"] = create_beam_flux()
         params["Wavelength"]["figureOfMerit"] = create_figure_of_merit()
@@ -98,9 +98,17 @@ class NG7SANS(Instrument):
         params["QRange"]["maximumVerticalQ"] = create_max_vertical_q()
         params["QRange"]["maximumHorizontalQ"] = create_maximum_horizontal_q()
         params["hidden"]["source_apertures"] = {'0': [1.43, 2.54, 3.81], '1': [5.08], '2': [5.08], '3': [5.08],
-                                                      '4': [5.08], '5': [5.08], '6': [5.08], '7': [5.08], '8': [5.08],
-                                                      'LENS': [1.43],
-                                                      }
+                                                '4': [5.08], '5': [5.08], '6': [5.08], '7': [5.08], '8': [5.08],
+                                                'LENS': [1.43],
+                                                }
         params["hidden"]["wavelength_ranges"] = {"9.7": ['6.5', '20.0'], "13.9": ['4.8', '20.0'],
-                                                       "15": ['4.5', '20.0'], "22.1": ['4.0', '20.0']}
+                                                 "15": ['4.5', '20.0'], "22.1": ['4.0', '20.0']}
+        params["hidden"]["secondary_elements"]["sDDInputBox"] = {"cat1": "Detector", "name1": "sDDDefaults",
+                                                                 "cat2": "Detector", "name2": "sDDInputBox"}
+        params["hidden"]["secondary_elements"]["sDDDefaults"] = {"cat1": "Detector", "name1": "sDDInputBox",
+                                                                 "cat2": "Detector", "name2": "sDDDefaults"}
+        params["hidden"]["secondary_elements"]["offsetInputBox"] = {"cat1": "Detector", "name1": "offsetDefaults",
+                                                                    "cat2": "Detector", "name2": "offsetInputBox"}
+        params["hidden"]["secondary_elements"]["offsetDefaults"] = {"cat1": "Detector", "name1": "offsetInputBox",
+                                                                    "cat2": "Detector", "name2": "offsetDefaults"}
         return params
