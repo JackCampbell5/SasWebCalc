@@ -11,6 +11,7 @@ webcalc\.python
     :caption: Python Folder API Listing
 
     webcalc.python.instrument
+    webcalc.python.instrumentJSParams
     webcalc.python.instruments
     webcalc.python.slicers
     webcalc.python.link_to_sasmodels

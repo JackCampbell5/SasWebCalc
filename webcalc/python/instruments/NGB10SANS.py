@@ -87,12 +87,23 @@ class NGB10SANS(Instrument):
 
     @staticmethod
     def get_js_params():
-        """
-        Parameters set by user: wavelengthInput, wavelengthSpread, guideConfig, sourceAperture, sampleAperture,
-        customAperture, sDDInputBox,and sDDDefaults
-        Read only parameters that can not be set by user beamFlux, figureOfMerit, attenuators, attenuationFactor,
-        sSD, sDD, beamDiameter, beamStopSize, minimumQ, maximumQ, maximumVerticalQ, maximumHorizontalQ, source_apertures, and wavelength_ranges
-        :return:
+        """Creates a dictionary of js element_parameters to create html elements for the NGB10SANS
+
+        params[category][elementName] = {element_parameters}
+
+        + **User editable elements:** wavelengthInput, wavelengthSpread, guideConfig, sourceAperture,
+          sampleAperture,customAperture, sDDInputBox,and sDDDefaults
+
+        + **Read only elements:** beamFlux, figureOfMerit, attenuators, attenuationFactor,
+          sSD, sDD, beamDiameter, beamStopSize, minimumQ, maximumQ, maximumVerticalQ, maximumHorizontalQ,
+          source_apertures, and wavelength_ranges
+
+        + **element_parameters**: name, default, type_val, unit, readonly, options, step, range_id,hidden, lower_limit,
+          and upper_limit
+
+
+        :return: Completed dictionary params[category][paramName] = js_element_array
+        :rtype: Dict
         """
         params = generate_js_array()
         params["Wavelength"]["wavelengthInput"] = create_wavelength_input(lower_limit=3.0)
@@ -118,6 +129,6 @@ class NGB10SANS(Instrument):
         params["hidden"]["source_apertures"] = {'0': [1.3, 2.5, 3.8], '1': [5], '2': [5]}
         params["hidden"]["wavelength_ranges"] = {'9.2': ['5.5', '20.0'], '12': ['4.0', '20.0'], '14': ['3.0', '20.0'],
                                                  '25': ['3.0', '20.0']}
-        params["hidden"]["secondary_elements"] = create_secondary_elements(offset=False)
+        params["hidden"]["secondary_elements"] = encode_secondary_elements(offset=False)
         params = check_params(params=params)
         return params

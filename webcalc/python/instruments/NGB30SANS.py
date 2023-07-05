@@ -70,6 +70,24 @@ class NGB30SANS(Instrument):
 
     @staticmethod
     def get_js_params():
+        """Creates a dictionary of js element_parameters to create html elements for the NGB30SANS
+
+        params[category][elementName] = {element_parameters}
+
+        + **User editable elements:** sampleTable, wavelengthInput, wavelengthSpread, guideConfig, sourceAperture,
+          sampleAperture,customAperture, sDDInputBox, sDDDefaults, offsetInputBox and offsetDefaults
+
+        + **Read only elements:** beamFlux, figureOfMerit, attenuators, attenuationFactor,
+          sSD, sDD, beamDiameter, beamStopSize, minimumQ, maximumQ, maximumVerticalQ, maximumHorizontalQ,
+          source_apertures, and wavelength_ranges
+
+        + **element_parameters**: name, default, type_val, unit, readonly, options, step, range_id,hidden, lower_limit,
+          and upper_limit
+
+
+        :return: Completed dictionary params[category][paramName] = js_element_array
+        :rtype: Dict
+        """
         params = generate_js_array()
         params["Sample"]["sampleTable"] = create_sample_table()
         params["Wavelength"]["wavelengthInput"] = create_wavelength_input(lower_limit=3.0)
@@ -103,6 +121,6 @@ class NGB30SANS(Instrument):
         params["hidden"]["wavelength_ranges"] = {'10.9': ['6.0', '20.0'], '12.1': ['5.5', '20.0'],
                                                  '13.8': ['4.5', '20.0'], '16.8': ['3.0', '20.0'],
                                                  '25.6': ['3.0', '20.0']}
-        params["hidden"]["secondary_elements"] = create_secondary_elements()
+        params["hidden"]["secondary_elements"] = encode_secondary_elements()
         params = check_params(params=params)
         return params

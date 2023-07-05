@@ -240,6 +240,20 @@ class NoInstrument:
 
     @staticmethod
     def get_js_params():
+        """Creates a dictionary of js element_parameters to create html elements for NoInstrument
+
+        params["Settings"][elementName] = {element_parameters}
+
+        + **User editable elements:** q_min_vertical, q_max_vertical, q_min_horizontal, q_max_horizontal, q_min, dq,
+          points, and point_spacing
+
+        + **element_parameters**: name, default, type_val, unit, readonly, options, step, range_id,hidden, lower_limit,
+          and upper_limit
+
+
+        :return: Completed dictionary params["Settings"][paramName] = js_element_array
+        :rtype: Dict
+        """
         params = {"Settings": {"name": " "}}
         params["Settings"]["q_min_vertical"] = create_number_input(name='Q Min Vertical', default=-0.3,
                                                                    lower_limit=-2.0, upper_limit=2.0, step=0.1)
