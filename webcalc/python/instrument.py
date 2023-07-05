@@ -995,72 +995,79 @@ class Instrument:
         :return: An array of the params
         :rtype: Dict
         """
-        wrong_params = calculate_params["instrument_params"]
-        # This is a temporary patch and the below code should be redone
-        old_params = {}
-        for type_param in wrong_params:
-            for param, result in wrong_params[type_param].items():
-                old_params[param] = result
+        old_params = calculate_params["instrument_params"]
 
-        name = ''
+        def _param_get_helper(name="", category="", key="default", default_value=None, division=1):
+            """ Checks if a value exists at a certain key and if not sets the value to none ot be removed later
+
+            :param str name: the dictionary of parameters to get the value from
+            :param str key: The name of the key you want the value of
+            :param default_value: The default value if none exists at that location in the params dictionary
+            :param int division: The number to device by if necessary for debuting
+            :return: The value at the keys position in the dictionary or None
+            :rtype: str, None
+            """
+            params = old_params.get(category, {}).get(name,{})
+            try:
+                result = params.get(key, default_value)
+                if division != 1:
+                    result = result / 100
+            except AttributeError:
+                return None
+            # If it is blank make the value none
+            if result == "":
+                return default_value
+            return result
+
         # Instrument class parameters
-        self.beam_flux = self._param_get_helper(params=old_params.get(name + "BeamFlux", {}), key="default")
+        self.beam_flux = _param_get_helper(name="beamFlux", category="Wavelength")
 
         params = {}
         # Collimation
         params["collimation"] = {}
         params["collimation"]["guides"] = {}
         params["collimation"]["guides"]["lenses"] = self.guide_lens_config(
-            self._param_get_helper(params=old_params.get(name + "GuideConfig", {}), key="default"), False)
+            _param_get_helper(name="guideConfig", category="Collimation"), False)
         params["collimation"]["guides"]["number_of_guides"] = self.guide_lens_config(
-            self._param_get_helper(params=old_params.get(name + "GuideConfig", {}), key="default"), True)
-        params["collimation"]["detector_distance"] = self._param_get_helper(
-            params=old_params.get(name + "SDDInputBox", {}), key="default")
-        if name + "SampleTable" in old_params.values():
-            params["collimation"]["sample_space"] = self._param_get_helper(
-                params=old_params.get(name + "SampleTable", {}), key="default")
-        params["collimation"]["ssad_unit"] = self._param_get_helper(params=old_params.get(name + "SSD", {}), key="unit")
-        params["collimation"]["ssad"] = self._param_get_helper(params=old_params.get(name + "SSD", {}), key="default")
-        params["collimation"]["ssd_unit"] = self._param_get_helper(params=old_params.get(name + "SSD", {}), key="unit")
-        params["collimation"]["ssd"] = self._param_get_helper(params=old_params.get(name + "SSD", {}), key="default")
+            _param_get_helper(name="guideConfig", category="Collimation"), True)
+        params["collimation"]["detector_distance"] = _param_get_helper(name="sDDInputBox", category="Detector")
+        if "sampleTable" in old_params.values():
+            params["collimation"]["sample_space"] = _param_get_helper(name="sampleTable", category="Sample")
+        params["collimation"]["ssad_unit"] = _param_get_helper(name="sSD", category="Collimation", key="unit")
+        params["collimation"]["ssad"] = _param_get_helper(name="sSD", category="Collimation")
+        params["collimation"]["ssd_unit"] = _param_get_helper(name="sSD", category="Collimation", key="unit")
+        params["collimation"]["ssd"] = _param_get_helper(name="sSD", category="Collimation")
 
         # Collimation - sample_aperture
         params["collimation"]["sample_aperture"] = {}
         # Better arrangement for the get statements below - missing  else None from Jeff's changes
-        params["collimation"]["sample_aperture"]["diameter"] = self._param_get_helper(
-            params=old_params.get(name + "SampleAperture", {}), key="default")
+        params["collimation"]["sample_aperture"]["diameter"] = _param_get_helper(name="sampleAperture",
+                                                                                 category="Collimation")
         # FIXME Can not set sample aperture unit otherwise creates errors
         params["collimation"]["source_aperture"] = {}
-        params["collimation"]["source_aperture"]["diameter_unit"] = self._param_get_helper(
-            params=old_params.get(name + "SourceAperture", {}), key="unit")
-        params["collimation"]["source_aperture"]["diameter"] = self._param_get_helper(
-            params=old_params.get(name + "SourceAperture", {}), key="default")
+        params["collimation"]["source_aperture"]["diameter_unit"] = _param_get_helper(name="sourceAperture",
+                                                                                      category="Collimation",key="unit")
+        params["collimation"]["source_aperture"]["diameter"] = _param_get_helper(name="sourceAperture",
+                                                                                 category="Collimation")
 
         # Data
         params["data"] = {}
-        params["data"]["beam_diameter"] = self._param_get_helper(params=old_params.get(name + "BeamDiameter", {}),
-                                                                 key="default")
-        params["data"]["beam_diameter_unit"] = self._param_get_helper(params=old_params.get(name + "BeamDiameter", {}),
-                                                                      key="unit")
-        params["data"]["calculated_beam_stop_diameter"] = self._param_get_helper(
-            params=old_params.get(name + "BeamStopSize", {}), key="default")
-        params["data"]["figure_of_merit"] = self._param_get_helper(params=old_params.get(name + "FigureOfMerit", {}),
-                                                                   key="default")
-        params["data"]["flux"] = self._param_get_helper(params=old_params.get(name + "BeamFlux", {}), key="default")
+        params["data"]["beam_diameter"] = _param_get_helper(name="beamDiameter", category="Detector")
+        params["data"]["beam_diameter_unit"] = _param_get_helper(name="beamDiameter", category="Detector", key="unit")
+        params["data"]["calculated_beam_stop_diameter"] = _param_get_helper(name="beamStopSize", category="Detector")
+        params["data"]["figure_of_merit"] = _param_get_helper(name="figureOfMerit", category="Wavelength")
+        params["data"]["flux"] = _param_get_helper(name="beamFlux", category="Wavelength")
 
         # Detectors
         params["detectors"] = [None]
         params["detectors"][0] = {}
-        offset_params = old_params.get(name + "OffsetInputBox", {})
+        offset_params = old_params.get("offsetInputBox", {})
         if any(offset_params):
-            params["detectors"][0]["offset_unit"] = self._param_get_helper(
-                params=old_params.get(name + "OffsetInputBox", {}), key="unit")
-            params["detectors"][0]["offset"] = self._param_get_helper(
-                params=old_params.get(name + "OffsetInputBox", {}), key="default")
-        params["detectors"][0]["sdd_unit"] = self._param_get_helper(params=old_params.get(name + "SDDInputBox", {}),
-                                                                    key="unit")
-        params["detectors"][0]["sdd"] = self._param_get_helper(params=old_params.get(name + "SDDInputBox", {}),
-                                                               key="default")
+            params["detectors"][0]["offset_unit"] = _param_get_helper(name="offsetInputBox", category="Detector",
+                                                                      key="unit")
+            params["detectors"][0]["offset"] = _param_get_helper(name="offsetInputBox", category="Detector")
+        params["detectors"][0]["sdd_unit"] = _param_get_helper(name="sDDInputBox", category="Detector", key="unit")
+        params["detectors"][0]["sdd"] = _param_get_helper(name="sDDInputBox", category="Detector")
 
         # Slicer
         params["slicer"] = {}
@@ -1068,42 +1075,18 @@ class Instrument:
 
         # Wavelength
         params["wavelength"] = {}
-        params["wavelength"]["attenuation_factor"] = self._param_get_helper(
-            params=old_params.get(name + "AttenuationFactor", {}), key="default")
-        params["wavelength"]["number_of_attenuators"] = self._param_get_helper(
-            params=old_params.get(name + "CustomAperture", {}), key="default")
-        params["wavelength"]["wavelength_spread_unit"] = self._param_get_helper(
-            params=old_params.get(name + "WavelengthSpread", {}), key="unit")
-        params["wavelength"]["wavelength_spread"] = self._param_get_helper(
-            params=old_params.get(name + "WavelengthSpread", {}), key="default", division=100)
-        params["wavelength"]["wavelength_unit"] = self._param_get_helper(
-            params=old_params.get(name + "WavelengthInput", {}), key="unit")
-        params["wavelength"]["wavelength"] = self._param_get_helper(params=old_params.get(name + "WavelengthInput", {}),
-                                                                    key="default")
+        params["wavelength"]["attenuation_factor"] = _param_get_helper(name="attenuationFactor", category="Wavelength")
+        params["wavelength"]["number_of_attenuators"] = _param_get_helper(name="customAperture", category="Collimation")
+        params["wavelength"]["wavelength_spread_unit"] = _param_get_helper(name="wavelengthSpread",
+                                                                           category="Wavelength",key="unit")
+        params["wavelength"]["wavelength_spread"] = _param_get_helper(name="wavelengthSpread", category="Wavelength",
+                                                                      division=100)
+        params["wavelength"]["wavelength_unit"] = _param_get_helper(name="wavelengthInput", category="Wavelength",
+                                                                    key="unit")
+        params["wavelength"]["wavelength"] = _param_get_helper(name="wavelengthInput", category="Wavelength")
 
         # Removes the None values so they can be set to the default value
         return self._remove_nones(params)
-
-    def _param_get_helper(self, params, key="default", default_value=None, division=1):
-        """ Checks if a value exists at a certain key and if not sets the value to none ot be removed later
-
-        :param dict params: the dictionary of parameters to get the value from
-        :param str key: The name of the key you want the value of
-        :param default_value: The default value if none exists at that location in the params dictionary
-        :param int division: The number to device by if necessary for debuting
-        :return: The value at the keys position in the dictionary or None
-        :rtype: str, None
-        """
-        try:
-            result = params.get(key, default_value)
-            if division != 1:
-                result = result / 100
-        except AttributeError:
-            return None
-        # If it is blank make the value none
-        if result == "":
-            return default_value
-        return result
 
     def _remove_nones(self, params: dict) -> dict:
         """A recursive method to remove any dictionary values that are None
