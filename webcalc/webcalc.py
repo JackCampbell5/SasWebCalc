@@ -1,23 +1,24 @@
 ﻿# Decides what to do based on link given
 import json
 import sys
+import importlib
+import pathlib
+import inspect
+import os
+import numpy as np
 
 from typing import Optional, Union, Dict, List
-
-import numpy as np
 from flask import Flask, render_template, request, send_file
 
 # import specific methods from python files
 try:
     from python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
     from python.link_to_sasmodels import calculate_model as calculate_m
-    from python.instrument import calculate_instrument as calculate_i
     from python.helpers import decode_json, encode_json
 except ModuleNotFoundError:
-    # Runs the imports from webcalc only when auto-doc runs to remove errors
+    # If running in docker or for auto doc need to import from webcalc/python/instruments instead
     from webcalc.python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
     from webcalc.python.link_to_sasmodels import calculate_model as calculate_m
-    from webcalc.python.instrument import calculate_instrument as calculate_i
     from webcalc.python.helpers import decode_json, encode_json
 
 Number = Union[float, int]
@@ -67,7 +68,23 @@ def create_app():
         return_array["structures"] = get_structure_list()
         return_array["multiplicity_models"] = get_multiplicity_models()
         return_array["models"] = get_model_list()
+        return_array["instruments"] = _get_all_instruments()
         return encode_json(return_array)
+
+    def _get_all_instruments():
+        """Gets a list of all the instruments that are in the python.instruments directory
+
+        :return: A dictionary of the structure that includes structure name and the user visible name
+        :rtype: Dict
+        """
+        instrument_list = {}
+        loaded_instruments = _import_instruments()
+        for instrument in loaded_instruments:
+            cls = loaded_instruments[instrument]
+            code_name = cls.class_name if hasattr(cls, "class_name") else str(cls)
+            front_name = cls.name_shown if hasattr(cls, "name_shown") else code_name
+            instrument_list[code_name] = front_name
+        return instrument_list
 
     @app.route('/get/params/<model_name>', methods=['GET'])
     @app.route('/get/params/model/<model_name>', methods=['GET'])
@@ -137,7 +154,7 @@ def create_app():
         # Find the multiplicity model params
         sld_dict = []
         for name in js_model_params:
-            if ('sld' in name or (param_keyword in name and param_keyword != name))and first_run:
+            if ('sld' in name or (param_keyword in name and param_keyword != name)) and first_run:
                 sld_dict.append(name)
             if not first_run:
                 if '[' in name:
@@ -240,7 +257,7 @@ def create_app():
         results_dict = model_params.copy()
         for key, value in results_dict.items():
             if '[' in key:
-                new_name = key[0:key.find('[')]+key[key.find('[')+1:key.find(']')]
+                new_name = key[0:key.find('[')] + key[key.find('[') + 1:key.find(']')]
                 model_params[new_name] = value
                 model_params.pop(key)
         return model_params
@@ -277,15 +294,56 @@ def create_app():
         # Calculates all the values and returns them
         return encode_json(_calculate_instrument(instrument_name, params))
 
-    def _calculate_instrument(instrument_name: str, params: Dict[str, Union[Number, str]]) -> \
-            Dict[str, Union[Number, str, List[Union[Number, str]]]]:
-        """
+    def _import_instruments():
+        """Gets a list of the instruments in the python.instruments directory
 
-        :param instrument_name: The string representation of the instrument name.
-        :param params: A dictionary of parameters mapping the param name to the value.
-        :return: A dictionary of calculated instrument values including Q (1D and 2D),
+        :return: A dictionary that has the name and the object
+        :rtype; Dict
         """
-        return calculate_i(instrument_name, params)
+        # Specify the directory containing the classes
+        directory_base = '/python/instruments/'
+        directory_extended = f'/webcalc{directory_base}'
+
+        # Get a list of all Python files in the directory
+        # If running in docker or for auto doc need to import from webcalc/python/instruments instead
+        current_path = str(pathlib.Path(__file__).parent.resolve())
+        try_path = pathlib.Path(current_path + directory_base)
+        second_path = pathlib.Path(current_path + directory_extended)
+        directory = try_path if os.path.exists(try_path) else second_path
+        rel_path = directory_base if os.path.exists(try_path) else directory_extended
+        # Remove leading slash and replace remaining ones with periods for import
+        import_path = rel_path[1:].replace("/", ".")
+        files = [file[:-3] for file in os.listdir(directory) if file.endswith('.py')]
+
+        instruments_dict = {}
+        # Import all classes from the files
+        for file in files:
+            module = importlib.import_module(f"{import_path}{file}")
+            result = inspect.getmembers(module, inspect.isclass)
+            for name, cls in result:
+                if hasattr(cls, "class_name"):
+                    instruments_dict[name] = cls
+        return instruments_dict
+
+    def _calculate_instrument(instrument: str, params: dict) -> Dict[str, Union[Number, str, List[Union[Number, str]]]]:
+        """The base calculation script. Creates an instrument class, calculates the instrumental resolution for the
+        configuration, and returns two list of intensities
+
+        :param str instrument: The instrument that we're doing the calculations based off of
+        :param dict params: A dictionary of parameters inputted by the user in the JavaScript
+        :return: The python return dictionary
+        :rtype: dict
+        """
+        loaded_instruments = _import_instruments()
+        if instrument in loaded_instruments:
+            loaded_instrument = loaded_instruments[instrument]
+        else:
+            print("Instrument Not on List")
+            return {}
+        # Temporary fix- TODO make the name of everything the same
+        instrument_name = instrument[0:instrument.find("S")].lower()
+        i_class = loaded_instrument(instrument_name, params)
+        return i_class.sas_calc()
 
     return app
 

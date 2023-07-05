@@ -1,9 +1,9 @@
 import AveragingParams from './AveragingParams.js';
-import {default as ng7} from "./instruments/NG7SANS.js";
-import {default as ngb30} from "./instruments/NGB30SANS.js";
+import {default as NG7SANS} from "./instruments/NG7SANS.js";
+import {default as NGB30SANS} from "./instruments/NGB30SANS.js";
 import {default as vsans} from "./instruments/VSANS.js";
-import {default as q_range} from "./instruments/UserDefinedQRange.js";
-import {default as ngb10} from "./instruments/NGB10SANS.js";
+import {default as NoInstrument} from "./instruments/UserDefinedQRange.js";
+import {default as NGB10SANS} from "./instruments/NGB10SANS.js";
 import {default as plotting} from "./Plotting.js";
 import {default as model} from "./ModelParams.js";
 
@@ -70,28 +70,21 @@ const template = `
 </main>
 `;
 
-const instruments = {
-  "q_range": "User-Defined Q-Range and Resolutions",
-  "ngb30": "NGB 30m SANS",
-  "ng7": "NG7 SANS",
-  "ngb10": "NGB 10m SANS",
-  //"vsans": "VSANS",
-};
-
 export default {
   components: {
     'averaging-params': AveragingParams,
     'model-params': model,
     'plotting': plotting,
-    'q_range': q_range,
-    "ngb30": ngb30,
-    "ng7": ng7,
-    "ngb10": ngb10,
+    'NoInstrument': NoInstrument,
+    "NGB30SANS": NGB30SANS,
+    "NG7SANS": NG7SANS,
+    "NGB10SANS": NGB10SANS,
     "vsans": vsans
   },
   data: () => ({
     active_instrument: "",
     active_averaging_type: "Circular",
+    available_instruments: ["NG7SANS","NGB10SANS","NGB30SANS","NoInstrument"],
     averaging_types: {
       'circular': 'Circular',
       // 'sector: ': 'Sector',
@@ -113,7 +106,7 @@ export default {
     offset: false,
     averaging_params: {},
     shapes: [],
-    instruments,
+    instruments: {},
     pythonParams: {},
     documentation_shown: false,
     calculating_shown: false,
@@ -240,6 +233,12 @@ export default {
     this.active_structure = this.structure_names[0];
     this.multiplicity_models = structures_result["multiplicity_models"];
     this.model_names = structures_result["models"];
+    let instrument_options = structures_result["instruments"]
+    for (let a in instrument_options){
+      if(this.available_instruments.includes(a)){
+        this.instruments[a] = instrument_options[a]
+      }
+    }
   },
   mounted() {
     // Sets the dropdowns to automatically choose for testing
