@@ -74,34 +74,33 @@ class NG7SANS(Instrument):
     def get_js_params():
         params = generate_js_array()
         # params["ng7BeamStopSizes"] = create_js(options=[2.54, 5.08, 7.62, 10.16])
-        params["Sample"]["SampleTable"] = create_sample_table()
-        params["Wavelength"]["WavelengthInput"] =create_wavelength_input()
-        params["Wavelength"]["WavelengthSpread"] = create_wavelength_spread()
-        params["Wavelength"]["BeamFlux"] = create_beam_flux()
-        params["Wavelength"]["FigureOfMerit"] = create_figure_of_merit()
-        params["Wavelength"]["Attenuators"] = create_attenuators()
-        params["Wavelength"]["AttenuationFactor"] = create_attenuation_factor()
-        params["Collimation"]["GuideConfig"] = create_guide_config()
-        params["Collimation"]["SourceAperture"] = create_source_aperture()
-        params["Collimation"]["SampleAperture"] = create_sample_aperture()
-        params["Collimation"]["CustomAperture"] = create_custom_aperture()
-        params["Collimation"]["SSD"] = create_ssd()
-        params["Detector"]["SDDInputBox"] = create_ssd_input_box()
-        params["Detector"]["SDDDefaults"] = create_ssd_defaults()
-        params["Detector"]["OffsetInputBox"] = create_offset_input_box()
-        params["Detector"]["OffsetDefaults"] = create_offset_defaults()
-        params["Detector"]["SDD"] = create_sdd()
-        params["Detector"]["BeamDiameter"] = create_beam_diameter()
-        params["Detector"]["BeamStopSize"] = create_beam_stop_size()
-        params["QRange"]["MinimumQ"] = create_min_q()
-        params["QRange"]["MaximumQ"] = create_max_q()
-        params["QRange"]["MaximumVerticalQ"] = create_max_vertical_q()
-        params["QRange"]["MaximumHorizontalQ"] = create_maximum_horizontal_q()
-        output = {"params": params, "other_params": {}}
-        output["other_params"]["source_apertures"] = {'0': [1.43, 2.54, 3.81], '1': [5.08], '2': [5.08], '3': [5.08],
+        params["Sample"]["sampleTable"] = create_sample_table()
+        params["Wavelength"]["wavelengthInput"] =create_wavelength_input()
+        params["Wavelength"]["wavelengthSpread"] = create_wavelength_spread()
+        params["Wavelength"]["beamFlux"] = create_beam_flux()
+        params["Wavelength"]["figureOfMerit"] = create_figure_of_merit()
+        params["Wavelength"]["attenuators"] = create_attenuators()
+        params["Wavelength"]["attenuationFactor"] = create_attenuation_factor()
+        params["Collimation"]["guideConfig"] = create_guide_config()
+        params["Collimation"]["sourceAperture"] = create_source_aperture()
+        params["Collimation"]["sampleAperture"] = create_sample_aperture()
+        params["Collimation"]["customAperture"] = create_custom_aperture()
+        params["Collimation"]["sSD"] = create_ssd()
+        params["Detector"]["sDDInputBox"] = create_ssd_input_box()
+        params["Detector"]["sDDDefaults"] = create_ssd_defaults()
+        params["Detector"]["offsetInputBox"] = create_offset_input_box()
+        params["Detector"]["offsetDefaults"] = create_offset_defaults()
+        params["Detector"]["sDD"] = create_sdd()
+        params["Detector"]["beamDiameter"] = create_beam_diameter()
+        params["Detector"]["beamStopSize"] = create_beam_stop_size()
+        params["QRange"]["minimumQ"] = create_min_q()
+        params["QRange"]["maximumQ"] = create_max_q()
+        params["QRange"]["maximumVerticalQ"] = create_max_vertical_q()
+        params["QRange"]["maximumHorizontalQ"] = create_maximum_horizontal_q()
+        params["hidden"]["source_apertures"] = {'0': [1.43, 2.54, 3.81], '1': [5.08], '2': [5.08], '3': [5.08],
                                                       '4': [5.08], '5': [5.08], '6': [5.08], '7': [5.08], '8': [5.08],
                                                       'LENS': [1.43],
                                                       }
-        output["other_params"]["wavelength_ranges"] = {"9.7": ['6.5', '20.0'], "13.9": ['4.8', '20.0'],
+        params["hidden"]["wavelength_ranges"] = {"9.7": ['6.5', '20.0'], "13.9": ['4.8', '20.0'],
                                                        "15": ['4.5', '20.0'], "22.1": ['4.0', '20.0']}
-        return output
+        return params

@@ -2,7 +2,8 @@ const template = `
 <div class="instrument_params">
   <h2>{{title}} Instrumental Parameters</h2>
   <div id="_inputs">
-    <div v-for="(params,key) in instrument_params_local" :id="key" :key="key" class="instrument-section">
+    <div v-for="(params,category_name) in instrument_params_local" :id="category_name" :key="category_name" class="instrument-section">
+      <div v-if="category_name != 'hidden'">
       <h3>{{params.name}}:</h3>
       <ul class="parameter">
         <li v-for="(param, key) in params" :key="key" class="parameter" v-show="!param.hidden">
@@ -28,6 +29,7 @@ const template = `
         </div>
         </li>
       </ul>
+      </div>
     </div>
   </div>
 </div>
@@ -38,9 +40,12 @@ export default {
     title: String,
     pythonParams: {},
     instrument_params_local: {},
+  },
+  data: () => ({
     source_apertures: {},
     wavelength_ranges:{},
-  },
+    first_run: true,
+  }),
   methods: {
     onChangeValue(event) {
       this.updateSecondaryElements(event.target);
@@ -49,33 +54,38 @@ export default {
       }
     },
     updateSecondaryElements(target) {
-      if (target.id === "GuideConfig") {
+      if(this.first_run){
+        this.source_apertures = this.instrument_params_local["hidden"]["source_apertures"];
+        this.wavelength_ranges = this.instrument_params_local["hidden"]["wavelength_ranges"];
+        this.first_run = false;
+      }
+      if (target.id === "guideConfig") {
         this.updateApertureOptions(target);
       }
-      else if (target.id === "WavelengthSpread") {
+      else if (target.id === "wavelengthSpread") {
         let range = this.wavelength_ranges[target.value];
-        this.instrument_params_local['WavelengthInput'].min = range[0];
-        this.instrument_params_local['WavelengthInput'].max = range[1];
+        this.instrument_params_local['wavelength']['wavelengthInput'].min = range[0];
+        this.instrument_params_local['wavelength']['wavelengthInput'].max = range[1];
       }
-      else if (target.id === "SampleAperture") {
-        this.instrument_params_local['CustomAperture'].hidden = !(target.value === 'Custom');
+      else if (target.id === "sampleAperture") {
+        this.instrument_params_local['Collimation']['customAperture'].hidden = !(target.value === 'Custom');
       }
-      else if (target.id === "SDDInputBox") {
-        this.instrument_params_local['SDDDefaults'].default = this.instrument_params_local['SDDInputBox'].default;
+      else if (target.id === "sDDInputBox") {
+        this.instrument_params_local['Detector']['sDDDefaults'].default = this.instrument_params_local['Detector']['sDDInputBox'].default;
       }
-      else if (target.id === "SDDDefaults") {
-        this.instrument_params_local['SDDInputBox'].default = this.instrument_params_local['SDDDefaults'].default;
+      else if (target.id === "sDDDefaults") {
+        this.instrument_params_local['Detector']['sDDInputBox'].default = this.instrument_params_local['Detector']['sDDDefaults'].default;
       }
-      else if (target.id === "OffsetInputBox") {
-        this.instrument_params_local['OffsetDefaults'].default = this.instrument_params_local['OffsetInputBox'].default;
+      else if (target.id === "offsetInputBox") {
+        this.instrument_params_local['Detector']['offsetDefaults'].default = this.instrument_params_local['Detector']['offsetInputBox'].default;
       }
-      else if (target.id === "OffsetDefaults") {
-        this.instrument_params_local['OffsetInputBox'].default = this.instrument_params_local['OffsetDefaults'].default;
+      else if (target.id === "offsetDefaults") {
+        this.instrument_params_local['Detector']['offsetInputBox'].default = this.instrument_params_local['Detector']['offsetDefaults'].default;
       }
     },
     updateApertureOptions(target) {
       // Update the allowed aperture values based on the number of guides selected
-      let allApertureOptions = Object.values(document.getElementById("SourceAperture").options);
+      let allApertureOptions = Object.values(document.getElementById("sourceAperture").options);
       let guideApertureOptions = this.source_apertures[target.value];
       for (let aperture of allApertureOptions) {
         let toggle = !guideApertureOptions.includes(parseFloat(aperture.value));
@@ -83,7 +93,7 @@ export default {
         aperture.disabled = toggle;
         aperture.hidden = toggle;
         if (!toggle) {
-          this.instrument_params_local['SourceAperture'].default = aperture.value;
+          this.instrument_params_local['Collimation']['sourceAperture'].default = aperture.value;
         }
       }
     }

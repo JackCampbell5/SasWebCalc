@@ -1188,18 +1188,18 @@ class Instrument:
         # Final output returned to the JS
         python_return = {}
         python_return["user_inaccessible"] = generate_js_array(name=False)
-        python_return["user_inaccessible"]["Wavelength"]["BeamFlux"] = self.data.get_beam_flux()
-        python_return["user_inaccessible"]["Wavelength"]["FigureOfMerit"] = self.data.get_figure_of_merit()
-        python_return["user_inaccessible"]["Wavelength"]["Attenuators"] = self.get_attenuator_number()
-        python_return["user_inaccessible"]["Collimation"]["SSD"] = self.collimation.ssd
-        python_return["user_inaccessible"]["Detector"]["SDD"] = self.detectors[0].get_sdd()
-        python_return["user_inaccessible"]["Detector"]["BeamDiameter"] = int(self.get_beam_diameter() * 10000) / 10000
-        python_return["user_inaccessible"]["Detector"]["BeamStopSize"] = self.get_beam_stop_diameter()
-        python_return["user_inaccessible"]["Wavelength"]["AttenuationFactor"] = self.get_attenuation_factor()
-        python_return["user_inaccessible"]["QRange"]["MaximumVerticalQ"] = self.data.q_max_vert
-        python_return["user_inaccessible"]["QRange"]["MaximumHorizontalQ"] = self.data.q_max_horizon
-        python_return["user_inaccessible"]["QRange"]["MaximumQ"] = self.data.q_max
-        python_return["user_inaccessible"]["QRange"]["MinimumQ"]= self.data.q_min
+        python_return["user_inaccessible"]["Wavelength"]["beamFlux"] = self.data.get_beam_flux()
+        python_return["user_inaccessible"]["Wavelength"]["figureOfMerit"] = self.data.get_figure_of_merit()
+        python_return["user_inaccessible"]["Wavelength"]["attenuators"] = self.get_attenuator_number()
+        python_return["user_inaccessible"]["Collimation"]["sSD"] = self.collimation.ssd
+        python_return["user_inaccessible"]["Detector"]["sDD"] = self.detectors[0].get_sdd()
+        python_return["user_inaccessible"]["Detector"]["beamDiameter"] = int(self.get_beam_diameter() * 10000) / 10000
+        python_return["user_inaccessible"]["Detector"]["beamStopSize"] = self.get_beam_stop_diameter()
+        python_return["user_inaccessible"]["Wavelength"]["attenuationFactor"] = self.get_attenuation_factor()
+        python_return["user_inaccessible"]["QRange"]["maximumVerticalQ"] = self.data.q_max_vert
+        python_return["user_inaccessible"]["QRange"]["maximumHorizontalQ"] = self.data.q_max_horizon
+        python_return["user_inaccessible"]["QRange"]["maximumQ"] = self.data.q_max
+        python_return["user_inaccessible"]["QRange"]["minimumQ"] = self.data.q_min
         # TODO Question: Do we even use half of thease
         python_return["nCells"] = self.slicer.n_cells.tolist()
         python_return["qsq"] = self.slicer.d_sq.tolist()

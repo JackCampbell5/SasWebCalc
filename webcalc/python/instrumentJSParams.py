@@ -526,6 +526,7 @@ def generate_js_array(name=True):
     output["Collimation"] = {"name": "Collimation Settings"} if name else {}
     output["Detector"] = {"name": "Detector Settings"} if name else {}
     output["QRange"] = {"name": "Calculated Q Range"} if name else {}
+    output["hidden"] = {}
     return output
 
 
