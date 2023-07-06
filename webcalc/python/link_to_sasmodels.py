@@ -19,10 +19,10 @@ def get_model_list(category=None):
     :return: A list of the model list
     :rtype: List
     """
-    model_list = list_models(category)
+    model_list = set(list_models(category))
     if 'rpa' in model_list:
-        model_list.pop(model_list.index('rpa'))
-    return model_list
+        model_list.remove('rpa')
+    return sorted(list(model_list))
 
 
 def get_structure_list():
