@@ -1062,8 +1062,9 @@ class Instrument:
         # Detectors
         params["detectors"] = [None]
         params["detectors"][0] = {}
-        offset_params = old_params.get("offsetInputBox", {})
+        offset_params = old_params.get("Detector", {}).get("offsetInputBox",{})
         if any(offset_params):
+            print("test")
             params["detectors"][0]["offset_unit"] = _param_get_helper(name="offsetInputBox", category="Detector",
                                                                       key="unit")
             params["detectors"][0]["offset"] = _param_get_helper(name="offsetInputBox", category="Detector")
