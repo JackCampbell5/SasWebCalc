@@ -92,6 +92,11 @@ def create_app():
         params = get_params(model_name, json_encode=False)
         return _update_model_params(js_model_params=params)
 
+    @app.route('/get/params/instrument/<instrument_name>', methods=['GET'])
+    def get_instrument_params(instrument_name):
+        loaded_instruments = _import_instruments()
+        return encode_json(loaded_instruments[instrument_name].get_js_params())
+
     @app.route('/update/params/', methods=['POST'])
     def model_params_update() -> dict:
         # Checks the params out differently if it is coming from the JS or the function

@@ -1,9 +1,6 @@
 import AveragingParams from './AveragingParams.js';
-import {default as NG7SANS} from "./instruments/NG7SANS.js";
-import {default as NGB30SANS} from "./instruments/NGB30SANS.js";
 import {default as vsans} from "./instruments/VSANS.js";
-import {default as NoInstrument} from "./instruments/UserDefinedQRange.js";
-import {default as NGB10SANS} from "./instruments/NGB10SANS.js";
+import {default as anyInstrument} from "./instruments/anyInstrument.js";
 import {default as plotting} from "./Plotting.js";
 import {default as model} from "./ModelParams.js";
 
@@ -30,7 +27,7 @@ const template = `
   <div id="SASWEBCALC">
     <div class="instrument-section" title="Choose the instrument you plan to use.">
       <label for="instrumentSelector">Instrument: </label>
-      <select id="instrumentSelector" v-model="active_instrument">
+      <select id="instrumentSelector" v-model="active_instrument_change" @change = "getParamsInstrument">
         <option v-for="(label, alias, index) in instruments" :key="alias" :value="alias">{{label}}</option>
       </select>
       <label id="modelLabel" for="model">Model: </label>
@@ -63,8 +60,8 @@ const template = `
         @model-value-change="onModelParamChange" />
   </div>
   <div class="instrument-section" id="instrumentParams">
-    <component v-if="active_instrument != ''" :is="active_instrument" :title="instruments[active_instrument]" :pythonParams="pythonParams"
-        @value-change="onInstrumentParamChange"/>
+    <anyInstrument v-if="active_instrument != ''" :is="active_instrument" :title="instruments[active_instrument]"
+        :instrument_params_local="instrument_params" @value-change="onInstrumentParamChange"/>
   </div>
 </div>
 </main>
@@ -75,16 +72,13 @@ export default {
     'averaging-params': AveragingParams,
     'model-params': model,
     'plotting': plotting,
-    'NoInstrument': NoInstrument,
-    "NGB30SANS": NGB30SANS,
-    "NG7SANS": NG7SANS,
-    "NGB10SANS": NGB10SANS,
-    "vsans": vsans
+    "vsans": vsans,
+    "anyInstrument": anyInstrument,
   },
   data: () => ({
     active_instrument: "",
+    active_instrument_change: "",
     active_averaging_type: "Circular",
-    available_instruments: ["NG7SANS","NGB10SANS","NGB30SANS","NoInstrument"],
     averaging_types: {
       'circular': 'Circular',
       // 'sector: ': 'Sector',
@@ -107,11 +101,16 @@ export default {
     averaging_params: {},
     shapes: [],
     instruments: {},
-    pythonParams: {},
     documentation_shown: false,
     calculating_shown: false,
   }),
   methods: {
+    async getParamsInstrument(){
+      const fetch_result = await fetch(`/get/params/instrument/${this.active_instrument_change}`);
+      this.instrument_params =  await fetch_result.json();
+      this.active_instrument = this.active_instrument_change
+      await this.onChange();
+    },
     async populateModelParams() {
       if(this.active_model !== ""){
         let model_name = this.active_structure !== this.structure_names[0] ? this.active_model+'@'+this.active_structure :  this.active_model
@@ -180,7 +179,12 @@ export default {
         });
         let results = await this.fetch_with_data(location, data);
         if("user_inaccessible" in results){
-          this.pythonParams = results["user_inaccessible"];
+          let value = results["user_inaccessible"];
+          for (const type in value){
+            for (const param in value[type]) {
+              this.instrument_params[type][param].default = value[type][param];
+            }//End type for loop
+          }// End value or loop
         }
         this.data_1d = {qValues:results["qValues"],intensity:results["fSubs"]};
         this.data_2d = {qxValues:results["qxValues"],qyValues:results["qyValues"],intensity2D: results["intensity2D"]};
@@ -233,12 +237,7 @@ export default {
     this.active_structure = this.structure_names[0];
     this.multiplicity_models = structures_result["multiplicity_models"];
     this.model_names = structures_result["models"];
-    let instrument_options = structures_result["instruments"]
-    for (let a in instrument_options){
-      if(this.available_instruments.includes(a)){
-        this.instruments[a] = instrument_options[a]
-      }
-    }
+    this.instruments = structures_result["instruments"]
   },
   mounted() {
     // Sets the dropdowns to automatically choose for testing

@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Dict, Union
 import math
+from ..instrumentJSParams import create_number_input, create_js
 
 
 class NoInstrument:
@@ -106,7 +107,8 @@ class NoInstrument:
         print("No Instrument Load Params")
         values = {}
         # Simplify the parameters passed into a key:value pairing instead of a key: {sub_key: value} pairing
-        params = params.get('instrument_params', None)
+        params = params.get('instrument_params', None).get('Settings',None)
+        params.pop("name")
         for name, value in params.items():
             def_value = 0.0 if value.get("type", "number") == "number" else "lin"
             values[name] = value.get("default", def_value)
@@ -169,7 +171,7 @@ class NoInstrument:
         center = self.n_pts / 2  # The center of the data
 
         # If the # of points is less than the size of the beamstop then make all the points 0's
-        if self.n_pts <= stop_points:
+        if self.n_pts <= stop_points or  self.n_pts<3:
             return np.zeros((self.n_pts, self.n_pts))
         else:
             intensity2d = np.ones((self.n_pts, self.n_pts))
@@ -235,3 +237,39 @@ class NoInstrument:
         python_return["intensity2D"] = self.two_dimensional.get("intensity2D", {})
         python_return["qValues"] = self.one_dimensional.get("Q", {}).tolist()
         return python_return
+
+    @staticmethod
+    def get_js_params():
+        """Creates a dictionary of js element_parameters to create html elements for NoInstrument
+
+        params["Settings"][elementName] = {element_parameters}
+
+        + **User editable elements:** q_min_vertical, q_max_vertical, q_min_horizontal, q_max_horizontal, q_min, dq,
+          points, and point_spacing
+
+        + **element_parameters**: name, default, type_val, unit, readonly, options, step, range_id,hidden, lower_limit,
+          and upper_limit
+
+
+        :return: Completed dictionary params["Settings"][paramName] = js_element_array
+        :rtype: Dict
+        """
+        params = {"Settings": {"name": " "}}
+        params["Settings"]["q_min_vertical"] = create_number_input(name='Q Min Vertical', default=-0.3,
+                                                                   lower_limit=-2.0, upper_limit=2.0, step=0.1)
+        params["Settings"]["q_max_vertical"] = create_number_input(name="Q Max Vertical", default=0.3, lower_limit=-2.0,
+                                                                   upper_limit=2.0, step=0.1)
+        params["Settings"]["q_min_horizontal"] = create_number_input(name="Q Min Horizontal", default=-0.3,
+                                                                     lower_limit=-2.0, upper_limit=2.0, step=0.1)
+        params["Settings"]["q_max_horizontal"] = create_number_input(name="Q Max Horizontal", default=0.3,
+                                                                     lower_limit=-2.0,
+                                                                     upper_limit=2.0, step=0.1)
+        params["Settings"]["q_min"] = create_number_input(name="Q Minimum", default=0.01, lower_limit=-2.0,
+                                                          upper_limit=2.0, step=0.01)
+        params["Settings"]["dq"] = create_number_input(name="Q Resolution", default=10.0, lower_limit=0.0,
+                                                       upper_limit="inf", unit="%")
+        params["Settings"]["points"] = create_number_input(name="Number of 1D points", default=50, lower_limit=3.0,
+                                                           upper_limit=1000)
+        params["Settings"]["point_spacing"] = create_js(name="Point Spacing", default="lin", type_val="select",
+                                                        options=['lin', 'log'])
+        return params
