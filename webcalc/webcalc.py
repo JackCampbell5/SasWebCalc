@@ -11,15 +11,10 @@ from typing import Optional, Union, Dict, List
 from flask import Flask, render_template, request, send_file
 
 # import specific methods from python files
-try:
-    from python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
-    from python.link_to_sasmodels import calculate_model as calculate_m
-    from python.helpers import decode_json, encode_json
-except ModuleNotFoundError:
-    # If running in docker or for auto doc need to import from webcalc/python/instruments instead
-    from webcalc.python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
-    from webcalc.python.link_to_sasmodels import calculate_model as calculate_m
-    from webcalc.python.helpers import decode_json, encode_json
+from python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
+from python.link_to_sasmodels import calculate_model as calculate_m
+from python.helpers import decode_json, encode_json
+from python.instruments import *
 
 Number = Union[float, int]
 
