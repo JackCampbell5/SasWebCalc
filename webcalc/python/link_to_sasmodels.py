@@ -19,7 +19,10 @@ def get_model_list(category=None):
     :return: A list of the model list
     :rtype: List
     """
-    return list_models(category)
+    model_list = set(list_models(category))
+    if 'rpa' in model_list:
+        model_list.remove('rpa')
+    return sorted(list(model_list))
 
 
 def get_structure_list():
@@ -44,7 +47,7 @@ def get_multiplicity_models():
     """
     return_array = []  # The return array
     # Loop though all the models
-    for model in list_models():
+    for model in get_model_list():
         model_params = get_params(model, encode=False)
         simple_model_params = [key.name for key in model_params]  # A list of just the name of model parameters
         # Find the keyword
