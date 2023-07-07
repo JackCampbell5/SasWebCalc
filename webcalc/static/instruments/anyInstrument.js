@@ -70,7 +70,12 @@ export default {
       }else if (!("hidden" in this.instrument_params_local)){
         return;
       }
-      if (target.id === "guideConfig") {
+      if (Object.keys(this.secondary_elements).includes(target.id)){
+        let update_dict = this.secondary_elements[target.id];
+        this.instrument_params_local[update_dict["cat1"]][update_dict["name1"]].default =
+            this.instrument_params_local[update_dict["cat2"]][update_dict["name2"]].default;
+      }
+      else if (target.id === "guideConfig") {
         this.updateApertureOptions(target);
       }
       else if (target.id === "wavelengthSpread") {
@@ -86,10 +91,6 @@ export default {
       }
       else if (target.id === "sampleAperture") {
         this.instrument_params_local['Collimation']['customAperture'].hidden = !(target.value === 'Custom');
-      }else if (Object.keys(this.secondary_elements).includes(target.id)){
-        let update_dict = this.secondary_elements[target.id];
-        this.instrument_params_local[update_dict["cat1"]][update_dict["name1"]].default =
-            this.instrument_params_local[update_dict["cat2"]][update_dict["name2"]].default;
       }
 
     },
