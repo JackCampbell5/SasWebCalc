@@ -20,7 +20,7 @@ def create_js(name=None, default=None, type_val=None, unit=None, readonly=None, 
     :param boolean hidden: The boolean that decides whether this parameter is hidden at start
     :param float lower_limit: The lower limit if the parameter is a range
     :param float upper_limit: The upper limit is the parameter is a range
-    :returns: The JS dictionary of params encoded by create js
+    :returns: The JS dictionary of params encoded for js
     :rtype: Dict
     """
     # Add to the correct category
@@ -54,20 +54,9 @@ def create_js(name=None, default=None, type_val=None, unit=None, readonly=None, 
 
 def create_sample_table(name='Sample Table', default='Chamber', type_val='select', unit='', readonly=None, options=None,
                         hidden=None):
-    """Takes in the appropriate parameters to set up the js dictionary for sample_table
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     if options is None: options = ['Chamber', 'Huber']
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
@@ -76,23 +65,9 @@ def create_sample_table(name='Sample Table', default='Chamber', type_val='select
 
 def create_wavelength_input(name='Wavelength', default=6.0, type_val='number', unit='nm;', readonly=None, options=None,
                             step=None, hidden=None, range_id=None, lower_limit=4.8, upper_limit=20.0):
-    """Takes in the appropriate parameters to set up the js dictionary for wavelength_input
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param float step: The amount the number in the input box will change by each arrow
-    :param str range_id: The id of the range of the range
-    :param float lower_limit: The lower limit if the parameter is a range
-    :param float upper_limit: The upper limit if the parameter is a range
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
                      step=step, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit, hidden=hidden)
@@ -100,19 +75,9 @@ def create_wavelength_input(name='Wavelength', default=6.0, type_val='number', u
 
 def create_wavelength_spread(name='Wavelength Spread', default=13.9, type_val='select', unit='', readonly=None,
                              options=None, hidden=None):
-    """Takes in the appropriate parameters to set up the js dictionary for wavelength_spread
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     if options is None: options = [9.7, 13.9, 15, 22.1]
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
@@ -122,23 +87,9 @@ def create_wavelength_spread(name='Wavelength Spread', default=13.9, type_val='s
 def create_beam_flux(name='Beam Flux', default='', type_val='number', unit='n cm<sup>-2</sup> s<sup>-1</sup>',
                      readonly=True, options=None, step=None, hidden=None, range_id=None, lower_limit=None,
                      upper_limit=None):
-    """Takes in the appropriate parameters to set up the js dictionary for beam_flux
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param float step: The amount the number in the input box will change by each arrow
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :param str range_id: The id of the range of the range
-    :param float lower_limit: The lower limit if the parameter is a range
-    :param float upper_limit: The upper limit if the parameter is a range
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
                      step=step, hidden=hidden, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit)
@@ -146,23 +97,9 @@ def create_beam_flux(name='Beam Flux', default='', type_val='number', unit='n cm
 
 def create_figure_of_merit(name='Figure of Merit', default='', type_val='number', unit='', readonly=True, options=None,
                            step=None, hidden=None, range_id=None, lower_limit=None, upper_limit=None):
-    """Takes in the appropriate parameters to set up the js dictionary for beam_flux
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param float step: The amount the number in the input box will change by each arrow
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :param str range_id: The id of the range of the range
-    :param float lower_limit: The lower limit if the parameter is a range
-    :param float upper_limit: The upper limit if the parameter is a range
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
                      step=step, hidden=hidden, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit)
@@ -170,23 +107,9 @@ def create_figure_of_merit(name='Figure of Merit', default='', type_val='number'
 
 def create_attenuators(name='Attenuators', default='', type_val='number', unit=None, readonly=True, options=None,
                        step=None, hidden=None, range_id=None, lower_limit=None, upper_limit=None):
-    """Takes in the appropriate parameters to set up the js dictionary for attenuators
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param float step: The amount the number in the input box will change by each arrow
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :param str range_id: The id of the range of the range
-    :param float lower_limit: The lower limit if the parameter is a range
-    :param float upper_limit: The upper limit if the parameter is a range
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
                      step=step, hidden=hidden, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit)
@@ -194,23 +117,9 @@ def create_attenuators(name='Attenuators', default='', type_val='number', unit=N
 
 def create_attenuation_factor(name='Attenuation Factor', default='', type_val='number', unit=None, readonly=True,
                               options=None, step=None, hidden=None, range_id=None, lower_limit=None, upper_limit=None):
-    """Takes in the appropriate parameters to set up the js dictionary for attenuation_factor
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param float step: The amount the number in the input box will change by each arrow
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :param str range_id: The id of the range of the range
-    :param float lower_limit: The lower limit if the parameter is a range
-    :param float upper_limit: The upper limit if the parameter is a range
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
                      step=step, hidden=hidden, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit)
@@ -218,19 +127,9 @@ def create_attenuation_factor(name='Attenuation Factor', default='', type_val='n
 
 def create_guide_config(name='Guides', default=0, type_val='select', unit=None, readonly=None, options=None,
                         hidden=None):
-    """Takes in the appropriate parameters to set up the js dictionary for guide_config
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     if options is None: options = [0, 1, 2, 3, 4, 5, 6, 7, 8, 'LENS']
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
@@ -239,19 +138,9 @@ def create_guide_config(name='Guides', default=0, type_val='select', unit=None, 
 
 def create_source_aperture(name='Source Aperture', default=1.43, type_val='select', unit='cm', readonly=None,
                            options=None, hidden=None):
-    """Takes in the appropriate parameters to set up the js dictionary for source_aperture
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     if options is None: options = [1.43, 2.54, 3.81, 5.08]
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
@@ -260,19 +149,9 @@ def create_source_aperture(name='Source Aperture', default=1.43, type_val='selec
 
 def create_sample_aperture(name='Sample Aperture', default=0.500, type_val='select', unit='inch', readonly=None,
                            options=None, hidden=None):
-    """Takes in the appropriate parameters to set up the js dictionary for sample_aperture
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     if options is None: options = [0.125, 0.25, 0.375, 0.125, 0.500, 0.625, 0.75, 0.875, 1.00, 'Custom']
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
@@ -281,23 +160,9 @@ def create_sample_aperture(name='Sample Aperture', default=0.500, type_val='sele
 
 def create_custom_aperture(name='Aperture Diameter', default=13, type_val='number', unit='mm', readonly=None,
                            options=None, step=None, hidden=True, range_id=None, lower_limit=None, upper_limit=None):
-    """Takes in the appropriate parameters to set up the js dictionary for custom_aperture
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param float step: The amount the number in the input box will change by each arrow
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :param str range_id: The id of the range of the range
-    :param float lower_limit: The lower limit if the parameter is a range
-    :param float upper_limit: The upper limit if the parameter is a range
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
                      step=step, hidden=hidden, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit)
@@ -305,23 +170,9 @@ def create_custom_aperture(name='Aperture Diameter', default=13, type_val='numbe
 
 def create_ssd(name='Source-To-Sample Distance', default=1627, type_val='number', unit='cm', readonly=True,
                options=None, step=None, hidden=None, range_id=None, lower_limit=None, upper_limit=None):
-    """Takes in the appropriate parameters to set up the js dictionary for ssd
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param float step: The amount the number in the input box will change by each arrow
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :param str range_id: The id of the range of the range
-    :param float lower_limit: The lower limit if the parameter is a range
-    :param float upper_limit: The upper limit if the parameter is a range
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
                      step=step, hidden=hidden, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit)
@@ -329,23 +180,9 @@ def create_ssd(name='Source-To-Sample Distance', default=1627, type_val='number'
 
 def create_sdd_input_box(name='Detector Distance', default=100, type_val='number', unit='cm', readonly=None,
                          options=None, step=None, hidden=None, range_id=None, lower_limit=None, upper_limit=None):
-    """Takes in the appropriate parameters to set up the js dictionary for ssd_input_box
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param float step: The amount the number in the input box will change by each arrow
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :param str range_id: The id of the range of the range
-    :param float lower_limit: The lower limit if the parameter is a range
-    :param float upper_limit: The upper limit if the parameter is a range
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
                      step=step, hidden=hidden, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit)
@@ -353,22 +190,9 @@ def create_sdd_input_box(name='Detector Distance', default=100, type_val='number
 
 def create_sdd_defaults(name=' ', default=100, type_val='range', unit='', readonly=None, options=None,
                         range_id='ng7SDDDefaultRange', hidden=None, lower_limit=90, upper_limit=1532):
-    """Takes in the appropriate parameters to set up the js dictionary for ssd_defaults
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param str range_id: The id of the range of the range
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :param float lower_limit: The lower limit if the parameter is a range
-    :param float upper_limit: The upper limit is the parameter is a range
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     if options is None: options = [100, 400, 1300, 1530]
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
@@ -377,23 +201,9 @@ def create_sdd_defaults(name=' ', default=100, type_val='range', unit='', readon
 
 def create_offset_input_box(name='Detector Offset', default=0, type_val='number', unit='cm', readonly=None,
                             options=None, step=None, hidden=None, range_id=None, lower_limit=None, upper_limit=None):
-    """Takes in the appropriate parameters to set up the js dictionary for offset_input_box
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param float step: The amount the number in the input box will change by each arrow
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :param str range_id: The id of the range of the range
-    :param float lower_limit: The lower limit if the parameter is a range
-    :param float upper_limit: The upper limit if the parameter is a range
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
                      step=step, hidden=hidden, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit)
@@ -401,22 +211,9 @@ def create_offset_input_box(name='Detector Offset', default=0, type_val='number'
 
 def create_offset_defaults(name=' ', default=0, type_val='range', unit='', readonly=None, options=None,
                            range_id='ng7OffsetDefaultRange', hidden=None, lower_limit=0, upper_limit=25):
-    """Takes in the appropriate parameters to set up the js dictionary for offset_defaults
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param str range_id: The id of the range of the range
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :param float lower_limit: The lower limit if the parameter is a range
-    :param float upper_limit: The upper limit is the parameter is a range
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     if options is None: options = [0, 5, 10, 15, 20, 25]
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
@@ -425,23 +222,9 @@ def create_offset_defaults(name=' ', default=0, type_val='range', unit='', reado
 
 def create_sdd(name='Sample-To-Detector Distance', default=100, type_val='number', unit='cm', readonly=True,
                options=None, step=None, hidden=None, range_id=None, lower_limit=None, upper_limit=None):
-    """Takes in the appropriate parameters to set up the js dictionary for sdd
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param float step: The amount the number in the input box will change by each arrow
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :param str range_id: The id of the range of the range
-    :param float lower_limit: The lower limit if the parameter is a range
-    :param float upper_limit: The upper limit if the parameter is a range
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
                      step=step, hidden=hidden, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit)
@@ -449,23 +232,9 @@ def create_sdd(name='Sample-To-Detector Distance', default=100, type_val='number
 
 def create_beam_diameter(name='Beam Diameter', default='', type_val='number', unit='cm', readonly=True, options=None,
                          step=None, hidden=None, range_id=None, lower_limit=None, upper_limit=None):
-    """Takes in the appropriate parameters to set up the js dictionary for beam_diameter
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param float step: The amount the number in the input box will change by each arrow
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :param str range_id: The id of the range of the range
-    :param float lower_limit: The lower limit if the parameter is a range
-    :param float upper_limit: The upper limit if the parameter is a range
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
                      step=step, hidden=hidden, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit)
@@ -473,23 +242,9 @@ def create_beam_diameter(name='Beam Diameter', default='', type_val='number', un
 
 def create_beam_stop_size(name='Beam Stop Diameter', default='', type_val='number', unit='cm', readonly=True,
                           options=None, step=None, hidden=None, range_id=None, lower_limit=None, upper_limit=None):
-    """Takes in the appropriate parameters to set up the js dictionary for beam_stop_size
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param float step: The amount the number in the input box will change by each arrow
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :param str range_id: The id of the range of the range
-    :param float lower_limit: The lower limit if the parameter is a range
-    :param float upper_limit: The upper limit if the parameter is a range
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
                      step=step, hidden=hidden, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit)
@@ -497,23 +252,9 @@ def create_beam_stop_size(name='Beam Stop Diameter', default='', type_val='numbe
 
 def create_min_q(name='Minimum Q', default='', type_val='number', unit='Å;<sup>-1</sup>', readonly=True, options=None,
                  step=None, hidden=None, range_id=None, lower_limit=None, upper_limit=None):
-    """Takes in the appropriate parameters to set up the js dictionary for min_q
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param float step: The amount the number in the input box will change by each arrow
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :param str range_id: The id of the range of the range
-    :param float lower_limit: The lower limit if the parameter is a range
-    :param float upper_limit: The upper limit if the parameter is a range
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
                      step=step, hidden=hidden, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit)
@@ -521,23 +262,9 @@ def create_min_q(name='Minimum Q', default='', type_val='number', unit='Å;<sup>
 
 def create_max_q(name='Maximum Q', default='', type_val='number', unit='Å;<sup>-1</sup>', readonly=True, options=None,
                  step=None, hidden=None, range_id=None, lower_limit=None, upper_limit=None):
-    """Takes in the appropriate parameters to set up the js dictionary for max_q
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param float step: The amount the number in the input box will change by each arrow
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :param str range_id: The id of the range of the range
-    :param float lower_limit: The lower limit if the parameter is a range
-    :param float upper_limit: The upper limit if the parameter is a range
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
                      step=step, hidden=hidden, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit)
@@ -546,23 +273,9 @@ def create_max_q(name='Maximum Q', default='', type_val='number', unit='Å;<sup>
 def create_max_vertical_q(name='Maximum Vertical Q', default='', type_val='number', unit='Å;<sup>-1</sup>',
                           readonly=True, options=None, step=None, hidden=None, range_id=None, lower_limit=None,
                           upper_limit=None):
-    """Takes in the appropriate parameters to set up the js dictionary for min_vertical_q
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param float step: The amount the number in the input box will change by each arrow
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :param str range_id: The id of the range of the range
-    :param float lower_limit: The lower limit if the parameter is a range
-    :param float upper_limit: The upper limit if the parameter is a range
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
                      step=step, hidden=hidden, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit)
@@ -571,23 +284,9 @@ def create_max_vertical_q(name='Maximum Vertical Q', default='', type_val='numbe
 def create_maximum_horizontal_q(name='Maximum Horizontal Q', default='', type_val='number', unit='Å;<sup>-1</sup>',
                                 readonly=True, options=None, step=None, hidden=None, range_id=None, lower_limit=None,
                                 upper_limit=None):
-    """Takes in the appropriate parameters to set up the js dictionary for maximum_horizontal_q
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param float step: The amount the number in the input box will change by each arrow
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :param str range_id: The id of the range of the range
-    :param float lower_limit: The lower limit if the parameter is a range
-    :param float upper_limit: The upper limit if the parameter is a range
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
                      step=step, hidden=hidden, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit)
@@ -595,23 +294,9 @@ def create_maximum_horizontal_q(name='Maximum Horizontal Q', default='', type_va
 
 def create_number_input(name=None, default=0.0, type_val='number', unit='Å', readonly=None, options=None, step=None,
                         range_id=None, hidden=None, lower_limit=None, upper_limit=None):
-    """Takes in the appropriate parameters to set up the js dictionary for a numerical input
+    """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
-    Sets all other parameters to the default or None and then runs them through create_js to create the dictionary
-
-    :param str name: The name of the parameter
-    :param any default: The default value of the parameter
-    :param str type_val: The type of vue object to use for the parameter
-    :param str unit: The unit of the parameter
-    :param boolean readonly: The boolean that decides whether this parameter editable by the user
-    :param list options: The options for the parameter if it needs specific options
-    :param float step: The amount the number in the input box will change by each arrow
-    :param str range_id: The id of the range of the range
-    :param float or str lower_limit: The lower limit if the parameter is a range
-    :param float or str upper_limit: The upper limit if the parameter is a range
-    :param boolean hidden: The boolean that decides whether this parameter is hidden at start
-    :returns: The JS dictionary of params encoded by create js
-    :rtype: Dict
+    :returns: A dictionary of parameters encoded by create js
     """
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
                      step=step, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit, hidden=hidden)
