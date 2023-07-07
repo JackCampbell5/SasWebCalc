@@ -288,8 +288,8 @@ class Collimation:
         :return: The calculated SSAD value
         :rtype: float
         """
-        self.ssad = (self.guides.get_maximum_length() - self.guides.get_length_per_guide()
-                     * self.guides.number_of_guides - self.get_sample_aperture_offset())
+        self.ssad = (
+                    self.guides.get_maximum_length() - self.guides.get_length_per_guide() * self.guides.number_of_guides - self.get_sample_aperture_offset())
         return self.ssad
 
 
@@ -366,8 +366,8 @@ class Detector:
         :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
         :rtype: None
         """
-        float_params = ["ssd", "ssad", "offset", "pixel_size_x", "pixel_size_y", "pixel_size_z",
-                        "pixel_no_x", "pixel_no_y", "pixel_no_z", "beam_center_x", "beam_center_y", "beam_center_z"]
+        float_params = ["ssd", "ssad", "offset", "pixel_size_x", "pixel_size_y", "pixel_size_z", "pixel_no_x",
+                        "pixel_no_y", "pixel_no_z", "beam_center_x", "beam_center_y", "beam_center_z"]
         set_params(self, params, float_params)
 
     def calculate_all_beam_centers(self):
@@ -874,8 +874,8 @@ class Data:
                 return
         else:
             # If this is reached, that means the beam diameter is larger than the largest known beam stop
-            self.calculated_beam_stop_diameter = self.parent.beam_stops[len(self.parent.beam_stops) -
-                                                                             1].beam_stop_diameter
+            self.calculated_beam_stop_diameter = self.parent.beam_stops[
+                len(self.parent.beam_stops) - 1].beam_stop_diameter
 
     def get_figure_of_merit(self):
         """Gets the figure of merit attribute from the Data object and rounds it
@@ -960,8 +960,7 @@ class Instrument:
         self.one_dimensional = {"I": None, "dI": None, "Q": None, "dQ": None, "fSubS": None}
         self.two_dimensional = {"I": None, "dI": None, "Qx": None, "dQx": None, "Qy": None, "dQy": None, "fSubS": None}
         if not params:
-            params = {}
-            # Only store values used for calculations in Instrument class
+            params = {}  # Only store values used for calculations in Instrument class
         self.name = name
         self.constants = Constants()
         self.params = params
@@ -1008,7 +1007,7 @@ class Instrument:
             :return: The value at the keys position in the dictionary or None
             :rtype: str, None
             """
-            params = old_params.get(category, {}).get(name,{})
+            params = old_params.get(category, {}).get(name, {})
             try:
                 result = params.get(key, default_value)
                 if division != 1:
@@ -1047,7 +1046,8 @@ class Instrument:
         # FIXME Can not set sample aperture unit otherwise creates errors
         params["collimation"]["source_aperture"] = {}
         params["collimation"]["source_aperture"]["diameter_unit"] = _param_get_helper(name="sourceAperture",
-                                                                                      category="Collimation",key="unit")
+                                                                                      category="Collimation",
+                                                                                      key="unit")
         params["collimation"]["source_aperture"]["diameter"] = _param_get_helper(name="sourceAperture",
                                                                                  category="Collimation")
 
@@ -1079,7 +1079,7 @@ class Instrument:
         params["wavelength"]["attenuation_factor"] = _param_get_helper(name="attenuationFactor", category="Wavelength")
         params["wavelength"]["number_of_attenuators"] = _param_get_helper(name="customAperture", category="Collimation")
         params["wavelength"]["wavelength_spread_unit"] = _param_get_helper(name="wavelengthSpread",
-                                                                           category="Wavelength",key="unit")
+                                                                           category="Wavelength", key="unit")
         params["wavelength"]["wavelength_spread"] = _param_get_helper(name="wavelengthSpread", category="Wavelength",
                                                                       division=100)
         params["wavelength"]["wavelength_unit"] = _param_get_helper(name="wavelengthInput", category="Wavelength",
@@ -1178,7 +1178,7 @@ class Instrument:
         python_return["user_inaccessible"]["Collimation"]["sSD"] = self.collimation.ssd
         python_return["user_inaccessible"]["Detector"]["sDD"] = self.detectors[0].get_sdd()
         python_return["user_inaccessible"]["Detector"]["beamDiameter"] = int(self.get_beam_diameter() * 10000) / 10000
-        python_return["user_inaccessible"]["Detector"]["beamStopSize"] = self.get_beam_stop_diameter()
+        python_return["user_inaccessible"]["Detector"]["beamStopSize"] = self.data.get_calculated_beam_stop_diameter()
         python_return["user_inaccessible"]["Wavelength"]["attenuationFactor"] = self.get_attenuation_factor()
         python_return["user_inaccessible"]["QRange"]["maximumVerticalQ"] = self.data.q_max_vert
         python_return["user_inaccessible"]["QRange"]["maximumHorizontalQ"] = self.data.q_max_horizon
@@ -1327,7 +1327,8 @@ class Instrument:
         # and sampleAperture differently
         slicer_params["source_aperture"] = self.get_source_aperture_size()
         slicer_params["sample_aperture"] = self.get_sample_aperture_size()
-        slicer_params["beam_stop_size"] = self.get_beam_stop_diameter() * 2.54
+        print(self.get_beam_stop_diameter())
+        slicer_params["beam_stop_size"] = self.data.get_calculated_beam_stop_diameter()
         slicer_params["SSD"] = self.get_source_to_sample_aperture_distance()
         slicer_params["SDD"] = self.get_sample_to_detector_distance()
         averaging_type = self.averaging_type
@@ -1536,8 +1537,7 @@ class Instrument:
         """
         return self.collimation.calculate_source_to_sample_aperture_distance()
 
-    # class VSANS(Instrument):
-# TODO Implement VSANS
+    # class VSANS(Instrument):  # TODO Implement VSANS
 #     # Class for the VSANS instrument
 #     def __init__(self, name, params):
 #         super().__init__(name, params)
