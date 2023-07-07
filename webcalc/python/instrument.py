@@ -1064,7 +1064,6 @@ class Instrument:
         params["detectors"][0] = {}
         offset_params = old_params.get("Detector", {}).get("offsetInputBox",{})
         if any(offset_params):
-            print("test")
             params["detectors"][0]["offset_unit"] = _param_get_helper(name="offsetInputBox", category="Detector",
                                                                       key="unit")
             params["detectors"][0]["offset"] = _param_get_helper(name="offsetInputBox", category="Detector")
@@ -1131,7 +1130,6 @@ class Instrument:
     def load_objects(self, params):
         """A function that creates the objects necessary for the calculations
 
-        Runs calculate_sample_to_detector_distance and calculate_min_and_max_q.
         Create objects beam_stops, detectors, collimation, and wavelength
 
         :param dict params: A dictionary of parameters to send to the initialization of the objects
@@ -1218,8 +1216,8 @@ class Instrument:
         self.data.calculate_figure_of_merit()
         # Calculate the number of attenuators
         self.calculate_attenuator_number()
-        self.calculate_slicer()
         self.data.calculate_min_and_max_q()
+        self.calculate_slicer()
 
     def calculate_attenuation_factor(self, index=0):
         """Calculates the attenuation factors from te sample aperture diameter and returns the calculated value
@@ -1328,7 +1326,7 @@ class Instrument:
         # and sampleAperture differently
         slicer_params["source_aperture"] = self.get_source_aperture_size()
         slicer_params["sample_aperture"] = self.get_sample_aperture_size()
-        print(self.get_beam_stop_diameter())
+        print(self.data.get_calculated_beam_stop_diameter())
         slicer_params["beam_stop_size"] = self.data.get_calculated_beam_stop_diameter()
         slicer_params["SSD"] = self.get_source_to_sample_aperture_distance()
         slicer_params["SDD"] = self.get_sample_to_detector_distance()
