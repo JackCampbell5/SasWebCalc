@@ -378,6 +378,25 @@ class Elliptical(Slicer):
             math.cos(rho) * math.cos(rho) + self.aspect_ratio * math.sin(rho) * math.sin(rho))) + 1
 
 
+class Annular(Slicer):
+    def __init__(self, params):
+        super().__init__(params)
+        self.average_type = "annular"
+
+    def include_pixel(self, x_val, y_val, mask):
+        q = math.sqrt(x_val * x_val + y_val * y_val)
+        return mask == 0 and self.q_range_min <= q <= self.q_range_max
+
+
+SLICER_MAP = {
+    'circular': Circular,
+    'annular': Annular,
+    'sector': Sector,
+    'elliptical': Elliptical,
+    'rectangular': Rectangular,
+}
+
+
 if __name__ == '__main__':
     # Quick test to ensure
     params = {
