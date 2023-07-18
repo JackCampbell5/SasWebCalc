@@ -45,8 +45,9 @@ const template = `
       </select>
     </div>
   </div>
-  <div class="calculatingText" v-show="calculating_shown">
+  <div class="calculatingText">
     <p id="calculating">Calculating</p>
+    <p id="calculatingBackup">&nbsp;</p>
   </div> 
   <div class="documentation" v-show="documentation_shown">
   <iframe src="/docs/index.html" title="SasWebCalc Documentation"  width="100%" height="500" style="border:1px solid black;"></iframe>
@@ -102,7 +103,8 @@ export default {
     shapes: [],
     instruments: {},
     documentation_shown: false,
-    calculating_shown: false,
+    calculating: Object,
+    calculatingBackup: Object,
   }),
   methods: {
     async getParamsInstrument(){
@@ -165,7 +167,8 @@ export default {
       //Does not run the function if the instrument or model is blank
       // This is so when the python objects are created they have the correct data
       if(this.active_instrument !== "" && this.active_model !== "") {
-        this.calculating_shown = true;
+        this.calculating.style.fontSize = "22px";
+        this.calculatingBackup.style.fontSize = "0px";
         let location = `/calculate/`;
         this.persist();
         let data = JSON.stringify({
@@ -188,8 +191,8 @@ export default {
         }
         this.data_1d = {qValues:results["qValues"],intensity:results["fSubs"]};
         this.data_2d = {qxValues:results["qxValues"],qyValues:results["qyValues"],intensity2D: results["intensity2D"]};
-        this.calculating_shown = false;
-
+        this.calculating.style.fontSize = "0px";
+        this.calculatingBackup.style.fontSize = "17px";
       }//End if statement to check instrument existence
 
     },
@@ -244,6 +247,8 @@ export default {
     if (this.active_instrument !== "" && this.active_model !== "") {
       this.onChange();
     }
+    this.calculating = document.getElementById('calculating');
+    this.calculatingBackup = document.getElementById('calculatingBackup');
   },
   template: template,
 }

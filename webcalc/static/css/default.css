@@ -82,7 +82,12 @@ div.calculatingText{
     margin-right: 20px;
     font-weight: bolder;
     color: #01a514;
-    font-size: 22px;
+}
+#calculating{
+    font-size: 0px;
+}
+#calculatingBackup{
+    font-size: 17px;
 }
 #calculating:after, #calculating:before {
   overflow: hidden;
