@@ -1,5 +1,4 @@
 import AveragingParams from './AveragingParams.js';
-import {default as vsans} from "./instruments/VSANS.js";
 import {default as anyInstrument} from "./instruments/anyInstrument.js";
 import {default as plotting} from "./Plotting.js";
 import {default as model} from "./ModelParams.js";
@@ -72,7 +71,6 @@ export default {
     'averaging-params': AveragingParams,
     'model-params': model,
     'plotting': plotting,
-    "vsans": vsans,
     "anyInstrument": anyInstrument,
   },
   data: () => ({

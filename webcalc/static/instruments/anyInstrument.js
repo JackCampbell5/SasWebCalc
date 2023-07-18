@@ -60,7 +60,10 @@ export default {
       }
     },
     updateSecondaryElements(target) {
-      if (target.value === ''){
+      if(!("hidden" in this.instrument_params_local)){
+        return;
+      }
+      if (target.value === '' || "hidden"){
         this.run = false;
         return;
       }
