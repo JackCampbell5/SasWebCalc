@@ -302,6 +302,38 @@ def create_number_input(name=None, default=0.0, type_val='number', unit='Å', re
                      step=step, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit, hidden=hidden)
 
 
+def create_number_output(name=None, default=0.0, type_val='number', unit=None, readonly=True, options=None, step=None,
+                         range_id=None, hidden=None):
+    """Function that creates an un user editable js input based on the parameters given(All parameters are defined in
+    create JS)
+
+    :returns: A dictionary of parameters encoded by create js
+    """
+    return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
+                     step=step, range_id=range_id, hidden=hidden)
+
+
+def create_checkbox(name=None, default=None, type_val='checkbox', unit=None, readonly=None, options=None, step=None,
+                  range_id=None, hidden=None):
+    """Function that creates a js checkbox based on the parameters given(All parameters are defined in create JS)
+
+    :returns: A dictionary of parameters encoded by create js
+    """
+    return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
+                     step=step, range_id=range_id, hidden=hidden)
+
+
+def create_number_select(name=None, default=0.0, type_val='select', unit='Å', readonly=False, options=None, step=None,
+                         range_id=None, hidden=None):
+    """Function that creates a selection js element based on the parameters given(All parameters are defined in
+    create JS)
+
+    :returns: A dictionary of parameters encoded by create js
+    """
+    return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
+                     step=step, range_id=range_id, hidden=hidden)
+
+
 def encode_secondary_elements(more_data=None, ssd=True, offset=True):
     """Checks if the element changed is a key in the dictionary and then changed values based on the dictionary in
     result[key]

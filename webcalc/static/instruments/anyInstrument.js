@@ -13,6 +13,8 @@ const template = `
               :disabled="param.readonly" @change="onChangeValue">
               <option v-for="option in param.options" :key="option" :value="option">{{option}}</option>
           </select>
+          <input type = "checkbox" v-else-if="param.type == 'checkbox'" v-model.string="param.default" :id="key" 
+              :disabled="param.readonly" @change="onChangeValue">
           <span v-else-if="param.type == 'range'">
             <input type="range" v-model.string="param.default" :disabled="param.readonly" :id="key" 
               :min="(param.lower_limit == '-inf') ? null : param.lower_limit"
