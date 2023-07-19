@@ -71,6 +71,14 @@ def create_app():
         return_array["instruments"] = _get_all_instruments()
         return encode_json(return_array)
 
+    @app.route('/get/preset_params/instrument/<preset_info>', methods=['GET'])
+    def on_preset_change(preset_info):
+        print("Updating Values Based on Preset")
+        instrument_name = preset_info[:preset_info.find('%')]
+        preset = preset_info[preset_info.find('%') + 1:]
+        instrument = _import_instruments()[instrument_name]
+        return encode_json(instrument.update_values(preset))
+
     def _get_all_instruments():
         """Gets a list of all the instruments that are in the python.instruments directory
 

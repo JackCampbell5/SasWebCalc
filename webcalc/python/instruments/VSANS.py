@@ -2,12 +2,14 @@ from ..instrument import Instrument
 from ..instrumentJSParams import *
 from typing import Dict, List, Union
 from ..instrumentVSANS import *
+from ..constants import VSANS_Constants
 
 Number = Union[float, int]
 
 
 def _create_vsans_dict(name=True):
     vsans_dict = {}
+    vsans_dict["Presets"] = {"name": "Presets"} if name else {}
     vsans_dict["Beam"] = {"name": "Beam"} if name else {}
     vsans_dict["Collimation"] = {"name": "Collimation"} if name else {}
     vsans_dict["MiddleCarriage"] = {"name": "Middle Carriage"} if name else {}
@@ -18,6 +20,7 @@ def _create_vsans_dict(name=True):
     vsans_dict["FrontRightPanel"] = {"name": "Front Carriage Right Panel"} if name else {}
     vsans_dict["FrontTopPanel"] = {"name": "Front Carriage Top Panel"} if name else {}
     vsans_dict["FrontBottomPanel"] = {"name": "Front Carriage Bottom Panel"} if name else {}
+    vsans_dict["options"] = {}
     return vsans_dict
 
 
@@ -39,10 +42,13 @@ class VSANS():
         :rtype: None
         """
         self.name = name if name else "VSANS"
+        self.preset = params.get('Preset', "19m")
+        self.options = {}
         self.beam = None
         self.collimation = None
         self.middle_Carriage = None
         self.front_Carriage = None
+        self.constants = VSANS_Constants().get_constants(self.preset, _create_vsans_dict(name=False))
         # Super is the Instrument class
         self.load_params(params)
 
@@ -60,6 +66,8 @@ class VSANS():
         params["temp"] = {}
         params["temp"]["serverName"] = "VSANS.ncnr.nist.gov"
         params["Beam"]["frontend_trans_options"] = {"0.02": 0.5, "0.12": 1.0, "0.4": 0.7}
+        params["Beam"]["lambda_T"] = self.constants.get("lambda_T", 6.2)
+        params["Beam"]["phi_0"] = self.constants.get("phi_0", 1.82e13)
 
         self.load_objects(params)
 
@@ -76,6 +84,7 @@ class VSANS():
             :return: The value at the keys position in the dictionary or None
             :rtype: str, None
             """
+            # TODO get default values if possible from constants.py
             params = old_params.get(category, {}).get(name, {})
             try:
                 result = params.get(key, default_value)
@@ -89,6 +98,7 @@ class VSANS():
             return result
 
         params = _create_vsans_dict(name=False)
+        params["Preset"] = _param_get_helper(name="Presets", category="Presets", default_value="19m")
         params["Beam"]["wavelength"] = _param_get_helper(name="wavelength", category="Beam", default_value=6.0)
         params["Beam"]["dlambda"] = _param_get_helper(name="dlambda", category="Beam", default_value=0.12)
         params["Beam"]["frontendTrans"] = _param_get_helper(name="frontendTrans", category="Beam", default_value=1.0)
@@ -97,8 +107,8 @@ class VSANS():
         params["Beam"]["iSub0"] = _param_get_helper(name="iSub0", category="Beam", default_value=8.332e+4)
         params["Collimation"]["numGuides"] = _param_get_helper(name="numGuides", category="Collimation",
                                                                default_value=0)
-        params["Collimation"]["sourceAperture"] = _param_get_helper(name="sourceAperture", category="Collimation",
-                                                                    default_value=30.0)
+        params["Collimation"]["sourceAperture_js"] = _param_get_helper(name="sourceAperture_js", category="Collimation",
+                                                                       default_value=30.0)
         params["Collimation"]["sourceDistance"] = _param_get_helper(name="sourceDistance", category="Collimation",
                                                                     default_value=2441)
         params["Collimation"]["t_filter"] = _param_get_helper(name="t_filter", category="Collimation",
@@ -219,7 +229,6 @@ class VSANS():
         :return: Nothing as it just sets up all the objects
         :rtype: None
         """
-
         self.beam = Beam(self, params.get('Beam', {}))
         self.collimation = Collimation(self, params.get('Collimation', {}))
         middle_carriage_params = {"MiddleCarriage": params.get('MiddleCarriage', {}),
@@ -244,13 +253,14 @@ class VSANS():
     def sas_calc(self) -> Dict[str, Union[Number, str, List[Union[Number, str]]]]:
         self.calculate_objects()
         user_inaccessible = _create_vsans_dict(name=False)
+        user_inaccessible["Beam"]["wavelength"] = self.beam.wavelength
         user_inaccessible["Beam"]["dlambda"] = self.beam.dlambda
         user_inaccessible["Beam"]["frontendTrans"] = self.beam.frontend_trans
         user_inaccessible["Beam"]["flux"] = self.beam.flux
         user_inaccessible["Beam"]["beamCurrent"] = self.beam.beamCurrent
         user_inaccessible["Beam"]["iSub0"] = self.beam.iSub0
         user_inaccessible["Collimation"]["numGuides"] = self.collimation.numGuides
-        user_inaccessible["Collimation"]["sourceAperture"] = self.collimation.sourceAperture
+        user_inaccessible["Collimation"]["sourceAperture_js"] = self.collimation.sourceAperture_js
         user_inaccessible["Collimation"]["sourceDistance"] = self.collimation.sourceDistance
         user_inaccessible["Collimation"]["t_filter"] = self.collimation.t_filter
         user_inaccessible["Collimation"]["t_guide"] = self.collimation.t_guide
@@ -308,10 +318,54 @@ class VSANS():
         user_inaccessible["FrontBottomPanel"]["q_Top"] = self.front_Carriage.bottomPanel.q_Top
         user_inaccessible["FrontBottomPanel"]["q_Bottom"] = self.front_Carriage.bottomPanel.q_Bottom
         user_inaccessible["FrontBottomPanel"]["matchBottomMR"] = self.front_Carriage.bottomPanel.matchBottomMR
-
         python_return = {"user_inaccessible": user_inaccessible}
-
+        if self.options is not {}:
+            python_return['options'] = self.options
         return python_return
+
+    @staticmethod
+    def update_values(info):
+        type_info = info[:info.find('@')]
+        rest_info = info[info.find('@') + 1:]
+        if type_info == "preset":
+            return VSANS.preset_change(rest_info)
+        elif type_info == "guideUpdate":
+            sourceAperture_js = rest_info[:rest_info.find('+')]
+            numGuides = rest_info[rest_info.find('+')+1:]
+            return VSANS.update_source_aperture(rest_info,sourceAperture_js=sourceAperture_js,numGuides=numGuides)
+
+    @staticmethod
+    def preset_change(preset):
+        constants = VSANS_Constants()
+        results = constants.get_constants(preset, _create_vsans_dict(name=False), True)
+        results = VSANS.update_source_aperture_with_data(results)
+        return check_params(params=results)
+
+    @staticmethod
+    def update_source_aperture_with_data(results):
+        # Update the number of guides to be correct
+        sourceAperture_js = results["Collimation"]["sourceAperture_js"]
+        numGuides = results["Collimation"]["numGuides"]
+        return VSANS.update_source_aperture(results=results, sourceAperture_js=sourceAperture_js, numGuides=numGuides)
+
+    @staticmethod
+    def update_source_aperture(results=None, sourceAperture_js=0.0, numGuides=0):
+        if results is None: results = {"Collimation": {}, "options": {}}
+        if numGuides == 0:
+            valid_ops = ['7.5', '15.0', '30.0']
+            if not sourceAperture_js in valid_ops:
+                sourceAperture_js = '30.0'
+        elif numGuides == 'CONV_BEAMS':
+            if sourceAperture_js != '6.0':
+                sourceAperture_js = '6.0'
+            valid_ops = ['6.0']
+        else:
+            if sourceAperture_js != '60.0':
+                sourceAperture_js = '60.0'
+            valid_ops = ['60.0']
+        results["Collimation"]["sourceAperture_js"] = sourceAperture_js
+        results["options"]["sourceAperture_js"] = {"category": "Collimation", "options": valid_ops}
+        return results
 
     @staticmethod
     def get_js_params():
@@ -335,6 +389,9 @@ class VSANS():
         """
         # TODO find all the upper and lower limits of the ones set to None
         params = _create_vsans_dict()
+        params["Presets"]["Preset"] = create_number_select(name="Presets", options=["19m", "16m", "11m", "4.5m"],
+                                                           default="19m", extra="19m")  # The Extra parameter saves
+        # the previous value of the preset, so we can check if it has changed
         params["Beam"]["wavelength"] = create_wavelength_input(lower_limit=None, upper_limit=None)
         params["Beam"]["dlambda"] = create_wavelength_spread(options=[0.02, 0.12, 0.4], default=0.12)
         params["Beam"]["frontendTrans"] = create_number_output(name="Frontend Trans", default=1.0,
@@ -342,9 +399,10 @@ class VSANS():
         params["Beam"]["flux"] = create_number_output(name="Flux", unit="Φ", default=1.362e+11)
         params["Beam"]["beamCurrent"] = create_number_output(name="Beam Current", unit="1/s", default=1.055e+5)
         params["Beam"]["iSub0"] = create_number_output(name="I0", unit="1/s/cm^2", default=8.332e+4)
-        params["Collimation"]["numGuides"] = create_guide_config(options=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, "CONV_BEAMS"])
-        params["Collimation"]["sourceAperture"] = create_source_aperture(unit="mm", options=[7.5, 15.0, 30.0],
-                                                                         default=30.0)
+        params["Collimation"]["numGuides"] = create_guide_config(options=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, "CONV_BEAMS"]
+                                                                 ,extra=0)
+        params["Collimation"]["sourceAperture_js"] = create_source_aperture(unit="mm", options=[7.5, 15.0, 30.0],
+                                                                            default=30.0)
         params["Collimation"]["sourceDistance"] = create_number_output(name="Source distance", unit="cm", default=2441)
         params["Collimation"]["t_filter"] = create_number_output(name="T_filter", unit=None, default=0.5062523594147008)
         params["Collimation"]["t_guide"] = create_number_output(name="T_guide", unit=None, default=1)

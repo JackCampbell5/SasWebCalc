@@ -5,7 +5,7 @@ that dictionary as necessary
 
 
 def create_js(name=None, default=None, type_val=None, unit=None, readonly=None, options=None, step=None, range_id=None,
-              hidden=None, lower_limit=None, upper_limit=None):
+              hidden=None, lower_limit=None, upper_limit=None,extra=None):
     """Takes in the appropriate parameters to set up the js dictionary from either a function with pre encoded
     defaults or just parameters passed in by a direct call to this function
 
@@ -20,6 +20,7 @@ def create_js(name=None, default=None, type_val=None, unit=None, readonly=None, 
     :param boolean hidden: The boolean that decides whether this parameter is hidden at start
     :param float lower_limit: The lower limit if the parameter is a range
     :param float upper_limit: The upper limit is the parameter is a range
+    :param Any extra: Any extra info I would like to give as a part of this parameter
     :returns: The JS dictionary of params encoded for js
     :rtype: Dict
     """
@@ -49,6 +50,8 @@ def create_js(name=None, default=None, type_val=None, unit=None, readonly=None, 
         js_array["readonly"] = readonly
     if options is not None and options != "":
         js_array["options"] = options
+    if extra is not None and extra != "":
+        js_array["extra"] = extra
     return js_array  # Ones that are not none add to the array
 
 
@@ -126,14 +129,14 @@ def create_attenuation_factor(name='Attenuation Factor', default='', type_val='n
 
 
 def create_guide_config(name='Guides', default=0, type_val='select', unit=None, readonly=None, options=None,
-                        hidden=None):
+                        hidden=None,extra = None):
     """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
     :returns: A dictionary of parameters encoded by create js
     """
     if options is None: options = [0, 1, 2, 3, 4, 5, 6, 7, 8, 'LENS']
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
-                     hidden=hidden)
+                     hidden=hidden,extra= extra)
 
 
 def create_source_aperture(name='Source Aperture', default=1.43, type_val='select', unit='cm', readonly=None,
@@ -323,15 +326,15 @@ def create_checkbox(name=None, default=None, type_val='checkbox', unit=None, rea
                      step=step, range_id=range_id, hidden=hidden)
 
 
-def create_number_select(name=None, default=0.0, type_val='select', unit='Å', readonly=False, options=None, step=None,
-                         range_id=None, hidden=None):
+def create_number_select(name=None, default=None, type_val='select', unit=None, readonly=False, options=None, step=None,
+                         range_id=None, hidden=None,extra = None):
     """Function that creates a selection js element based on the parameters given(All parameters are defined in
     create JS)
 
     :returns: A dictionary of parameters encoded by create js
     """
     return create_js(name=name, default=default, type_val=type_val, unit=unit, readonly=readonly, options=options,
-                     step=step, range_id=range_id, hidden=hidden)
+                     step=step, range_id=range_id, hidden=hidden,extra=extra)
 
 
 def encode_secondary_elements(more_data=None, ssd=True, offset=True):
@@ -385,7 +388,7 @@ def check_params(params=None):
     if params is None: params = None
     return_array = params.copy()
     for name in params.keys():
-        if len(params[name]) < 2 and name != "hidden":
+        if "name" in return_array[name] and len(params[name]) < 2:
             return_array.pop(name)
     return return_array
 

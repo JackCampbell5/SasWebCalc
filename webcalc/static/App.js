@@ -162,6 +162,36 @@ export default {
     async onChange() {
       //Does not run the function if the instrument or model is blank
       // This is so when the python objects are created they have the correct data
+      let run = false;
+      let results = {}
+      let info_provided = ""
+      if(this.active_instrument=== "VSANS"){
+        // Check for if the preset has changed
+        let preset_object = this.instrument_params["Presets"]["Preset"]
+        if (preset_object.extra !== preset_object.default) {
+          run = true;
+          info_provided = this.active_instrument+ "%preset@" + preset_object.default
+          preset_object.extra = preset_object.default
+        }//End preset object
+        // Check if the number of guides has changed
+        let numGuide_Object = this.instrument_params["Collimation"]["numGuides"]
+        if(numGuide_Object.extra !== numGuide_Object.default){
+          run = true;
+          let sourceAperture_js = this.instrument_params["Collimation"]["sourceAperture_js"].default
+          let numGuides = numGuide_Object.default
+          info_provided = this.active_instrument+ "%guideUpdate@" + sourceAperture_js+'+'+numGuides
+        }
+        if(run){
+          const fetch_result = await fetch(`/get/preset_params/instrument/${info_provided}`);
+          results = await fetch_result.json()
+          for (const type in results) {
+            if(type === "options"){continue;}
+            for (const param in results[type]) {
+              this.instrument_params[type][param].default = results[type][param];
+            }//End type for loop
+          }// End value or loop
+        }
+      }//End else if statement
       if(this.active_instrument !== "" && this.active_model !== "") {
         this.calculating_shown = true;
         let location = `/calculate/`;
@@ -175,7 +205,8 @@ export default {
           'averaging_type': this.active_averaging_type,
           'averaging_params': this.averaging_params,
         });
-        let results = await this.fetch_with_data(location, data);
+        results = await this.fetch_with_data(location, data);
+        this.check_options(results)
         if("user_inaccessible" in results){
           let value = results["user_inaccessible"];
           for (const type in value){
@@ -189,7 +220,15 @@ export default {
         this.calculating_shown = false;
 
       }//End if statement to check instrument existence
-
+    },
+    check_options(results){
+      if('options' in results){
+        let options_dict = results['options'];
+        for(const option in options_dict){
+          let option_dict = options_dict[option]
+          this.instrument_params[option_dict["category"]][option].options = option_dict["options"]
+        }//End for loop
+      }
     },
     async fetch_with_data(location, data) {
       const fetch_result = await fetch(
@@ -235,7 +274,7 @@ export default {
     this.active_structure = this.structure_names[0];
     this.multiplicity_models = structures_result["multiplicity_models"];
     this.model_names = structures_result["models"];
-    this.instruments = structures_result["instruments"]
+      this.instruments = structures_result["instruments"]
   },
   mounted() {
     // Sets the dropdowns to automatically choose for testing
