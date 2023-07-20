@@ -180,10 +180,14 @@ export default {
           let sourceAperture_js = this.instrument_params["Collimation"]["sourceAperture_js"].default
           let numGuides = numGuide_Object.default
           info_provided = this.active_instrument+ "%guideUpdate@" + sourceAperture_js+'+'+numGuides
+          numGuide_Object.extra = numGuide_Object.default
         }
         if(run){
           const fetch_result = await fetch(`/get/preset_params/instrument/${info_provided}`);
           results = await fetch_result.json()
+          if("options" in results){
+            this.check_options(results)
+          }
           for (const type in results) {
             if(type === "options"){continue;}
             for (const param in results[type]) {

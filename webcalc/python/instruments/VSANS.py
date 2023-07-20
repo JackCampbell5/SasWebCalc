@@ -332,7 +332,7 @@ class VSANS():
         elif type_info == "guideUpdate":
             sourceAperture_js = rest_info[:rest_info.find('+')]
             numGuides = rest_info[rest_info.find('+')+1:]
-            return VSANS.update_source_aperture(rest_info,sourceAperture_js=sourceAperture_js,numGuides=numGuides)
+            return VSANS.update_source_aperture(sourceAperture_js=sourceAperture_js,numGuides=numGuides)
 
     @staticmethod
     def preset_change(preset):
@@ -349,9 +349,9 @@ class VSANS():
         return VSANS.update_source_aperture(results=results, sourceAperture_js=sourceAperture_js, numGuides=numGuides)
 
     @staticmethod
-    def update_source_aperture(results=None, sourceAperture_js=0.0, numGuides=0):
+    def update_source_aperture(results=None, sourceAperture_js='0.0', numGuides='0'):
         if results is None: results = {"Collimation": {}, "options": {}}
-        if numGuides == 0:
+        if numGuides == '0':
             valid_ops = ['7.5', '15.0', '30.0']
             if not sourceAperture_js in valid_ops:
                 sourceAperture_js = '30.0'
