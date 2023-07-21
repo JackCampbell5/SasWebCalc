@@ -69,7 +69,7 @@ class VSANS_Constants:
         user_inaccessible["Beam"]["wavelength"] = 6
         user_inaccessible["Beam"]["dlambda"] = 0.12
         other_constants["T_Frontend"] = 1.0
-        user_inaccessible["Collimation"]["numGuides"] = "9"
+        user_inaccessible["Collimation"]["guide_select"] = "9"
         user_inaccessible["Collimation"]["sourceAperture_js"] = "60.0"
         user_inaccessible["Collimation"]["sourceDistance"] = 579
         user_inaccessible["Collimation"]["extSampleAperture"] = 12.7
@@ -97,7 +97,7 @@ class VSANS_Constants:
         user_inaccessible["Beam"]["wavelength"] = 6
         user_inaccessible["Beam"]["dlambda"] = 0.12
         other_constants["T_Frontend"] = 1.0
-        user_inaccessible["Collimation"]["numGuides"] = "7"
+        user_inaccessible["Collimation"]["guide_select"] = "7"
         user_inaccessible["Collimation"]["sourceAperture_js"] = "60.0"
         user_inaccessible["Collimation"]["sourceDistance"] = 980
         user_inaccessible["Collimation"]["extSampleAperture"] = 12.7
@@ -125,7 +125,7 @@ class VSANS_Constants:
         user_inaccessible["Beam"]["wavelength"] = 6
         user_inaccessible["Beam"]["dlambda"] = 0.12
         other_constants["T_Frontend"] = 1.0
-        user_inaccessible["Collimation"]["numGuides"] = "2"
+        user_inaccessible["Collimation"]["guide_select"] = "2"
         user_inaccessible["Collimation"]["sourceAperture_js"] = "60.0"
         user_inaccessible["Collimation"]["sourceDistance"] = 2157
         user_inaccessible["Collimation"]["extSampleAperture"] = 12.7
@@ -153,7 +153,7 @@ class VSANS_Constants:
         user_inaccessible["Beam"]["wavelength"] = 6  # lambda
         user_inaccessible["Beam"]["dlambda"] = 0.12
         other_constants["T_Frontend"] = 1.0
-        user_inaccessible["Collimation"]["numGuides"] = "0"
+        user_inaccessible["Collimation"]["guide_select"] = "0"
         user_inaccessible["Collimation"]["sourceAperture_js"] = "30.0"  # source_aperture_str
         user_inaccessible["Collimation"]["sourceDistance"] = 2441  # source_distance
         user_inaccessible["Collimation"]["extSampleAperture"] = 12.7

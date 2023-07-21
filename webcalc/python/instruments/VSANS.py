@@ -7,7 +7,7 @@ from ..constants import VSANS_Constants
 Number = Union[float, int]
 
 
-def _create_vsans_dict(name=True):
+def _create_vsans_dict(name=True, additional=False):
     vsans_dict = {}
     vsans_dict["Presets"] = {"name": "Presets"} if name else {}
     vsans_dict["Beam"] = {"name": "Beam"} if name else {}
@@ -21,6 +21,10 @@ def _create_vsans_dict(name=True):
     vsans_dict["FrontTopPanel"] = {"name": "Front Carriage Top Panel"} if name else {}
     vsans_dict["FrontBottomPanel"] = {"name": "Front Carriage Bottom Panel"} if name else {}
     vsans_dict["options"] = {}
+    if additional:
+        vsans_dict["AllCarriage"] = {}
+        vsans_dict["MidDqValues"] = {}
+        vsans_dict["FrontDqValues"] = {}
     return vsans_dict
 
 
@@ -45,11 +49,13 @@ class VSANS():
         self.preset = params.get('Preset', "19m")
         self.options = {}
         self.beam = None
+        self.all_carriage = None
         self.collimation = None
         self.middle_Carriage = None
         self.front_Carriage = None
         self.constants = VSANS_Constants().get_constants(self.preset, _create_vsans_dict(name=False))
         # Super is the Instrument class
+        params = params["instrument_params"]
         self.load_params(params)
 
     def load_params(self, params):
@@ -71,9 +77,7 @@ class VSANS():
 
         self.load_objects(params)
 
-    def param_restructure(self, params):
-        old_params = params["instrument_params"]
-
+    def param_restructure(self, old_params):
         def _param_get_helper(name="", category="", key="default", default_value=None, division=1):
             """ Checks if a value exists at a certain key and if not sets the value to none ot be removed later
 
@@ -97,7 +101,7 @@ class VSANS():
                 return default_value
             return result
 
-        params = _create_vsans_dict(name=False)
+        params = _create_vsans_dict(name=False, additional=True)
         params["Preset"] = _param_get_helper(name="Presets", category="Presets", default_value="19m")
         params["Beam"]["wavelength"] = _param_get_helper(name="wavelength", category="Beam", default_value=6.0)
         params["Beam"]["dlambda"] = _param_get_helper(name="dlambda", category="Beam", default_value=0.12)
@@ -105,8 +109,8 @@ class VSANS():
         params["Beam"]["flux"] = _param_get_helper(name="flux", category="Beam", default_value=1.362e+11)
         params["Beam"]["beamCurrent"] = _param_get_helper(name="beamCurrent", category="Beam", default_value=1.055e+5)
         params["Beam"]["iSub0"] = _param_get_helper(name="iSub0", category="Beam", default_value=8.332e+4)
-        params["Collimation"]["numGuides"] = _param_get_helper(name="numGuides", category="Collimation",
-                                                               default_value=0)
+        params["Collimation"]["guide_select"] = _param_get_helper(name="guide_select", category="Collimation",
+                                                                  default_value=0)
         params["Collimation"]["sourceAperture_js"] = _param_get_helper(name="sourceAperture_js", category="Collimation",
                                                                        default_value=30.0)
         params["Collimation"]["sourceDistance"] = _param_get_helper(name="sourceDistance", category="Collimation",
@@ -126,27 +130,27 @@ class VSANS():
         params["MiddleCarriage"]["ssdInput"] = _param_get_helper(name="ssdInput", category="MiddleCarriage",
                                                                  default_value=1900)
         params["MiddleCarriage"]["ssd"] = _param_get_helper(name="ssd", category="MiddleCarriage", default_value=1911)
-        params["MiddleCarriage"]["L_2"] = _param_get_helper(name="L_2", category="MiddleCarriage", default_value=1922)
-        params["MiddleCarriage"]["beamDrop"] = _param_get_helper(name="beamDrop", category="MiddleCarriage",
-                                                                 default_value=0.9414)
-        params["MiddleCarriage"]["beamstopRequired"] = _param_get_helper(name="beamstopRequired",
-                                                                         category="MiddleCarriage", default_value=2.014)
-        params["MiddleCarriage"]["Beamstop"] = _param_get_helper(name="Beamstop", category="MiddleCarriage",
-                                                                 default_value=2)
-        params["MiddleCarriage"]["θ2_min"] = _param_get_helper(name="θ2_min", category="MiddleCarriage",
-                                                               default_value=0.001329)
+        params["AllCarriage"]["L_2"] = _param_get_helper(name="L_2", category="MiddleCarriage", default_value=1922)
+        params["AllCarriage"]["beamDrop"] = _param_get_helper(name="beamDrop", category="MiddleCarriage",
+                                                              default_value=0.9414)
+        params["AllCarriage"]["beamstopRequired"] = _param_get_helper(name="beamstopRequired",
+                                                                      category="MiddleCarriage", default_value=2.014)
+        params["AllCarriage"]["Beamstop"] = _param_get_helper(name="Beamstop", category="MiddleCarriage",
+                                                              default_value=2)
+        params["AllCarriage"]["θ2_min"] = _param_get_helper(name="θ2_min", category="MiddleCarriage",
+                                                            default_value=0.001329)
         params["MiddleCarriage"]["q_min"] = _param_get_helper(name="q_min", category="MiddleCarriage",
                                                               default_value=0.001392)
-        params["MiddleCarriage"]["dQx_Middle_min"] = _param_get_helper(name="dQx_Middle_min", category="MiddleCarriage",
-                                                                       default_value=0.3393)
-        params["MiddleCarriage"]["dQy_Middle_min"] = _param_get_helper(name="dQy_Middle_min", category="MiddleCarriage",
-                                                                       default_value=0.3412)
+        params["MidDqValues"]["dQx_Middle_min"] = _param_get_helper(name="dQx_Middle_min", category="MiddleCarriage",
+                                                                    default_value=0.3393)
+        params["MidDqValues"]["dQy_Middle_min"] = _param_get_helper(name="dQy_Middle_min", category="MiddleCarriage",
+                                                                    default_value=0.3412)
         params["MiddleCarriage"]["qMax"] = _param_get_helper(name="qMax", category="MiddleCarriage",
                                                              default_value=0.03818)
-        params["MiddleCarriage"]["dQx_Middle_max"] = _param_get_helper(name="dQx_Middle_max", category="MiddleCarriage",
-                                                                       default_value=0.05050)
-        params["MiddleCarriage"]["dQy_Middle_max"] = _param_get_helper(name="dQy_Middle_max", category="MiddleCarriage",
-                                                                       default_value=0.05051)
+        params["MidDqValues"]["dQx_Middle_max"] = _param_get_helper(name="dQx_Middle_max", category="MiddleCarriage",
+                                                                    default_value=0.05050)
+        params["MidDqValues"]["dQy_Middle_max"] = _param_get_helper(name="dQy_Middle_max", category="MiddleCarriage",
+                                                                    default_value=0.05051)
         params["MiddleCarriage"]["refBeamCtr_x"] = _param_get_helper(name="refBeamCtr_x", category="MiddleCarriage",
                                                                      default_value=0)
         params["MiddleCarriage"]["refBeamCtr_y"] = _param_get_helper(name="refBeamCtr_y", category="MiddleCarriage",
@@ -231,12 +235,15 @@ class VSANS():
         """
         self.beam = Beam(self, params.get('Beam', {}))
         self.collimation = Collimation(self, params.get('Collimation', {}))
+        self.all_carriage = AllCarriage(self, params.get('AllCarriage', {}))
         middle_carriage_params = {"MiddleCarriage": params.get('MiddleCarriage', {}),
+                                  "MidDqValues": params.get("MidDqValues", {}),
                                   "MidLeftPanel": params.get("MidLeftPanel", {}),
-                                  "MidRightPanel": params.get("MidRightPanel", {})
+                                  "MidRightPanel": params.get("MidRightPanel", {}),
                                   }
         self.middle_Carriage = MiddleCarriage(self, middle_carriage_params)
         front_carriage_params = {"FrontCarriage": params.get('FrontCarriage', {}),
+                                 "FrontDqValues": params.get("FrontDqValues", {}),
                                  "FrontLeftPanel": params.get("FrontLeftPanel", {}),
                                  "FrontRightPanel": params.get("FrontRightPanel", {}),
                                  "FrontTopPanel": params.get("FrontTopPanel", {}),
@@ -247,8 +254,27 @@ class VSANS():
     def calculate_objects(self):
         self.beam.calculate_beam()
         self.collimation.calculate_collimation()
+        self.all_carriage.calculate_All_Carriage()
         self.middle_Carriage.calculate_middleCarriage()
         self.front_Carriage.calculate_frontCarriage()
+
+    # Get methods After here
+    def get_wavelength(self):
+        return self.beam.wavelength
+
+    def get_l_1(self):
+        return self.collimation.l_1
+
+    def get_l_2(self):
+        return self.all_carriage.L_2
+
+    def get_sourceAperture(self):
+        return self.collimation.sourceAperture
+
+    def get_sample_aperture(self):
+        return self.collimation.sample_aperture
+
+    # Get methods before here
 
     def sas_calc(self) -> Dict[str, Union[Number, str, List[Union[Number, str]]]]:
         self.calculate_objects()
@@ -259,7 +285,7 @@ class VSANS():
         user_inaccessible["Beam"]["flux"] = self.beam.flux
         user_inaccessible["Beam"]["beamCurrent"] = self.beam.beamCurrent
         user_inaccessible["Beam"]["iSub0"] = self.beam.iSub0
-        user_inaccessible["Collimation"]["numGuides"] = self.collimation.numGuides
+        user_inaccessible["Collimation"]["guide_select"] = self.collimation.guide_select
         user_inaccessible["Collimation"]["sourceAperture_js"] = self.collimation.sourceAperture_js
         user_inaccessible["Collimation"]["sourceDistance"] = self.collimation.sourceDistance
         user_inaccessible["Collimation"]["t_filter"] = self.collimation.t_filter
@@ -271,17 +297,17 @@ class VSANS():
         user_inaccessible["Collimation"]["aOverL"] = self.collimation.aOverL
         user_inaccessible["MiddleCarriage"]["ssdInput"] = self.middle_Carriage.ssdInput
         user_inaccessible["MiddleCarriage"]["ssd"] = self.middle_Carriage.ssd
-        user_inaccessible["MiddleCarriage"]["L_2"] = self.middle_Carriage.L_2
-        user_inaccessible["MiddleCarriage"]["beamDrop"] = self.middle_Carriage.beamDrop
-        user_inaccessible["MiddleCarriage"]["beamstopRequired"] = self.middle_Carriage.beamstopRequired
-        user_inaccessible["MiddleCarriage"]["Beamstop"] = self.middle_Carriage.Beamstop
-        user_inaccessible["MiddleCarriage"]["θ2_min"] = self.middle_Carriage.θ2_min
-        user_inaccessible["MiddleCarriage"]["q_min"] = self.middle_Carriage.q_min
-        user_inaccessible["MiddleCarriage"]["dQx_Middle_min"] = self.middle_Carriage.dQx_Middle_min
-        user_inaccessible["MiddleCarriage"]["dQy_Middle_min"] = self.middle_Carriage.dQy_Middle_min
-        user_inaccessible["MiddleCarriage"]["qMax"] = self.middle_Carriage.qMax
-        user_inaccessible["MiddleCarriage"]["dQx_Middle_max"] = self.middle_Carriage.dQx_Middle_max
-        user_inaccessible["MiddleCarriage"]["dQy_Middle_max"] = self.middle_Carriage.dQy_Middle_max
+        user_inaccessible["MiddleCarriage"]["L_2"] = self.all_carriage.L_2
+        user_inaccessible["MiddleCarriage"]["beamDrop"] = self.all_carriage.beamDrop
+        user_inaccessible["MiddleCarriage"]["beamstopRequired"] = self.all_carriage.beamstopRequired
+        user_inaccessible["MiddleCarriage"]["Beamstop"] = self.all_carriage.Beamstop
+        user_inaccessible["MiddleCarriage"]["θ2_min"] = self.all_carriage.θ2_min
+        user_inaccessible["MiddleCarriage"]["q_min"] = self.middle_Carriage.dqCalc.q_min
+        user_inaccessible["MiddleCarriage"]["dQx_Middle_min"] = self.middle_Carriage.dqCalc.dQx_min
+        user_inaccessible["MiddleCarriage"]["dQy_Middle_min"] = self.middle_Carriage.dqCalc.dQy_min
+        user_inaccessible["MiddleCarriage"]["qMax"] = self.middle_Carriage.dqCalc.qMax
+        user_inaccessible["MiddleCarriage"]["dQx_Middle_max"] = self.middle_Carriage.dqCalc.dQx_max
+        user_inaccessible["MiddleCarriage"]["dQy_Middle_max"] = self.middle_Carriage.dqCalc.dQy_max
         user_inaccessible["MiddleCarriage"]["refBeamCtr_x"] = self.middle_Carriage.refBeamCtr_x
         user_inaccessible["MiddleCarriage"]["refBeamCtr_y"] = self.middle_Carriage.refBeamCtr_y
         user_inaccessible["MidLeftPanel"]["lateralOffset"] = self.middle_Carriage.leftPanel.lateralOffset
@@ -292,12 +318,12 @@ class VSANS():
         user_inaccessible["MidRightPanel"]["qx_MR_max"] = self.middle_Carriage.rightPanel.qx_MR_max
         user_inaccessible["MidRightPanel"]["qy_MR_min"] = self.middle_Carriage.rightPanel.qy_MR_min
         user_inaccessible["MidRightPanel"]["qy_MR_max"] = self.middle_Carriage.rightPanel.qy_MR_max
-        user_inaccessible["FrontCarriage"]["qmin"] = self.front_Carriage.qmin
-        user_inaccessible["FrontCarriage"]["dQx_Front_min"] = self.front_Carriage.dQx_Front_min
-        user_inaccessible["FrontCarriage"]["dQy_Front_min"] = self.front_Carriage.dQy_Front_min
-        user_inaccessible["FrontCarriage"]["qMax"] = self.front_Carriage.qMax
-        user_inaccessible["FrontCarriage"]["dQx_Front_max"] = self.front_Carriage.dQx_Front_max
-        user_inaccessible["FrontCarriage"]["dQy_Front_max"] = self.front_Carriage.dQy_Front_max
+        user_inaccessible["FrontCarriage"]["qmin"] = self.front_Carriage.dqCalc.q_min
+        user_inaccessible["FrontCarriage"]["dQx_Front_min"] = self.front_Carriage.dqCalc.dQx_min
+        user_inaccessible["FrontCarriage"]["dQy_Front_min"] = self.front_Carriage.dqCalc.dQy_min
+        user_inaccessible["FrontCarriage"]["qMax"] = self.front_Carriage.dqCalc.qMax
+        user_inaccessible["FrontCarriage"]["dQx_Front_max"] = self.front_Carriage.dqCalc.dQx_max
+        user_inaccessible["FrontCarriage"]["dQy_Front_max"] = self.front_Carriage.dqCalc.dQy_max
         user_inaccessible["FrontCarriage"]["ssd_input"] = self.front_Carriage.ssd_input
         user_inaccessible["FrontCarriage"]["ssd"] = self.front_Carriage.ssd
         user_inaccessible["FrontCarriage"]["refBeamCtrX"] = self.front_Carriage.refBeamCtrX
@@ -331,8 +357,8 @@ class VSANS():
             return VSANS.preset_change(rest_info)
         elif type_info == "guideUpdate":
             sourceAperture_js = rest_info[:rest_info.find('+')]
-            numGuides = rest_info[rest_info.find('+')+1:]
-            return VSANS.update_source_aperture(sourceAperture_js=sourceAperture_js,numGuides=numGuides)
+            guide_select = rest_info[rest_info.find('+') + 1:]
+            return VSANS.update_source_aperture(sourceAperture_js=sourceAperture_js, guide_select=guide_select)
 
     @staticmethod
     def preset_change(preset):
@@ -345,17 +371,19 @@ class VSANS():
     def update_source_aperture_with_data(results):
         # Update the number of guides to be correct
         sourceAperture_js = results["Collimation"]["sourceAperture_js"]
-        numGuides = results["Collimation"]["numGuides"]
-        return VSANS.update_source_aperture(results=results, sourceAperture_js=sourceAperture_js, numGuides=numGuides)
+        guide_select = results["Collimation"]["guide_select"]
+        return VSANS.update_source_aperture(results=results, sourceAperture_js=sourceAperture_js,
+                                            guide_select=guide_select)
 
     @staticmethod
-    def update_source_aperture(results=None, sourceAperture_js='0.0', numGuides='0'):
+    def update_source_aperture(results=None, sourceAperture_js='0.0', guide_select='0'):
         if results is None: results = {"Collimation": {}, "options": {}}
-        if numGuides == '0':
+        print(guide_select)
+        if guide_select == '0':
             valid_ops = ['7.5', '15.0', '30.0']
             if not sourceAperture_js in valid_ops:
                 sourceAperture_js = '30.0'
-        elif numGuides == 'CONV_BEAMS':
+        elif guide_select == 'CONV_BEAMS':
             if sourceAperture_js != '6.0':
                 sourceAperture_js = '6.0'
             valid_ops = ['6.0']
@@ -399,8 +427,8 @@ class VSANS():
         params["Beam"]["flux"] = create_number_output(name="Flux", unit="Φ", default=1.362e+11)
         params["Beam"]["beamCurrent"] = create_number_output(name="Beam Current", unit="1/s", default=1.055e+5)
         params["Beam"]["iSub0"] = create_number_output(name="I0", unit="1/s/cm^2", default=8.332e+4)
-        params["Collimation"]["numGuides"] = create_guide_config(options=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, "CONV_BEAMS"]
-                                                                 ,extra=0)
+        params["Collimation"]["guide_select"] = create_guide_config(
+            options=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, "CONV_BEAMS"], extra=0)
         params["Collimation"]["sourceAperture_js"] = create_source_aperture(unit="mm", options=[7.5, 15.0, 30.0],
                                                                             default=30.0)
         params["Collimation"]["sourceDistance"] = create_number_output(name="Source distance", unit="cm", default=2441)
@@ -414,7 +442,7 @@ class VSANS():
         params["Collimation"]["aOverL"] = create_number_output(name="A_1A_2/L_1", unit=None, default=0.000001530)
         # Middle Carriage
         params["MiddleCarriage"]["ssdInput"] = create_number_input(name="SDD input", unit="cm", default=1900)
-        params["MiddleCarriage"]["ssd"] = create_number_input(name="SSD", unit="cm", default=1911)
+        params["MiddleCarriage"]["ssd"] = create_number_input(name="SSD", unit="cm", default=1911, readonly=True)
         params["MiddleCarriage"]["L_2"] = create_number_output(name="L_2", unit="cm", default=1922)
         params["MiddleCarriage"]["beamDrop"] = create_number_output(name="Beam Drop", unit="cm", default=0.9414)
         params["MiddleCarriage"]["beamstopRequired"] = create_number_output(name="Beamstop Required", unit="inch",
@@ -452,7 +480,7 @@ class VSANS():
         params["FrontCarriage"]["dQy_Front_max"] = create_number_output(name="(ΔQ/_Qmax)_y", unit="1/Å",
                                                                         default=0.04906)
         params["FrontCarriage"]["ssd_input"] = create_number_input(name="SSD Input", unit="cm", default=400)
-        params["FrontCarriage"]["ssd"] = create_ssd(default=411)
+        params["FrontCarriage"]["ssd"] = create_ssd(default=411, readonly=True)
         params["FrontCarriage"]["refBeamCtrX"] = create_number_input(name="Ref Beam Ctr X", unit="cm", default=0)
         params["FrontCarriage"]["RefBeamCtrY"] = create_number_input(name="Ref Beam Ctr Y", unit="cm", default=0)
         params["FrontLeftPanel"]["lateralOffset"] = create_number_input(name="Lateral Offset", unit="cm", default=-9.24)

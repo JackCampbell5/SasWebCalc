@@ -174,13 +174,13 @@ export default {
           preset_object.extra = preset_object.default
         }//End preset object
         // Check if the number of guides has changed
-        let numGuide_Object = this.instrument_params["Collimation"]["numGuides"]
-        if(numGuide_Object.extra !== numGuide_Object.default){
+        let guide_select_Object = this.instrument_params["Collimation"]["guide_select"]
+        if(guide_select_Object.extra !== guide_select_Object.default){
           run = true;
           let sourceAperture_js = this.instrument_params["Collimation"]["sourceAperture_js"].default
-          let numGuides = numGuide_Object.default
-          info_provided = this.active_instrument+ "%guideUpdate@" + sourceAperture_js+'+'+numGuides
-          numGuide_Object.extra = numGuide_Object.default
+          let guide_select = guide_select_Object.default
+          info_provided = this.active_instrument+ "%guideUpdate@" + sourceAperture_js+'+'+guide_select
+          guide_select_Object.extra = guide_select_Object.default
         }
         if(run){
           const fetch_result = await fetch(`/get/preset_params/instrument/${info_provided}`);
