@@ -3,7 +3,7 @@ import math
 
 
 class Beam:
-    def __init__(self, parent, params, name=None):
+    def __init__(self, parent, params, name="Beam"):
         self.parent = parent
         self.wavelength = 0  # Known as lamda in the js
         self.dlambda = 0.0
@@ -66,7 +66,7 @@ class Beam:
 
 
 class Collimation:
-    def __init__(self, parent, params, name=None):
+    def __init__(self, parent, params, name="Collimation"):
         self.parent = parent
         self.name = name
         self.guide_select = 0
@@ -113,10 +113,10 @@ class Collimation:
         self.sample_aperture = self.extSampleAperture / 10.0
 
     def calculate_l_1(self):
-        return self.sourceDistance - self.sampleToApGv
+        self.l_1 = self.sourceDistance - self.sampleToApGv
 
     def calculate_aOverL(self):
-        return math.pow((math.pi / 4.0 * self.sourceAperture * self.sample_aperture / self.l_1), 2)
+        self.aOverL = math.pow((math.pi / 4.0 * self.sourceAperture * self.sample_aperture / self.l_1), 2)
 
     def calculate_collimation(self):
         self.calculate_num_guides()
@@ -129,7 +129,7 @@ class Collimation:
 
 
 class DqCalculator:
-    def __init__(self, parent, params, name=None):
+    def __init__(self, parent, params, name="DqCalculator"):
         self.parent = parent
         self.name = name
 
@@ -143,7 +143,6 @@ class DqCalculator:
         self.dQ_geometric = 0.0
         self.dq_wavelength = 0.0
         self.dq_gravity = 0.0
-
         set_params(instance=self, params=params)
 
     def update_dq_values(self):
@@ -161,6 +160,7 @@ class DqCalculator:
         return math.sqrt(math.pow(self.dQ_geometric, 2) + math.pow(self.dq_wavelength * q, 2) + addition) / q
 
     def calculate_q_min(self):
+        # The min values of Middle and front are differnt
         self.q_min = 4 * math.pi / self.parent.parent.get_wavelength() * math.sin(
             self.parent.parent.all_carriage.θ2_min / 2.0)
 
@@ -191,7 +191,7 @@ class DqCalculator:
 
 
 class AllCarriage:
-    def __init__(self, parent, params, name=None):
+    def __init__(self, parent, params, name="AllCarriage"):
         self.parent = parent
         self.name = name
 
@@ -209,7 +209,6 @@ class AllCarriage:
         self.dQ_geometric = 0.0
         self.dq_wavelength = 0.0
         self.dq_gravity = 0.0
-
         set_params(instance=self, params=params)
 
     def calculate_L_2(self):
@@ -290,14 +289,14 @@ class AllCarriage:
 
 
 class MiddleCarriage:
-    def __init__(self, parent, params, name=None):
+    def __init__(self, parent, params, name="MiddleCarriage"):
         self.parent = parent
         self.name = name
 
         # Create the secondary object off the main object
-        self.leftPanel = Panel(self, params.get("MidLeftPanel", {}))
-        self.rightPanel = MidRightPanel(self, params.get("MidRightPanel", {}))
-        self.dqCalc = DqCalculator(self, params.get("DqCalc"), {})
+        # self.leftPanel = Panel(self, params.get("MidLeftPanel", {}), name="ML")
+        self.rightPanel = Panel(self, params.get("MidRightPanel", {}), name="MR")
+        self.dqCalc = DqCalculator(self, params.get("MidDqValues"), {})
 
         params = params.get("MiddleCarriage", {})
 
@@ -307,7 +306,6 @@ class MiddleCarriage:
         # DQ Values that are used for both classes
         self.refBeamCtr_x = 0.0
         self.refBeamCtr_y = 0.0
-
         set_params(instance=self, params=params)
 
     def calculate_ssd(self):
@@ -328,39 +326,71 @@ class MiddleCarriage:
         self.calculate_refBeamCtr_x()
         self.calculate_refBeamCtr_y()
         # Calculates the 2 other panels
-        self.leftPanel.calculate_panel()
-        self.rightPanel.calculate_midRightPanel()
+        # self.leftPanel.calculate_panel()
+        self.rightPanel.calculate_panel()
         self.dqCalc.calculate_all_dq()
 
 
 class Panel:
-    def __init__(self, parent, params, name=None):
+    def __init__(self, parent, params, name="Panel"):
         self.parent = parent
         self.name = name
         self.lateralOffset = 0.0
-        self.Q_right = 0.0
-        self.qx_ML_min = 0.0
-
+        self.qx_min = 0.0  # Left
+        self.qx_max = 0.0  # Right
+        self.qy_min = 0.0  # Bottom
+        self.qy_max = 0.0  # Top
+        self.reference_x_center = 0.0
+        self.reference_y_center = 0.0
+        self.is_valid = 0.0
+        self.detectors = 0.0
         set_params(instance=self, params=params)
+
+    def calculate_qx_min(self):
+        pass
+
+    def calculate_qx_max(self):
+        pass
+
+    def calculate_qy_min(self):
+        pass
+
+    def calculate_qy_max(self):
+        pass
+
+    def calculate_reference_x_center(self):
+        pass
+
+    def calculate_reference_y_center(self):
+        pass
+
+    def calculate_is_valid(self):
+        pass
 
     def calculate_panel(self):
-        pass
+        self.calculate_qx_min()
+        self.calculate_qx_max()
+        self.calculate_qy_min()
+        self.calculate_qy_max()
+        self.calculate_reference_x_center()
+        self.calculate_reference_y_center()
+        self.calculate_is_valid()
 
 
-class MidRightPanel:
-    def __init__(self, parent, params, name=None):
-        self.parent = parent
-        self.name = name
-        self.lateralOffset = 0.0
-        self.qx_MR_min = 0.0
-        self.qx_MR_max = 0.0
-        self.qy_MR_min = 0.0
-        self.qy_MR_max = 0.0
-
-        set_params(instance=self, params=params)
-
-    def calculate_midRightPanel(self):
-        pass
+# class MidRightPanel:
+#     def __init__(self, parent, params, name=None):
+#         self.parent = parent
+#         self.name = name
+#         self.lateralOffset = 0.0
+#         self.qx_MR_min = 0.0
+#         self.qx_MR_max = 0.0
+#         self.qy_MR_min = 0.0
+#         self.qy_MR_max = 0.0
+#
+#         set_params(instance=self, params=params)
+#
+#     def calculate_midRightPanel(self):
+#         pass
 
 
 class FrontCarriage:
@@ -368,11 +398,11 @@ class FrontCarriage:
         self.parent = parent
         self.name = name
         # Create the secondary object off the main object
-        self.leftPanel = FrontLeftPanel(self, params.get("FrontLeftPanel", {}))
-        self.rightPanel = FrontRightPanel(self, params.get("FrontRightPanel", {}))
-        self.topPanel = FrontTopPanel(self, params.get("FrontTopPanel", {}))
-        self.bottomPanel = FrontBottomPanel(self, params.get("FrontBottomPanel", {}))
-        self.dqCalc = DqCalculator(self, params.get("DqCalc"), {})
+        # self.leftPanel = Panel(self, params.get("FrontLeftPanel", {}))
+        # self.rightPanel = Panel(self, params.get("FrontRightPanel", {}))
+        # self.topPanel = Panel(self, params.get("FrontTopPanel", {}))
+        # self.bottomPanel = Panel(self, params.get("FrontBottomPanel", {}))
+        self.dqCalc = DqCalculator(self, params.get("FrontDqValues"), {})
         params = params.get("FrontCarriage", {})
 
         # Creates all the necessary parameters for the Front carriage class
@@ -390,67 +420,165 @@ class FrontCarriage:
         set_params(instance=self, params=params)
 
     def calculate_frontCarriage(self):
-        self.leftPanel.calculate_frontLeftPanel()
-        self.rightPanel.calculate_frontRightPanel()
-        self.topPanel.calculate_frontTopPanel()
-        self.bottomPanel.calculate_frontBottomPanel()
+        # self.leftPanel.calculate_panel()
+        # self.rightPanel.calculate_panel()
+        # self.topPanel.calculate_panel()
+        # self.bottomPanel.calculate_panel()
         self.dqCalc.calculate_all_dq()
 
 
-class FrontLeftPanel:
-    def __init__(self, parent, params, name=None):
-        self.parent = parent
-        self.name = name
-        self.lateralOffset = 0.0
-        self.q_right = 0.0
-        self.q_left = 0.0
-        self.matchMLButton = 0.0
-        set_params(instance=self, params=params)
+#
+# # class FrontLeftPanel:
+# #     def __init__(self, parent, params, name=None):
+# #         self.parent = parent
+# #         self.name = name
+# #         self.lateralOffset = 0.0
+# #         self.q_right = 0.0
+# #         self.q_left = 0.0
+# #         self.matchMLButton = 0.0
+# #         set_params(instance=self, params=params)
+# #
+# #     def calculate_frontLeftPanel(self):
+# #         pass
+#
+#
+# class FrontRightPanel:
+#     def __init__(self, parent, params, name=None):
+#         self.parent = parent
+#         self.name = name
+#         self.lateralOffset = 0.0
+#         self.q_Left = 0.0
+#         self.q_Right = 0.0
+#         self.matchRightMR = 0.0
+#
+#         set_params(instance=self, params=params)
+#
+#     def calculate_frontRightPanel(self):
+#         pass
+#
+#
+# class FrontTopPanel:
+#     def __init__(self, parent, params, name=None):
+#         self.parent = parent
+#         self.name = name
+#         self.verticalOffset = 0.0
+#         self.qBottom = 0.0
+#         self.q_Top = 0.0
+#         self.matchTopMR = 0.0
+#
+#         set_params(instance=self, params=params)
+#
+#     def calculate_frontTopPanel(self):
+#         pass
+#
+#
+# class FrontBottomPanel:
+#     def __init__(self, parent, params, name=None):
+#         self.parent = parent
+#         self.name = name
+#         self.verticalOffset = 0.0
+#         self.q_Top = 0.0
+#         self.q_Bottom = 0.0
+#         self.matchBottomMR = 0.0
+#
+#         set_params(instance=self, params=params)
+#
+#     def calculate_frontBottomPanel(self):
+#         pass
 
-    def calculate_frontLeftPanel(self):
-        pass
+class Detector:
+    """ A class for the detector constants needed for calculations
+    """
 
+    def __init__(self, where="MR"):
+        self.name = where
+        self.id = 0.0
+        self.spatial_calibration = 0.0
+        self.setback = 0.0
+        self.x_ctr_offset = 0.0
+        self.y_ctr_offset = 0.0
+        self.orientation = 0.0
+        self.left_or_bottom = 0.0
+        self.panel_gap = 0.0
+        self.set_constants()
 
-class FrontRightPanel:
-    def __init__(self, parent, params, name=None):
-        self.parent = parent
-        self.name = name
-        self.lateralOffset = 0.0
-        self.q_Left = 0.0
-        self.q_Right = 0.0
-        self.matchRightMR = 0.0
+    def set_constants(self):
+        # If statements based off the name of the detector
+        if self.name == "ML":
+            self.id = "detector_ML"
+            self.spatial_calibration = "v_spatial_calibration"
+            self.setback = 0
+            self.x_ctr_offset = 0.26
+            self.y_ctr_offset = -0.16
+            self.orientation = "VERTICAL"
+            self.left_or_bottom = True
+            self.panel_gap = 0.59
 
-        set_params(instance=self, params=params)
+        elif self.name == "MT":
+            self.id = "detector_MT"
+            self.spatial_calibration = "h_spatial_calibration"
+            self.setback = 41
+            self.x_ctr_offset = -0.28
+            self.y_ctr_offset = 0.6
+            self.orientation = "HORIZONTAL"
+            self.left_or_bottom = False
+            self.panel_gap = 1.83
 
-    def calculate_frontRightPanel(self):
-        pass
+        elif self.name == "MB":
+            self.id = "detector_MB"
+            self.spatial_calibration = "h_spatial_calibration"
+            self.setback = 41
+            self.x_ctr_offset = -0.89
+            self.y_ctr_offset = 0.96
+            self.orientation = "HORIZONTAL"
+            self.left_or_bottom = True
+            self.panel_gap = 1.83
 
+        elif self.name == "FR":
+            self.id = "detector_FR"
+            self.spatial_calibration = "v_spatial_calibration"
+            self.setback = 0
+            self.x_ctr_offset = 0
+            self.y_ctr_offset = 0
+            self.orientation = "VERTICAL"
+            self.left_or_bottom = False
+            self.panel_gap = 0.35
 
-class FrontTopPanel:
-    def __init__(self, parent, params, name=None):
-        self.parent = parent
-        self.name = name
-        self.verticalOffset = 0.0
-        self.qBottom = 0.0
-        self.q_Top = 0.0
-        self.matchTopMR = 0.0
+        elif self.name == "FL":
+            self.id = "detector_FL"
+            self.spatial_calibration = "v_spatial_calibration"
+            self.setback = 0
+            self.x_ctr_offset = 0.13
+            self.y_ctr_offset = 0.35
+            self.orientation = "VERTICAL"
+            self.left_or_bottom = True
+            self.panel_gap = 0.35
 
-        set_params(instance=self, params=params)
+        elif self.name == "FT":
+            self.id = "detector_FT"
+            self.spatial_calibration = "h_spatial_calibration"
+            self.setback = 41
+            self.x_ctr_offset = 1.59
+            self.y_ctr_offset = 0.09
+            self.orientation = "HORIZONTAL"
+            self.left_or_bottom = False
+            self.panel_gap = 0.33
 
-    def calculate_frontTopPanel(self):
-        pass
-
-
-class FrontBottomPanel:
-    def __init__(self, parent, params, name=None):
-        self.parent = parent
-        self.name = name
-        self.verticalOffset = 0.0
-        self.q_Top = 0.0
-        self.q_Bottom = 0.0
-        self.matchBottomMR = 0.0
-
-        set_params(instance=self, params=params)
-
-    def calculate_frontBottomPanel(self):
-        pass
+        elif self.name == "FB":
+            self.id = "detector_FB"
+            self.spatial_calibration = "h_spatial_calibration"
+            self.setback = 41
+            self.x_ctr_offset = 0.95
+            self.y_ctr_offset = 0.77
+            self.orientation = "HORIZONTAL"
+            self.left_or_bottom = True
+            self.panel_gap = 0.33
+        else:
+            self.id = "detector_MR"
+            self.spatial_calibration = "v_spatial_calibration"
+            self.setback = 0
+            self.x_ctr_offset = 0
+            self.y_ctr_offset = 0
+            self.orientation = "VERTICAL"
+            self.left_or_bottom = False
+            self.panel_gap = 0.59
