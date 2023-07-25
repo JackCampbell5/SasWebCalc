@@ -157,10 +157,10 @@ class VSANS():
                                                                      default_value=0)
         params["MidLeftPanel"]["lateralOffset"] = _param_get_helper(name="lateralOffset", category="MidLeftPanel",
                                                                     default_value=-6)
-        # params["MidLeftPanel"]["Q_right"] = _param_get_helper(name="Q_right", category="MidLeftPanel",
-        #                                                       default_value=0.003822)
-        # params["MidLeftPanel"]["qx_ML_min"] = _param_get_helper(name="qx_ML_min", category="MidLeftPanel",
-        #                                                         default_value=-0.02545)
+        params["MidLeftPanel"]["qx_max"] = _param_get_helper(name="Q_right", category="MidLeftPanel",
+                                                              default_value=0.003822)
+        params["MidLeftPanel"]["qx_min"] = _param_get_helper(name="qx_ML_min", category="MidLeftPanel",
+                                                                default_value=-0.02545)
         params["MidRightPanel"]["lateralOffset"] = _param_get_helper(name="lateralOffset", category="MidRightPanel",
                                                                      default_value=-5.5)
         params["MidRightPanel"]["qx_min"] = _param_get_helper(name="qx_MR_min", category="MidRightPanel",
@@ -311,9 +311,9 @@ class VSANS():
         user_inaccessible["MiddleCarriage"]["refBeamCtr_x"] = self.middle_Carriage.refBeamCtr_x
         user_inaccessible["MiddleCarriage"]["refBeamCtr_y"] = self.middle_Carriage.refBeamCtr_y
         # TODO add the panel return back when panel class is fixed
-        # user_inaccessible["MidLeftPanel"]["lateralOffset"] = self.middle_Carriage.leftPanel.lateralOffset
-        # user_inaccessible["MidLeftPanel"]["Q_right"] = self.middle_Carriage.leftPanel.Q_right
-        # user_inaccessible["MidLeftPanel"]["qx_ML_min"] = self.middle_Carriage.leftPanel.qx_ML_min
+        user_inaccessible["MidLeftPanel"]["lateralOffset"] = self.middle_Carriage.leftPanel.lateralOffset
+        user_inaccessible["MidLeftPanel"]["Q_right"] = self.middle_Carriage.leftPanel.qx_max
+        user_inaccessible["MidLeftPanel"]["qx_ML_min"] = self.middle_Carriage.leftPanel.qx_min
         user_inaccessible["MidRightPanel"]["lateralOffset"] = self.middle_Carriage.rightPanel.lateralOffset
         user_inaccessible["MidRightPanel"]["qx_MR_min"] = self.middle_Carriage.rightPanel.qx_min
         user_inaccessible["MidRightPanel"]["qx_MR_max"] = self.middle_Carriage.rightPanel.qx_max

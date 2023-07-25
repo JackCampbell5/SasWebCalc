@@ -1,3 +1,5 @@
+import setuptools.package_index
+
 from .instrument import set_params
 import math
 
@@ -166,22 +168,22 @@ class DqCalculator:
 
     def _calculate_dQx_min(self):
         q = self.q_min
-        self._calculate_dq(q=q, y_value=False)
+        self.dQx_min = self._calculate_dq(q=q, y_value=False)
 
     def _calculate_dQy_min(self):
         q = self.q_min
-        self._calculate_dq(q=q, y_value=True)
+        self.dQy_min = self._calculate_dq(q=q, y_value=True)
 
     def calculate_qMax(self):
         pass
 
     def _calculate_dQx_max(self):
         q = self.qMax
-        self._calculate_dq(q=q, y_value=False)
+        self.dQx_max = self._calculate_dq(q=q, y_value=False)
 
     def _calculate_dQy_max(self):
         q = self.qMax
-        self._calculate_dq(q=q, y_value=True)
+        self.dQy_max = self._calculate_dq(q=q, y_value=True)
 
     def calculate_all_dq(self):
         self.update_dq_values()
@@ -203,6 +205,7 @@ class AllCarriage:
         self.gravity_Drop_Max = 0.0
         self.beamstopRequired = 0.0
         self.Beamstop = 0.0
+        self.beamStopCm = 0.0
         self.θ2_min = 0.0
         # Values needed for the DQ calculations
         self.overall_dq_calculated = False
@@ -244,11 +247,13 @@ class AllCarriage:
         gravity_width = abs(self.gravity_Drop_Max - self.gravity_Drop_Min)
         self.beamstopRequired = beam_size_geometric + gravity_width
 
+    def calculate_beam_stop_cm(self):
+        self.beamStopCm = self.Beamstop * 2.54
+
     def calculate_θ2_min(self):
         # Also known as TwoTheta_min
-        #        return Math.atan2(this.beamstop / 2, this.SDD_middle);
         self.parent.middle_Carriage.calculate_ssd()
-        self.θ2_min = math.atan2(self.Beamstop / 2, self.parent.middle_Carriage.ssd)
+        self.θ2_min = math.atan2(self.beamStopCm / 2, self.parent.middle_Carriage.ssd)
 
     def calculate_overall_d_q_values(self):
         self._calculate_dQ_geometric()
@@ -283,6 +288,7 @@ class AllCarriage:
         self.calculate_L_2()
         self.calculate_beamDrop()
         self.calculate_beamstopRequired()  # Also Calls the gravity drop ones too
+        self.calculate_beam_stop_cm()
         self.calculate_θ2_min()
         # Runs more calculation statements
         self.calculate_overall_d_q_values()
@@ -294,9 +300,9 @@ class MiddleCarriage:
         self.name = name
 
         # Create the secondary object off the main object
-        # self.leftPanel = Panel(self, params.get("MidLeftPanel", {}), name="ML")
-        self.rightPanel = Panel(self, params.get("MidRightPanel", {}), name="MR")
-        self.dqCalc = DqCalculator(self, params.get("MidDqValues"), {})
+        self.leftPanel = HorizontalPanel(self, params.get("MidLeftPanel", {}), name="ML")
+        self.rightPanel = HorizontalPanel(self, params.get("MidRightPanel", {}), name="MR")
+        self.dqCalc = DqCalculator(self, params.get("MidDqValues", {}))
 
         params = params.get("MiddleCarriage", {})
 
@@ -326,13 +332,13 @@ class MiddleCarriage:
         self.calculate_refBeamCtr_x()
         self.calculate_refBeamCtr_y()
         # Calculates the 2 other panels
-        # self.leftPanel.calculate_panel()
+        self.leftPanel.calculate_panel()
         self.rightPanel.calculate_panel()
         self.dqCalc.calculate_all_dq()
 
 
-class Panel:
-    def __init__(self, parent, params, name="Panel"):
+class HorizontalPanel:
+    def __init__(self, parent, params, name="HorizontalPanel"):
         self.parent = parent
         self.name = name
         self.lateralOffset = 0.0
@@ -340,40 +346,81 @@ class Panel:
         self.qx_max = 0.0  # Right
         self.qy_min = 0.0  # Bottom
         self.qy_max = 0.0  # Top
-        self.reference_x_center = 0.0
-        self.reference_y_center = 0.0
+        self.refBeamCtr_x = 0.0
+        self.refBeamCtr_y = 0.0
         self.is_valid = 0.0
-        self.detectors = 0.0
+        self.detectors = Detector(where=name)
         set_params(instance=self, params=params)
 
+    def _calculate_q_helper(self, value):
+        return 4 * math.pi / self.parent.parent.get_wavelength() * math.sin(math.atan2(value, self.parent.ssd) / 2)
+
     def calculate_qx_min(self):
-        pass
+        xmin = self.detectors.x_min(self.lateralOffset) - self.refBeamCtr_x
+        self.qx_min = self._calculate_q_helper(value=xmin)
 
     def calculate_qx_max(self):
-        pass
+        xmax = self.detectors.x_max(self.lateralOffset) - self.refBeamCtr_x
+        self.qx_max = self._calculate_q_helper(value=xmax)
 
     def calculate_qy_min(self):
-        pass
+        ymin = self.detectors.y_min() - self.refBeamCtr_y
+        self.qy_min = self._calculate_q_helper(value=ymin)
 
     def calculate_qy_max(self):
-        pass
-
-    def calculate_reference_x_center(self):
-        pass
-
-    def calculate_reference_y_center(self):
-        pass
+        ymax = self.detectors.y_max() - self.refBeamCtr_y
+        self.qy_max = self._calculate_q_helper(value=ymax)
 
     def calculate_is_valid(self):
         pass
 
     def calculate_panel(self):
+        # Update values to be used
+        self.refBeamCtr_x = self.parent.refBeamCtr_x
+        self.refBeamCtr_y = self.parent.refBeamCtr_y
         self.calculate_qx_min()
         self.calculate_qx_max()
         self.calculate_qy_min()
         self.calculate_qy_max()
-        self.calculate_reference_x_center()
-        self.calculate_reference_y_center()
+        self.calculate_is_valid()
+
+
+class VerticalPanel:
+    def __init__(self, parent, params, name="VerticalPanel"):
+        self.parent = parent
+        self.name = name
+        self.verticalOffset = 0.0
+        self.qy_min = 0.0  # Bottom
+        self.qy_max = 0.0  # Top
+        self.refBeamCtr_y = 0.0
+        self.is_valid = 0.0
+        self.detectors = Detector(where=name)
+        set_params(instance=self, params=params)
+
+    def _calculate_q_helper(self, value):
+        return 4 * math.pi / self.parent.parent.get_wavelength() * math.sin(
+            math.atan2(value, self.parent.ssd + self.detectors.setback) / 2)
+
+    def calculate_qy_min(self):
+        # var ymin = detectors.detector_FT.y_min(this.top_front_offset) - this.front_reference_yctr;;
+        # return 4 * Math.PI / this.lambda *Math.sin(Math.atan2(ymin, this.SDD_front + detectors.detector_FT.setback) / 2);
+        ymin = self.detectors.y_min(self.verticalOffset) - self.refBeamCtr_y
+        self.qy_min = self._calculate_q_helper(value=ymin)
+
+    def calculate_qy_max(self):
+        # var ymax = detectors.detector_FB.y_max(this.bottom_front_offset) - this.front_reference_yctr;
+        # return 4 * Math.PI / this.lambda *Math.sin(Math.atan2(ymax, this.SDD_front + detectors.detector_FB.setback) / 2)
+        ymax = self.detectors.y_max(self.verticalOffset) - self.refBeamCtr_y
+        self.qy_max = self._calculate_q_helper(value=ymax)
+
+    def calculate_is_valid(self):
+        pass
+
+    def calculate_panel(self):
+        # Update values to be used
+        self.refBeamCtr_y = self.parent.refBeamCtr_y
+        self.calculate_qy_min()
+        self.calculate_qy_max()
         self.calculate_is_valid()
 
 
@@ -492,21 +539,42 @@ class Detector:
 
     def __init__(self, where="MR"):
         self.name = where
-        self.id = 0.0
-        self.spatial_calibration = 0.0
+
+        # Default values needed
+        self.tube_width = 0.84  # cm
+        self.num_tubes = 48
+        self.num_bins = 128
+        # Other necessary object parameters
+        self.x = None
+        self.y = None
+        self._coord1_ctr_offset = None
+        self._coord0_ctr_offset = None
+        self.x_dim = None
+        self.y_dim = None
+        # Constants for this detector that are based on the position of the detector
+        self.id = ""
+        self.spatial_calibration = []
         self.setback = 0.0
         self.x_ctr_offset = 0.0
         self.y_ctr_offset = 0.0
-        self.orientation = 0.0
+        self.orientation = ""
         self.left_or_bottom = 0.0
         self.panel_gap = 0.0
+        self._coord1_zero_pos = -(self.panel_gap / 2.0 + (
+                self.num_tubes * self.tube_width)) if self.left_or_bottom else self.panel_gap / 2.0
+
+        # Set the constant value based on were it is
         self.set_constants()
+        # Update the params now that the constants are set
+        self.update_params()
 
     def set_constants(self):
         # If statements based off the name of the detector
+        v_spatial_calibration = [-52.1, 0.814, 0]  # CM
+        h_spatial_calibration = [-26.6, 0.416, 0]
         if self.name == "ML":
             self.id = "detector_ML"
-            self.spatial_calibration = "v_spatial_calibration"
+            self.spatial_calibration = v_spatial_calibration
             self.setback = 0
             self.x_ctr_offset = 0.26
             self.y_ctr_offset = -0.16
@@ -516,7 +584,7 @@ class Detector:
 
         elif self.name == "MT":
             self.id = "detector_MT"
-            self.spatial_calibration = "h_spatial_calibration"
+            self.spatial_calibration = h_spatial_calibration
             self.setback = 41
             self.x_ctr_offset = -0.28
             self.y_ctr_offset = 0.6
@@ -526,7 +594,7 @@ class Detector:
 
         elif self.name == "MB":
             self.id = "detector_MB"
-            self.spatial_calibration = "h_spatial_calibration"
+            self.spatial_calibration = h_spatial_calibration
             self.setback = 41
             self.x_ctr_offset = -0.89
             self.y_ctr_offset = 0.96
@@ -536,7 +604,7 @@ class Detector:
 
         elif self.name == "FR":
             self.id = "detector_FR"
-            self.spatial_calibration = "v_spatial_calibration"
+            self.spatial_calibration = v_spatial_calibration
             self.setback = 0
             self.x_ctr_offset = 0
             self.y_ctr_offset = 0
@@ -546,7 +614,7 @@ class Detector:
 
         elif self.name == "FL":
             self.id = "detector_FL"
-            self.spatial_calibration = "v_spatial_calibration"
+            self.spatial_calibration = v_spatial_calibration
             self.setback = 0
             self.x_ctr_offset = 0.13
             self.y_ctr_offset = 0.35
@@ -556,7 +624,7 @@ class Detector:
 
         elif self.name == "FT":
             self.id = "detector_FT"
-            self.spatial_calibration = "h_spatial_calibration"
+            self.spatial_calibration = h_spatial_calibration
             self.setback = 41
             self.x_ctr_offset = 1.59
             self.y_ctr_offset = 0.09
@@ -566,7 +634,7 @@ class Detector:
 
         elif self.name == "FB":
             self.id = "detector_FB"
-            self.spatial_calibration = "h_spatial_calibration"
+            self.spatial_calibration = h_spatial_calibration
             self.setback = 41
             self.x_ctr_offset = 0.95
             self.y_ctr_offset = 0.77
@@ -575,10 +643,70 @@ class Detector:
             self.panel_gap = 0.33
         else:
             self.id = "detector_MR"
-            self.spatial_calibration = "v_spatial_calibration"
+            self.spatial_calibration = v_spatial_calibration
             self.setback = 0
             self.x_ctr_offset = 0
             self.y_ctr_offset = 0
             self.orientation = "VERTICAL"
             self.left_or_bottom = False
             self.panel_gap = 0.59
+
+    def update_params(self):
+        if self.orientation == 'VERTICAL':
+            self.x = self._pixel_to_coord1  # This is a method not a variable
+            self.y = self._pixel_to_coord0
+            self._coord1_ctr_offset = self.x_ctr_offset
+            self._coord0_ctr_offset = self.y_ctr_offset
+            self.x_dim = self.num_tubes
+            self.y_dim = self.num_bins
+        else:
+            self.x = self._pixel_to_coord0
+            self.y = self._pixel_to_coord1
+            self._coord0_ctr_offset = self.x_ctr_offset
+            self._coord1_ctr_offset = self.y_ctr_offset
+            self.x_dim = self.num_bins
+            self.y_dim = self.num_tubes
+
+    def _pixel_to_coord0(self, pixel):
+        # convert pixel to spatial dimension, along tube length;
+        return self.spatial_calibration[0] - self._coord0_ctr_offset + self.spatial_calibration[1] * pixel + \
+            self.spatial_calibration[2] * math.pow(pixel, 2)
+
+    def _pixel_to_coord1(self, pixel):
+        return (pixel + 0.5) * self.tube_width + self._coord1_zero_pos - self._coord1_ctr_offset
+
+    def _coord0_to_pixel(self, coord0):
+        beta = math.sqrt(self.spatial_calibration[2])
+        if beta == 0:
+            return (coord0 - self.spatial_calibration[0] + self._coord0_ctr_offset) / self.spatial_calibration[1]
+        else:
+            alpha = self.spatial_calibration[1] / (2 * beta)
+            # pick the right sign?
+            return (alpha + math.sqrt(coord0 - self.spatial_calibration[0] + self._coord0_ctr_offset + alpha)) / beta
+
+    def _coord1_to_pixel(self, coord1):
+        return (coord1 - self._coord1_zero_pos + self._coord0_ctr_offset) / self.tube_width - 0.5
+
+    def x_min(self, lateral_offset):
+        return self.x(0) + (lateral_offset or 0)
+
+    def x_max(self, lateral_offset):
+        return self.x(self.x_dim - 1) + (lateral_offset or 0)
+
+    def y_min(self, vertical_offset=None):
+        return self.y(0) + (vertical_offset or 0)
+
+    def y_max(self, vertical_offset=None):
+        return self.y(self.y_dim - 1) + (vertical_offset or 0)
+
+    def lateral_offset_from_x_max(self, x):
+        return x - self.x_max(0)
+
+    def lateral_offset_from_x_min(self, x):
+        return x - self.x_min(0)
+
+    def vertical_offset_from_y_max(self, y):
+        return y - self.y_max(0)
+
+    def vertical_offset_from_y_min(self, y):
+        return y - self.y_min(0)
