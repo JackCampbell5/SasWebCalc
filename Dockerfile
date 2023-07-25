@@ -20,4 +20,6 @@ EXPOSE 5000/tcp
 
 ENTRYPOINT ["gunicorn"]
 
-CMD ["-b 0.0.0.0:5000", "--config=/etc/gunicorn_configuration.py", "wsgi:application"]
+WORKDIR /SasWebCalc/webcalc
+
+CMD ["-b 0.0.0.0:5000", "--config=/../etc/gunicorn_configuration.py", "wsgi:application"]

@@ -2,7 +2,6 @@
 import json
 import sys
 import importlib
-import pathlib
 import inspect
 import os
 import numpy as np
@@ -11,15 +10,9 @@ from typing import Optional, Union, Dict, List
 from flask import Flask, render_template, request, send_file
 
 # import specific methods from python files
-try:
-    from python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
-    from python.link_to_sasmodels import calculate_model as calculate_m
-    from python.helpers import decode_json, encode_json
-except ModuleNotFoundError:
-    # If running in docker or for auto doc need to import from webcalc/python/instruments instead
-    from webcalc.python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
-    from webcalc.python.link_to_sasmodels import calculate_model as calculate_m
-    from webcalc.python.helpers import decode_json, encode_json
+from python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
+from python.link_to_sasmodels import calculate_model as calculate_m
+from python.helpers import decode_json, encode_json
 
 Number = Union[float, int]
 
@@ -306,24 +299,15 @@ def create_app():
         :rtype; Dict
         """
         # Specify the directory containing the classes
-        directory_base = '/python/instruments/'
-        directory_extended = f'/webcalc{directory_base}'
+        directory = 'python/instruments'
 
         # Get a list of all Python files in the directory
-        # If running in docker or for auto doc need to import from webcalc/python/instruments instead
-        current_path = str(pathlib.Path(__file__).parent.resolve())
-        try_path = pathlib.Path(current_path + directory_base)
-        second_path = pathlib.Path(current_path + directory_extended)
-        directory = try_path if os.path.exists(try_path) else second_path
-        rel_path = directory_base if os.path.exists(try_path) else directory_extended
-        # Remove leading slash and replace remaining ones with periods for import
-        import_path = rel_path[1:].replace("/", ".")
         files = [file[:-3] for file in os.listdir(directory) if file.endswith('.py')]
 
         instruments_dict = {}
         # Import all classes from the files
         for file in files:
-            module = importlib.import_module(f"{import_path}{file}")
+            module = importlib.import_module(directory.replace("/", ".")+'.' + file)
             result = inspect.getmembers(module, inspect.isclass)
             for name, cls in result:
                 if hasattr(cls, "class_name"):
