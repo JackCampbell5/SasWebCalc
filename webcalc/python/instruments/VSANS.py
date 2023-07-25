@@ -171,57 +171,57 @@ class VSANS():
                                                                  default_value=0.02854)
         params["MidRightPanel"]["qy_max"] = _param_get_helper(name="qy_MR_max", category="MidRightPanel",
                                                                  default_value=0.02809)
-        params["FrontCarriage"]["qmin"] = _param_get_helper(name="qmin", category="FrontCarriage",
+        params["FrontDqValues"]["q_min"] = _param_get_helper(name="qmin", category="FrontCarriage",
                                                             default_value=0.01875)
-        params["FrontCarriage"]["dQx_Front_min"] = _param_get_helper(name="dQx_Front_min", category="FrontCarriage",
+        params["FrontDqValues"]["dQx_min"] = _param_get_helper(name="dQx_Front_min", category="FrontCarriage",
                                                                      default_value=0.05496)
-        params["FrontCarriage"]["dQy_Front_min"] = _param_get_helper(name="dQy_Front_min", category="FrontCarriage",
+        params["FrontDqValues"]["dQy_min"] = _param_get_helper(name="dQy_Front_min", category="FrontCarriage",
                                                                      default_value=0.05503)
-        params["FrontCarriage"]["qMax"] = _param_get_helper(name="qMax", category="FrontCarriage", default_value=0.1826)
-        params["FrontCarriage"]["dQx_Front_max"] = _param_get_helper(name="dQx_Front_max", category="FrontCarriage",
+        params["FrontDqValues"]["qMax"] = _param_get_helper(name="qMax", category="FrontCarriage", default_value=0.1826)
+        params["FrontDqValues"]["dQx_max"] = _param_get_helper(name="dQx_Front_max", category="FrontCarriage",
                                                                      default_value=0.04906)
-        params["FrontCarriage"]["dQy_Front_max"] = _param_get_helper(name="dQy_Front_max", category="FrontCarriage",
+        params["FrontDqValues"]["dQy_max"] = _param_get_helper(name="dQy_Front_max", category="FrontCarriage",
                                                                      default_value=0.04906)
         params["FrontCarriage"]["ssd_input"] = _param_get_helper(name="ssd_input", category="FrontCarriage",
                                                                  default_value=400)
         params["FrontCarriage"]["ssd"] = _param_get_helper(name="ssd", category="FrontCarriage", default_value=411)
-        params["FrontCarriage"]["refBeamCtrX"] = _param_get_helper(name="refBeamCtrX", category="FrontCarriage",
+        params["FrontCarriage"]["refBeamCtr_x"] = _param_get_helper(name="refBeamCtrX", category="FrontCarriage",
                                                                    default_value=0)
-        params["FrontCarriage"]["RefBeamCtrY"] = _param_get_helper(name="RefBeamCtrY", category="FrontCarriage",
+        params["FrontCarriage"]["refBeamCtr_y"] = _param_get_helper(name="RefBeamCtrY", category="FrontCarriage",
                                                                    default_value=0)
-        # params["FrontLeftPanel"]["lateralOffset"] = _param_get_helper(name="lateralOffset", category="FrontLeftPanel",
-        #                                                               default_value=-9.24)
-        # params["FrontLeftPanel"]["q_right"] = _param_get_helper(name="q_right", category="FrontLeftPanel",
-        #                                                         default_value=-0.02538)
-        # params["FrontLeftPanel"]["q_left"] = _param_get_helper(name="q_left", category="FrontLeftPanel",
-        #                                                        default_value=-0.1253)
-        # params["FrontLeftPanel"]["matchMLButton"] = _param_get_helper(name="matchMLButton", category="FrontLeftPanel",
-        #                                                               default_value=False)
-        # params["FrontRightPanel"]["lateralOffset"] = _param_get_helper(name="lateralOffset", category="FrontRightPanel",
-        #                                                                default_value=6.766)
-        # params["FrontRightPanel"]["q_Left"] = _param_get_helper(name="q_Left", category="FrontRightPanel",
-        #                                                         default_value=0.01875)
-        # params["FrontRightPanel"]["q_Right"] = _param_get_helper(name="q_Right", category="FrontRightPanel",
-        #                                                          default_value=0.1188)
-        # params["FrontRightPanel"]["matchRightMR"] = _param_get_helper(name="matchRightMR", category="FrontRightPanel",
-        #                                                               default_value=False)
-        # params["FrontTopPanel"]["verticalOffset"] = _param_get_helper(name="verticalOffset", category="FrontTopPanel",
-        #                                                               default_value=0)
-        # params["FrontTopPanel"]["qBottom"] = _param_get_helper(name="qBottom", category="FrontTopPanel",
-        #                                                        default_value=0.001147)
-        # params["FrontTopPanel"]["q_Top"] = _param_get_helper(name="q_Top", category="FrontTopPanel",
-        #                                                      default_value=0.09234)
-        # params["FrontTopPanel"]["matchTopMR"] = _param_get_helper(name="matchTopMR", category="FrontTopPanel",
-        #                                                           default_value=False)
-        # params["FrontBottomPanel"]["verticalOffset"] = _param_get_helper(name="verticalOffset",
-        #                                                                  category="FrontBottomPanel", default_value=0)
-        # params["FrontBottomPanel"]["q_Top"] = _param_get_helper(name="q_Top", category="FrontBottomPanel",
-        #                                                         default_value=-0.003139)
-        # params["FrontBottomPanel"]["q_Bottom"] = _param_get_helper(name="q_Bottom", category="FrontBottomPanel",
-        #                                                            default_value=-0.09432)
-        # params["FrontBottomPanel"]["matchBottomMR"] = _param_get_helper(name="matchBottomMR",
-        #                                                                 category="FrontBottomPanel",
-        #                                                                 default_value=False)
+        params["FrontLeftPanel"]["lateralOffset"] = _param_get_helper(name="lateralOffset", category="FrontLeftPanel",
+                                                                      default_value=-9.24)
+        params["FrontLeftPanel"]["qx_max"] = _param_get_helper(name="q_right", category="FrontLeftPanel",
+                                                                default_value=-0.02538)
+        params["FrontLeftPanel"]["qx_min"] = _param_get_helper(name="q_left", category="FrontLeftPanel",
+                                                               default_value=-0.1253)
+        params["FrontLeftPanel"]["match_button"] = _param_get_helper(name="matchMLButton", category="FrontLeftPanel",
+                                                                      default_value=False)
+        params["FrontRightPanel"]["lateralOffset"] = _param_get_helper(name="lateralOffset", category="FrontRightPanel",
+                                                                       default_value=6.766)
+        params["FrontRightPanel"]["qx_min"] = _param_get_helper(name="q_Left", category="FrontRightPanel",
+                                                                default_value=0.01875)
+        params["FrontRightPanel"]["qx_max"] = _param_get_helper(name="q_Right", category="FrontRightPanel",
+                                                                 default_value=0.1188)
+        params["FrontRightPanel"]["match_button"] = _param_get_helper(name="matchRightMR", category="FrontRightPanel",
+                                                                      default_value=False)
+        params["FrontTopPanel"]["verticalOffset"] = _param_get_helper(name="verticalOffset", category="FrontTopPanel",
+                                                                      default_value=0)
+        params["FrontTopPanel"]["qy_min"] = _param_get_helper(name="qBottom", category="FrontTopPanel",
+                                                               default_value=0.001147)
+        params["FrontTopPanel"]["qy_max"] = _param_get_helper(name="q_Top", category="FrontTopPanel",
+                                                             default_value=0.09234)
+        params["FrontTopPanel"]["match_button"] = _param_get_helper(name="matchTopMR", category="FrontTopPanel",
+                                                                  default_value=False)
+        params["FrontBottomPanel"]["verticalOffset"] = _param_get_helper(name="verticalOffset",
+                                                                         category="FrontBottomPanel", default_value=0)
+        params["FrontBottomPanel"]["qy_max"] = _param_get_helper(name="q_Top", category="FrontBottomPanel",
+                                                                default_value=-0.003139)
+        params["FrontBottomPanel"]["qy_min"] = _param_get_helper(name="q_Bottom", category="FrontBottomPanel",
+                                                                   default_value=-0.09432)
+        params["FrontBottomPanel"]["match_button"] = _param_get_helper(name="matchBottomMR",
+                                                                        category="FrontBottomPanel",
+                                                                        default_value=False)
         return params
 
     def load_objects(self, params):
@@ -281,7 +281,7 @@ class VSANS():
         user_inaccessible = _create_vsans_dict(name=False)
         user_inaccessible["Beam"]["wavelength"] = self.beam.wavelength
         user_inaccessible["Beam"]["dlambda"] = self.beam.dlambda
-        user_inaccessible["Beam"]["frontendTrans"] = self.beam.frontend_trans
+        user_inaccessible["Beam"]["frontendTrans"] = self.beam.frontendTrans
         user_inaccessible["Beam"]["flux"] = self.beam.flux
         user_inaccessible["Beam"]["beamCurrent"] = self.beam.beamCurrent
         user_inaccessible["Beam"]["iSub0"] = self.beam.iSub0
@@ -327,24 +327,24 @@ class VSANS():
         user_inaccessible["FrontCarriage"]["dQy_Front_max"] = self.front_Carriage.dqCalc.dQy_max
         user_inaccessible["FrontCarriage"]["ssd_input"] = self.front_Carriage.ssd_input
         user_inaccessible["FrontCarriage"]["ssd"] = self.front_Carriage.ssd
-        user_inaccessible["FrontCarriage"]["refBeamCtrX"] = self.front_Carriage.refBeamCtrX
-        user_inaccessible["FrontCarriage"]["RefBeamCtrY"] = self.front_Carriage.RefBeamCtrY
-        # user_inaccessible["FrontLeftPanel"]["lateralOffset"] = self.front_Carriage.leftPanel.lateralOffset
-        # user_inaccessible["FrontLeftPanel"]["q_right"] = self.front_Carriage.leftPanel.q_right
-        # user_inaccessible["FrontLeftPanel"]["q_left"] = self.front_Carriage.leftPanel.q_left
-        # user_inaccessible["FrontLeftPanel"]["matchMLButton"] = self.front_Carriage.leftPanel.matchMLButton
-        # user_inaccessible["FrontRightPanel"]["lateralOffset"] = self.front_Carriage.rightPanel.lateralOffset
-        # user_inaccessible["FrontRightPanel"]["q_Left"] = self.front_Carriage.rightPanel.q_Left
-        # user_inaccessible["FrontRightPanel"]["q_Right"] = self.front_Carriage.rightPanel.q_Right
-        # user_inaccessible["FrontRightPanel"]["matchRightMR"] = self.front_Carriage.rightPanel.matchRightMR
-        # user_inaccessible["FrontTopPanel"]["verticalOffset"] = self.front_Carriage.topPanel.verticalOffset
-        # user_inaccessible["FrontTopPanel"]["qBottom"] = self.front_Carriage.topPanel.qBottom
-        # user_inaccessible["FrontTopPanel"]["q_Top"] = self.front_Carriage.topPanel.q_Top
-        # user_inaccessible["FrontTopPanel"]["matchTopMR"] = self.front_Carriage.topPanel.matchTopMR
-        # user_inaccessible["FrontBottomPanel"]["verticalOffset"] = self.front_Carriage.bottomPanel.verticalOffset
-        # user_inaccessible["FrontBottomPanel"]["q_Top"] = self.front_Carriage.bottomPanel.q_Top
-        # user_inaccessible["FrontBottomPanel"]["q_Bottom"] = self.front_Carriage.bottomPanel.q_Bottom
-        # user_inaccessible["FrontBottomPanel"]["matchBottomMR"] = self.front_Carriage.bottomPanel.matchBottomMR
+        user_inaccessible["FrontCarriage"]["refBeamCtrX"] = self.front_Carriage.refBeamCtr_x
+        user_inaccessible["FrontCarriage"]["RefBeamCtrY"] = self.front_Carriage.refBeamCtr_y
+        user_inaccessible["FrontLeftPanel"]["lateralOffset"] = self.front_Carriage.leftPanel.lateralOffset
+        user_inaccessible["FrontLeftPanel"]["q_right"] = self.front_Carriage.leftPanel.qx_max
+        user_inaccessible["FrontLeftPanel"]["q_left"] = self.front_Carriage.leftPanel.qx_min
+        user_inaccessible["FrontLeftPanel"]["matchMLButton"] = self.front_Carriage.leftPanel.match_button
+        user_inaccessible["FrontRightPanel"]["lateralOffset"] = self.front_Carriage.rightPanel.lateralOffset
+        user_inaccessible["FrontRightPanel"]["q_Left"] = self.front_Carriage.rightPanel.qx_min
+        user_inaccessible["FrontRightPanel"]["q_Right"] = self.front_Carriage.rightPanel.qx_max
+        user_inaccessible["FrontRightPanel"]["matchRightMR"] = self.front_Carriage.rightPanel.match_button
+        user_inaccessible["FrontTopPanel"]["verticalOffset"] = self.front_Carriage.topPanel.verticalOffset
+        user_inaccessible["FrontTopPanel"]["qBottom"] = self.front_Carriage.topPanel.qy_min
+        user_inaccessible["FrontTopPanel"]["q_Top"] = self.front_Carriage.topPanel.qy_max
+        user_inaccessible["FrontTopPanel"]["matchTopMR"] = self.front_Carriage.topPanel.match_button
+        user_inaccessible["FrontBottomPanel"]["verticalOffset"] = self.front_Carriage.bottomPanel.verticalOffset
+        user_inaccessible["FrontBottomPanel"]["q_Top"] = self.front_Carriage.bottomPanel.qy_max
+        user_inaccessible["FrontBottomPanel"]["q_Bottom"] = self.front_Carriage.bottomPanel.qy_min
+        user_inaccessible["FrontBottomPanel"]["matchBottomMR"] = self.front_Carriage.bottomPanel.match_button
         python_return = {"user_inaccessible": user_inaccessible}
         if self.options is not {}:
             python_return['options'] = self.options

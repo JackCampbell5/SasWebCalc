@@ -1,5 +1,3 @@
-import setuptools.package_index
-
 from .instrument import set_params
 import math
 
@@ -43,7 +41,7 @@ class Beam:
 
     def calculate_frontend_trans(self):
         """Gets the value of frontend_trans from the list of options based on dlambda"""
-        self.frontend_trans = self.frontend_trans_options[str(self.dlambda)]
+        self.frontendTrans = self.frontend_trans_options[str(self.dlambda)]
 
     def calculate_flux(self):
         lfrac = self.lambda_T / self.wavelength
@@ -130,68 +128,6 @@ class Collimation:
         self.calculate_aOverL()
 
 
-class DqCalculator:
-    def __init__(self, parent, params, name="DqCalculator"):
-        self.parent = parent
-        self.name = name
-
-        self.q_min = 0.0
-        self.dQx_min = 0.0
-        self.dQy_min = 0.0
-        self.qMax = 0.0
-        self.dQx_max = 0.0
-        self.dQy_max = 0.0
-        # Parameters from the AllCarriage Class
-        self.dQ_geometric = 0.0
-        self.dq_wavelength = 0.0
-        self.dq_gravity = 0.0
-        set_params(instance=self, params=params)
-
-    def update_dq_values(self):
-        self.dQ_geometric = self.parent.parent.all_carriage.dQ_geometric
-        self.dq_wavelength = self.parent.parent.all_carriage.dq_wavelength
-        self.dq_gravity = self.parent.parent.all_carriage.dq_gravity
-
-    def calculate_d_q_values(self):
-        self._calculate_dQx_min()
-        self._calculate_dQy_min()  # self._calculate_dQx_max()  # self._calculate_dQy_max()
-
-    # Not sure why I have this
-    def _calculate_dq(self, q=0.0, y_value=False):
-        addition = math.pow(self.dq_gravity, 2) if y_value else 0.0
-        return math.sqrt(math.pow(self.dQ_geometric, 2) + math.pow(self.dq_wavelength * q, 2) + addition) / q
-
-    def calculate_q_min(self):
-        # The min values of Middle and front are differnt
-        self.q_min = 4 * math.pi / self.parent.parent.get_wavelength() * math.sin(
-            self.parent.parent.all_carriage.θ2_min / 2.0)
-
-    def _calculate_dQx_min(self):
-        q = self.q_min
-        self.dQx_min = self._calculate_dq(q=q, y_value=False)
-
-    def _calculate_dQy_min(self):
-        q = self.q_min
-        self.dQy_min = self._calculate_dq(q=q, y_value=True)
-
-    def calculate_qMax(self):
-        pass
-
-    def _calculate_dQx_max(self):
-        q = self.qMax
-        self.dQx_max = self._calculate_dq(q=q, y_value=False)
-
-    def _calculate_dQy_max(self):
-        q = self.qMax
-        self.dQy_max = self._calculate_dq(q=q, y_value=True)
-
-    def calculate_all_dq(self):
-        self.update_dq_values()
-        self.calculate_q_min()
-        self.calculate_qMax()
-        self.calculate_d_q_values()
-
-
 class AllCarriage:
     def __init__(self, parent, params, name="AllCarriage"):
         self.parent = parent
@@ -247,7 +183,7 @@ class AllCarriage:
         gravity_width = abs(self.gravity_Drop_Max - self.gravity_Drop_Min)
         beamstopRequired = beam_size_geometric + gravity_width
         # UNITS to get into CM
-        self.beamstopRequired = beamstopRequired/2.54
+        self.beamstopRequired = beamstopRequired / 2.54
 
     def calculate_beam_stop_cm(self):
         self.beamStopCm = self.Beamstop * 2.54
@@ -322,21 +258,128 @@ class MiddleCarriage:
     # create a class for the chnaging dq values and the constant calculated values are kept in the front apature clas
     # sbut there is a paramater that will be set saying the calculations can be done in the dependet classes
 
-    def calculate_refBeamCtr_x(self):
-        pass
-
-    def calculate_refBeamCtr_y(self):
-        pass
-
     def calculate_middleCarriage(self):
         # Calculates all the parameters of this object
         self.calculate_ssd()
-        self.calculate_refBeamCtr_x()
-        self.calculate_refBeamCtr_y()
         # Calculates the 2 other panels
         self.leftPanel.calculate_panel()
         self.rightPanel.calculate_panel()
         self.dqCalc.calculate_all_dq()
+
+
+class FrontCarriage:
+    def __init__(self, parent, params, name="FrontCarriage"):
+        self.parent = parent
+        self.name = name
+        # Create the secondary object off the main object
+        self.leftPanel = HorizontalPanel(self, params.get("FrontLeftPanel", {}), name="FL")
+        self.rightPanel = HorizontalPanel(self, params.get("FrontRightPanel", {}), name="FR")
+        self.topPanel = VerticalPanel(self, params.get("FrontTopPanel", {}), name="FT")
+        self.bottomPanel = VerticalPanel(self, params.get("FrontBottomPanel", {}), name="FB")
+        self.dqCalc = DqCalculator(self, params.get("FrontDqValues", {}))
+        params = params.get("FrontCarriage", {})
+
+        # Creates all the necessary parameters for the Front carriage class
+        self.ssd_input = 0.0
+        self.ssd = 0.0
+        self.refBeamCtr_x = 0.0
+        self.refBeamCtr_y = 0.0
+
+        set_params(instance=self, params=params)
+
+    def calculate_ssd(self):
+        self.ssd = self.ssd_input + self.parent.collimation.sampleToGv
+
+    def calculate_frontCarriage(self):
+        self.calculate_ssd()
+
+        # Calculate the other objects
+        self.leftPanel.calculate_panel()
+        self.rightPanel.calculate_panel()
+        self.topPanel.calculate_panel()
+        self.bottomPanel.calculate_panel()
+        self.dqCalc.calculate_all_dq()
+
+
+class DqCalculator:
+    def __init__(self, parent, params, name="DqCalculator"):
+        self.parent = parent
+        self.name = name
+
+        self.q_min = 0.0
+        self.calculate_q_min = self._calculate_q_min_middle
+        self.dQx_min = 0.0
+        self.dQy_min = 0.0
+        self.qMax = 0.0
+        self.dQx_max = 0.0
+        self.dQy_max = 0.0
+        # Parameters from the AllCarriage Class
+        self.dQ_geometric = 0.0
+        self.dq_wavelength = 0.0
+        self.dq_gravity = 0.0
+        set_params(instance=self, params=params)
+
+    def update_dq_values(self):
+        self.dQ_geometric = self.parent.parent.all_carriage.dQ_geometric
+        self.dq_wavelength = self.parent.parent.all_carriage.dq_wavelength
+        self.dq_gravity = self.parent.parent.all_carriage.dq_gravity
+
+    def _calculate_dq(self, q=0.0, y_value=False):
+        addition = math.pow(self.dq_gravity, 2) if y_value else 0.0
+        return math.sqrt(math.pow(self.dQ_geometric, 2) + math.pow(self.dq_wavelength * q, 2) + addition) / q
+
+    def _calculate_q_min_middle(self):
+        # The min values of Middle and front are different
+        self.q_min = 4 * math.pi / self.parent.parent.get_wavelength() * math.sin(
+            self.parent.parent.all_carriage.θ2_min / 2.0)
+
+    def _calculate_q_min_front(self):
+        self.q_min = min(abs(self.parent.leftPanel.qx_min), abs(self.parent.leftPanel.qx_max),
+                         abs(self.parent.rightPanel.qx_min), abs(self.parent.rightPanel.qx_max))
+
+    def _calculate_dQx_min(self):
+        q = self.q_min
+        self.dQx_min = self._calculate_dq(q=q, y_value=False)
+
+    def _calculate_dQy_min(self):
+        q = self.q_min
+        self.dQy_min = self._calculate_dq(q=q, y_value=True)
+
+    @staticmethod
+    def _q_abs(qx, qy):
+        return math.sqrt(math.pow(qx, 2) + math.pow(qy, 2))
+
+    def calculate_qMax(self):
+        self.qMax = max(self._q_abs(self.parent.leftPanel.qx_min, self.parent.leftPanel.qy_min),
+                        self._q_abs(self.parent.leftPanel.qx_max, self.parent.leftPanel.qy_min),
+                        self._q_abs(self.parent.leftPanel.qx_min, self.parent.leftPanel.qy_max),
+                        self._q_abs(self.parent.leftPanel.qx_max, self.parent.leftPanel.qy_max),
+                        self._q_abs(self.parent.rightPanel.qx_min, self.parent.rightPanel.qy_min),
+                        self._q_abs(self.parent.rightPanel.qx_max, self.parent.rightPanel.qy_min),
+                        self._q_abs(self.parent.rightPanel.qx_min, self.parent.rightPanel.qy_max),
+                        self._q_abs(self.parent.rightPanel.qx_max, self.parent.rightPanel.qy_max))
+
+    def _calculate_dQx_max(self):
+        q = self.qMax
+        self.dQx_max = self._calculate_dq(q=q, y_value=False)
+
+    def _calculate_dQy_max(self):
+        q = self.qMax
+        self.dQy_max = self._calculate_dq(q=q, y_value=True)
+
+    def calculate_d_q_values(self):
+        self._calculate_dQx_min()
+        self._calculate_dQy_min()
+        self._calculate_dQx_max()
+        self._calculate_dQy_max()
+
+    def calculate_all_dq(self):
+        if self.parent.name == "FrontCarriage":
+            self.calculate_q_min = self._calculate_q_min_front
+        self.update_dq_values()
+        self.calculate_q_min()
+        self.calculate_qMax()
+        self.calculate_d_q_values()
 
 
 class HorizontalPanel:
@@ -351,6 +394,7 @@ class HorizontalPanel:
         self.refBeamCtr_x = 0.0
         self.refBeamCtr_y = 0.0
         self.is_valid = 0.0
+        self.match_button = False
         self.detectors = Detector(where=name)
         set_params(instance=self, params=params)
 
@@ -396,6 +440,7 @@ class VerticalPanel:
         self.qy_max = 0.0  # Top
         self.refBeamCtr_y = 0.0
         self.is_valid = 0.0
+        self.match_button = False
         self.detectors = Detector(where=name)
         set_params(instance=self, params=params)
 
@@ -426,115 +471,6 @@ class VerticalPanel:
         self.calculate_is_valid()
 
 
-# class MidRightPanel:
-#     def __init__(self, parent, params, name=None):
-#         self.parent = parent
-#         self.name = name
-#         self.lateralOffset = 0.0
-#         self.qx_MR_min = 0.0
-#         self.qx_MR_max = 0.0
-#         self.qy_MR_min = 0.0
-#         self.qy_MR_max = 0.0
-#
-#         set_params(instance=self, params=params)
-#
-#     def calculate_midRightPanel(self):
-#         pass
-
-
-class FrontCarriage:
-    def __init__(self, parent, params, name=None):
-        self.parent = parent
-        self.name = name
-        # Create the secondary object off the main object
-        # self.leftPanel = Panel(self, params.get("FrontLeftPanel", {}))
-        # self.rightPanel = Panel(self, params.get("FrontRightPanel", {}))
-        # self.topPanel = Panel(self, params.get("FrontTopPanel", {}))
-        # self.bottomPanel = Panel(self, params.get("FrontBottomPanel", {}))
-        self.dqCalc = DqCalculator(self, params.get("FrontDqValues"), {})
-        params = params.get("FrontCarriage", {})
-
-        # Creates all the necessary parameters for the Front carriage class
-        self.qmin = 0.0
-        self.dQx_Front_min = 0.0
-        self.dQy_Front_min = 0.0
-        self.qMax = 0.0
-        self.dQx_Front_max = 0.0
-        self.dQy_Front_max = 0.0
-        self.ssd_input = 0.0
-        self.ssd = 0.0
-        self.refBeamCtrX = 0.0
-        self.RefBeamCtrY = 0.0
-
-        set_params(instance=self, params=params)
-
-    def calculate_frontCarriage(self):
-        # self.leftPanel.calculate_panel()
-        # self.rightPanel.calculate_panel()
-        # self.topPanel.calculate_panel()
-        # self.bottomPanel.calculate_panel()
-        self.dqCalc.calculate_all_dq()
-
-
-#
-# # class FrontLeftPanel:
-# #     def __init__(self, parent, params, name=None):
-# #         self.parent = parent
-# #         self.name = name
-# #         self.lateralOffset = 0.0
-# #         self.q_right = 0.0
-# #         self.q_left = 0.0
-# #         self.matchMLButton = 0.0
-# #         set_params(instance=self, params=params)
-# #
-# #     def calculate_frontLeftPanel(self):
-# #         pass
-#
-#
-# class FrontRightPanel:
-#     def __init__(self, parent, params, name=None):
-#         self.parent = parent
-#         self.name = name
-#         self.lateralOffset = 0.0
-#         self.q_Left = 0.0
-#         self.q_Right = 0.0
-#         self.matchRightMR = 0.0
-#
-#         set_params(instance=self, params=params)
-#
-#     def calculate_frontRightPanel(self):
-#         pass
-#
-#
-# class FrontTopPanel:
-#     def __init__(self, parent, params, name=None):
-#         self.parent = parent
-#         self.name = name
-#         self.verticalOffset = 0.0
-#         self.qBottom = 0.0
-#         self.q_Top = 0.0
-#         self.matchTopMR = 0.0
-#
-#         set_params(instance=self, params=params)
-#
-#     def calculate_frontTopPanel(self):
-#         pass
-#
-#
-# class FrontBottomPanel:
-#     def __init__(self, parent, params, name=None):
-#         self.parent = parent
-#         self.name = name
-#         self.verticalOffset = 0.0
-#         self.q_Top = 0.0
-#         self.q_Bottom = 0.0
-#         self.matchBottomMR = 0.0
-#
-#         set_params(instance=self, params=params)
-#
-#     def calculate_frontBottomPanel(self):
-#         pass
-
 class Detector:
     """ A class for the detector constants needed for calculations
     """
@@ -547,6 +483,7 @@ class Detector:
         self.num_tubes = 48
         self.num_bins = 128
         # Other necessary object parameters
+        self._coord1_zero_pos = None
         self.x = None
         self.y = None
         self._coord1_ctr_offset = None
@@ -562,11 +499,10 @@ class Detector:
         self.orientation = ""
         self.left_or_bottom = 0.0
         self.panel_gap = 0.0
-        self._coord1_zero_pos = -(self.panel_gap / 2.0 + (
-                self.num_tubes * self.tube_width)) if self.left_or_bottom else self.panel_gap / 2.0
 
         # Set the constant value based on were it is
         self.set_constants()
+
         # Update the params now that the constants are set
         self.update_params()
 
@@ -654,6 +590,8 @@ class Detector:
             self.panel_gap = 0.59
 
     def update_params(self):
+        self._coord1_zero_pos = -(self.panel_gap / 2.0 + (
+                self.num_tubes * self.tube_width)) if self.left_or_bottom else self.panel_gap / 2.0
         if self.orientation == 'VERTICAL':
             self.x = self._pixel_to_coord1  # This is a method not a variable
             self.y = self._pixel_to_coord0
