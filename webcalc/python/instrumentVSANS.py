@@ -245,7 +245,9 @@ class AllCarriage:
         beam_size_geometric = self.parent.get_sourceAperture() * self.L_2 / self.imported_l_1 + self.parent.get_sample_aperture() * (
                 self.imported_l_1 + self.L_2) / self.imported_l_1
         gravity_width = abs(self.gravity_Drop_Max - self.gravity_Drop_Min)
-        self.beamstopRequired = beam_size_geometric + gravity_width
+        beamstopRequired = beam_size_geometric + gravity_width
+        # UNITS to get into CM
+        self.beamstopRequired = beamstopRequired/2.54
 
     def calculate_beam_stop_cm(self):
         self.beamStopCm = self.Beamstop * 2.54
