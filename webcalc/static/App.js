@@ -167,17 +167,17 @@ export default {
       let info_provided = ""
       if(this.active_instrument=== "VSANS"){
         // Check for if the preset has changed
-        let preset_object = this.instrument_params["Presets"]["Preset"]
+        let preset_object = this.instrument_params["presets"]["preset"]
         if (preset_object.extra !== preset_object.default) {
           run = true;
           info_provided = this.active_instrument+ "%preset@" + preset_object.default
           preset_object.extra = preset_object.default
         }//End preset object
         // Check if the number of guides has changed
-        let guide_select_Object = this.instrument_params["Collimation"]["guide_select"]
+        let guide_select_Object = this.instrument_params["collimation"]["guide_select"]
         if(guide_select_Object.extra !== guide_select_Object.default){
           run = true;
-          let sourceAperture_js = this.instrument_params["Collimation"]["sourceAperture_js"].default
+          let sourceAperture_js = this.instrument_params["collimation"]["source_aperture_js"].default
           let guide_select = guide_select_Object.default
           info_provided = this.active_instrument+ "%guideUpdate@" + sourceAperture_js+'+'+guide_select
           guide_select_Object.extra = guide_select_Object.default
