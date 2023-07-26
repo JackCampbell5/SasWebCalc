@@ -9,10 +9,10 @@ class Beam:
         self.dlambda = 0.0
         self.lambda_T = 0.0
         self.phi_0 = 0.0
-        self.frontendTrans = 0.0
+        self.frontend_trans = 0.0
         self.flux = 0.0
-        self.beamCurrent = 0.0
-        self.iSub0 = 0.0  # or Incident_Intensity
+        self.beam_current = 0.0
+        self.i_sub_zero = 0.0  # or Incident_Intensity
         self.frontend_trans_options = {}
         self.name = name
         set_params(instance=self, params=params)
@@ -41,7 +41,7 @@ class Beam:
 
     def calculate_frontend_trans(self):
         """Gets the value of frontend_trans from the list of options based on dlambda"""
-        self.frontendTrans = self.frontend_trans_options[str(self.dlambda)]
+        self.frontend_trans = self.frontend_trans_options[str(self.dlambda)]
 
     def calculate_flux(self):
         lfrac = self.lambda_T / self.wavelength
@@ -50,12 +50,12 @@ class Beam:
     def calculate_beam_current(self):
         self.parent.collimation.calculate_t_filter()
         t_filter = self.parent.collimation.t_filter
-        self.beamCurrent = self.frontendTrans * t_filter
+        self.beam_current = self.frontend_trans * t_filter
 
     def calculate_iSub0(self):
         collimation = self.parent.collimation
         collimation.calculate_sample_aperture()
-        self.iSub0 = self.beamCurrent / (math.pi * math.pow(collimation.sample_aperture / 2.0, 2))
+        self.i_sub_zero = self.beam_current / (math.pi * math.pow(collimation.sample_aperture / 2.0, 2))
 
     def calculate_beam(self):
         self.calculate_wavelength()
@@ -70,25 +70,25 @@ class Collimation:
         self.parent = parent
         self.name = name
         self.guide_select = 0
-        self.numGuides = 0  # No calculation necessary just get the value
+        self.num_guides = 0  # No calculation necessary just get the value
         self.cov_beams = False
-        self.sourceAperture_js = 0.0  # The one coming from the js ( No Calculation Necessary)
-        self.sourceAperture = 0.0  # The one that is used for the calculations
-        self.sourceDistance = 0.0
-        self.sourceDistance_options = [2441, 2157, 1976, 1782, 1582, 1381, 1181, 980, 780, 579]
+        self.source_aperture_js = 0.0  # The one coming from the js ( No Calculation Necessary)
+        self.source_aperture = 0.0  # The one that is used for the calculations
+        self.source_distance = 0.0
+        self.source_distance_options = [2441, 2157, 1976, 1782, 1582, 1381, 1181, 980, 780, 579]
         self.t_filter = 0.0
         self.t_guide = 0.0
         self.sample_aperture = 0.0
-        self.extSampleAperture = 0.0  # This is a constant and does not need to be calculated
-        self.sampleToApGv = 0.0
-        self.sampleToGv = 0.0
+        self.ext_sample_aperture = 0.0  # This is a constant and does not need to be calculated
+        self.sample_to_ap_gv = 0.0
+        self.sample_to_gv = 0.0
         self.l_1 = 0.0
-        self.aOverL = 0.0
+        self.a_over_l = 0.0
 
         set_params(instance=self, params=params)
 
     def calculate_num_guides(self):
-        self.numGuides = 0 if self.guide_select == "CONV_BEAMS" or self.guide_select == "NARROW_SLITS" else int(
+        self.num_guides = 0 if self.guide_select == "CONV_BEAMS" or self.guide_select == "NARROW_SLITS" else int(
             self.guide_select)
 
     def calculate_source_aperture(self):
@@ -96,10 +96,10 @@ class Collimation:
 
         :return: None as it just sets a value
         """
-        self.sourceAperture = float(self.sourceAperture_js) / 10.0
+        self.source_aperture = float(self.source_aperture_js) / 10.0
 
     def calculate_sourceDistance(self):
-        self.sourceDistance = self.sourceDistance_options[self.numGuides]
+        self.source_distance = self.source_distance_options[self.num_guides]
 
     def calculate_t_filter(self):
         # Calculation run in beam.calculate_beam_current()
@@ -107,16 +107,16 @@ class Collimation:
         self.t_filter = math.exp(-0.371 - 0.0305 * lambda_val - 0.00352 * math.pow(lambda_val, 2))
 
     def calculate_t_guide(self):
-        return math.pow(0.97, self.numGuides)
+        return math.pow(0.97, self.num_guides)
 
     def calculate_sample_aperture(self):
-        self.sample_aperture = self.extSampleAperture / 10.0
+        self.sample_aperture = self.ext_sample_aperture / 10.0
 
     def calculate_l_1(self):
-        self.l_1 = self.sourceDistance - self.sampleToApGv
+        self.l_1 = self.source_distance - self.sample_to_ap_gv
 
     def calculate_aOverL(self):
-        self.aOverL = math.pow((math.pi / 4.0 * self.sourceAperture * self.sample_aperture / self.l_1), 2)
+        self.a_over_l = math.pow((math.pi / 4.0 * self.source_aperture * self.sample_aperture / self.l_1), 2)
 
     def calculate_collimation(self):
         self.calculate_num_guides()
@@ -134,35 +134,35 @@ class AllCarriage:
         self.name = name
 
         # In Middle Carriage in the JS
-        self.L_2 = 0.0
+        self.l_2 = 0.0
         self.imported_l_1 = 0.0
-        self.beamDrop = 0.0  # Also know as Gravity_Drop_Mean in the JS
+        self.beam_drop = 0.0  # Also know as Gravity_Drop_Mean in the JS
         self.gravity_Drop_Min = 0.0
         self.gravity_Drop_Max = 0.0
-        self.beamstopRequired = 0.0
-        self.Beamstop = 0.0
-        self.beamStopCm = 0.0
+        self.beamstop_required = 0.0
+        self.beamstop = 0.0
+        self.beam_stop_cm = 0.0
         self.θ2_min = 0.0
         # Values needed for the DQ calculations
         self.overall_dq_calculated = False
-        self.dQ_geometric = 0.0
+        self.dq_geometric = 0.0
         self.dq_wavelength = 0.0
         self.dq_gravity = 0.0
         set_params(instance=self, params=params)
 
     def calculate_L_2(self):
-        self.L_2 = self.parent.middle_Carriage.ssdInput + self.parent.collimation.sampleToApGv
+        self.l_2 = self.parent.middle_Carriage.ssd_input + self.parent.collimation.sample_to_ap_gv
 
     def calculate_beamDrop(self):
         # Also known as Gravity_Drop_Mean in the JS
         lambda_val = self.parent.get_wavelength()
-        self.beamDrop = self._calculate_Gravity_Drop(lambda_val=lambda_val)
+        self.beam_drop = self._calculate_Gravity_Drop(lambda_val=lambda_val)
 
     def _calculate_Gravity_Drop(self, lambda_val=0.0):
         h_over_mn = 395603.0  # Angstrom cm / s
         g = 981.0  # cm/s^2
         return g / 2.0 * math.pow((lambda_val / h_over_mn), 2) * (
-                math.pow((self.imported_l_1 + self.L_2), 2) - (self.imported_l_1 + self.L_2) * self.imported_l_1)
+                math.pow((self.imported_l_1 + self.l_2), 2) - (self.imported_l_1 + self.l_2) * self.imported_l_1)
 
     def calculate_Gravity_Drop_Min(self):
         #         var lambda = this.lambda * (1.0 + this.dlambda);
@@ -178,20 +178,21 @@ class AllCarriage:
         self.calculate_Gravity_Drop_Min()
         self.calculate_Gravity_Drop_Max()
         # The actual calculations being done
-        beam_size_geometric = self.parent.get_sourceAperture() * self.L_2 / self.imported_l_1 + self.parent.get_sample_aperture() * (
-                self.imported_l_1 + self.L_2) / self.imported_l_1
+        beam_size_geometric = self.parent.get_source_aperture() * self.l_2 / self.imported_l_1 + \
+                              self.parent.get_sample_aperture() * (
+                self.imported_l_1 + self.l_2) / self.imported_l_1
         gravity_width = abs(self.gravity_Drop_Max - self.gravity_Drop_Min)
         beamstopRequired = beam_size_geometric + gravity_width
         # UNITS to get into CM
-        self.beamstopRequired = beamstopRequired / 2.54
+        self.beamstop_required = beamstopRequired / 2.54
 
     def calculate_beam_stop_cm(self):
-        self.beamStopCm = self.Beamstop * 2.54
+        self.beam_stop_cm = self.beamstop * 2.54
 
     def calculate_θ2_min(self):
         # Also known as TwoTheta_min
         self.parent.middle_Carriage.calculate_ssd()
-        self.θ2_min = math.atan2(self.beamStopCm / 2, self.parent.middle_Carriage.ssd)
+        self.θ2_min = math.atan2(self.beam_stop_cm / 2, self.parent.middle_Carriage.ssd)
 
     def calculate_overall_d_q_values(self):
         self._calculate_dQ_geometric()
@@ -202,11 +203,11 @@ class AllCarriage:
     def _calculate_dQ_geometric(self):
         pixel_size = 0.82  # cm
         a = 2 * math.pi / (self.parent.get_wavelength() * self.parent.get_l_2())
-        b = math.pow((self.parent.get_l_2() * self.parent.get_sourceAperture()) / (4 * self.parent.get_l_1()), 2)
+        b = math.pow((self.parent.get_l_2() * self.parent.get_source_aperture()) / (4 * self.parent.get_l_1()), 2)
         c = math.pow((self.parent.get_l_1() + self.parent.get_l_2()) * self.parent.get_sample_aperture() / (
                 4 * self.parent.get_l_1()), 2)
         d = math.pow(pixel_size / 2, 2) / 3
-        self.dQ_geometric = a * math.sqrt(b + c + d)
+        self.dq_geometric = a * math.sqrt(b + c + d)
 
     def _calculate_dq_wavelength(self):
         resolution_factor = 6.0
@@ -217,7 +218,7 @@ class AllCarriage:
         h_over_mn = 395603.0  # Angstrom cm/s
         a = 2 * math.pi / (self.parent.get_wavelength() * self.parent.get_l_2())
         b = math.pow(g, 2) / (2 * math.pow(h_over_mn, 4))
-        c = math.pow(self.L_2, 2) * math.pow(self.parent.get_l_1() + self.L_2, 2)
+        c = math.pow(self.l_2, 2) * math.pow(self.parent.get_l_1() + self.l_2, 2)
         d = math.pow(self.parent.get_wavelength(), 4) * 2 / 3 * math.pow(self.parent.beam.dlambda, 2)
         self.dq_gravity = a * math.sqrt(b * c * d)
 
@@ -238,14 +239,14 @@ class MiddleCarriage:
         self.name = name
 
         # Create the secondary object off the main object
-        self.leftPanel = HorizontalPanel(self, params.get("MidLeftPanel", {}), name="MidLeftPanel", short_name="ML")
-        self.rightPanel = HorizontalPanel(self, params.get("MidRightPanel", {}), name="MidRightPanel", short_name="MR")
-        self.dqCalc = DqCalculator(self, params.get("MidDqValues", {}))
+        self.left_panel = HorizontalPanel(self, params.get("MidLeftPanel", {}), name="MidLeftPanel", short_name="ML")
+        self.right_panel = HorizontalPanel(self, params.get("MidRightPanel", {}), name="MidRightPanel", short_name="MR")
+        self.dq_calc = DqCalculator(self, params.get("MidDqValues", {}))
 
         params = params.get("MiddleCarriage", {})
 
         # Creates all the necessary parameters for the middle carriage class
-        self.ssdInput = 0.0  # This is just the value input by the user, not the actual SSD value
+        self.ssd_input = 0.0  # This is just the value input by the user, not the actual SSD value
         self.ssd = 0.0
         # DQ Values that are used for both classes
         self.refBeamCtr_x = 0.0
@@ -253,7 +254,7 @@ class MiddleCarriage:
         set_params(instance=self, params=params)
 
     def calculate_ssd(self):
-        self.ssd = self.ssdInput + self.parent.collimation.sampleToGv
+        self.ssd = self.ssd_input + self.parent.collimation.sample_to_gv
 
     # create a class for the chnaging dq values and the constant calculated values are kept in the front apature clas
     # sbut there is a paramater that will be set saying the calculations can be done in the dependet classes
@@ -262,9 +263,9 @@ class MiddleCarriage:
         # Calculates all the parameters of this object
         self.calculate_ssd()
         # Calculates the 2 other panels
-        self.leftPanel.calculate_panel()
-        self.rightPanel.calculate_panel()
-        self.dqCalc.calculate_all_dq()
+        self.left_panel.calculate_panel()
+        self.right_panel.calculate_panel()
+        self.dq_calc.calculate_all_dq()
 
 
 class FrontCarriage:
@@ -272,13 +273,13 @@ class FrontCarriage:
         self.parent = parent
         self.name = name
         # Create the secondary object off the main object
-        self.leftPanel = HorizontalPanel(self, params.get("FrontLeftPanel", {}), name="FrontLeftPanel", short_name="FL")
-        self.rightPanel = HorizontalPanel(self, params.get("FrontRightPanel", {}), name="FrontRightPanel",
-                                          short_name="FR")
-        self.topPanel = VerticalPanel(self, params.get("FrontTopPanel", {}), name="FrontTopPanel", short_name="FT")
-        self.bottomPanel = VerticalPanel(self, params.get("FrontBottomPanel", {}), name="FrontBottomPanel",
-                                         short_name="FB")
-        self.dqCalc = DqCalculator(self, params.get("FrontDqValues", {}))
+        self.left_panel = HorizontalPanel(self, params.get("FrontLeftPanel", {}), name="FrontLeftPanel", short_name="FL")
+        self.right_panel = HorizontalPanel(self, params.get("FrontRightPanel", {}), name="FrontRightPanel",
+                                           short_name="FR")
+        self.top_panel = VerticalPanel(self, params.get("FrontTopPanel", {}), name="FrontTopPanel", short_name="FT")
+        self.bottom_panel = VerticalPanel(self, params.get("FrontBottomPanel", {}), name="FrontBottomPanel",
+                                          short_name="FB")
+        self.dq_calc = DqCalculator(self, params.get("FrontDqValues", {}))
         params = params.get("FrontCarriage", {})
 
         # Creates all the necessary parameters for the Front carriage class
@@ -290,17 +291,17 @@ class FrontCarriage:
         set_params(instance=self, params=params)
 
     def calculate_ssd(self):
-        self.ssd = self.ssd_input + self.parent.collimation.sampleToGv
+        self.ssd = self.ssd_input + self.parent.collimation.sample_to_gv
 
     def calculate_frontCarriage(self):
         self.calculate_ssd()
 
         # Calculate the other objects
-        self.leftPanel.calculate_panel()
-        self.rightPanel.calculate_panel()
-        self.topPanel.calculate_panel()
-        self.bottomPanel.calculate_panel()
-        self.dqCalc.calculate_all_dq()
+        self.left_panel.calculate_panel()
+        self.right_panel.calculate_panel()
+        self.top_panel.calculate_panel()
+        self.bottom_panel.calculate_panel()
+        self.dq_calc.calculate_all_dq()
 
 
 class DqCalculator:
@@ -310,25 +311,25 @@ class DqCalculator:
 
         self.q_min = 0.0
         self.calculate_q_min = self._calculate_q_min_middle
-        self.dQx_min = 0.0
-        self.dQy_min = 0.0
-        self.qMax = 0.0
-        self.dQx_max = 0.0
-        self.dQy_max = 0.0
+        self.dqx_min = 0.0
+        self.dqy_min = 0.0
+        self.q_max = 0.0
+        self.dqx_max = 0.0
+        self.dqy_max = 0.0
         # Parameters from the AllCarriage Class
-        self.dQ_geometric = 0.0
+        self.dq_geometric = 0.0
         self.dq_wavelength = 0.0
         self.dq_gravity = 0.0
         set_params(instance=self, params=params)
 
     def update_dq_values(self):
-        self.dQ_geometric = self.parent.parent.all_carriage.dQ_geometric
+        self.dq_geometric = self.parent.parent.all_carriage.dq_geometric
         self.dq_wavelength = self.parent.parent.all_carriage.dq_wavelength
         self.dq_gravity = self.parent.parent.all_carriage.dq_gravity
 
     def _calculate_dq(self, q=0.0, y_value=False):
         addition = math.pow(self.dq_gravity, 2) if y_value else 0.0
-        return math.sqrt(math.pow(self.dQ_geometric, 2) + math.pow(self.dq_wavelength * q, 2) + addition) / q
+        return math.sqrt(math.pow(self.dq_geometric, 2) + math.pow(self.dq_wavelength * q, 2) + addition) / q
 
     def _calculate_q_min_middle(self):
         # The min values of Middle and front are different
@@ -336,38 +337,38 @@ class DqCalculator:
             self.parent.parent.all_carriage.θ2_min / 2.0)
 
     def _calculate_q_min_front(self):
-        self.q_min = min(abs(self.parent.leftPanel.qx_min), abs(self.parent.leftPanel.qx_max),
-                         abs(self.parent.rightPanel.qx_min), abs(self.parent.rightPanel.qx_max))
+        self.q_min = min(abs(self.parent.left_panel.qx_min), abs(self.parent.left_panel.qx_max),
+                         abs(self.parent.right_panel.qx_min), abs(self.parent.right_panel.qx_max))
 
     def _calculate_dQx_min(self):
         q = self.q_min
-        self.dQx_min = self._calculate_dq(q=q, y_value=False)
+        self.dqx_min = self._calculate_dq(q=q, y_value=False)
 
     def _calculate_dQy_min(self):
         q = self.q_min
-        self.dQy_min = self._calculate_dq(q=q, y_value=True)
+        self.dqy_min = self._calculate_dq(q=q, y_value=True)
 
     @staticmethod
     def _q_abs(qx, qy):
         return math.sqrt(math.pow(qx, 2) + math.pow(qy, 2))
 
     def calculate_qMax(self):
-        self.qMax = max(self._q_abs(self.parent.leftPanel.qx_min, self.parent.leftPanel.qy_min),
-                        self._q_abs(self.parent.leftPanel.qx_max, self.parent.leftPanel.qy_min),
-                        self._q_abs(self.parent.leftPanel.qx_min, self.parent.leftPanel.qy_max),
-                        self._q_abs(self.parent.leftPanel.qx_max, self.parent.leftPanel.qy_max),
-                        self._q_abs(self.parent.rightPanel.qx_min, self.parent.rightPanel.qy_min),
-                        self._q_abs(self.parent.rightPanel.qx_max, self.parent.rightPanel.qy_min),
-                        self._q_abs(self.parent.rightPanel.qx_min, self.parent.rightPanel.qy_max),
-                        self._q_abs(self.parent.rightPanel.qx_max, self.parent.rightPanel.qy_max))
+        self.q_max = max(self._q_abs(self.parent.left_panel.qx_min, self.parent.left_panel.qy_min),
+                         self._q_abs(self.parent.left_panel.qx_max, self.parent.left_panel.qy_min),
+                         self._q_abs(self.parent.left_panel.qx_min, self.parent.left_panel.qy_max),
+                         self._q_abs(self.parent.left_panel.qx_max, self.parent.left_panel.qy_max),
+                         self._q_abs(self.parent.right_panel.qx_min, self.parent.right_panel.qy_min),
+                         self._q_abs(self.parent.right_panel.qx_max, self.parent.right_panel.qy_min),
+                         self._q_abs(self.parent.right_panel.qx_min, self.parent.right_panel.qy_max),
+                         self._q_abs(self.parent.right_panel.qx_max, self.parent.right_panel.qy_max))
 
     def _calculate_dQx_max(self):
-        q = self.qMax
-        self.dQx_max = self._calculate_dq(q=q, y_value=False)
+        q = self.q_max
+        self.dqx_max = self._calculate_dq(q=q, y_value=False)
 
     def _calculate_dQy_max(self):
-        q = self.qMax
-        self.dQy_max = self._calculate_dq(q=q, y_value=True)
+        q = self.q_max
+        self.dqy_max = self._calculate_dq(q=q, y_value=True)
 
     def calculate_d_q_values(self):
         self._calculate_dQx_min()
@@ -414,16 +415,16 @@ class HorizontalPanel:
 
     def _calculate_match_left(self):
         middle_object = self.parent.parent.middle_Carriage
-        xmin = middle_object.leftPanel.detectors.x_min(
-            middle_object.leftPanel.lateralOffset) - middle_object.refBeamCtr_x
+        xmin = middle_object.left_panel.detectors.x_min(
+            middle_object.left_panel.lateralOffset) - middle_object.refBeamCtr_x
         angle_min = math.atan2(xmin, middle_object.ssd)
         fr_xmax = math.tan(angle_min) * self.parent.ssd + self.refBeamCtr_x
         self.lateralOffset = self.detectors.lateral_offset_from_x_max(fr_xmax)
 
     def _calculate_match_right(self):
         middle_object = self.parent.parent.middle_Carriage
-        xmax = middle_object.rightPanel.detectors.x_max(
-            middle_object.rightPanel.lateralOffset) - middle_object.refBeamCtr_x
+        xmax = middle_object.right_panel.detectors.x_max(
+            middle_object.right_panel.lateralOffset) - middle_object.refBeamCtr_x
         angle_max = math.atan2(xmax, middle_object.ssd)
         fr_xmin = math.tan(angle_max) * self.parent.ssd + self.refBeamCtr_x
         self.lateralOffset = self.detectors.lateral_offset_from_x_min(fr_xmin)
@@ -454,7 +455,7 @@ class HorizontalPanel:
         # Update values to be used
         self.refBeamCtr_x = self.parent.refBeamCtr_x
         self.refBeamCtr_y = self.parent.refBeamCtr_y
-        self.calculate_match()
+        self.calculate_match()  # This needs to run first as it affects the values for the rest of the calculations
         self.calculate_qx_min()
         self.calculate_qx_max()
         self.calculate_qy_min()
@@ -489,14 +490,14 @@ class VerticalPanel:
 
     def _calculate_match_bottom(self):
         middle_object = self.parent.parent.middle_Carriage
-        ymin = middle_object.rightPanel.detectors.y_min(0) - middle_object.refBeamCtr_y
+        ymin = middle_object.right_panel.detectors.y_min(0) - middle_object.refBeamCtr_y
         angle_min = math.atan2(ymin, middle_object.ssd)
         fr_ymax = math.tan(angle_min) * (self.parent.ssd + self.detectors.setback) + self.refBeamCtr_y
         self.verticalOffset = self.detectors.vertical_offset_from_y_max(fr_ymax)
 
     def _calculate_match_top(self):
         middle_object = self.parent.parent.middle_Carriage
-        ymax = middle_object.rightPanel.detectors.y_max(0) - middle_object.refBeamCtr_y
+        ymax = middle_object.right_panel.detectors.y_max(0) - middle_object.refBeamCtr_y
         angle_max = math.atan2(ymax, middle_object.ssd)
         fr_ymin = math.tan(angle_max) * (self.parent.ssd + self.detectors.setback) + self.refBeamCtr_y
         self.verticalOffset = self.detectors.vertical_offset_from_y_min(fr_ymin)
@@ -523,7 +524,7 @@ class VerticalPanel:
     def calculate_panel(self):
         # Update values to be used
         self.refBeamCtr_y = self.parent.refBeamCtr_y
-        self.calculate_match()
+        self.calculate_match()  # This needs to run first as it affects the values for the rest of the calculations
         self.calculate_qy_min()
         self.calculate_qy_max()
         self.calculate_is_valid()

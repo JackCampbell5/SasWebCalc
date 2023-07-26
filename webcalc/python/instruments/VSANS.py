@@ -105,50 +105,54 @@ class VSANS():
         params["Preset"] = _param_get_helper(name="Presets", category="Presets", default_value="19m")
         params["Beam"]["wavelength"] = _param_get_helper(name="wavelength", category="Beam", default_value=6.0)
         params["Beam"]["dlambda"] = _param_get_helper(name="dlambda", category="Beam", default_value=0.12)
-        params["Beam"]["frontendTrans"] = _param_get_helper(name="frontendTrans", category="Beam", default_value=1.0)
+        params["Beam"]["frontend_trans"] = _param_get_helper(name="frontend_trans", category="Beam", default_value=1.0)
         params["Beam"]["flux"] = _param_get_helper(name="flux", category="Beam", default_value=1.362e+11)
-        params["Beam"]["beamCurrent"] = _param_get_helper(name="beamCurrent", category="Beam", default_value=1.055e+5)
-        params["Beam"]["iSub0"] = _param_get_helper(name="iSub0", category="Beam", default_value=8.332e+4)
+        params["Beam"]["beam_current"] = _param_get_helper(name="beam_current", category="Beam",
+                                                            default_value=1.055e+5)
+        params["Beam"]["i_sub_zero"] = _param_get_helper(name="i_sub_zero", category="Beam", default_value=8.332e+4)
         params["Collimation"]["guide_select"] = _param_get_helper(name="guide_select", category="Collimation",
                                                                   default_value=0)
-        params["Collimation"]["sourceAperture_js"] = _param_get_helper(name="sourceAperture_js", category="Collimation",
+        params["Collimation"]["source_aperture_js"] = _param_get_helper(name="source_aperture_js",
+                                                                        category="Collimation",
                                                                        default_value=30.0)
-        params["Collimation"]["sourceDistance"] = _param_get_helper(name="sourceDistance", category="Collimation",
+        params["Collimation"]["source_distance"] = _param_get_helper(name="source_distance", category="Collimation",
                                                                     default_value=2441)
         params["Collimation"]["t_filter"] = _param_get_helper(name="t_filter", category="Collimation",
                                                               default_value=0.5062523594147008)
         params["Collimation"]["t_guide"] = _param_get_helper(name="t_guide", category="Collimation", default_value=1)
-        params["Collimation"]["extSampleAperture"] = _param_get_helper(name="extSampleAperture", category="Collimation",
+        params["Collimation"]["ext_sample_aperture"] = _param_get_helper(name="ext_sample_aperture",
+                                                                        category="Collimation",
                                                                        default_value=12.7)
-        params["Collimation"]["sampleToApGv"] = _param_get_helper(name="sampleToApGv", category="Collimation",
+        params["Collimation"]["sample_to_ap_gv"] = _param_get_helper(name="sample_to_ap_gv", category="Collimation",
                                                                   default_value=22)
-        params["Collimation"]["sampleToGv"] = _param_get_helper(name="sampleToGv", category="Collimation",
+        params["Collimation"]["sample_to_gv"] = _param_get_helper(name="sample_to_gv", category="Collimation",
                                                                 default_value=22)
         params["Collimation"]["l_1"] = _param_get_helper(name="l_1", category="Collimation", default_value=2419)
-        params["Collimation"]["aOverL"] = _param_get_helper(name="aOverL", category="Collimation",
+        params["Collimation"]["a_over_l"] = _param_get_helper(name="a_over_l", category="Collimation",
                                                             default_value=0.000001530)
-        params["MiddleCarriage"]["ssdInput"] = _param_get_helper(name="ssdInput", category="MiddleCarriage",
+        params["MiddleCarriage"]["ssd_input"] = _param_get_helper(name="ssd_input", category="MiddleCarriage",
                                                                  default_value=1900)
         params["MiddleCarriage"]["ssd"] = _param_get_helper(name="ssd", category="MiddleCarriage", default_value=1911)
-        params["AllCarriage"]["L_2"] = _param_get_helper(name="L_2", category="MiddleCarriage", default_value=1922)
-        params["AllCarriage"]["beamDrop"] = _param_get_helper(name="beamDrop", category="MiddleCarriage",
+        params["AllCarriage"]["l_2"] = _param_get_helper(name="l_2", category="MiddleCarriage", default_value=1922)
+        params["AllCarriage"]["beam_drop"] = _param_get_helper(name="beam_drop", category="MiddleCarriage",
                                                               default_value=0.9414)
-        params["AllCarriage"]["beamstopRequired"] = _param_get_helper(name="beamstopRequired",
+        params["AllCarriage"]["beamstop_required"] = _param_get_helper(name="beamstop_required",
                                                                       category="MiddleCarriage", default_value=2.014)
-        params["AllCarriage"]["Beamstop"] = _param_get_helper(name="Beamstop", category="MiddleCarriage",
+        params["AllCarriage"]["beamstop"] = _param_get_helper(name="beamstop", category="MiddleCarriage",
                                                               default_value=2)
         params["AllCarriage"]["θ2_min"] = _param_get_helper(name="θ2_min", category="MiddleCarriage",
                                                             default_value=0.001329)
         params["MidDqValues"]["q_min"] = _param_get_helper(name="q_min", category="MiddleCarriage",
                                                            default_value=0.001392)
-        params["MidDqValues"]["dQx_min"] = _param_get_helper(name="dQx_Middle_min", category="MiddleCarriage",
+        params["MidDqValues"]["dqx_min"] = _param_get_helper(name="dqx_min", category="MiddleCarriage",
                                                              default_value=0.3393)
-        params["MidDqValues"]["dQy_min"] = _param_get_helper(name="dQy_Middle_min", category="MiddleCarriage",
+        params["MidDqValues"]["dqx_min"] = _param_get_helper(name="dqx_min", category="MiddleCarriage",
                                                              default_value=0.3412)
-        params["MidDqValues"]["qMax"] = _param_get_helper(name="qMax", category="MiddleCarriage", default_value=0.03818)
-        params["MidDqValues"]["dQx_max"] = _param_get_helper(name="dQx_Middle_max", category="MiddleCarriage",
+        params["MidDqValues"]["q_max"] = _param_get_helper(name="q_max", category="MiddleCarriage",
+                                                           default_value=0.03818)
+        params["MidDqValues"]["dqx_max"] = _param_get_helper(name="dqx_max", category="MiddleCarriage",
                                                              default_value=0.05050)
-        params["MidDqValues"]["dQy_max"] = _param_get_helper(name="dQy_Middle_max", category="MiddleCarriage",
+        params["MidDqValues"]["dqy_max"] = _param_get_helper(name="dqy_max", category="MiddleCarriage",
                                                              default_value=0.05051)
         params["MiddleCarriage"]["refBeamCtr_x"] = _param_get_helper(name="refBeamCtr_x", category="MiddleCarriage",
                                                                      default_value=0)
@@ -156,69 +160,70 @@ class VSANS():
                                                                      default_value=0)
         params["MidLeftPanel"]["lateralOffset"] = _param_get_helper(name="lateralOffset", category="MidLeftPanel",
                                                                     default_value=-6)
-        params["MidLeftPanel"]["qx_max"] = _param_get_helper(name="Q_right", category="MidLeftPanel",
+        params["MidLeftPanel"]["qx_max"] = _param_get_helper(name="qx_max", category="MidLeftPanel",
                                                              default_value=0.003822)
-        params["MidLeftPanel"]["qx_min"] = _param_get_helper(name="qx_ML_min", category="MidLeftPanel",
+        params["MidLeftPanel"]["qx_min"] = _param_get_helper(name="qx_min", category="MidLeftPanel",
                                                              default_value=-0.02545)
         params["MidRightPanel"]["lateralOffset"] = _param_get_helper(name="lateralOffset", category="MidRightPanel",
                                                                      default_value=-5.5)
-        params["MidRightPanel"]["qx_min"] = _param_get_helper(name="qx_MR_min", category="MidRightPanel",
+        params["MidRightPanel"]["qx_min"] = _param_get_helper(name="qx_min", category="MidRightPanel",
                                                               default_value=-0.002622)
-        params["MidRightPanel"]["qx_max"] = _param_get_helper(name="qx_MR_max", category="MidRightPanel",
+        params["MidRightPanel"]["qx_max"] = _param_get_helper(name="qx_max", category="MidRightPanel",
                                                               default_value=0.01901)
-        params["MidRightPanel"]["qy_min"] = _param_get_helper(name="qy_MR_min", category="MidRightPanel",
+        params["MidRightPanel"]["qy_min"] = _param_get_helper(name="qy_min", category="MidRightPanel",
                                                               default_value=0.02854)
-        params["MidRightPanel"]["qy_max"] = _param_get_helper(name="qy_MR_max", category="MidRightPanel",
+        params["MidRightPanel"]["qy_max"] = _param_get_helper(name="qy_max", category="MidRightPanel",
                                                               default_value=0.02809)
-        params["FrontDqValues"]["q_min"] = _param_get_helper(name="qmin", category="FrontCarriage",
+        params["FrontDqValues"]["q_min"] = _param_get_helper(name="q_min", category="FrontCarriage",
                                                              default_value=0.01875)
-        params["FrontDqValues"]["dQx_min"] = _param_get_helper(name="dQx_Front_min", category="FrontCarriage",
+        params["FrontDqValues"]["dqx_min"] = _param_get_helper(name="dqx_min", category="FrontCarriage",
                                                                default_value=0.05496)
-        params["FrontDqValues"]["dQy_min"] = _param_get_helper(name="dQy_Front_min", category="FrontCarriage",
+        params["FrontDqValues"]["dqy_min"] = _param_get_helper(name="dqy_min", category="FrontCarriage",
                                                                default_value=0.05503)
-        params["FrontDqValues"]["qMax"] = _param_get_helper(name="qMax", category="FrontCarriage", default_value=0.1826)
-        params["FrontDqValues"]["dQx_max"] = _param_get_helper(name="dQx_Front_max", category="FrontCarriage",
+        params["FrontDqValues"]["q_max"] = _param_get_helper(name="q_max", category="FrontCarriage",
+                                                             default_value=0.1826)
+        params["FrontDqValues"]["dqx_max"] = _param_get_helper(name="dqx_max", category="FrontCarriage",
                                                                default_value=0.04906)
-        params["FrontDqValues"]["dQy_max"] = _param_get_helper(name="dQy_Front_max", category="FrontCarriage",
+        params["FrontDqValues"]["dqy_max"] = _param_get_helper(name="dqy_max", category="FrontCarriage",
                                                                default_value=0.04906)
         params["FrontCarriage"]["ssd_input"] = _param_get_helper(name="ssd_input", category="FrontCarriage",
                                                                  default_value=400)
         params["FrontCarriage"]["ssd"] = _param_get_helper(name="ssd", category="FrontCarriage", default_value=411)
-        params["FrontCarriage"]["refBeamCtr_x"] = _param_get_helper(name="refBeamCtrX", category="FrontCarriage",
+        params["FrontCarriage"]["refBeamCtr_x"] = _param_get_helper(name="refBeamCtr_x", category="FrontCarriage",
                                                                     default_value=0)
-        params["FrontCarriage"]["refBeamCtr_y"] = _param_get_helper(name="RefBeamCtrY", category="FrontCarriage",
+        params["FrontCarriage"]["refBeamCtr_y"] = _param_get_helper(name="refBeamCtr_y", category="FrontCarriage",
                                                                     default_value=0)
         params["FrontLeftPanel"]["lateralOffset"] = _param_get_helper(name="lateralOffset", category="FrontLeftPanel",
                                                                       default_value=-9.24)
-        params["FrontLeftPanel"]["qx_max"] = _param_get_helper(name="q_right", category="FrontLeftPanel",
+        params["FrontLeftPanel"]["qx_max"] = _param_get_helper(name="qx_max", category="FrontLeftPanel",
                                                                default_value=-0.02538)
-        params["FrontLeftPanel"]["qx_min"] = _param_get_helper(name="q_left", category="FrontLeftPanel",
+        params["FrontLeftPanel"]["qx_min"] = _param_get_helper(name="qx_min", category="FrontLeftPanel",
                                                                default_value=-0.1253)
-        params["FrontLeftPanel"]["match_button"] = _param_get_helper(name="matchMLButton", category="FrontLeftPanel",
+        params["FrontLeftPanel"]["match_button"] = _param_get_helper(name="match_button", category="FrontLeftPanel",
                                                                      default_value=False)
         params["FrontRightPanel"]["lateralOffset"] = _param_get_helper(name="lateralOffset", category="FrontRightPanel",
                                                                        default_value=6.766)
-        params["FrontRightPanel"]["qx_min"] = _param_get_helper(name="q_Left", category="FrontRightPanel",
+        params["FrontRightPanel"]["qx_min"] = _param_get_helper(name="qx_min", category="FrontRightPanel",
                                                                 default_value=0.01875)
-        params["FrontRightPanel"]["qx_max"] = _param_get_helper(name="q_Right", category="FrontRightPanel",
+        params["FrontRightPanel"]["qx_max"] = _param_get_helper(name="qx_max", category="FrontRightPanel",
                                                                 default_value=0.1188)
-        params["FrontRightPanel"]["match_button"] = _param_get_helper(name="matchRightMR", category="FrontRightPanel",
+        params["FrontRightPanel"]["match_button"] = _param_get_helper(name="match_button", category="FrontRightPanel",
                                                                       default_value=False)
         params["FrontTopPanel"]["verticalOffset"] = _param_get_helper(name="verticalOffset", category="FrontTopPanel",
                                                                       default_value=0)
-        params["FrontTopPanel"]["qy_min"] = _param_get_helper(name="qBottom", category="FrontTopPanel",
+        params["FrontTopPanel"]["qy_min"] = _param_get_helper(name="qy_min", category="FrontTopPanel",
                                                               default_value=0.001147)
-        params["FrontTopPanel"]["qy_max"] = _param_get_helper(name="q_Top", category="FrontTopPanel",
+        params["FrontTopPanel"]["qy_max"] = _param_get_helper(name="qy_max", category="FrontTopPanel",
                                                               default_value=0.09234)
-        params["FrontTopPanel"]["match_button"] = _param_get_helper(name="matchTopMR", category="FrontTopPanel",
+        params["FrontTopPanel"]["match_button"] = _param_get_helper(name="match_button", category="FrontTopPanel",
                                                                     default_value=False)
         params["FrontBottomPanel"]["verticalOffset"] = _param_get_helper(name="verticalOffset",
                                                                          category="FrontBottomPanel", default_value=0)
-        params["FrontBottomPanel"]["qy_max"] = _param_get_helper(name="q_Top", category="FrontBottomPanel",
+        params["FrontBottomPanel"]["qy_max"] = _param_get_helper(name="qy_max", category="FrontBottomPanel",
                                                                  default_value=-0.003139)
-        params["FrontBottomPanel"]["qy_min"] = _param_get_helper(name="q_Bottom", category="FrontBottomPanel",
+        params["FrontBottomPanel"]["qy_min"] = _param_get_helper(name="qy_min", category="FrontBottomPanel",
                                                                  default_value=-0.09432)
-        params["FrontBottomPanel"]["match_button"] = _param_get_helper(name="matchBottomMR",
+        params["FrontBottomPanel"]["match_button"] = _param_get_helper(name="match_button",
                                                                        category="FrontBottomPanel", default_value=False)
         return params
 
@@ -264,10 +269,10 @@ class VSANS():
         return self.collimation.l_1
 
     def get_l_2(self):
-        return self.all_carriage.L_2
+        return self.all_carriage.l_2
 
-    def get_sourceAperture(self):
-        return self.collimation.sourceAperture
+    def get_source_aperture(self):
+        return self.collimation.source_aperture
 
     def get_sample_aperture(self):
         return self.collimation.sample_aperture
@@ -279,70 +284,69 @@ class VSANS():
         user_inaccessible = _create_vsans_dict(name=False)
         user_inaccessible["Beam"]["wavelength"] = self.beam.wavelength
         user_inaccessible["Beam"]["dlambda"] = self.beam.dlambda
-        user_inaccessible["Beam"]["frontendTrans"] = self.beam.frontendTrans
+        user_inaccessible["Beam"]["frontend_trans"] = self.beam.frontend_trans
         user_inaccessible["Beam"]["flux"] = self.beam.flux
-        user_inaccessible["Beam"]["beamCurrent"] = self.beam.beamCurrent
-        user_inaccessible["Beam"]["iSub0"] = self.beam.iSub0
+        user_inaccessible["Beam"]["beam_current"] = self.beam.beam_current
+        user_inaccessible["Beam"]["i_sub_zero"] = self.beam.i_sub_zero
         user_inaccessible["Collimation"]["guide_select"] = self.collimation.guide_select
-        user_inaccessible["Collimation"]["sourceAperture_js"] = self.collimation.sourceAperture_js
-        user_inaccessible["Collimation"]["sourceDistance"] = self.collimation.sourceDistance
+        user_inaccessible["Collimation"]["source_aperture_js"] = self.collimation.source_aperture_js
+        user_inaccessible["Collimation"]["source_distance"] = self.collimation.source_distance
         user_inaccessible["Collimation"]["t_filter"] = self.collimation.t_filter
         user_inaccessible["Collimation"]["t_guide"] = self.collimation.t_guide
-        user_inaccessible["Collimation"]["extSampleAperture"] = self.collimation.extSampleAperture
-        user_inaccessible["Collimation"]["sampleToApGv"] = self.collimation.sampleToApGv
-        user_inaccessible["Collimation"]["sampleToGv"] = self.collimation.sampleToGv
+        user_inaccessible["Collimation"]["ext_sample_aperture"] = self.collimation.ext_sample_aperture
+        user_inaccessible["Collimation"]["sample_to_ap_gv"] = self.collimation.sample_to_ap_gv
+        user_inaccessible["Collimation"]["sample_to_gv"] = self.collimation.sample_to_gv
         user_inaccessible["Collimation"]["l_1"] = self.collimation.l_1
-        user_inaccessible["Collimation"]["aOverL"] = self.collimation.aOverL
-        user_inaccessible["MiddleCarriage"]["ssdInput"] = self.middle_Carriage.ssdInput
+        user_inaccessible["Collimation"]["a_over_l"] = self.collimation.a_over_l
+        user_inaccessible["MiddleCarriage"]["ssd_input"] = self.middle_Carriage.ssd_input
         user_inaccessible["MiddleCarriage"]["ssd"] = self.middle_Carriage.ssd
-        user_inaccessible["MiddleCarriage"]["L_2"] = self.all_carriage.L_2
-        user_inaccessible["MiddleCarriage"]["beamDrop"] = self.all_carriage.beamDrop
-        user_inaccessible["MiddleCarriage"]["beamstopRequired"] = self.all_carriage.beamstopRequired
-        user_inaccessible["MiddleCarriage"]["Beamstop"] = self.all_carriage.Beamstop
+        user_inaccessible["MiddleCarriage"]["l_2"] = self.all_carriage.l_2
+        user_inaccessible["MiddleCarriage"]["beam_drop"] = self.all_carriage.beam_drop
+        user_inaccessible["MiddleCarriage"]["beamstop_required"] = self.all_carriage.beamstop_required
+        user_inaccessible["MiddleCarriage"]["beamstop"] = self.all_carriage.beamstop
         user_inaccessible["MiddleCarriage"]["θ2_min"] = self.all_carriage.θ2_min
-        user_inaccessible["MiddleCarriage"]["q_min"] = self.middle_Carriage.dqCalc.q_min
-        user_inaccessible["MiddleCarriage"]["dQx_Middle_min"] = self.middle_Carriage.dqCalc.dQx_min
-        user_inaccessible["MiddleCarriage"]["dQy_Middle_min"] = self.middle_Carriage.dqCalc.dQy_min
-        user_inaccessible["MiddleCarriage"]["qMax"] = self.middle_Carriage.dqCalc.qMax
-        user_inaccessible["MiddleCarriage"]["dQx_Middle_max"] = self.middle_Carriage.dqCalc.dQx_max
-        user_inaccessible["MiddleCarriage"]["dQy_Middle_max"] = self.middle_Carriage.dqCalc.dQy_max
+        user_inaccessible["MiddleCarriage"]["q_min"] = self.middle_Carriage.dq_calc.q_min
+        user_inaccessible["MiddleCarriage"]["dqx_min"] = self.middle_Carriage.dq_calc.dqx_min
+        user_inaccessible["MiddleCarriage"]["dqy_min"] = self.middle_Carriage.dq_calc.dqy_min
+        user_inaccessible["MiddleCarriage"]["q_max"] = self.middle_Carriage.dq_calc.q_max
+        user_inaccessible["MiddleCarriage"]["dqx_max"] = self.middle_Carriage.dq_calc.dqx_max
+        user_inaccessible["MiddleCarriage"]["dqy_max"] = self.middle_Carriage.dq_calc.dqy_max
         user_inaccessible["MiddleCarriage"]["refBeamCtr_x"] = self.middle_Carriage.refBeamCtr_x
         user_inaccessible["MiddleCarriage"]["refBeamCtr_y"] = self.middle_Carriage.refBeamCtr_y
-        # TODO add the panel return back when panel class is fixed
-        user_inaccessible["MidLeftPanel"]["lateralOffset"] = self.middle_Carriage.leftPanel.lateralOffset
-        user_inaccessible["MidLeftPanel"]["Q_right"] = self.middle_Carriage.leftPanel.qx_max
-        user_inaccessible["MidLeftPanel"]["qx_ML_min"] = self.middle_Carriage.leftPanel.qx_min
-        user_inaccessible["MidRightPanel"]["lateralOffset"] = self.middle_Carriage.rightPanel.lateralOffset
-        user_inaccessible["MidRightPanel"]["qx_MR_min"] = self.middle_Carriage.rightPanel.qx_min
-        user_inaccessible["MidRightPanel"]["qx_MR_max"] = self.middle_Carriage.rightPanel.qx_max
-        user_inaccessible["MidRightPanel"]["qy_MR_min"] = self.middle_Carriage.rightPanel.qy_min
-        user_inaccessible["MidRightPanel"]["qy_MR_max"] = self.middle_Carriage.rightPanel.qy_max
-        user_inaccessible["FrontCarriage"]["qmin"] = self.front_Carriage.dqCalc.q_min
-        user_inaccessible["FrontCarriage"]["dQx_Front_min"] = self.front_Carriage.dqCalc.dQx_min
-        user_inaccessible["FrontCarriage"]["dQy_Front_min"] = self.front_Carriage.dqCalc.dQy_min
-        user_inaccessible["FrontCarriage"]["qMax"] = self.front_Carriage.dqCalc.qMax
-        user_inaccessible["FrontCarriage"]["dQx_Front_max"] = self.front_Carriage.dqCalc.dQx_max
-        user_inaccessible["FrontCarriage"]["dQy_Front_max"] = self.front_Carriage.dqCalc.dQy_max
+        user_inaccessible["MidLeftPanel"]["lateralOffset"] = self.middle_Carriage.left_panel.lateralOffset
+        user_inaccessible["MidLeftPanel"]["qx_max"] = self.middle_Carriage.left_panel.qx_max
+        user_inaccessible["MidLeftPanel"]["qx_min"] = self.middle_Carriage.left_panel.qx_min
+        user_inaccessible["MidRightPanel"]["lateralOffset"] = self.middle_Carriage.right_panel.lateralOffset
+        user_inaccessible["MidRightPanel"]["qx_min"] = self.middle_Carriage.right_panel.qx_min
+        user_inaccessible["MidRightPanel"]["qx_max"] = self.middle_Carriage.right_panel.qx_max
+        user_inaccessible["MidRightPanel"]["qy_min"] = self.middle_Carriage.right_panel.qy_min
+        user_inaccessible["MidRightPanel"]["qy_max"] = self.middle_Carriage.right_panel.qy_max
+        user_inaccessible["FrontCarriage"]["q_min"] = self.front_Carriage.dq_calc.q_min
+        user_inaccessible["FrontCarriage"]["dqx_min"] = self.front_Carriage.dq_calc.dqx_min
+        user_inaccessible["FrontCarriage"]["dqy_min"] = self.front_Carriage.dq_calc.dqy_min
+        user_inaccessible["FrontCarriage"]["q_max"] = self.front_Carriage.dq_calc.q_max
+        user_inaccessible["FrontCarriage"]["dqx_max"] = self.front_Carriage.dq_calc.dqx_max
+        user_inaccessible["FrontCarriage"]["dqy_max"] = self.front_Carriage.dq_calc.dqy_max
         user_inaccessible["FrontCarriage"]["ssd_input"] = self.front_Carriage.ssd_input
         user_inaccessible["FrontCarriage"]["ssd"] = self.front_Carriage.ssd
         user_inaccessible["FrontCarriage"]["refBeamCtrX"] = self.front_Carriage.refBeamCtr_x
         user_inaccessible["FrontCarriage"]["RefBeamCtrY"] = self.front_Carriage.refBeamCtr_y
-        user_inaccessible["FrontLeftPanel"]["lateralOffset"] = self.front_Carriage.leftPanel.lateralOffset
-        user_inaccessible["FrontLeftPanel"]["q_right"] = self.front_Carriage.leftPanel.qx_max
-        user_inaccessible["FrontLeftPanel"]["q_left"] = self.front_Carriage.leftPanel.qx_min
-        user_inaccessible["FrontLeftPanel"]["matchMLButton"] = self.front_Carriage.leftPanel.match_button
-        user_inaccessible["FrontRightPanel"]["lateralOffset"] = self.front_Carriage.rightPanel.lateralOffset
-        user_inaccessible["FrontRightPanel"]["q_Left"] = self.front_Carriage.rightPanel.qx_min
-        user_inaccessible["FrontRightPanel"]["q_Right"] = self.front_Carriage.rightPanel.qx_max
-        user_inaccessible["FrontRightPanel"]["matchRightMR"] = self.front_Carriage.rightPanel.match_button
-        user_inaccessible["FrontTopPanel"]["verticalOffset"] = self.front_Carriage.topPanel.verticalOffset
-        user_inaccessible["FrontTopPanel"]["qBottom"] = self.front_Carriage.topPanel.qy_min
-        user_inaccessible["FrontTopPanel"]["q_Top"] = self.front_Carriage.topPanel.qy_max
-        user_inaccessible["FrontTopPanel"]["matchTopMR"] = self.front_Carriage.topPanel.match_button
-        user_inaccessible["FrontBottomPanel"]["verticalOffset"] = self.front_Carriage.bottomPanel.verticalOffset
-        user_inaccessible["FrontBottomPanel"]["q_Top"] = self.front_Carriage.bottomPanel.qy_max
-        user_inaccessible["FrontBottomPanel"]["q_Bottom"] = self.front_Carriage.bottomPanel.qy_min
-        user_inaccessible["FrontBottomPanel"]["matchBottomMR"] = self.front_Carriage.bottomPanel.match_button
+        user_inaccessible["FrontLeftPanel"]["lateralOffset"] = self.front_Carriage.left_panel.lateralOffset
+        user_inaccessible["FrontLeftPanel"]["qx_max"] = self.front_Carriage.left_panel.qx_max
+        user_inaccessible["FrontLeftPanel"]["qx_min"] = self.front_Carriage.left_panel.qx_min
+        user_inaccessible["FrontLeftPanel"]["match_button"] = self.front_Carriage.left_panel.match_button
+        user_inaccessible["FrontRightPanel"]["lateralOffset"] = self.front_Carriage.right_panel.lateralOffset
+        user_inaccessible["FrontRightPanel"]["qx_min"] = self.front_Carriage.right_panel.qx_min
+        user_inaccessible["FrontRightPanel"]["qx_max"] = self.front_Carriage.right_panel.qx_max
+        user_inaccessible["FrontRightPanel"]["match_button"] = self.front_Carriage.right_panel.match_button
+        user_inaccessible["FrontTopPanel"]["verticalOffset"] = self.front_Carriage.top_panel.verticalOffset
+        user_inaccessible["FrontTopPanel"]["qy_min"] = self.front_Carriage.top_panel.qy_min
+        user_inaccessible["FrontTopPanel"]["qy_max"] = self.front_Carriage.top_panel.qy_max
+        user_inaccessible["FrontTopPanel"]["match_button"] = self.front_Carriage.top_panel.match_button
+        user_inaccessible["FrontBottomPanel"]["verticalOffset"] = self.front_Carriage.bottom_panel.verticalOffset
+        user_inaccessible["FrontBottomPanel"]["qy_max"] = self.front_Carriage.bottom_panel.qy_max
+        user_inaccessible["FrontBottomPanel"]["qy_min"] = self.front_Carriage.bottom_panel.qy_min
+        user_inaccessible["FrontBottomPanel"]["match_button"] = self.front_Carriage.bottom_panel.match_button
         python_return = {"user_inaccessible": user_inaccessible}
         if self.options is not {}:
             python_return['options'] = self.options
@@ -355,9 +359,9 @@ class VSANS():
         if type_info == "preset":
             return VSANS.preset_change(rest_info)
         elif type_info == "guideUpdate":
-            sourceAperture_js = rest_info[:rest_info.find('+')]
+            source_aperture_js = rest_info[:rest_info.find('+')]
             guide_select = rest_info[rest_info.find('+') + 1:]
-            return VSANS.update_source_aperture(sourceAperture_js=sourceAperture_js, guide_select=guide_select)
+            return VSANS.update_source_aperture(source_aperture_js=source_aperture_js, guide_select=guide_select)
 
     @staticmethod
     def preset_change(preset):
@@ -369,28 +373,28 @@ class VSANS():
     @staticmethod
     def update_source_aperture_with_data(results):
         # Update the number of guides to be correct
-        sourceAperture_js = results["Collimation"]["sourceAperture_js"]
+        source_aperture_js = results["Collimation"]["source_aperture_js"]
         guide_select = results["Collimation"]["guide_select"]
-        return VSANS.update_source_aperture(results=results, sourceAperture_js=sourceAperture_js,
+        return VSANS.update_source_aperture(results=results, source_aperture_js=source_aperture_js,
                                             guide_select=guide_select)
 
     @staticmethod
-    def update_source_aperture(results=None, sourceAperture_js='0.0', guide_select='0'):
+    def update_source_aperture(results=None, source_aperture_js='0.0', guide_select='0'):
         if results is None: results = {"Collimation": {}, "options": {}}
         if guide_select == '0':
             valid_ops = ['7.5', '15.0', '30.0']
-            if not sourceAperture_js in valid_ops:
-                sourceAperture_js = '30.0'
+            if not source_aperture_js in valid_ops:
+                source_aperture_js = '30.0'
         elif guide_select == 'CONV_BEAMS':
-            if sourceAperture_js != '6.0':
-                sourceAperture_js = '6.0'
+            if source_aperture_js != '6.0':
+                source_aperture_js = '6.0'
             valid_ops = ['6.0']
         else:
-            if sourceAperture_js != '60.0':
-                sourceAperture_js = '60.0'
+            if source_aperture_js != '60.0':
+                source_aperture_js = '60.0'
             valid_ops = ['60.0']
-        results["Collimation"]["sourceAperture_js"] = sourceAperture_js
-        results["options"]["Collimation+ sourceAperture_js"] = {"type": "options", "set_to": valid_ops}
+        results["Collimation"]["source_aperture_js"] = source_aperture_js
+        results["options"]["Collimation+ source_aperture_js"] = {"type": "options", "set_to": valid_ops}
         return results
 
     @staticmethod
@@ -399,7 +403,7 @@ class VSANS():
 
         params[category][elementName] = {element_parameters}
 
-        + **User editable elements:** sampleTable, wavelengthInput, wavelengthSpread, guideConfig, sourceAperture,
+        + **User editable elements:** sampleTable, wavelengthInput, wavelengthSpread, guideConfig, source_aperture,
           sampleAperture,customAperture, sDDInputBox, sDDDefaults, offsetInputBox and offsetDefaults
 
         + **Read only elements:** beamFlux, figureOfMerit, attenuators, attenuationFactor,
@@ -420,84 +424,75 @@ class VSANS():
         # the previous value of the preset, so we can check if it has changed
         params["Beam"]["wavelength"] = create_wavelength_input(lower_limit=None, upper_limit=None)
         params["Beam"]["dlambda"] = create_wavelength_spread(options=[0.02, 0.12, 0.4], default=0.12)
-        params["Beam"]["frontendTrans"] = create_number_output(name="Frontend Trans", default=1.0,
+        params["Beam"]["frontend_trans"] = create_number_output(name="Frontend Trans", default=1.0,
                                                                options=[0.5, 1.0, 0.7], unit=None)
         params["Beam"]["flux"] = create_number_output(name="Flux", unit="Φ", default=1.362e+11)
-        params["Beam"]["beamCurrent"] = create_number_output(name="Beam Current", unit="1/s", default=1.055e+5)
-        params["Beam"]["iSub0"] = create_number_output(name="I0", unit="1/s/cm^2", default=8.332e+4)
-        params["Collimation"]["guide_select"] = create_guide_config(
-            options=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, "CONV_BEAMS"], extra=0)
-        params["Collimation"]["sourceAperture_js"] = create_source_aperture(unit="mm", options=[7.5, 15.0, 30.0],
-                                                                            default=30.0)
-        params["Collimation"]["sourceDistance"] = create_number_output(name="Source distance", unit="cm", default=2441)
+        params["Beam"]["beam_current"] = create_number_output(name="Beam Current", unit="1/s", default=1.055e+5)
+        params["Beam"]["i_sub_zero"] = create_number_output(name="I0", unit="1/s/cm^2", default=8.332e+4)
+        params["Collimation"]["guide_select"] = create_guide_config(options=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, "CONV_BEAMS"], extra=0)
+        params["Collimation"]["source_aperture_js"] = create_source_aperture(unit="mm", options=[7.5, 15.0, 30.0],
+                                                                             default=30.0)
+        params["Collimation"]["source_distance"] = create_number_output(name="Source distance", unit="cm", default=2441)
         params["Collimation"]["t_filter"] = create_number_output(name="T_filter", unit=None, default=0.5062523594147008)
         params["Collimation"]["t_guide"] = create_number_output(name="T_guide", unit=None, default=1)
-        params["Collimation"]["extSampleAperture"] = create_number_input(name="Ext. Sample aperture", unit="mm",
+        params["Collimation"]["ext_sample_aperture"] = create_number_input(name="Ext. Sample aperture", unit="mm",
                                                                          default=12.7, step=0.1)
-        params["Collimation"]["sampleToApGv"] = create_number_input(name="Sample ap. to GV", unit="cm", default=22)
-        params["Collimation"]["sampleToGv"] = create_number_input(name="Sample to GV", unit="cm", default=11)
+        params["Collimation"]["sample_to_ap_gv"] = create_number_input(name="Sample ap. to GV", unit="cm", default=22)
+        params["Collimation"]["sample_to_gv"] = create_number_input(name="Sample to GV", unit="cm", default=11)
         params["Collimation"]["l_1"] = create_number_output(name="L1", unit="cm", default=2419)
-        params["Collimation"]["aOverL"] = create_number_output(name="A_1A_2/L_1", unit=None, default=0.000001530)
+        params["Collimation"]["a_over_l"] = create_number_output(name="A_1A_2/L_1", unit=None, default=0.000001530)
         # Middle Carriage
-        params["MiddleCarriage"]["ssdInput"] = create_number_input(name="SDD input", unit="cm", default=1900)
+        params["MiddleCarriage"]["ssd_input"] = create_number_input(name="SDD input", unit="cm", default=1900)
         params["MiddleCarriage"]["ssd"] = create_number_input(name="SSD", unit="cm", default=1911, readonly=True)
-        params["MiddleCarriage"]["L_2"] = create_number_output(name="L_2", unit="cm", default=1922)
-        params["MiddleCarriage"]["beamDrop"] = create_number_output(name="Beam Drop", unit="cm", default=0.9414)
-        params["MiddleCarriage"]["beamstopRequired"] = create_number_output(name="Beamstop Required", unit="inch",
-                                                                            default=2.014)
-        params["MiddleCarriage"]["Beamstop"] = create_number_select(name="Beamstop", unit="inch", options=[2, 3, 4],
-                                                                    default=2)
+        params["MiddleCarriage"]["l_2"] = create_number_output(name="l_2", unit="cm", default=1922)
+        params["MiddleCarriage"]["beam_drop"] = create_number_output(name="Beam Drop", unit="cm", default=0.9414)
+        params["MiddleCarriage"]["beamstop_required"] = create_number_output(name="Beamstop Required", unit="inch",
+                                                                             default=2.014)
+        params["MiddleCarriage"]["beamstop"] = create_number_select(name="beamstop", unit="inch", options=[2, 3, 4],default=2)
         params["MiddleCarriage"]["θ2_min"] = create_number_output(name="2θ_min", unit="rad", default=0.001329)
         params["MiddleCarriage"]["q_min"] = create_number_output(name="Q_min", unit="1/Å", default=0.001392)
-        params["MiddleCarriage"]["dQx_Middle_min"] = create_number_output(name="(ΔQ/Qmin)_x", default=0.3393)
-        params["MiddleCarriage"]["dQy_Middle_min"] = create_number_output(name="(ΔQ/Q_min)_y", default=0.3412)
-        params["MiddleCarriage"]["qMax"] = create_number_output(name="Qmax", unit="1/Å", default=0.03818)
-        params["MiddleCarriage"]["dQx_Middle_max"] = create_number_output(name="(ΔQ/Q_max)_x", default=0.05050)
-        params["MiddleCarriage"]["dQy_Middle_max"] = create_number_output(name="(ΔQ/Q_max)_y", default=0.05051)
-        params["MiddleCarriage"]["refBeamCtr_x"] = create_number_input(name="Ref Beam Ctr_x", default=0, step=0.1,
-                                                                       unit="cm")
-        params["MiddleCarriage"]["refBeamCtr_y"] = create_number_input(name="Ref Beam Ctr_y", default=0, step=0.1,
-                                                                       unit="cm")
+        params["MiddleCarriage"]["dqx_min"] = create_number_output(name="(ΔQ/Qmin)_x", default=0.3393)
+        params["MiddleCarriage"]["dqy_min"] = create_number_output(name="(ΔQ/Q_min)_y", default=0.3412)
+        params["MiddleCarriage"]["q_max"] = create_number_output(name="Qmax", unit="1/Å", default=0.03818)
+        params["MiddleCarriage"]["dqx_max"] = create_number_output(name="(ΔQ/Q_max)_x", default=0.05050)
+        params["MiddleCarriage"]["dqy_max"] = create_number_output(name="(ΔQ/Q_max)_y", default=0.05051)
+        params["MiddleCarriage"]["refBeamCtr_x"] = create_number_input(name="Ref Beam Ctr_x", default=0, step=0.1,unit="cm")
+        params["MiddleCarriage"]["refBeamCtr_y"] = create_number_input(name="Ref Beam Ctr_y", default=0, step=0.1,unit="cm")
         params["MidLeftPanel"]["lateralOffset"] = create_number_input(name="Lateral Offset", unit="cm", default=-6)
-        params["MidLeftPanel"]["Q_right"] = create_number_output(name="Q_right", unit="1/Å", default=-0.003822)
-        params["MidLeftPanel"]["qx_ML_min"] = create_number_output(name="Q_left", unit="1/Å", default=-0.02545)
+        params["MidLeftPanel"]["qx_max"] = create_number_output(name="Q_right", unit="1/Å", default=-0.003822)
+        params["MidLeftPanel"]["qx_min"] = create_number_output(name="Q_left", unit="1/Å", default=-0.02545)
         params["MidRightPanel"]["lateralOffset"] = create_number_input(name="Lateral Offset", unit="cm", default=-5.5)
-        params["MidRightPanel"]["qx_MR_min"] = create_number_output(name="Q_left", unit="1/Å", default=-0.002622)
-        params["MidRightPanel"]["qx_MR_max"] = create_number_output(name="Q_right", unit="1/Å", default=0.01901)
-        params["MidRightPanel"]["qy_MR_min"] = create_number_output(name="Q_bottom", unit="1/Å", default=-0.02854)
-        params["MidRightPanel"]["qy_MR_max"] = create_number_output(name="Qtop", unit="1/Å", default=0.02809)
+        params["MidRightPanel"]["qx_min"] = create_number_output(name="Q_left", unit="1/Å", default=-0.002622)
+        params["MidRightPanel"]["qx_max"] = create_number_output(name="Q_right", unit="1/Å", default=0.01901)
+        params["MidRightPanel"]["qy_min"] = create_number_output(name="Q_bottom", unit="1/Å", default=-0.02854)
+        params["MidRightPanel"]["qy_max"] = create_number_output(name="Qtop", unit="1/Å", default=0.02809)
         # Front Carriage
-        params["FrontCarriage"]["qmin"] = create_number_output(name="Qmin", unit="1/Å", default=0.01875)
-        params["FrontCarriage"]["dQx_Front_min"] = create_number_output(name="(ΔQ/Q_min)_x", unit="1/Å",
-                                                                        default=0.05496)
-        params["FrontCarriage"]["dQy_Front_min"] = create_number_output(name="(ΔQ/_Qmin)_y", unit="1/Å",
-                                                                        default=0.05503)
-        params["FrontCarriage"]["qMax"] = create_number_output(name="Q_max", unit="1/Å", default=0.1826)
-        params["FrontCarriage"]["dQx_Front_max"] = create_number_output(name="(ΔQ/Q_max)_x", unit="1/Å",
-                                                                        default=0.04906)
-        params["FrontCarriage"]["dQy_Front_max"] = create_number_output(name="(ΔQ/_Qmax)_y", unit="1/Å",
-                                                                        default=0.04906)
+        params["FrontCarriage"]["q_min"] = create_number_output(name="Qmin", unit="1/Å", default=0.01875)
+        params["FrontCarriage"]["dqx_min"] = create_number_output(name="(ΔQ/Q_min)_x", unit="1/Å",default=0.05496)
+        params["FrontCarriage"]["dqy_min"] = create_number_output(name="(ΔQ/_Qmin)_y", unit="1/Å",default=0.05503)
+        params["FrontCarriage"]["q_max"] = create_number_output(name="Q_max", unit="1/Å", default=0.1826)
+        params["FrontCarriage"]["dqx_max"] = create_number_output(name="(ΔQ/Q_max)_x", unit="1/Å",default=0.04906)
+        params["FrontCarriage"]["dqy_max"] = create_number_output(name="(ΔQ/_Qmax)_y", unit="1/Å",default=0.04906)
         params["FrontCarriage"]["ssd_input"] = create_number_input(name="SSD Input", unit="cm", default=400)
         params["FrontCarriage"]["ssd"] = create_ssd(default=411, readonly=True)
         params["FrontCarriage"]["refBeamCtrX"] = create_number_input(name="Ref Beam Ctr X", unit="cm", default=0)
         params["FrontCarriage"]["RefBeamCtrY"] = create_number_input(name="Ref Beam Ctr Y", unit="cm", default=0)
         params["FrontLeftPanel"]["lateralOffset"] = create_number_input(name="Lateral Offset", unit="cm", default=-9.24)
-        params["FrontLeftPanel"]["q_right"] = create_number_output(name="Q_right", unit="1/Å", default=-0.02538)
-        params["FrontLeftPanel"]["q_left"] = create_number_output(name="Q_left", unit="1/Å", default=-0.1253)
-        params["FrontLeftPanel"]["matchMLButton"] = create_checkbox(name="Match to left edge of ML?", default=False)
-        params["FrontRightPanel"]["lateralOffset"] = create_number_input(name="Lateral Offset", unit="cm",
-                                                                         default=6.766)
-        params["FrontRightPanel"]["q_Left"] = create_number_output(name="Q_left", unit="1/Å", default=0.01875)
-        params["FrontRightPanel"]["q_Right"] = create_number_output(name="Q_right", unit="1/Å", default=0.1188)
-        params["FrontRightPanel"]["matchRightMR"] = create_checkbox(name="Match right edge to of MR", default=False)
+        params["FrontLeftPanel"]["qx_max"] = create_number_output(name="Q_right", unit="1/Å", default=-0.02538)
+        params["FrontLeftPanel"]["qx_min"] = create_number_output(name="Q_left", unit="1/Å", default=-0.1253)
+        params["FrontLeftPanel"]["match_button"] = create_checkbox(name="Match to left edge of ML?", default=False)
+        params["FrontRightPanel"]["lateralOffset"] = create_number_input(name="Lateral Offset", unit="cm",default=6.766)
+        params["FrontRightPanel"]["qx_min"] = create_number_output(name="Q_left", unit="1/Å", default=0.01875)
+        params["FrontRightPanel"]["qx_max"] = create_number_output(name="Q_right", unit="1/Å", default=0.1188)
+        params["FrontRightPanel"]["match_button"] = create_checkbox(name="Match right edge to of MR", default=False)
         params["FrontTopPanel"]["verticalOffset"] = create_number_input(name="Vertical Offset", unit="cm", default=0)
-        params["FrontTopPanel"]["qBottom"] = create_number_output(name="Qbottom", unit="1/Å", default=0.001147)
-        params["FrontTopPanel"]["q_Top"] = create_number_output(name="q_top", unit="1/Å", default=0.09234)
-        params["FrontTopPanel"]["matchTopMR"] = create_checkbox(name="Match Top Edge to MR", default=False)
+        params["FrontTopPanel"]["qy_min"] = create_number_output(name="Qbottom", unit="1/Å", default=0.001147)
+        params["FrontTopPanel"]["qy_max"] = create_number_output(name="q_top", unit="1/Å", default=0.09234)
+        params["FrontTopPanel"]["match_button"] = create_checkbox(name="Match Top Edge to MR", default=False)
         params["FrontBottomPanel"]["verticalOffset"] = create_number_input(name="Vertical Offset", unit="cm", default=0)
-        params["FrontBottomPanel"]["q_Top"] = create_number_output(name="Q_Top", unit="1/Å", default=-0.003139)
-        params["FrontBottomPanel"]["q_Bottom"] = create_number_output(name="Q_Bottom", unit="1/Å", default=-0.09432)
-        params["FrontBottomPanel"]["matchBottomMR"] = create_checkbox(name="Match Bottom Edge of MR", default=False)
+        params["FrontBottomPanel"]["qy_max"] = create_number_output(name="Q_Top", unit="1/Å", default=-0.003139)
+        params["FrontBottomPanel"]["qy_min"] = create_number_output(name="Q_Bottom", unit="1/Å", default=-0.09432)
+        params["FrontBottomPanel"]["match_button"] = create_checkbox(name="Match Bottom Edge of MR", default=False)
 
         params = check_params(params=params)
         return params
