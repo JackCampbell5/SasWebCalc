@@ -238,8 +238,8 @@ class MiddleCarriage:
         self.name = name
 
         # Create the secondary object off the main object
-        self.leftPanel = HorizontalPanel(self, params.get("MidLeftPanel", {}), name="ML")
-        self.rightPanel = HorizontalPanel(self, params.get("MidRightPanel", {}), name="MR")
+        self.leftPanel = HorizontalPanel(self, params.get("MidLeftPanel", {}), name="MidLeftPanel", short_name="ML")
+        self.rightPanel = HorizontalPanel(self, params.get("MidRightPanel", {}), name="MidRightPanel", short_name="MR")
         self.dqCalc = DqCalculator(self, params.get("MidDqValues", {}))
 
         params = params.get("MiddleCarriage", {})
@@ -272,10 +272,12 @@ class FrontCarriage:
         self.parent = parent
         self.name = name
         # Create the secondary object off the main object
-        self.leftPanel = HorizontalPanel(self, params.get("FrontLeftPanel", {}), name="FL")
-        self.rightPanel = HorizontalPanel(self, params.get("FrontRightPanel", {}), name="FR")
-        self.topPanel = VerticalPanel(self, params.get("FrontTopPanel", {}), name="FT")
-        self.bottomPanel = VerticalPanel(self, params.get("FrontBottomPanel", {}), name="FB")
+        self.leftPanel = HorizontalPanel(self, params.get("FrontLeftPanel", {}), name="FrontLeftPanel", short_name="FL")
+        self.rightPanel = HorizontalPanel(self, params.get("FrontRightPanel", {}), name="FrontRightPanel",
+                                          short_name="FR")
+        self.topPanel = VerticalPanel(self, params.get("FrontTopPanel", {}), name="FrontTopPanel", short_name="FT")
+        self.bottomPanel = VerticalPanel(self, params.get("FrontBottomPanel", {}), name="FrontBottomPanel",
+                                         short_name="FB")
         self.dqCalc = DqCalculator(self, params.get("FrontDqValues", {}))
         params = params.get("FrontCarriage", {})
 
@@ -383,9 +385,10 @@ class DqCalculator:
 
 
 class HorizontalPanel:
-    def __init__(self, parent, params, name="HorizontalPanel"):
+    def __init__(self, parent, params, name="HorizontalPanel", short_name="MR"):
         self.parent = parent
         self.name = name
+        self.short_name = short_name
         self.lateralOffset = 0.0
         self.qx_min = 0.0  # Left
         self.qx_max = 0.0  # Right
@@ -394,9 +397,36 @@ class HorizontalPanel:
         self.refBeamCtr_x = 0.0
         self.refBeamCtr_y = 0.0
         self.is_valid = 0.0
-        self.match_button = False
-        self.detectors = Detector(where=name)
+        self.match_button = None
+        self.detectors = Detector(where=short_name)
         set_params(instance=self, params=params)
+
+    def calculate_match(self):
+        if self.match_button is not None:
+            if self.match_button:
+                if self.short_name.find("L") != -1:
+                    self._calculate_match_left()
+                else:
+                    self._calculate_match_right()
+                self.parent.parent.options[self.name + "+lateralOffset"] = {"type": "readonly", "set_to": True}
+            else:
+                self.parent.parent.options[self.name + "+lateralOffset"] = {"type": "readonly", "set_to": False}
+
+    def _calculate_match_left(self):
+        middle_object = self.parent.parent.middle_Carriage
+        xmin = middle_object.leftPanel.detectors.x_min(
+            middle_object.leftPanel.lateralOffset) - middle_object.refBeamCtr_x
+        angle_min = math.atan2(xmin, middle_object.ssd)
+        fr_xmax = math.tan(angle_min) * self.parent.ssd + self.refBeamCtr_x
+        self.lateralOffset = self.detectors.lateral_offset_from_x_max(fr_xmax)
+
+    def _calculate_match_right(self):
+        middle_object = self.parent.parent.middle_Carriage
+        xmax = middle_object.rightPanel.detectors.x_max(
+            middle_object.rightPanel.lateralOffset) - middle_object.refBeamCtr_x
+        angle_max = math.atan2(xmax, middle_object.ssd)
+        fr_xmin = math.tan(angle_max) * self.parent.ssd + self.refBeamCtr_x
+        self.lateralOffset = self.detectors.lateral_offset_from_x_min(fr_xmin)
 
     def _calculate_q_helper(self, value):
         return 4 * math.pi / self.parent.parent.get_wavelength() * math.sin(math.atan2(value, self.parent.ssd) / 2)
@@ -424,6 +454,7 @@ class HorizontalPanel:
         # Update values to be used
         self.refBeamCtr_x = self.parent.refBeamCtr_x
         self.refBeamCtr_y = self.parent.refBeamCtr_y
+        self.calculate_match()
         self.calculate_qx_min()
         self.calculate_qx_max()
         self.calculate_qy_min()
@@ -432,17 +463,43 @@ class HorizontalPanel:
 
 
 class VerticalPanel:
-    def __init__(self, parent, params, name="VerticalPanel"):
+    def __init__(self, parent, params, name="VerticalPanel", short_name="FT"):
         self.parent = parent
         self.name = name
+        self.short_name = short_name
         self.verticalOffset = 0.0
         self.qy_min = 0.0  # Bottom
         self.qy_max = 0.0  # Top
         self.refBeamCtr_y = 0.0
         self.is_valid = 0.0
         self.match_button = False
-        self.detectors = Detector(where=name)
+        self.detectors = Detector(where=short_name)
         set_params(instance=self, params=params)
+
+    def calculate_match(self):
+        if self.match_button is not None:
+            if self.match_button:
+                if self.short_name.find("T") != -1:
+                    self._calculate_match_top()
+                else:
+                    self._calculate_match_bottom()
+                self.parent.parent.options[self.name + "+verticalOffset"] = {"type": "readonly", "set_to": True}
+            else:
+                self.parent.parent.options[self.name + "+verticalOffset"] = {"type": "readonly", "set_to": False}
+
+    def _calculate_match_bottom(self):
+        middle_object = self.parent.parent.middle_Carriage
+        ymin = middle_object.rightPanel.detectors.y_min(0) - middle_object.refBeamCtr_y
+        angle_min = math.atan2(ymin, middle_object.ssd)
+        fr_ymax = math.tan(angle_min) * (self.parent.ssd + self.detectors.setback) + self.refBeamCtr_y
+        self.verticalOffset = self.detectors.vertical_offset_from_y_max(fr_ymax)
+
+    def _calculate_match_top(self):
+        middle_object = self.parent.parent.middle_Carriage
+        ymax = middle_object.rightPanel.detectors.y_max(0) - middle_object.refBeamCtr_y
+        angle_max = math.atan2(ymax, middle_object.ssd)
+        fr_ymin = math.tan(angle_max) * (self.parent.ssd + self.detectors.setback) + self.refBeamCtr_y
+        self.verticalOffset = self.detectors.vertical_offset_from_y_min(fr_ymin)
 
     def _calculate_q_helper(self, value):
         return 4 * math.pi / self.parent.parent.get_wavelength() * math.sin(
@@ -466,6 +523,7 @@ class VerticalPanel:
     def calculate_panel(self):
         # Update values to be used
         self.refBeamCtr_y = self.parent.refBeamCtr_y
+        self.calculate_match()
         self.calculate_qy_min()
         self.calculate_qy_max()
         self.calculate_is_valid()
@@ -590,6 +648,8 @@ class Detector:
             self.panel_gap = 0.59
 
     def update_params(self):
+        # Fix the value of this as there are issues with this value
+
         self._coord1_zero_pos = -(self.panel_gap / 2.0 + (
                 self.num_tubes * self.tube_width)) if self.left_or_bottom else self.panel_gap / 2.0
         if self.orientation == 'VERTICAL':

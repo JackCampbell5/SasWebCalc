@@ -230,7 +230,8 @@ export default {
         let options_dict = results['options'];
         for(const option in options_dict){
           let option_dict = options_dict[option]
-          this.instrument_params[option_dict["category"]][option].options = option_dict["options"]
+          let arrayParams = option.split("+")
+          this.instrument_params[arrayParams[0]][arrayParams[1]][option_dict["type"]] = option_dict["set_to"]
         }//End for loop
       }
     },
