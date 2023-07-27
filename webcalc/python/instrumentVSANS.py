@@ -452,9 +452,6 @@ class HorizontalPanel:
         ymax = self.detectors.y_max() - self.refBeamCtr_y
         self.qy_max = self._calculate_q_helper(value=ymax)
 
-    def calculate_is_valid(self):
-        pass
-
     def calculate_panel(self):
         # Update values to be used
         self.refBeamCtr_x = self.parent.refBeamCtr_x
@@ -464,7 +461,6 @@ class HorizontalPanel:
         self.calculate_qx_max()
         self.calculate_qy_min()
         self.calculate_qy_max()
-        self.calculate_is_valid()
 
 
 class VerticalPanel:
@@ -522,16 +518,12 @@ class VerticalPanel:
         ymax = self.detectors.y_max(self.verticalOffset) - self.refBeamCtr_y
         self.qy_max = self._calculate_q_helper(value=ymax)
 
-    def calculate_is_valid(self):
-        pass
-
     def calculate_panel(self):
         # Update values to be used
         self.refBeamCtr_y = self.parent.refBeamCtr_y
         self.calculate_match()  # This needs to run first as it affects the values for the rest of the calculations
         self.calculate_qy_min()
         self.calculate_qy_max()
-        self.calculate_is_valid()
 
 
 class Detector:

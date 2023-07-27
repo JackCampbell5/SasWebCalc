@@ -483,8 +483,8 @@ class VSANS():
         params["front_carriage"]["dqy_max"] = create_number_output(name="(ΔQ/_Qmax)_y", unit="1/Å", default=0.04906)
         params["front_carriage"]["ssd_input"] = create_number_input(name="SSD Input", unit="cm", default=400)
         params["front_carriage"]["ssd"] = create_ssd(default=411, readonly=True)
-        params["front_carriage"]["refBeamCtrX"] = create_number_input(name="Ref Beam Ctr X", unit="cm", default=0)
-        params["front_carriage"]["RefBeamCtrY"] = create_number_input(name="Ref Beam Ctr Y", unit="cm", default=0)
+        params["front_carriage"]["refBeamCtr_x"] = create_number_input(name="Ref Beam Ctr X", unit="cm", default=0)
+        params["front_carriage"]["refBeamCtr_y"] = create_number_input(name="Ref Beam Ctr Y", unit="cm", default=0)
         params["front_left_panel"]["lateral_offset"] = create_number_input(name="Lateral Offset", unit="cm",
                                                                          default=-9.24)
         params["front_left_panel"]["qx_max"] = create_number_output(name="Q_right", unit="1/Å", default=-0.02538)
