@@ -12,7 +12,8 @@ webcalc\.python
 
     webcalc.python.instrument
     webcalc.python.instrumentJSParams
-    webcalc.python.instruments
+    instruments/webcalc.python.instruments
+    instrument_VSANS/webcalc.python.instrumentVSANS
     webcalc.python.slicers
     webcalc.python.link_to_sasmodels
     webcalc.python.units
