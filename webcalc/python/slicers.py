@@ -1,10 +1,11 @@
-# TODO: Create slicer class and child slicers
 # built-in imports
 import math
 from typing import Union
 
 import numpy as np
 from scipy.special import gamma, gammainc, erf
+
+from sasdata.data_util.manipulations import CircularAverage, SectorQ, Ring, SlabX
 
 
 #  Calculate the x or y distance from the beam center of a given pixel
@@ -320,16 +321,18 @@ class Slicer:
 
 
 # Circular averaging class (No overridden methods)
-class Circular(Slicer):
+class Circular(Slicer, CircularAverage):
     def __init__(self, params):
-        super().__init__(params)
+        Slicer.__init__(self, params)
+        CircularAverage.__init__(self, 0.0, math.sqrt(self.max_qx**2 + self.max_qy**2))
         self.average_type = "circular"
 
 
 # Sector averaging class 3 overridden methods
-class Sector(Slicer):
+class Sector(Slicer, SectorQ):
     def __init__(self, params):
-        super().__init__(params)
+        Slicer.__init__(self, params)
+        SectorQ.__init__(self, 0.0, math.sqrt(self.max_qx**2 + self.max_qy**2), self.phi_min, self.phi_max, 20)
         self.average_type = "sector"
 
     def include_pixel(self, x_val, y_val, mask):
@@ -344,9 +347,10 @@ class Sector(Slicer):
         return (both or left or right) and (mask == 0)
 
 
-class Rectangular(Slicer):
+class Rectangular(Slicer, SlabX):
     def __init__(self, params):
-        super().__init__(params)
+        Slicer.__init__(self, params)
+        SlabX.__init__(self, self.x_min, self.x_max, self.y_min, self.y_max)
         self.average_type = "rectangular"
 
     def include_pixel(self, x_val, y_val, mask):
@@ -378,9 +382,10 @@ class Elliptical(Slicer):
             math.cos(rho) * math.cos(rho) + self.aspect_ratio * math.sin(rho) * math.sin(rho))) + 1
 
 
-class Annular(Slicer):
+class Annular(Slicer, Ring):
     def __init__(self, params):
-        super().__init__(params)
+        Slicer.__init__(self, params)
+        Ring.__init__(self, r_min=self.q_center - self.q_width, r_max=self.q_center + self.q_width, nbins=36)
         self.average_type = "annular"
 
     def include_pixel(self, x_val, y_val, mask):
