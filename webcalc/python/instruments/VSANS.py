@@ -3,6 +3,7 @@ from ..instrumentJSParams import *
 from typing import Dict, List, Union
 from ..instrumentVSANS import *
 from ..constants import VSANS_Constants
+from ..plotDataVSANS import PlotData
 
 Number = Union[float, int]
 
@@ -72,7 +73,9 @@ class VSANS():
         self.collimation = None
         self.middle_carriage = None
         self.front_carriage = None
-        self.constants = VSANS_Constants().get_constants(self.preset, _create_vsans_dict(name=False))
+        self.plot_data = None
+        self.constants = VSANS_Constants().get_constants(self.preset, _create_vsans_dict(name=False))  # TODO Look at
+        # if this is necessary
         # Super is the Instrument class
         params = params["instrument_params"]
         self.load_params(params)
@@ -282,6 +285,16 @@ class VSANS():
         self.middle_carriage.calculate_middleCarriage()
         self.front_carriage.calculate_frontCarriage()
 
+    def calculate_plots(self):
+        """FUnction takes in all the params from the other classes needed to calculate the plot data and passes it
+        as a parameter to the innit statement of the PLotData class
+
+        :return:
+        """
+        plot_params = {}
+
+        self.plot_data = PlotData()
+
     # Get methods After here
     def get_wavelength(self):
         return self.beam.wavelength
@@ -301,7 +314,9 @@ class VSANS():
     # Get methods before here
 
     def sas_calc(self) -> Dict[str, Union[Number, str, List[Union[Number, str]]]]:
+        # Calculate all the objects
         self.calculate_objects()
+        # Calculate all the Plots
         user_inaccessible = _create_vsans_dict(name=False)
         user_inaccessible["beam"]["wavelength"] = self.beam.wavelength
         user_inaccessible["beam"]["dlambda"] = self.beam.dlambda

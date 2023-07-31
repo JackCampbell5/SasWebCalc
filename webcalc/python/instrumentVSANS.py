@@ -178,8 +178,7 @@ class AllCarriage:
         self.calculate_gravity_drop_min()
         self.calculate_gravity_drop_max()
         # The actual calculations being done
-        beam_size_geometric = self.parent.get_source_aperture() * self.l_2 / self.imported_l_1 + \
-                              self.parent.get_sample_aperture() * (
+        beam_size_geometric = self.parent.get_source_aperture() * self.l_2 / self.imported_l_1 + self.parent.get_sample_aperture() * (
                 self.imported_l_1 + self.l_2) / self.imported_l_1
         gravity_width = abs(self.gravity_drop_max - self.gravity_drop_min)
         beamstopRequired = beam_size_geometric + gravity_width
@@ -191,7 +190,7 @@ class AllCarriage:
 
     def calculate_θ2_min(self):
         # Also known as TwoTheta_min
-        #FIx the calculation of this value
+        # FIx the calculation of this value
         self.parent.middle_carriage.calculate_ssd()
         self.two_theta_min = math.atan2(self.beam_stop_cm / 2, self.parent.middle_carriage.ssd)
 
