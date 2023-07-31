@@ -332,8 +332,8 @@ class VSANS():
         user_inaccessible["front_carriage"]["dqy_max"] = self.front_carriage.dq_calc.dqy_max
         user_inaccessible["front_carriage"]["ssd_input"] = self.front_carriage.ssd_input
         user_inaccessible["front_carriage"]["ssd"] = self.front_carriage.ssd
-        user_inaccessible["front_carriage"]["refBeamCtrX"] = self.front_carriage.refBeamCtr_x
-        user_inaccessible["front_carriage"]["RefBeamCtrY"] = self.front_carriage.refBeamCtr_y
+        user_inaccessible["front_carriage"]["refBeamCtr_x"] = self.front_carriage.refBeamCtr_x
+        user_inaccessible["front_carriage"]["refBeamCtr_y"] = self.front_carriage.refBeamCtr_y
         user_inaccessible["front_left_panel"]["lateral_offset"] = self.front_carriage.left_panel.lateral_offset
         user_inaccessible["front_left_panel"]["qx_max"] = self.front_carriage.left_panel.qx_max
         user_inaccessible["front_left_panel"]["qx_min"] = self.front_carriage.left_panel.qx_min
