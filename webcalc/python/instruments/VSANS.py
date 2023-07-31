@@ -8,6 +8,13 @@ Number = Union[float, int]
 
 
 def _create_vsans_dict(name=True, additional=False):
+    """Creates the sub dictionary necessary for the VSANS instrument to work properly and returns the all in 1
+    dictionary
+
+    :param Boolean name:
+    :param Boolean additional:
+    :return:
+    """
     vsans_dict = {}
     vsans_dict["presets"] = {"name": "Presets"} if name else {}
     vsans_dict["beam"] = {"name": "Beam"} if name else {}
@@ -31,7 +38,19 @@ def _create_vsans_dict(name=True, additional=False):
 class VSANS():
     """ A class to manipulate NG7SANS as a subclass of the instrument class
 
-    :param  self.name: The name of the instrument
+    :param str self.name: The name of the instrument
+    :param dict self.preset: What the preset selected is for the VSANS instrument
+    :param dict self.options: The options to return to the JS to change specific parts of the parameters that are not default
+    :param Beam self.beam: The beam object that contains info related to the beam section of the params
+    :param Collimation self.collimation: The Collimation object that contains info related to the collimation section
+    of the params
+    :param AllCarriage self.all_carriage: The AllCarriage object that contains info related to some params in the
+    MiddleCarriage section of the params
+    :param MiddleCarriage self.middle_carriage: The MiddleCarriage object that contains info related to the Middle
+    Carriage and middle detector section of the params
+    :param FrontCarriage self.front_carriage: The FrontCarriage object that contains info related to the Front
+    Carriage and front detectors section of the params
+    :param Constants self.constants: The Constants object that contains the constants needed for the VSANS instrument
     """
     class_name = "VSANS"
     name_shown = "VSANS"
@@ -128,106 +147,105 @@ class VSANS():
         params["collimation"]["a_over_l"] = _param_get_helper(name="a_over_l", category="collimation",
                                                               default_value=0.000001530)
         params["middle_carriage"]["ssd_input"] = _param_get_helper(name="ssd_input", category="middle_carriage",
-                                                                  default_value=1900)
+                                                                   default_value=1900)
         params["middle_carriage"]["ssd"] = _param_get_helper(name="ssd", category="middle_carriage", default_value=1911)
         params["all_carriage"]["l_2"] = _param_get_helper(name="l_2", category="middle_carriage", default_value=1922)
         params["all_carriage"]["beam_drop"] = _param_get_helper(name="beam_drop", category="middle_carriage",
-                                                               default_value=0.9414)
+                                                                default_value=0.9414)
         params["all_carriage"]["beamstop_required"] = _param_get_helper(name="beamstop_required",
-                                                                       category="middle_carriage", default_value=2.014)
+                                                                        category="middle_carriage", default_value=2.014)
         params["all_carriage"]["beamstop"] = _param_get_helper(name="beamstop", category="middle_carriage",
-                                                              default_value=2)
+                                                               default_value=2)
         params["all_carriage"]["two_theta_min"] = _param_get_helper(name="two_theta_min", category="middle_carriage",
-                                                            default_value=0.001329)
+                                                                    default_value=0.001329)
         params["mid_dq_values"]["q_min"] = _param_get_helper(name="q_min", category="middle_carriage",
-                                                           default_value=0.001392)
+                                                             default_value=0.001392)
         params["mid_dq_values"]["dqx_min"] = _param_get_helper(name="dqx_min", category="middle_carriage",
-                                                             default_value=0.3393)
+                                                               default_value=0.3393)
         params["mid_dq_values"]["dqx_min"] = _param_get_helper(name="dqx_min", category="middle_carriage",
-                                                             default_value=0.3412)
+                                                               default_value=0.3412)
         params["mid_dq_values"]["q_max"] = _param_get_helper(name="q_max", category="middle_carriage",
-                                                           default_value=0.03818)
+                                                             default_value=0.03818)
         params["mid_dq_values"]["dqx_max"] = _param_get_helper(name="dqx_max", category="middle_carriage",
-                                                             default_value=0.05050)
+                                                               default_value=0.05050)
         params["mid_dq_values"]["dqy_max"] = _param_get_helper(name="dqy_max", category="middle_carriage",
-                                                             default_value=0.05051)
+                                                               default_value=0.05051)
         params["middle_carriage"]["refBeamCtr_x"] = _param_get_helper(name="refBeamCtr_x", category="middle_carriage",
-                                                                     default_value=0)
+                                                                      default_value=0)
         params["middle_carriage"]["refBeamCtr_y"] = _param_get_helper(name="refBeamCtr_y", category="middle_carriage",
-                                                                     default_value=0)
+                                                                      default_value=0)
         params["mid_left_panel"]["lateral_offset"] = _param_get_helper(name="lateral_offset", category="mid_left_panel",
-                                                                    default_value=-6)
+                                                                       default_value=-6)
         params["mid_left_panel"]["qx_max"] = _param_get_helper(name="qx_max", category="mid_left_panel",
-                                                             default_value=0.003822)
+                                                               default_value=0.003822)
         params["mid_left_panel"]["qx_min"] = _param_get_helper(name="qx_min", category="mid_left_panel",
-                                                             default_value=-0.02545)
+                                                               default_value=-0.02545)
         params["mid_right_panel"]["lateral_offset"] = _param_get_helper(name="lateral_offset",
-                                                                        category="mid_right_panel",
-                                                                     default_value=-5.5)
+                                                                        category="mid_right_panel", default_value=-5.5)
         params["mid_right_panel"]["qx_min"] = _param_get_helper(name="qx_min", category="mid_right_panel",
-                                                              default_value=-0.002622)
+                                                                default_value=-0.002622)
         params["mid_right_panel"]["qx_max"] = _param_get_helper(name="qx_max", category="mid_right_panel",
-                                                              default_value=0.01901)
+                                                                default_value=0.01901)
         params["mid_right_panel"]["qy_min"] = _param_get_helper(name="qy_min", category="mid_right_panel",
-                                                              default_value=0.02854)
+                                                                default_value=0.02854)
         params["mid_right_panel"]["qy_max"] = _param_get_helper(name="qy_max", category="mid_right_panel",
-                                                              default_value=0.02809)
+                                                                default_value=0.02809)
         params["front_dq_values"]["q_min"] = _param_get_helper(name="q_min", category="front_carriage",
-                                                             default_value=0.01875)
+                                                               default_value=0.01875)
         params["front_dq_values"]["dqx_min"] = _param_get_helper(name="dqx_min", category="front_carriage",
-                                                               default_value=0.05496)
+                                                                 default_value=0.05496)
         params["front_dq_values"]["dqy_min"] = _param_get_helper(name="dqy_min", category="front_carriage",
-                                                               default_value=0.05503)
+                                                                 default_value=0.05503)
         params["front_dq_values"]["q_max"] = _param_get_helper(name="q_max", category="front_carriage",
-                                                             default_value=0.1826)
+                                                               default_value=0.1826)
         params["front_dq_values"]["dqx_max"] = _param_get_helper(name="dqx_max", category="front_carriage",
-                                                               default_value=0.04906)
+                                                                 default_value=0.04906)
         params["front_dq_values"]["dqy_max"] = _param_get_helper(name="dqy_max", category="front_carriage",
-                                                               default_value=0.04906)
+                                                                 default_value=0.04906)
         params["front_carriage"]["ssd_input"] = _param_get_helper(name="ssd_input", category="front_carriage",
-                                                                 default_value=400)
+                                                                  default_value=400)
         params["front_carriage"]["ssd"] = _param_get_helper(name="ssd", category="front_carriage", default_value=411)
         params["front_carriage"]["refBeamCtr_x"] = _param_get_helper(name="refBeamCtr_x", category="front_carriage",
-                                                                    default_value=0)
+                                                                     default_value=0)
         params["front_carriage"]["refBeamCtr_y"] = _param_get_helper(name="refBeamCtr_y", category="front_carriage",
-                                                                    default_value=0)
+                                                                     default_value=0)
         params["front_left_panel"]["lateral_offset"] = _param_get_helper(name="lateral_offset",
-                                                                        category="front_left_panel",
-                                                                      default_value=-9.24)
+                                                                         category="front_left_panel",
+                                                                         default_value=-9.24)
         params["front_left_panel"]["qx_max"] = _param_get_helper(name="qx_max", category="front_left_panel",
-                                                               default_value=-0.02538)
+                                                                 default_value=-0.02538)
         params["front_left_panel"]["qx_min"] = _param_get_helper(name="qx_min", category="front_left_panel",
-                                                               default_value=-0.1253)
+                                                                 default_value=-0.1253)
         params["front_left_panel"]["match_button"] = _param_get_helper(name="match_button", category="front_left_panel",
-                                                                     default_value=False)
+                                                                       default_value=False)
         params["front_right_panel"]["lateral_offset"] = _param_get_helper(name="lateral_offset",
-                                                                        category="front_right_panel",
-                                                                       default_value=6.766)
+                                                                          category="front_right_panel",
+                                                                          default_value=6.766)
         params["front_right_panel"]["qx_min"] = _param_get_helper(name="qx_min", category="front_right_panel",
-                                                                default_value=0.01875)
+                                                                  default_value=0.01875)
         params["front_right_panel"]["qx_max"] = _param_get_helper(name="qx_max", category="front_right_panel",
-                                                                default_value=0.1188)
+                                                                  default_value=0.1188)
         params["front_right_panel"]["match_button"] = _param_get_helper(name="match_button",
                                                                         category="front_right_panel",
-                                                                      default_value=False)
+                                                                        default_value=False)
         params["front_top_panel"]["verticalOffset"] = _param_get_helper(name="verticalOffset",
-                                                                        category="front_top_panel",
-                                                                      default_value=0)
+                                                                        category="front_top_panel", default_value=0)
         params["front_top_panel"]["qy_min"] = _param_get_helper(name="qy_min", category="front_top_panel",
-                                                              default_value=0.001147)
+                                                                default_value=0.001147)
         params["front_top_panel"]["qy_max"] = _param_get_helper(name="qy_max", category="front_top_panel",
-                                                              default_value=0.09234)
+                                                                default_value=0.09234)
         params["front_top_panel"]["match_button"] = _param_get_helper(name="match_button", category="front_top_panel",
-                                                                    default_value=False)
+                                                                      default_value=False)
         params["front_bottom_panel"]["verticalOffset"] = _param_get_helper(name="verticalOffset",
-                                                                         category="front_bottom_panel", default_value=0)
+                                                                           category="front_bottom_panel",
+                                                                           default_value=0)
         params["front_bottom_panel"]["qy_max"] = _param_get_helper(name="qy_max", category="front_bottom_panel",
-                                                                 default_value=-0.003139)
+                                                                   default_value=-0.003139)
         params["front_bottom_panel"]["qy_min"] = _param_get_helper(name="qy_min", category="front_bottom_panel",
-                                                                 default_value=-0.09432)
+                                                                   default_value=-0.09432)
         params["front_bottom_panel"]["match_button"] = _param_get_helper(name="match_button",
-                                                                        category="front_bottom_panel",
-                                                                       default_value=False)
+                                                                         category="front_bottom_panel",
+                                                                         default_value=False)
         return params
 
     def load_objects(self, params):
@@ -451,9 +469,9 @@ class VSANS():
         params["middle_carriage"]["l_2"] = create_number_output(name="l_2", unit="cm", default=1922)
         params["middle_carriage"]["beam_drop"] = create_number_output(name="Beam Drop", unit="cm", default=0.9414)
         params["middle_carriage"]["beamstop_required"] = create_number_output(name="Beamstop Required", unit="inch",
-                                                                             default=2.014)
+                                                                              default=2.014)
         params["middle_carriage"]["beamstop"] = create_number_select(name="beamstop", unit="inch", options=[2, 3, 4],
-                                                                    default=2)
+                                                                     default=2)
         params["middle_carriage"]["two_theta_min"] = create_number_output(name="2θ_min", unit="rad", default=0.001329)
         params["middle_carriage"]["q_min"] = create_number_output(name="Q_min", unit="1/Å", default=0.001392)
         params["middle_carriage"]["dqx_min"] = create_number_output(name="(ΔQ/Qmin)_x", default=0.3393)
@@ -462,9 +480,9 @@ class VSANS():
         params["middle_carriage"]["dqx_max"] = create_number_output(name="(ΔQ/Q_max)_x", default=0.05050)
         params["middle_carriage"]["dqy_max"] = create_number_output(name="(ΔQ/Q_max)_y", default=0.05051)
         params["middle_carriage"]["refBeamCtr_x"] = create_number_input(name="Ref Beam Ctr_x", default=0, step=0.1,
-                                                                       unit="cm")
+                                                                        unit="cm")
         params["middle_carriage"]["refBeamCtr_y"] = create_number_input(name="Ref Beam Ctr_y", default=0, step=0.1,
-                                                                       unit="cm")
+                                                                        unit="cm")
         params["mid_left_panel"]["lateral_offset"] = create_number_input(name="Lateral Offset", unit="cm", default=-6)
         params["mid_left_panel"]["qx_max"] = create_number_output(name="Q_right", unit="1/Å", default=-0.003822)
         params["mid_left_panel"]["qx_min"] = create_number_output(name="Q_left", unit="1/Å", default=-0.02545)
@@ -486,12 +504,12 @@ class VSANS():
         params["front_carriage"]["refBeamCtr_x"] = create_number_input(name="Ref Beam Ctr X", unit="cm", default=0)
         params["front_carriage"]["refBeamCtr_y"] = create_number_input(name="Ref Beam Ctr Y", unit="cm", default=0)
         params["front_left_panel"]["lateral_offset"] = create_number_input(name="Lateral Offset", unit="cm",
-                                                                         default=-9.24)
+                                                                           default=-9.24)
         params["front_left_panel"]["qx_max"] = create_number_output(name="Q_right", unit="1/Å", default=-0.02538)
         params["front_left_panel"]["qx_min"] = create_number_output(name="Q_left", unit="1/Å", default=-0.1253)
         params["front_left_panel"]["match_button"] = create_checkbox(name="Match to left edge of ML?", default=False)
         params["front_right_panel"]["lateral_offset"] = create_number_input(name="Lateral Offset", unit="cm",
-                                                                         default=6.766)
+                                                                            default=6.766)
         params["front_right_panel"]["qx_min"] = create_number_output(name="Q_left", unit="1/Å", default=0.01875)
         params["front_right_panel"]["qx_max"] = create_number_output(name="Q_right", unit="1/Å", default=0.1188)
         params["front_right_panel"]["match_button"] = create_checkbox(name="Match right edge to of MR", default=False)
@@ -500,7 +518,7 @@ class VSANS():
         params["front_top_panel"]["qy_max"] = create_number_output(name="q_top", unit="1/Å", default=0.09234)
         params["front_top_panel"]["match_button"] = create_checkbox(name="Match Top Edge to MR", default=False)
         params["front_bottom_panel"]["verticalOffset"] = create_number_input(name="Vertical Offset", unit="cm",
-                                                                            default=0)
+                                                                             default=0)
         params["front_bottom_panel"]["qy_max"] = create_number_output(name="Q_Top", unit="1/Å", default=-0.003139)
         params["front_bottom_panel"]["qy_min"] = create_number_output(name="Q_Bottom", unit="1/Å", default=-0.09432)
         params["front_bottom_panel"]["match_button"] = create_checkbox(name="Match Bottom Edge of MR", default=False)
