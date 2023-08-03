@@ -1,5 +1,6 @@
 from .instrument import set_params
 import math
+import numpy as np
 
 
 class Beam:
@@ -239,10 +240,13 @@ class MiddleCarriage:
         self.name = name
 
         # Create the secondary object off the main object
-        self.left_panel = HorizontalPanel(self, params.get("mid_left_panel", {}), name="mid_left_panel",
-                                          short_name="ML")
-        self.right_panel = HorizontalPanel(self, params.get("mid_right_panel", {}), name="mid_right_panel",
-                                           short_name="MR")
+        self.left_panel = VerticalPanel(self, params.get("mid_left_panel", {}), name="mid_left_panel",
+                                        short_name="ML")
+        self.right_panel = VerticalPanel(self, params.get("mid_right_panel", {}), name="mid_right_panel",
+                                         short_name="MR")
+        self.top_panel = HorizontalPanel(self, params.get("mid_top_panel", {}), name="front_top_panel", short_name="MT")
+        self.bottom_panel = HorizontalPanel(self, params.get("mid_bottom_panel", {}), name="front_bottom_panel",
+                                            short_name="MB")
         self.dq_calc = DqCalculator(self, params.get("mid_dq_values", {}))
 
         params = params.get("middle_carriage", {})
@@ -253,6 +257,14 @@ class MiddleCarriage:
         # DQ Values that are used for both classes
         self.refBeamCtr_x = 0.0
         self.refBeamCtr_y = 0.0
+
+        # Front detector dimensions
+        self.middle_lr_w = 0.0
+        self.middle_lr_h = 0.0
+        self.middle_tb_w = 0.0
+        self.middle_tb_h = 0.0
+        self.middle_ssd_setback = 0.0
+
         set_params(instance=self, params=params)
 
     def calculate_ssd(self):
@@ -267,6 +279,8 @@ class MiddleCarriage:
         # Calculates the 2 other panels
         self.left_panel.calculate_panel()
         self.right_panel.calculate_panel()
+        self.top_panel.calculate_panel()
+        self.bottom_panel.calculate_panel()
         self.dq_calc.calculate_all_dq()
 
 
@@ -275,13 +289,13 @@ class FrontCarriage:
         self.parent = parent
         self.name = name
         # Create the secondary object off the main object
-        self.left_panel = HorizontalPanel(self, params.get("front_left_panel", {}), name="front_left_panel",
-                                          short_name="FL")
-        self.right_panel = HorizontalPanel(self, params.get("front_right_panel", {}), name="front_right_panel",
-                                           short_name="FR")
-        self.top_panel = VerticalPanel(self, params.get("front_top_panel", {}), name="front_top_panel", short_name="FT")
-        self.bottom_panel = VerticalPanel(self, params.get("front_bottom_panel", {}), name="front_bottom_panel",
-                                          short_name="FB")
+        self.left_panel = VerticalPanel(self, params.get("front_left_panel", {}), name="front_left_panel",
+                                        short_name="FL")
+        self.right_panel = VerticalPanel(self, params.get("front_right_panel", {}), name="front_right_panel",
+                                         short_name="FR")
+        self.top_panel = HorizontalPanel(self, params.get("front_top_panel", {}), name="front_top_panel", short_name="FT")
+        self.bottom_panel = HorizontalPanel(self, params.get("front_bottom_panel", {}), name="front_bottom_panel",
+                                            short_name="FB")
         self.dq_calc = DqCalculator(self, params.get("front_dq_values", {}))
         params = params.get("front_carriage", {})
 
@@ -290,6 +304,13 @@ class FrontCarriage:
         self.ssd = 0.0
         self.refBeamCtr_x = 0.0
         self.refBeamCtr_y = 0.0
+
+        # Front detector dimensions
+        self.front_lr_w = 0.0
+        self.front_lr_h = 0.0
+        self.front_tb_w = 0.0
+        self.front_tb_h = 0.0
+        self.front_ssd_setback = 0.0
 
         set_params(instance=self, params=params)
 
@@ -388,11 +409,15 @@ class DqCalculator:
         self.calculate_d_q_values()
 
 
-class HorizontalPanel:
-    def __init__(self, parent, params, name="HorizontalPanel", short_name="MR"):
+class VerticalPanel:
+    """Left and right panels
+
+    """
+    def __init__(self, parent, params, name="VerticalPanel", short_name="MR"):
         self.parent = parent
         self.name = name
         self.short_name = short_name
+        self.horizontal_orientation = False
         self.lateral_offset = 0.0
         self.qx_min = 0.0  # Left
         self.qx_max = 0.0  # Right
@@ -403,6 +428,25 @@ class HorizontalPanel:
         self.is_valid = 0.0
         self.match_button = None
         self.detectors = Detector(where=short_name)
+
+        # Constants needed for plotting
+        self.x_pixel_size = 0.0
+        self.y_pixel_size = 0.0
+        self.pixel_num_x = 0.0
+        self.pixel_num_y = 0.0
+        self.beam_center_x = 0.0
+        self.beam_center_y = 0.0
+
+        # Detector Arrays
+        self.detector_array = []
+        self.q_to_t_array = []
+        self.qx_array = []
+        self.qy_array = []
+        self.qz_array = []
+        self.default_mask = []
+        self.data_real_dist_x = [] # data_realDistX
+        self.data_real_dist_y = [] # data_realDistY
+
         set_params(instance=self, params=params)
 
     def calculate_match(self):
@@ -451,6 +495,36 @@ class HorizontalPanel:
         ymax = self.detectors.y_max() - self.refBeamCtr_y
         self.qy_max = self._calculate_q_helper(value=ymax)
 
+    def create_detector_array(self):
+        """Creates 5 arrays of zeros based on the number of x and y pixels
+
+        :return: Nothing as it just sets the value of detector_array, q_to_t_array, qx_array, qy_array, and qz_array
+        :rtype: None
+        """
+        self.detector_array = np.zeros((int(self.pixel_num_x), int(self.pixel_num_y)))
+        self.q_to_t_array = np.copy(self.detector_array)
+        self.qx_array = np.copy(self.detector_array)
+        self.qy_array = np.copy(self.detector_array)
+        self.qz_array = np.copy(self.detector_array)
+        self.data_real_dist_x = np.copy(self.detector_array)
+        self.data_real_dist_y = np.copy(self.detector_array)
+
+    def create_default_mask(self):
+        if 'L' in self.short_name:
+            inner_array = np.concatenate((np.ones(5), np.zeros(118), np.ones(5)))
+            self.default_mask = np.concatenate((np.zeros((4, 128)), np.tile(inner_array, (44, 1))))
+        else:
+            inner_array = np.concatenate((np.ones(5), np.zeros(118), np.ones(5)))
+            self.default_mask = np.concatenate((np.tile(inner_array, (44, 1)), np.zeros((4, 128))))
+
+    def create_tmp_array(self):
+        tmp_calib = np.zeros((3, 48))
+        for a in range(48):
+            tmp_calib[0][a] = -512
+            tmp_calib[1][a] = 8
+            tmp_calib[2][a] = 0
+            return tmp_calib
+
     def calculate_panel(self):
         # Update values to be used
         self.refBeamCtr_x = self.parent.refBeamCtr_x
@@ -462,11 +536,14 @@ class HorizontalPanel:
         self.calculate_qy_max()
 
 
-class VerticalPanel:
-    def __init__(self, parent, params, name="VerticalPanel", short_name="FT"):
+class HorizontalPanel:
+    """Top and bottom panels
+    """
+    def __init__(self, parent, params, name="HorizontalPanel", short_name="FT"):
         self.parent = parent
         self.name = name
         self.short_name = short_name
+        self.horizontal_orientation = True
         self.verticalOffset = 0.0
         self.qy_min = 0.0  # Bottom
         self.qy_max = 0.0  # Top
@@ -474,6 +551,25 @@ class VerticalPanel:
         self.is_valid = 0.0
         self.match_button = False
         self.detectors = Detector(where=short_name)
+
+        # Constants needed for plotting
+        self.x_pixel_size = 0.0
+        self.y_pixel_size = 0.0
+        self.pixel_num_x = 0.0
+        self.pixel_num_y = 0.0
+        self.beam_center_x = 0.0
+        self.beam_center_y = 0.0
+
+        # Detector Arrays
+        self.detector_array = []  # det_FL
+        self.q_to_t_array = []  # qTot_FL
+        self.qx_array = []  # qTot_FL
+        self.qy_array = []  # qx_FL
+        self.qz_array = []  # qy_FL
+        self.default_mask = []  # qz_FL
+        self.data_real_dist_x = [] # data_realDistX
+        self.data_real_dist_y = [] # data_realDistY
+
         set_params(instance=self, params=params)
 
     def calculate_match(self):
@@ -516,6 +612,38 @@ class VerticalPanel:
         # return 4 * Math.PI / this.lambda *Math.sin(Math.atan2(ymax, this.SDD_front + detectors.detector_FB.setback) / 2)
         ymax = self.detectors.y_max(self.verticalOffset) - self.refBeamCtr_y
         self.qy_max = self._calculate_q_helper(value=ymax)
+
+    def create_detector_array(self):
+        """Creates 5 arrays of zeros based on the number of x and y pixels
+
+        :return: Nothing as it just sets the value of detector_array, q_to_t_array, qx_array, qy_array, and qz_array
+        :rtype: None
+        """
+        self.detector_array = np.zeros((int(self.pixel_num_x), int(self.pixel_num_y)))
+        self.q_to_t_array = np.copy(self.detector_array)
+        self.qx_array = np.copy(self.detector_array)
+        self.qy_array = np.copy(self.detector_array)
+        self.qz_array = np.copy(self.detector_array)
+        self.data_real_dist_x = np.copy(self.detector_array)
+        self.data_real_dist_y = np.copy(self.detector_array)
+
+    def create_default_mask(self):
+        self.default_mask = np.concatenate((np.ones((50, 48)), np.zeros((28, 48)), np.ones((50, 48))))
+
+    def create_tmp_array(self):
+        if 'B' in self.short_name:
+            tmp_calib_x = np.array([0, 1, 1000])
+            tmp_calib_y = np.copy(tmp_calib_x)
+            tmp_calib_x[0] = self.x_pixel_size
+            tmp_calib_y[0] = self.y_pixel_size
+            return [tmp_calib_x, tmp_calib_y]
+        else:
+            tmp_calib = np.zeros((3, 48))
+            for a in range(48):
+                tmp_calib[0][a] = -256
+                tmp_calib[1][a] = 4
+                tmp_calib[2][a] = 0
+                return tmp_calib
 
     def calculate_panel(self):
         # Update values to be used

@@ -23,6 +23,8 @@ def _create_vsans_dict(name=True, additional=False):
     vsans_dict["middle_carriage"] = {"name": "Middle Carriage"} if name else {}
     vsans_dict["mid_left_panel"] = {"name": "Middle Carriage Left Panel"} if name else {}
     vsans_dict["mid_right_panel"] = {"name": "Middle Carriage Right Panel"} if name else {}
+    vsans_dict["mid_top_panel"] = {"name": "Middle Carriage Top Panel"} if name else {}
+    vsans_dict["mid_bottom_panel"] = {"name": "Middle Carriage Bottom Panel"} if name else {}
     vsans_dict["front_carriage"] = {"name": "Front Carriage"} if name else {}
     vsans_dict["front_left_panel"] = {"name": "Front Carriage Left Panel"} if name else {}
     vsans_dict["front_right_panel"] = {"name": "Front Carriage Right Panel"} if name else {}
@@ -93,11 +95,75 @@ class VSANS():
         # Temporary constants not in use any more
         params["temp"] = {}
         params["temp"]["serverName"] = "VSANS.ncnr.nist.gov"
+        params = self.add_constants(params=params)
+
+        self.load_objects(params)
+
+    def add_constants(self, params):
         params["beam"]["frontend_trans_options"] = {"0.02": 0.5, "0.12": 1.0, "0.4": 0.7}
         params["beam"]["lambda_T"] = self.constants.get("lambda_T", 6.2)
         params["beam"]["phi_0"] = self.constants.get("phi_0", 1.82e13)
+        params["front_carriage"]["front_lr_w"] = 40.3
+        params["front_carriage"]["front_lr_h"] = 100.0
+        params["front_carriage"]["front_tb_w"] = 50.0
+        params["front_carriage"]["front_tb_h"] = 40.3
+        params["front_carriage"]["front_ssd_setback"] = 41.0
+        params["front_left_panel"]["x_pixel_size"] = 0.84
+        params["front_left_panel"]["y_pixel_size"] = 0.8
+        params["front_right_panel"]["x_pixel_size"] = 0.84
+        params["front_right_panel"]["y_pixel_size"] = 0.8
+        params["front_top_panel"]["x_pixel_size"] = 0.4
+        params["front_top_panel"]["y_pixel_size"] = 0.84
+        params["front_bottom_panel"]["x_pixel_size"] = 0.4
+        params["front_bottom_panel"]["y_pixel_size"] = 0.84
+        params["front_left_panel"]["pixel_num_x"] = 48.0
+        params["front_left_panel"]["pixel_num_y"] = 128.0
+        params["front_right_panel"]["pixel_num_x"] = 48.0
+        params["front_right_panel"]["pixel_num_y"] = 128.0
+        params["front_top_panel"]["pixel_num_x"] = 128.0
+        params["front_top_panel"]["pixel_num_y"] = 48.0
+        params["front_bottom_panel"]["pixel_num_x"] = 128.0
+        params["front_bottom_panel"]["pixel_num_y"] = 48.0
+        params["front_left_panel"]["beam_center_x"] = 55
+        params["front_left_panel"]["beam_center_y"] = 64
+        params["front_right_panel"]["beam_center_x"] = -8
+        params["front_right_panel"]["beam_center_y"] = 64
+        params["front_top_panel"]["beam_center_x"] = 64
+        params["front_top_panel"]["beam_center_y"] = -8
+        params["front_bottom_panel"]["beam_center_x"] = 64
+        params["front_bottom_panel"]["beam_center_y"] = 55
+        # Middle Carriage constants
+        params["middle_carriage"]["middle_lr_w"] = 40.3
+        params["middle_carriage"]["middle_lr_h"] = 100.0
+        params["middle_carriage"]["middle_tb_w"] = 50.0
+        params["middle_carriage"]["middle_tb_h"] = 40.3
+        params["middle_carriage"]["middle_ssd_setback"] = 41.0
+        params["mid_left_panel"]["x_pixel_size"] = 0.84
+        params["mid_left_panel"]["y_pixel_size"] = 0.8
+        params["mid_right_panel"]["x_pixel_size"] = 0.84
+        params["mid_right_panel"]["y_pixel_size"] = 0.8
+        params["mid_top_panel"]["x_pixel_size"] = 0.4
+        params["mid_top_panel"]["y_pixel_size"] = 0.84
+        params["mid_bottom_panel"]["x_pixel_size"] = 0.4
+        params["mid_bottom_panel"]["y_pixel_size"] = 0.84
+        params["mid_left_panel"]["pixel_num_x"] = 48.0
+        params["mid_left_panel"]["pixel_num_y"] = 128.0
+        params["mid_right_panel"]["pixel_num_x"] = 48.0
+        params["mid_right_panel"]["pixel_num_y"] = 128.0
+        params["mid_top_panel"]["pixel_num_x"] = 128.0
+        params["mid_top_panel"]["pixel_num_y"] = 48.0
+        params["mid_bottom_panel"]["pixel_num_x"] = 128.0
+        params["mid_bottom_panel"]["pixel_num_y"] = 48.0
+        params["mid_left_panel"]["beam_center_x"] = 55
+        params["mid_left_panel"]["beam_center_y"] = 64
+        params["mid_right_panel"]["beam_center_x"] = -8
+        params["mid_right_panel"]["beam_center_y"] = 64
+        params["mid_top_panel"]["beam_center_x"] = 64
+        params["mid_top_panel"]["beam_center_y"] = -8
+        params["mid_bottom_panel"]["beam_center_x"] = 64
+        params["mid_bottom_panel"]["beam_center_y"] = 55
 
-        self.load_objects(params)
+        return params
 
     def param_restructure(self, old_params):
         def _param_get_helper(name="", category="", key="default", default_value=None, division=1):
@@ -193,6 +259,16 @@ class VSANS():
                                                                 default_value=0.02854)
         params["mid_right_panel"]["qy_max"] = _param_get_helper(name="qy_max", category="mid_right_panel",
                                                                 default_value=0.02809)
+        params["mid_top_panel"]["verticalOffset"] = _param_get_helper(name="verticalOffset", category="mid_top_panel",
+                                                                      default_value=0)
+        params["mid_top_panel"]["qy_min"] = _param_get_helper(name="qy_min", category="mid_top_panel", default_value=0)
+        params["mid_top_panel"]["qy_max"] = _param_get_helper(name="qy_max", category="mid_top_panel", default_value=0)
+        params["mid_bottom_panel"]["verticalOffset"] = _param_get_helper(name="verticalOffset",
+                                                                         category="mid_bottom_panel", default_value=0)
+        params["mid_bottom_panel"]["qy_max"] = _param_get_helper(name="qy_max", category="mid_bottom_panel",
+                                                                 default_value=0)
+        params["mid_bottom_panel"]["qy_min"] = _param_get_helper(name="qy_min", category="mid_bottom_panel",
+                                                                 default_value=0)
         params["front_dq_values"]["q_min"] = _param_get_helper(name="q_min", category="front_carriage",
                                                                default_value=0.01875)
         params["front_dq_values"]["dqx_min"] = _param_get_helper(name="dqx_min", category="front_carriage",
@@ -267,6 +343,8 @@ class VSANS():
                                   "mid_dq_values": params.get("mid_dq_values", {}),
                                   "mid_left_panel": params.get("mid_left_panel", {}),
                                   "mid_right_panel": params.get("mid_right_panel", {}),
+                                  "mid_top_panel": params.get("mid_top_panel", {}),
+                                  "mid_bottom_panel": params.get("mid_bottom_panel", {}),
                                   }
         self.middle_carriage = MiddleCarriage(self, middle_carriage_params)
         front_carriage_params = {"front_carriage": params.get('front_carriage', {}),
@@ -274,7 +352,7 @@ class VSANS():
                                  "front_left_panel": params.get("front_left_panel", {}),
                                  "front_right_panel": params.get("front_right_panel", {}),
                                  "front_top_panel": params.get("front_top_panel", {}),
-                                 "front_bottom_panel": params.get("front_bottom_panel", {})
+                                 "front_bottom_panel": params.get("front_bottom_panel", {}),
                                  }
         self.front_carriage = FrontCarriage(self, front_carriage_params)
 
@@ -292,8 +370,19 @@ class VSANS():
         :return:
         """
         plot_params = {}
-
-        self.plot_data = PlotData()
+        plot_params["middle_carriage"] = self.middle_carriage
+        plot_params["mid_left_panel"] = self.middle_carriage.left_panel
+        plot_params["mid_right_panel"] = self.middle_carriage.right_panel
+        plot_params["mid_top_panel"] = self.middle_carriage.top_panel
+        plot_params["mid_bottom_panel"] = self.middle_carriage.bottom_panel
+        plot_params["front_carriage"] = self.front_carriage
+        plot_params["front_left_panel"] = self.front_carriage.left_panel
+        plot_params["front_right_panel"] = self.front_carriage.right_panel
+        plot_params["front_top_panel"] = self.front_carriage.top_panel
+        plot_params["front_bottom_panel"] = self.front_carriage.bottom_panel
+        plot_params["lambda_val"] = self.get_wavelength()
+        self.plot_data = PlotData(parent=self, params=plot_params)
+        self.plot_data.run_plot_data()
 
     # Get methods After here
     def get_wavelength(self):
@@ -316,6 +405,7 @@ class VSANS():
     def sas_calc(self) -> Dict[str, Union[Number, str, List[Union[Number, str]]]]:
         # Calculate all the objects
         self.calculate_objects()
+        self.calculate_plots()
         # Calculate all the Plots
         user_inaccessible = _create_vsans_dict(name=False)
         user_inaccessible["beam"]["wavelength"] = self.beam.wavelength
@@ -357,6 +447,12 @@ class VSANS():
         user_inaccessible["mid_right_panel"]["qx_max"] = self.middle_carriage.right_panel.qx_max
         user_inaccessible["mid_right_panel"]["qy_min"] = self.middle_carriage.right_panel.qy_min
         user_inaccessible["mid_right_panel"]["qy_max"] = self.middle_carriage.right_panel.qy_max
+        user_inaccessible["mid_top_panel"]["verticalOffset"] = self.middle_carriage.top_panel.verticalOffset
+        user_inaccessible["mid_top_panel"]["qy_min"] = self.middle_carriage.top_panel.qy_min
+        user_inaccessible["mid_top_panel"]["qy_max"] = self.middle_carriage.top_panel.qy_max
+        user_inaccessible["mid_bottom_panel"]["verticalOffset"] = self.middle_carriage.bottom_panel.verticalOffset
+        user_inaccessible["mid_bottom_panel"]["qy_max"] = self.middle_carriage.bottom_panel.qy_max
+        user_inaccessible["mid_bottom_panel"]["qy_min"] = self.middle_carriage.bottom_panel.qy_min
         user_inaccessible["front_carriage"]["q_min"] = self.front_carriage.dq_calc.q_min
         user_inaccessible["front_carriage"]["dqx_min"] = self.front_carriage.dq_calc.dqx_min
         user_inaccessible["front_carriage"]["dqy_min"] = self.front_carriage.dq_calc.dqy_min
@@ -507,6 +603,13 @@ class VSANS():
         params["mid_right_panel"]["qx_max"] = create_number_output(name="Q_right", unit="1/Å", default=0.01901)
         params["mid_right_panel"]["qy_min"] = create_number_output(name="Q_bottom", unit="1/Å", default=-0.02854)
         params["mid_right_panel"]["qy_max"] = create_number_output(name="Qtop", unit="1/Å", default=0.02809)
+        params["mid_top_panel"]["verticalOffset"] = create_number_input(name="Vertical Offset", unit="cm", default=0)
+        params["mid_top_panel"]["qy_min"] = create_number_output(name="Qbottom", unit="1/Å", default=0.0)
+        params["mid_top_panel"]["qy_max"] = create_number_output(name="q_top", unit="1/Å", default=0.0)
+        params["mid_bottom_panel"]["verticalOffset"] = create_number_input(name="Vertical Offset", unit="cm", default=0)
+        params["mid_bottom_panel"]["qy_max"] = create_number_output(name="Q_Top", unit="1/Å", default=-0.0)
+        params["mid_bottom_panel"]["qy_min"] = create_number_output(name="Q_Bottom", unit="1/Å", default=-0.0)
+
         # Front Carriage
         params["front_carriage"]["q_min"] = create_number_output(name="Qmin", unit="1/Å", default=0.01875)
         params["front_carriage"]["dqx_min"] = create_number_output(name="(ΔQ/Q_min)_x", unit="1/Å", default=0.05496)
