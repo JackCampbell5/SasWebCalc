@@ -1,6 +1,7 @@
 import numpy as np
 
 from .instrument import set_params
+
 import math
 
 
@@ -142,7 +143,12 @@ class PlotData:
 
         lam = self.lambda_val
         ssd_setback = 0
-        self.make_real_dist_x_y_waves(self.front_left_panel)
+
+        # Calculate the front panels
+        self.make_real_dist_x_y_waves(self.mid_left_panel)
+        self.make_real_dist_x_y_waves(self.mid_right_panel)
+        self.make_real_dist_x_y_waves(self.mid_top_panel)
+        self.make_real_dist_x_y_waves(self.mid_bottom_panel)
 
     def make_real_dist_x_y_waves(self, panel_object):
         # VC_MakeRealDistXYWaves in IGORPro
@@ -169,15 +175,54 @@ class PlotData:
                 gap = 5.9
             else:
                 gap = 18.3
+
+        # Params needed to calculate teh real_dist arrays
+        other_array_x = panel_object.data_real_dist_x  # The array we are editing
+        other_array_y = panel_object.data_real_dist_y  # The array we are editing
+        offset = self.get_offset(panel_object=panel_object)
+        offset = offset * 10
+        k_bctr_cm = True  # set to 1 to use beam center in cm. O to use pixels
+
+        # Get the data in the real_dist arrays
         if not horizontal_orientation:
-            offset = self.get_offset(panel_object=panel_object)
-            offset = offset * 10
-            k_bctr_cm = True  # set to 1 to use beam center in cm. O to use pixels
-            if k_bctr_cm:
+            if k_bctr_cm:  # Matches what is in IGOR:
                 if 'L' in panel_object.short_name:
-                    other_array = np.zeros(len(panel_object.data_real_dist_x[0]))
-                    for a in range(len(other_array)):
-                        other_array[a] = offset - (diamX - a - .5) * tube_width - gap / 2
+                    for a in range(len(other_array_x)):
+                        value = offset - (diamX - a - .5) * tube_width - gap / 2
+                        for b in range(len(other_array_x[0])):
+                            other_array_x[a][b] = value
+                else:  # Matches what is in IGOR
+                    # If it is on the right
+                    for a in range(len(other_array_x)):
+                        value = tube_width * (a + .5) + offset + gap / 2
+                        for b in range(len(other_array_x[0])):
+                            other_array_x[a][b] = value
+            else:
+                for a in range(len(other_array_x)):
+                    value = tube_width * a
+                    for b in range(len(other_array_x[0])):
+                        other_array_x[a][b] = value
+            # Set up the y array for the horizontal orientation
+            for a in range(len(other_array_y)):  # Matches what it says in IGOR
+                for b in range(len(other_array_y[0])):
+                    other_array_y[a][b] = tmp_array[0][a] + tmp_array[1][a] * b + tmp_array[2][a] * b * b
+        else:  # If it is a horizontal panel
+            if k_bctr_cm:
+                if 'T' in panel_object.short_name:
+                    for a in range(len(other_array_y)):
+                        for b in range(len(other_array_y[0])):
+                            other_array_y[a][b] = tube_width * (b + .5) + offset + gap / 2
+                else:
+                    for a in range(len(other_array_y)):
+                        for b in range(len(other_array_y[0])):
+                            other_array_y[a][b] = offset - (diamy - b - .5) * tube_width - gap / 2
+            else:
+                for a in range(len(other_array_y)):
+                    for b in range(len(other_array_y[0])):
+                        other_array_y[a][b] = tube_width * b
+            for a in range(len(other_array_x)):
+                for b in range(len(other_array_x[0])):
+                    other_array_x[a][b] = tmp_array[0][b] + tmp_array[1][b] * a + tmp_array[2][b] * a * a
 
     def plot_front_panel(self):
         pass

@@ -523,7 +523,7 @@ class VerticalPanel:
             tmp_calib[0][a] = -512
             tmp_calib[1][a] = 8
             tmp_calib[2][a] = 0
-            return tmp_calib
+        return tmp_calib
 
     def calculate_panel(self):
         # Update values to be used
@@ -631,19 +631,12 @@ class HorizontalPanel:
         self.default_mask = np.concatenate((np.ones((50, 48)), np.zeros((28, 48)), np.ones((50, 48))))
 
     def create_tmp_array(self):
-        if 'B' in self.short_name:
-            tmp_calib_x = np.array([0, 1, 1000])
-            tmp_calib_y = np.copy(tmp_calib_x)
-            tmp_calib_x[0] = self.x_pixel_size
-            tmp_calib_y[0] = self.y_pixel_size
-            return [tmp_calib_x, tmp_calib_y]
-        else:
-            tmp_calib = np.zeros((3, 48))
-            for a in range(48):
-                tmp_calib[0][a] = -256
-                tmp_calib[1][a] = 4
-                tmp_calib[2][a] = 0
-                return tmp_calib
+        tmp_calib = np.zeros((3, 48))
+        for a in range(48):
+            tmp_calib[0][a] = -256
+            tmp_calib[1][a] = 4
+            tmp_calib[2][a] = 0
+        return tmp_calib
 
     def calculate_panel(self):
         # Update values to be used
