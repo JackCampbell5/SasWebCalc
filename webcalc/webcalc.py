@@ -139,7 +139,7 @@ def create_app():
         # Remove all the params changed by the multiplicity models from the array
         sld_remove_dict = []
         for name in js_model_params:
-            if 'sld' in name or (param_keyword in name and param_keyword != name) or '[' in name:
+            if '[' in name:
                 sld_remove_dict.append(name)
         for name in sld_remove_dict:
             new_model_params.pop(name)
@@ -152,7 +152,7 @@ def create_app():
         # Find the multiplicity model params
         sld_dict = []
         for name in js_model_params:
-            if ('sld' in name or (param_keyword in name and param_keyword != name)) and first_run:
+            if '[' in name and first_run:
                 sld_dict.append(name)
             if not first_run:
                 if '[' in name:
