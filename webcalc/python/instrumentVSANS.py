@@ -436,6 +436,8 @@ class VerticalPanel:
         self.pixel_num_y = 0.0
         self.beam_center_x = 0.0
         self.beam_center_y = 0.0
+        self.beam_center_x_pix = 0.0
+        self.beam_center_y_pix = 0.0
 
         # Detector Arrays
         self.detector_array = []
@@ -559,6 +561,7 @@ class HorizontalPanel:
         self.pixel_num_y = 0.0
         self.beam_center_x = 0.0
         self.beam_center_y = 0.0
+        self.setback = 41 # CM
 
         # Detector Arrays
         self.detector_array = []  # det_FL
