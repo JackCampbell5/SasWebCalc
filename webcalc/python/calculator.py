@@ -1,9 +1,10 @@
 from typing import Optional, Union, List, Dict
 
+from sasdata.dataloader.data_info import Data2D
 from sasmodels.kernel import KernelModel
 from sasmodels.direct_model import call_kernel
 
-from .instrument import Instrument, Data
+from .instrument import Instrument
 from .slicers import Slicer
 
 
@@ -21,8 +22,8 @@ class Calculator:
         self.averaging = averaging
         # Placeholder for future addition of the Sample class that will hold sample specific information.
         self.sample = None
-        # The class to hold all calculated data
-        self.data = Data(self.instrument, {})
+        # Data object to hold 2D data
+        self.data = Data2D()
 
     def calculate(self, model_params: Dict[str, Union[int, float]]):
         """
@@ -32,6 +33,10 @@ class Calculator:
         # Calculate the as-viewed scattering pattern from the instrument without applying any model calculation
         #   This should calculate the resolution per point, and uncertainty in intensity.
         self.instrument.sas_calc()
+        # TODO: Create a sasdata.data_info Data2D object and pass that to the model and the slicer
+        self.data.q_data = self.instrument.data.q_values
+        # FIXME: This line is wrong - needs dqx data (and qx, qy, etc. data as well)
+        self.data.dqx_data = self.instrument.data
         # Apply any sample-specific modifications to the base pattern
         if self.sample:
             # TODO: we need a Sample class...
@@ -39,7 +44,8 @@ class Calculator:
         # Calculate the as-viewed scattering pattern using the model, assuming the resolution and information from
         #   the instrument class
         kernel = self.model.make_kernel(self.instrument.data.q_values)
-        self.data.intensity = call_kernel(kernel, model_params)
+        self.data.data = call_kernel(kernel, model_params)
+        # TODO: From here, ensure the data in averaging is up-to-date
         # Calculate the averaged representation of the data
         self.averaging.calculate()
 
