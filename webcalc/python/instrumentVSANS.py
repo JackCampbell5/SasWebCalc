@@ -135,7 +135,6 @@ class AllCarriage:
         self.name = name
 
         # In Middle Carriage in the JS
-        self.l_2 = 0.0
         self.imported_l_1 = 0.0
         self.beam_drop = 0.0  # Also know as Gravity_Drop_Mean in the JS
         self.gravity_drop_min = 0.0
@@ -151,9 +150,6 @@ class AllCarriage:
         self.dq_gravity = 0.0
         set_params(instance=self, params=params)
 
-    def calculate_L_2(self):
-        self.l_2 = self.parent.middle_carriage.ssd_input + self.parent.collimation.sample_to_ap_gv
-
     def calculate_beam_drop(self):
         # Also known as Gravity_Drop_Mean in the JS
         lambda_val = self.parent.get_wavelength()
@@ -163,7 +159,8 @@ class AllCarriage:
         h_over_mn = 395603.0  # Angstrom cm / s
         g = 981.0  # cm/s^2
         return g / 2.0 * math.pow((lambda_val / h_over_mn), 2) * (
-                math.pow((self.imported_l_1 + self.l_2), 2) - (self.imported_l_1 + self.l_2) * self.imported_l_1)
+                math.pow((self.imported_l_1 + self.parent.get_l_2()), 2) - (self.imported_l_1 + self.parent.get_l_2()) *
+                self.imported_l_1)
 
     def calculate_gravity_drop_min(self):
         #         var lambda = this.lambda * (1.0 + this.dlambda);
@@ -179,8 +176,9 @@ class AllCarriage:
         self.calculate_gravity_drop_min()
         self.calculate_gravity_drop_max()
         # The actual calculations being done
-        beam_size_geometric = self.parent.get_source_aperture() * self.l_2 / self.imported_l_1 + self.parent.get_sample_aperture() * (
-                self.imported_l_1 + self.l_2) / self.imported_l_1
+        beam_size_geometric = self.parent.get_source_aperture() * self.parent.get_l_2() / self.imported_l_1 + \
+                              self.parent.get_sample_aperture() * (
+                self.imported_l_1 + self.parent.get_l_2()) / self.imported_l_1
         gravity_width = abs(self.gravity_drop_max - self.gravity_drop_min)
         beamstopRequired = beam_size_geometric + gravity_width
         # UNITS to get into CM
@@ -219,13 +217,13 @@ class AllCarriage:
         h_over_mn = 395603.0  # Angstrom cm/s
         a = 2 * math.pi / (self.parent.get_wavelength() * self.parent.get_l_2())
         b = math.pow(g, 2) / (2 * math.pow(h_over_mn, 4))
-        c = math.pow(self.l_2, 2) * math.pow(self.parent.get_l_1() + self.l_2, 2)
+        c = math.pow(self.parent.get_l_2(), 2) * math.pow(self.parent.get_l_1() + self.parent.get_l_2(), 2)
         d = math.pow(self.parent.get_wavelength(), 4) * 2 / 3 * math.pow(self.parent.beam.dlambda, 2)
         self.dq_gravity = a * math.sqrt(b * c * d)
 
     def calculate_all_Carriage(self):
         self.imported_l_1 = self.parent.get_l_1()
-        self.calculate_L_2()
+        self.parent.middle_carriage.calculate_L_2()
         self.calculate_beam_drop()
         self.calculate_beamstop_required()  # Also Calls the gravity drop ones too
         self.calculate_beam_stop_cm()
@@ -240,8 +238,7 @@ class MiddleCarriage:
         self.name = name
 
         # Create the secondary object off the main object
-        self.left_panel = VerticalPanel(self, params.get("mid_left_panel", {}), name="mid_left_panel",
-                                        short_name="ML")
+        self.left_panel = VerticalPanel(self, params.get("mid_left_panel", {}), name="mid_left_panel", short_name="ML")
         self.right_panel = VerticalPanel(self, params.get("mid_right_panel", {}), name="mid_right_panel",
                                          short_name="MR")
         self.top_panel = HorizontalPanel(self, params.get("mid_top_panel", {}), name="front_top_panel", short_name="MT")
@@ -254,6 +251,7 @@ class MiddleCarriage:
         # Creates all the necessary parameters for the middle carriage class
         self.ssd_input = 0.0  # This is just the value input by the user, not the actual SSD value
         self.ssd = 0.0
+        self.l_2 = 0.0
         # DQ Values that are used for both classes
         self.refBeamCtr_x = 0.0
         self.refBeamCtr_y = 0.0
@@ -272,6 +270,9 @@ class MiddleCarriage:
 
     # create a class for the chnaging dq values and the constant calculated values are kept in the front apature clas
     # sbut there is a paramater that will be set saying the calculations can be done in the dependet classes
+
+    def calculate_L_2(self):
+        self.l_2 = self.ssd_input + self.parent.collimation.sample_to_ap_gv
 
     def calculate_middleCarriage(self):
         # Calculates all the parameters of this object
@@ -293,7 +294,8 @@ class FrontCarriage:
                                         short_name="FL")
         self.right_panel = VerticalPanel(self, params.get("front_right_panel", {}), name="front_right_panel",
                                          short_name="FR")
-        self.top_panel = HorizontalPanel(self, params.get("front_top_panel", {}), name="front_top_panel", short_name="FT")
+        self.top_panel = HorizontalPanel(self, params.get("front_top_panel", {}), name="front_top_panel",
+                                         short_name="FT")
         self.bottom_panel = HorizontalPanel(self, params.get("front_bottom_panel", {}), name="front_bottom_panel",
                                             short_name="FB")
         self.dq_calc = DqCalculator(self, params.get("front_dq_values", {}))
@@ -302,6 +304,7 @@ class FrontCarriage:
         # Creates all the necessary parameters for the Front carriage class
         self.ssd_input = 0.0
         self.ssd = 0.0
+        self.l_2 = 0.0
         self.refBeamCtr_x = 0.0
         self.refBeamCtr_y = 0.0
 
@@ -317,9 +320,12 @@ class FrontCarriage:
     def calculate_ssd(self):
         self.ssd = self.ssd_input + self.parent.collimation.sample_to_gv
 
+    def calculate_L_2(self):
+        self.l_2 = self.ssd_input + self.parent.collimation.sample_to_ap_gv
+
     def calculate_frontCarriage(self):
         self.calculate_ssd()
-
+        self.calculate_L_2()
         # Calculate the other objects
         self.left_panel.calculate_panel()
         self.right_panel.calculate_panel()
@@ -413,6 +419,7 @@ class VerticalPanel:
     """Left and right panels
 
     """
+
     def __init__(self, parent, params, name="VerticalPanel", short_name="MR"):
         self.parent = parent
         self.name = name
@@ -440,14 +447,15 @@ class VerticalPanel:
         self.beam_center_y_pix = 0.0
 
         # Detector Arrays
+        self.data = []
         self.detector_array = []
         self.q_to_t_array = []
         self.qx_array = []
         self.qy_array = []
         self.qz_array = []
         self.default_mask = []
-        self.data_real_dist_x = [] # data_realDistX
-        self.data_real_dist_y = [] # data_realDistY
+        self.data_real_dist_x = []  # data_realDistX
+        self.data_real_dist_y = []  # data_realDistY
 
         set_params(instance=self, params=params)
 
@@ -510,6 +518,7 @@ class VerticalPanel:
         self.qz_array = np.copy(self.detector_array)
         self.data_real_dist_x = np.copy(self.detector_array)
         self.data_real_dist_y = np.copy(self.detector_array)
+        self.data = np.copy(self.detector_array)
 
     def create_default_mask(self):
         if 'L' in self.short_name:
@@ -541,6 +550,7 @@ class VerticalPanel:
 class HorizontalPanel:
     """Top and bottom panels
     """
+
     def __init__(self, parent, params, name="HorizontalPanel", short_name="FT"):
         self.parent = parent
         self.name = name
@@ -561,17 +571,18 @@ class HorizontalPanel:
         self.pixel_num_y = 0.0
         self.beam_center_x = 0.0
         self.beam_center_y = 0.0
-        self.setback = 41 # CM
+        self.setback = 41  # CM
 
         # Detector Arrays
+        self.data = []  # Data though through a differnt path
         self.detector_array = []  # det_FL
         self.q_to_t_array = []  # qTot_FL
         self.qx_array = []  # qTot_FL
         self.qy_array = []  # qx_FL
         self.qz_array = []  # qy_FL
         self.default_mask = []  # qz_FL
-        self.data_real_dist_x = [] # data_realDistX
-        self.data_real_dist_y = [] # data_realDistY
+        self.data_real_dist_x = []  # data_realDistX
+        self.data_real_dist_y = []  # data_realDistY
 
         set_params(instance=self, params=params)
 
@@ -629,6 +640,7 @@ class HorizontalPanel:
         self.qz_array = np.copy(self.detector_array)
         self.data_real_dist_x = np.copy(self.detector_array)
         self.data_real_dist_y = np.copy(self.detector_array)
+        self.data = np.copy(self.detector_array)
 
     def create_default_mask(self):
         self.default_mask = np.concatenate((np.ones((50, 48)), np.zeros((28, 48)), np.ones((50, 48))))

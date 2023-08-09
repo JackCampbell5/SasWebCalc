@@ -4,6 +4,7 @@ from typing import Dict, List, Union
 from ..instrumentVSANS import *
 from ..constants import VSANS_Constants
 from ..plotDataVSANS import PlotData
+import numpy as np
 
 Number = Union[float, int]
 
@@ -218,7 +219,7 @@ class VSANS():
         params["middle_carriage"]["ssd_input"] = _param_get_helper(name="ssd_input", category="middle_carriage",
                                                                    default_value=1900)
         params["middle_carriage"]["ssd"] = _param_get_helper(name="ssd", category="middle_carriage", default_value=1911)
-        params["all_carriage"]["l_2"] = _param_get_helper(name="l_2", category="middle_carriage", default_value=1922)
+        params["middle_carriage"]["l_2"] = _param_get_helper(name="l_2", category="middle_carriage", default_value=1922)
         params["all_carriage"]["beam_drop"] = _param_get_helper(name="beam_drop", category="middle_carriage",
                                                                 default_value=0.9414)
         params["all_carriage"]["beamstop_required"] = _param_get_helper(name="beamstop_required",
@@ -392,7 +393,7 @@ class VSANS():
         return self.collimation.l_1
 
     def get_l_2(self):
-        return self.all_carriage.l_2
+        return self.middle_carriage.l_2
 
     def get_source_aperture(self):
         return self.collimation.source_aperture
@@ -426,7 +427,7 @@ class VSANS():
         user_inaccessible["collimation"]["a_over_l"] = self.collimation.a_over_l
         user_inaccessible["middle_carriage"]["ssd_input"] = self.middle_carriage.ssd_input
         user_inaccessible["middle_carriage"]["ssd"] = self.middle_carriage.ssd
-        user_inaccessible["middle_carriage"]["l_2"] = self.all_carriage.l_2
+        user_inaccessible["middle_carriage"]["l_2"] = self.middle_carriage.l_2
         user_inaccessible["middle_carriage"]["beam_drop"] = self.all_carriage.beam_drop
         user_inaccessible["middle_carriage"]["beamstop_required"] = self.all_carriage.beamstop_required
         user_inaccessible["middle_carriage"]["beamstop"] = self.all_carriage.beamstop

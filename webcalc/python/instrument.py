@@ -1220,11 +1220,11 @@ class Instrument:
         self.calculate_slicer()
 
     def calculate_attenuation_factor(self, index=0):
-        """Calculates the attenuation factors from te sample aperture diameter and returns the calculated value
+        """Calculates the attenuation factors from the sample aperture diameter and returns the calculated value
 
         * Usually run by the calculate attenuator number function
 
-        :param index: The index of the value to fin in the detectors array
+        :param index: The index of the value to find in the detectors array
         :return: Returns the float value of the calculated attenuation factor
         :rtype: Float
         """

@@ -76,7 +76,8 @@ class PlotData:
 
         # generate a proper mask based on hard + soft shadowing
         self.reset_mask()
-        self.draw_mask()
+        for panel in self.all_detectors:
+            self.draw_mask(panel)
 
         # update values on the panel
         self.calculate_beam_intensity()
@@ -134,9 +135,8 @@ class PlotData:
         # calculate Qtot, qxqyqz arrays from geometry
         for panel in self.all_detectors:
             self.plot_panel(panel)
-            self.fill_panel_w_model_data(panel)  # Middle Panels AsQ()  # self.
-        # TODO self.panel_asq(self.middle_carriage) # This displays the panel and checks ot make sure everything is
-        #  right
+            self.fill_panel_w_model_data(
+                panel)  # Middle Panels AsQ()  # self.  # TODO self.panel_asq(  # self.middle_carriage) # This displays the panel and checks ot make sure everything is  #  right
 
     def fill_panel_w_model_data(self, panel_object):
         # FillPanel_wModelData in Igor
@@ -372,10 +372,16 @@ class PlotData:
     # End calculate panel functions
 
     def reset_mask(self):
-        pass
+        # VC_ResetVCALCMask in Igor Pro
+        for panel in self.all_detectors:
+            panel.data = np.zeros((len(panel.detector_array), len(panel.detector_array[0])))
 
-    def draw_mask(self):
-        pass
+    def draw_mask(self, panel_object):
+        # VC_DrawVCALCMask in Igor Pro
+
+        offset = self.get_offset(panel_object)
+        D2 = self.parent.get_sample_aperture()
+        l2 = self.get_l_2(panel_object)
 
     def calculate_beam_intensity(self):
         pass
@@ -400,6 +406,12 @@ class PlotData:
 
     def iq_beam_stop_shadow(self):
         pass
+
+    def get_l_2(self,panel_object):
+        if 'F' in panel_object.short_name:
+            return self.front_carriage.l_2
+        else:
+            return self.middle_carriage.l_2
 
     @staticmethod
     def get_offset(panel_object):
