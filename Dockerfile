@@ -10,7 +10,7 @@ COPY . /SasWebCalc
 RUN python3 -m pip install pip --upgrade
 
 # Move the documentation to the correct location
-COPY docs webcalc/templates/docs
+COPY docs/build/html webcalc/templates/docs
 RUN python3 -m pip install /SasWebCalc/
 
 ENV PYTHONPATH "/SasWebCalc/"
