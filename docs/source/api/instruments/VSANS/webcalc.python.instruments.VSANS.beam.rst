@@ -1,7 +1,7 @@
-webcalc\.python\.instrument\.dqCalculator
+webcalc\.python\.instruments\.VSANS\.beam
 =========================================
 
-.. autoclass:: webcalc.python.instrumentVSANS.DqCalculator
+.. autoclass:: webcalc.python.instruments.VSANS.Beam
     :members:
     :special-members: __init__
     :undoc-members:

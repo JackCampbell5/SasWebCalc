@@ -1,10 +1,8 @@
-from ..instrument import Instrument
 from ..instrumentJSParams import *
 from typing import Dict, List, Union
-from ..instrumentVSANS import *
-from ..constants import VSANS_Constants
-from ..plotDataVSANS import PlotData
 import numpy as np
+from ..instrument import set_params
+import math
 
 Number = Union[float, int]
 
@@ -39,21 +37,21 @@ def _create_vsans_dict(name=True, additional=False):
     return vsans_dict
 
 
-class VSANS():
-    """ A class to manipulate NG7SANS as a subclass of the instrument class
+class VSANS:
+    """ A class to manipulate VSANS calculations and parameters
 
     :param str self.name: The name of the instrument
     :param dict self.preset: What the preset selected is for the VSANS instrument
     :param dict self.options: The options to return to the JS to change specific parts of the parameters that are not default
     :param Beam self.beam: The beam object that contains info related to the beam section of the params
     :param Collimation self.collimation: The Collimation object that contains info related to the collimation section
-    of the params
+        of the params
     :param AllCarriage self.all_carriage: The AllCarriage object that contains info related to some params in the
-    MiddleCarriage section of the params
+        MiddleCarriage section of the params
     :param MiddleCarriage self.middle_carriage: The MiddleCarriage object that contains info related to the Middle
-    Carriage and middle detector section of the params
+        Carriage and middle detector section of the params
     :param FrontCarriage self.front_carriage: The FrontCarriage object that contains info related to the Front
-    Carriage and front detectors section of the params
+        Carriage and front detectors section of the params
     :param Constants self.constants: The Constants object that contains the constants needed for the VSANS instrument
     """
     class_name = "VSANS"
@@ -83,24 +81,19 @@ class VSANS():
         params = params["instrument_params"]
         self.load_params(params)
 
-    def load_params(self, params):
+    def load_params(self, old_params):
         """A method that loads the constants of the VSANS Instrument
 
-        :param dict params: The dictionary of parameters from the __init__ statement
+        :param dict old_params: The dictionary of parameters from the __init__ statement
         :return: Nothing, just runs the instrument load objects method
         :rtype: None
         """
         print("VSANS Load Params")
-        params = self.param_restructure(params)
+        params = self.param_restructure(old_params)
 
         # Temporary constants not in use any more
         params["temp"] = {}
         params["temp"]["serverName"] = "VSANS.ncnr.nist.gov"
-        params = self.add_constants(params=params)
-
-        self.load_objects(params)
-
-    def add_constants(self, params):
         params["beam"]["frontend_trans_options"] = {"0.02": 0.5, "0.12": 1.0, "0.4": 0.7}
         params["beam"]["lambda_T"] = self.constants.get("lambda_T", 6.2)
         params["beam"]["phi_0"] = self.constants.get("phi_0", 1.82e13)
@@ -132,9 +125,17 @@ class VSANS():
         params["mid_bottom_panel"]["beam_center_x"] = 64
         params["mid_bottom_panel"]["beam_center_y"] = 55
 
-        return params
+        self.load_objects(params)
 
-    def param_restructure(self, old_params):
+    @staticmethod
+    def param_restructure(old_params):
+        """ A method that takes the list of params from the Javascript and assigns it to a dictionary allowing the python to assign variables to objects
+
+        :param dict old_params: A dictionary of the values gotten from the js
+        :return: An dictionary of the params that has been restructured correctly
+        :rtype: Dict
+        """
+
         def _param_get_helper(name="", category="", key="default", default_value=None, division=1):
             """ Checks if a value exists at a certain key and if not sets the value to none ot be removed later
 
@@ -326,6 +327,11 @@ class VSANS():
         self.front_carriage = FrontCarriage(self, front_carriage_params)
 
     def calculate_objects(self):
+        """Runs the calculate method of all the objects created in load objects
+
+        :return: Nothing as it just runs methods
+        :rtype: None
+        """
         self.beam.calculate_beam()
         self.collimation.calculate_collimation()
         self.all_carriage.calculate_all_Carriage()
@@ -333,10 +339,11 @@ class VSANS():
         self.front_carriage.calculate_frontCarriage()
 
     def calculate_plots(self):
-        """FUnction takes in all the params from the other classes needed to calculate the plot data and passes it
+        """A method that  takes in all the params from the other classes needed to calculate the plot data and passes it
         as a parameter to the innit statement of the PLotData class
 
-        :return:
+        :return: None as it just creates a dictionary and then runs functions
+        :rtype: None
         """
         plot_params = {}
         plot_params["middle_carriage"] = self.middle_carriage
@@ -355,23 +362,56 @@ class VSANS():
 
     # Get methods After here
     def get_wavelength(self):
+        """Gets the wavelength parameter from the beam object
+
+        :return: The values of the wavelength parameter
+        :rtype: Float
+        """
         return self.beam.wavelength
 
     def get_l_1(self):
+        """Gets the l_1 parameter from the collimation object
+
+        :return: The values of the l_1 parameter
+        :rtype: Float
+        """
         return self.collimation.l_1
 
     def get_l_2(self):
+        """Gets the l_2 parameter from the middle carriage object
+
+        :return: The values of the l_2 parameter
+        :rtype: Float
+        """
         return self.middle_carriage.l_2
 
     def get_source_aperture(self):
+        """Gets the source aperture parameter from the collimation object
+
+        :return: The values of the source aperture parameter
+        :rtype: Float
+        """
         return self.collimation.source_aperture
 
     def get_sample_aperture(self):
+        """Gets the sample aperture parameter from the collimation object
+
+        :return: The values of the sample aperture parameter
+        :rtype: Float
+        """
         return self.collimation.sample_aperture
 
     # Get methods before here
 
     def sas_calc(self) -> Dict[str, Union[Number, str, List[Union[Number, str]]]]:
+        """ The main function that runs all the calculation though the calculate objects and calculate plot methods and
+        returns the results
+
+        Makes a user inaccessible sub dictionary witch contains the results to be sent back to the instrument JS
+
+        :return: A dictionary of the calculation results
+        :rtype: Dict
+        """
         # Calculate all the objects
         self.calculate_objects()
         self.calculate_plots()
@@ -455,6 +495,13 @@ class VSANS():
 
     @staticmethod
     def update_values(info):
+        """The update values method for the VSANS instrument which happens when a js value is changed and other
+        values need to be updated because of it
+
+        :param str info: What is being sent by the server
+        :return: A dictionary of the values to be changed
+        :rtype: Dict
+        """
         type_info = info[:info.find('@')]
         rest_info = info[info.find('@') + 1:]
         if type_info == "preset":
@@ -466,6 +513,12 @@ class VSANS():
 
     @staticmethod
     def preset_change(preset):
+        """If the value being updated is a preset then create a constants object and get the constants from it
+
+        :param str preset: The preset which was decoded by the update values funtion
+        :return: A dictionary of the values to be updated
+        :rtype: Dict
+        """
         constants = VSANS_Constants()
         results = constants.get_constants(preset, _create_vsans_dict(name=False), True)
         results = VSANS.update_source_aperture_with_data(results)
@@ -473,6 +526,13 @@ class VSANS():
 
     @staticmethod
     def update_source_aperture_with_data(results):
+        """Updates the value of the source aperture based on the guide number and current value gotten from an array
+        of params by calling the update_source_aperture method
+
+        :param dict results: A dictionary of params that contains the source_aperture_js and guide_select params
+        :return: The results dictionary but with the source aperture updated
+        :rtype: Dict
+        """
         # Update the number of guides to be correct
         source_aperture_js = results["collimation"]["source_aperture_js"]
         guide_select = results["collimation"]["guide_select"]
@@ -481,6 +541,14 @@ class VSANS():
 
     @staticmethod
     def update_source_aperture(results=None, source_aperture_js='0.0', guide_select='0'):
+        """Updates the value of the source aperture based on the number of guides
+
+        :param dict results: A dictionary to output the results
+        :param str source_aperture_js: The string value of the source aperture
+        :param str guide_select: The string value of the number of guides
+        :return: The results dictionary
+        :rtype: Dict
+        """
         if results is None: results = {"collimation": {}, "options": {}}
         if guide_select == '0':
             valid_ops = ['7.5', '15.0', '30.0']
@@ -612,3 +680,1411 @@ class VSANS():
 
         params = check_params(params=params)
         return params
+
+
+class Beam:
+    """
+
+    """
+    def __init__(self, parent, params, name="beam"):
+        self.parent = parent
+        self.wavelength = 0  # Known as lamda in the js
+        self.dlambda = 0.0
+        self.lambda_T = 0.0
+        self.phi_0 = 0.0
+        self.frontend_trans = 0.0
+        self.flux = 0.0
+        self.beam_current = 0.0
+        self.i_sub_zero = 0.0  # or Incident_Intensity
+        self.frontend_trans_options = {}
+        self.name = name
+        set_params(instance=self, params=params)
+
+    def dlambda_check_lambda(self):
+        """ Makes sure the value of wavelength is correct based off dlambda
+
+        :return:
+        """
+        if self.dlambda == 0.02:
+            self.wavelength = 4.75
+        elif self.dlambda == 0.4:
+            self.wavelength = 5.3
+
+    def calculate_wavelength(self):
+        """If the value of the wavelength is in the wrong range brings it to the correct range
+
+        """
+        self.dlambda_check_lambda()
+        if self.wavelength < 4:
+            self.wavelength = 4.0
+        elif 8.5 < self.wavelength < 10.7:
+            self.wavelength = 8.5
+        elif self.wavelength > 19.3:
+            self.wavelength = 19.3
+
+    def calculate_frontend_trans(self):
+        """Gets the value of frontend_trans from the list of options based on dlambda"""
+        self.frontend_trans = self.frontend_trans_options[str(self.dlambda)]
+
+    def calculate_flux(self):
+        lfrac = self.lambda_T / self.wavelength
+        self.flux = (self.dlambda * math.pow(lfrac, 4) * math.exp(-math.pow(lfrac, 2)) * self.phi_0) / 2.0 * math.pi
+
+    def calculate_beam_current(self):
+        self.parent.collimation.calculate_t_filter()
+        t_filter = self.parent.collimation.t_filter
+        self.beam_current = self.frontend_trans * t_filter
+
+    def calculate_iSub0(self):
+        collimation = self.parent.collimation
+        collimation.calculate_sample_aperture()
+        self.i_sub_zero = self.beam_current / (math.pi * math.pow(collimation.sample_aperture / 2.0, 2))
+
+    def calculate_beam(self):
+        self.calculate_wavelength()
+        self.calculate_frontend_trans()
+        self.calculate_flux()
+        self.calculate_beam_current()
+        self.calculate_iSub0()
+
+
+class Collimation:
+    def __init__(self, parent, params, name="collimation"):
+        self.parent = parent
+        self.name = name
+        self.guide_select = 0
+        self.num_guides = 0  # No calculation necessary just get the value
+        self.cov_beams = False
+        self.source_aperture_js = 0.0  # The one coming from the js ( No Calculation Necessary)
+        self.source_aperture = 0.0  # The one that is used for the calculations
+        self.source_distance = 0.0
+        self.source_distance_options = [2441, 2157, 1976, 1782, 1582, 1381, 1181, 980, 780, 579]
+        self.t_filter = 0.0
+        self.t_guide = 0.0
+        self.sample_aperture = 0.0
+        self.ext_sample_aperture = 0.0  # This is a constant and does not need to be calculated
+        self.sample_to_ap_gv = 0.0
+        self.sample_to_gv = 0.0
+        self.l_1 = 0.0
+        self.a_over_l = 0.0
+
+        set_params(instance=self, params=params)
+
+    def calculate_num_guides(self):
+        self.num_guides = 0 if self.guide_select == "CONV_BEAMS" or self.guide_select == "NARROW_SLITS" else int(
+            self.guide_select)
+
+    def calculate_source_aperture(self):
+        """Calculates the value of the source aperture
+
+        :return: None as it just sets a value
+        """
+        self.source_aperture = float(self.source_aperture_js) / 10.0
+
+    def calculate_sourceDistance(self):
+        self.source_distance = self.source_distance_options[self.num_guides]
+
+    def calculate_t_filter(self):
+        # Calculation run in beam.calculate_beam_current()
+        lambda_val = self.parent.get_wavelength()
+        self.t_filter = math.exp(-0.371 - 0.0305 * lambda_val - 0.00352 * math.pow(lambda_val, 2))
+
+    def calculate_t_guide(self):
+        return math.pow(0.97, self.num_guides)
+
+    def calculate_sample_aperture(self):
+        self.sample_aperture = self.ext_sample_aperture / 10.0
+
+    def calculate_l_1(self):
+        self.l_1 = self.source_distance - self.sample_to_ap_gv
+
+    def calculate_aOverL(self):
+        self.a_over_l = math.pow((math.pi / 4.0 * self.source_aperture * self.sample_aperture / self.l_1), 2)
+
+    def calculate_collimation(self):
+        self.calculate_num_guides()
+        self.calculate_source_aperture()
+        self.calculate_sourceDistance()
+        self.calculate_t_guide()
+        self.calculate_sample_aperture()
+        self.calculate_l_1()
+        self.calculate_aOverL()
+
+
+class AllCarriage:
+    def __init__(self, parent, params, name="all_carriage"):
+        self.parent = parent
+        self.name = name
+
+        # In Middle Carriage in the JS
+        self.imported_l_1 = 0.0
+        self.beam_drop = 0.0  # Also know as Gravity_Drop_Mean in the JS
+        self.gravity_drop_min = 0.0
+        self.gravity_drop_max = 0.0
+        self.beamstop_required = 0.0
+        self.beamstop = 0.0
+        self.beam_stop_cm = 0.0
+        self.two_theta_min = 0.0
+        # Values needed for the DQ calculations
+        self.overall_dq_calculated = False
+        self.dq_geometric = 0.0
+        self.dq_wavelength = 0.0
+        self.dq_gravity = 0.0
+        set_params(instance=self, params=params)
+
+    def calculate_beam_drop(self):
+        # Also known as Gravity_Drop_Mean in the JS
+        lambda_val = self.parent.get_wavelength()
+        self.beam_drop = self._calculate_gravity_drop(lambda_val=lambda_val)
+
+    def _calculate_gravity_drop(self, lambda_val=0.0):
+        h_over_mn = 395603.0  # Angstrom cm / s
+        g = 981.0  # cm/s^2
+        return g / 2.0 * math.pow((lambda_val / h_over_mn), 2) * (
+                math.pow((self.imported_l_1 + self.parent.get_l_2()), 2) - (
+                self.imported_l_1 + self.parent.get_l_2()) * self.imported_l_1)
+
+    def calculate_gravity_drop_min(self):
+        #         var lambda = this.lambda * (1.0 + this.dlambda);
+        lambda_val = self.parent.get_wavelength() * (1.0 + self.parent.beam.dlambda)
+        self.gravity_drop_min = self._calculate_gravity_drop(lambda_val=lambda_val)
+
+    def calculate_gravity_drop_max(self):
+        lambda_val = self.parent.get_wavelength() * (1.0 - self.parent.beam.dlambda)
+        self.gravity_drop_max = self._calculate_gravity_drop(lambda_val=lambda_val)
+
+    def calculate_beamstop_required(self):
+        # Calculate the gravity drops needed for this problem
+        self.calculate_gravity_drop_min()
+        self.calculate_gravity_drop_max()
+        # The actual calculations being done
+        beam_size_geometric = self.parent.get_source_aperture() * self.parent.get_l_2() / self.imported_l_1 + self.parent.get_sample_aperture() * (
+                self.imported_l_1 + self.parent.get_l_2()) / self.imported_l_1
+        gravity_width = abs(self.gravity_drop_max - self.gravity_drop_min)
+        beamstopRequired = beam_size_geometric + gravity_width
+        # UNITS to get into CM
+        self.beamstop_required = beamstopRequired / 2.54
+
+    def calculate_beam_stop_cm(self):
+        self.beam_stop_cm = self.beamstop * 2.54
+
+    def calculate_θ2_min(self):
+        # Also known as TwoTheta_min
+        # FIx the calculation of this value
+        self.parent.middle_carriage.calculate_ssd()
+        self.two_theta_min = math.atan2(self.beam_stop_cm / 2, self.parent.middle_carriage.ssd)
+
+    def calculate_overall_d_q_values(self):
+        self._calculate_dq_geometric()
+        self._calculate_dq_wavelength()
+        self._calculate_dq_gravity()
+        self.overall_dq_calculated = True
+
+    def _calculate_dq_geometric(self):
+        pixel_size = 0.82  # cm
+        a = 2 * math.pi / (self.parent.get_wavelength() * self.parent.get_l_2())
+        b = math.pow((self.parent.get_l_2() * self.parent.get_source_aperture()) / (4 * self.parent.get_l_1()), 2)
+        c = math.pow((self.parent.get_l_1() + self.parent.get_l_2()) * self.parent.get_sample_aperture() / (
+                4 * self.parent.get_l_1()), 2)
+        d = math.pow(pixel_size / 2, 2) / 3
+        self.dq_geometric = a * math.sqrt(b + c + d)
+
+    def _calculate_dq_wavelength(self):
+        resolution_factor = 6.0
+        self.dq_wavelength = self.parent.beam.dlambda / math.sqrt(resolution_factor)
+
+    def _calculate_dq_gravity(self):
+        g = 981.0  # CM/s^2
+        h_over_mn = 395603.0  # Angstrom cm/s
+        a = 2 * math.pi / (self.parent.get_wavelength() * self.parent.get_l_2())
+        b = math.pow(g, 2) / (2 * math.pow(h_over_mn, 4))
+        c = math.pow(self.parent.get_l_2(), 2) * math.pow(self.parent.get_l_1() + self.parent.get_l_2(), 2)
+        d = math.pow(self.parent.get_wavelength(), 4) * 2 / 3 * math.pow(self.parent.beam.dlambda, 2)
+        self.dq_gravity = a * math.sqrt(b * c * d)
+
+    def calculate_all_Carriage(self):
+        self.imported_l_1 = self.parent.get_l_1()
+        self.parent.middle_carriage.calculate_L_2()
+        self.calculate_beam_drop()
+        self.calculate_beamstop_required()  # Also Calls the gravity drop ones too
+        self.calculate_beam_stop_cm()
+        self.calculate_θ2_min()
+        # Runs more calculation statements
+        self.calculate_overall_d_q_values()
+
+
+class MiddleCarriage:
+    def __init__(self, parent, params, name="middle_carriage"):
+        self.parent = parent
+        self.name = name
+
+        # Create the secondary object off the main object
+        self.left_panel = VerticalPanel(self, params.get("mid_left_panel", {}), name="mid_left_panel", short_name="ML")
+        self.right_panel = VerticalPanel(self, params.get("mid_right_panel", {}), name="mid_right_panel",
+                                         short_name="MR")
+        self.top_panel = HorizontalPanel(self, params.get("mid_top_panel", {}), name="front_top_panel", short_name="MT")
+        self.bottom_panel = HorizontalPanel(self, params.get("mid_bottom_panel", {}), name="front_bottom_panel",
+                                            short_name="MB")
+        self.dq_calc = DqCalculator(self, params.get("mid_dq_values", {}))
+
+        params = params.get("middle_carriage", {})
+
+        # Creates all the necessary parameters for the middle carriage class
+        self.ssd_input = 0.0  # This is just the value input by the user, not the actual SSD value
+        self.ssd = 0.0
+        self.l_2 = 0.0
+        # DQ Values that are used for both classes
+        self.refBeamCtr_x = 0.0
+        self.refBeamCtr_y = 0.0
+
+        # Front detector dimensions
+        self.middle_lr_w = 0.0
+        self.middle_lr_h = 0.0
+        self.middle_tb_w = 0.0
+        self.middle_tb_h = 0.0
+        self.middle_ssd_setback = 0.0
+
+        set_params(instance=self, params=params)
+
+    def calculate_ssd(self):
+        self.ssd = self.ssd_input + self.parent.collimation.sample_to_gv
+
+    # create a class for the chnaging dq values and the constant calculated values are kept in the front apature clas
+    # sbut there is a paramater that will be set saying the calculations can be done in the dependet classes
+
+    def calculate_L_2(self):
+        self.l_2 = self.ssd_input + self.parent.collimation.sample_to_ap_gv
+
+    def calculate_middleCarriage(self):
+        # Calculates all the parameters of this object
+        self.calculate_ssd()
+        # Calculates the 2 other panels
+        self.left_panel.calculate_panel()
+        self.right_panel.calculate_panel()
+        self.top_panel.calculate_panel()
+        self.bottom_panel.calculate_panel()
+        self.dq_calc.calculate_all_dq()
+
+
+class FrontCarriage:
+    def __init__(self, parent, params, name="front_carriage"):
+        self.parent = parent
+        self.name = name
+        # Create the secondary object off the main object
+        self.left_panel = VerticalPanel(self, params.get("front_left_panel", {}), name="front_left_panel",
+                                        short_name="FL")
+        self.right_panel = VerticalPanel(self, params.get("front_right_panel", {}), name="front_right_panel",
+                                         short_name="FR")
+        self.top_panel = HorizontalPanel(self, params.get("front_top_panel", {}), name="front_top_panel",
+                                         short_name="FT")
+        self.bottom_panel = HorizontalPanel(self, params.get("front_bottom_panel", {}), name="front_bottom_panel",
+                                            short_name="FB")
+        self.dq_calc = DqCalculator(self, params.get("front_dq_values", {}))
+        params = params.get("front_carriage", {})
+
+        # Creates all the necessary parameters for the Front carriage class
+        self.ssd_input = 0.0
+        self.ssd = 0.0
+        self.l_2 = 0.0
+        self.refBeamCtr_x = 0.0
+        self.refBeamCtr_y = 0.0
+
+        # Front detector dimensions
+        self.front_lr_w = 0.0
+        self.front_lr_h = 0.0
+        self.front_tb_w = 0.0
+        self.front_tb_h = 0.0
+        self.front_ssd_setback = 0.0
+
+        set_params(instance=self, params=params)
+
+    def calculate_ssd(self):
+        self.ssd = self.ssd_input + self.parent.collimation.sample_to_gv
+
+    def calculate_L_2(self):
+        self.l_2 = self.ssd_input + self.parent.collimation.sample_to_ap_gv
+
+    def calculate_frontCarriage(self):
+        self.calculate_ssd()
+        self.calculate_L_2()
+        # Calculate the other objects
+        self.left_panel.calculate_panel()
+        self.right_panel.calculate_panel()
+        self.top_panel.calculate_panel()
+        self.bottom_panel.calculate_panel()
+        self.dq_calc.calculate_all_dq()
+
+
+class DqCalculator:
+    def __init__(self, parent, params, name="DqCalculator"):
+        self.parent = parent
+        self.name = name
+
+        self.q_min = 0.0
+        self.calculate_q_min = self._calculate_q_min_middle
+        self.dqx_min = 0.0
+        self.dqy_min = 0.0
+        self.q_max = 0.0
+        self.dqx_max = 0.0
+        self.dqy_max = 0.0
+        # Parameters from the AllCarriage Class
+        self.dq_geometric = 0.0
+        self.dq_wavelength = 0.0
+        self.dq_gravity = 0.0
+        set_params(instance=self, params=params)
+
+    def update_dq_values(self):
+        self.dq_geometric = self.parent.parent.all_carriage.dq_geometric
+        self.dq_wavelength = self.parent.parent.all_carriage.dq_wavelength
+        self.dq_gravity = self.parent.parent.all_carriage.dq_gravity
+
+    def _calculate_dq(self, q=0.0, y_value=False):
+        addition = math.pow(self.dq_gravity, 2) if y_value else 0.0
+        return math.sqrt(math.pow(self.dq_geometric, 2) + math.pow(self.dq_wavelength * q, 2) + addition) / q
+
+    def _calculate_q_min_middle(self):
+        # The min values of Middle and front are different
+        self.q_min = 4 * math.pi / self.parent.parent.get_wavelength() * math.sin(
+            self.parent.parent.all_carriage.two_theta_min / 2.0)
+
+    def _calculate_q_min_front(self):
+        self.q_min = min(abs(self.parent.left_panel.qx_min), abs(self.parent.left_panel.qx_max),
+                         abs(self.parent.right_panel.qx_min), abs(self.parent.right_panel.qx_max))
+
+    def _calculate_dQx_min(self):
+        q = self.q_min
+        self.dqx_min = self._calculate_dq(q=q, y_value=False)
+
+    def _calculate_dQy_min(self):
+        q = self.q_min
+        self.dqy_min = self._calculate_dq(q=q, y_value=True)
+
+    @staticmethod
+    def _q_abs(qx, qy):
+        return math.sqrt(math.pow(qx, 2) + math.pow(qy, 2))
+
+    def calculate_qMax(self):
+        self.q_max = max(self._q_abs(self.parent.left_panel.qx_min, self.parent.left_panel.qy_min),
+                         self._q_abs(self.parent.left_panel.qx_max, self.parent.left_panel.qy_min),
+                         self._q_abs(self.parent.left_panel.qx_min, self.parent.left_panel.qy_max),
+                         self._q_abs(self.parent.left_panel.qx_max, self.parent.left_panel.qy_max),
+                         self._q_abs(self.parent.right_panel.qx_min, self.parent.right_panel.qy_min),
+                         self._q_abs(self.parent.right_panel.qx_max, self.parent.right_panel.qy_min),
+                         self._q_abs(self.parent.right_panel.qx_min, self.parent.right_panel.qy_max),
+                         self._q_abs(self.parent.right_panel.qx_max, self.parent.right_panel.qy_max))
+
+    def _calculate_dQx_max(self):
+        q = self.q_max
+        self.dqx_max = self._calculate_dq(q=q, y_value=False)
+
+    def _calculate_dQy_max(self):
+        q = self.q_max
+        self.dqy_max = self._calculate_dq(q=q, y_value=True)
+
+    def calculate_d_q_values(self):
+        self._calculate_dQx_min()
+        self._calculate_dQy_min()
+        self._calculate_dQx_max()
+        self._calculate_dQy_max()
+
+    def calculate_all_dq(self):
+        if self.parent.name == "front_carriage":
+            self.calculate_q_min = self._calculate_q_min_front
+        self.update_dq_values()
+        self.calculate_q_min()
+        self.calculate_qMax()
+        self.calculate_d_q_values()
+
+
+class VerticalPanel:
+    """Left and right panels
+
+    """
+
+    def __init__(self, parent, params, name="VerticalPanel", short_name="MR"):
+        self.parent = parent
+        self.name = name
+        self.short_name = short_name
+        self.horizontal_orientation = False
+        self.lateral_offset = 0.0
+        self.qx_min = 0.0  # Left
+        self.qx_max = 0.0  # Right
+        self.qy_min = 0.0  # Bottom
+        self.qy_max = 0.0  # Top
+        self.refBeamCtr_x = 0.0
+        self.refBeamCtr_y = 0.0
+        self.is_valid = 0.0
+        self.match_button = None
+        self.detectors = Detector(where=short_name)
+
+        # Constants needed for plotting
+        self.x_pixel_size = 0.84
+        self.y_pixel_size = 0.8
+        self.pixel_num_x = 48.0
+        self.pixel_num_y = 128.0
+        self.beam_center_x = 0.0
+        self.beam_center_y = 0.0
+        self.beam_center_x_pix = 0.0
+        self.beam_center_y_pix = 0.0
+
+        # Detector Arrays
+        self.data = []
+        self.detector_array = []
+        self.q_to_t_array = []
+        self.qx_array = []
+        self.qy_array = []
+        self.qz_array = []
+        self.default_mask = []
+        self.data_real_dist_x = []  # data_realDistX
+        self.data_real_dist_y = []  # data_realDistY
+
+        set_params(instance=self, params=params)
+
+    def calculate_match(self):
+        if self.match_button is not None:
+            if self.match_button:
+                if self.short_name.find("L") != -1:
+                    self._calculate_match_left()
+                else:
+                    self._calculate_match_right()
+                self.parent.parent.options[self.name + "+lateral_offset"] = {"type": "readonly", "set_to": True}
+            else:
+                self.parent.parent.options[self.name + "+lateral_offset"] = {"type": "readonly", "set_to": False}
+
+    def _calculate_match_left(self):
+        middle_object = self.parent.parent.middle_carriage
+        xmin = middle_object.left_panel.detectors.x_min(
+            middle_object.left_panel.lateral_offset) - middle_object.refBeamCtr_x
+        angle_min = math.atan2(xmin, middle_object.ssd)
+        fr_xmax = math.tan(angle_min) * self.parent.ssd + self.refBeamCtr_x
+        self.lateral_offset = self.detectors.lateral_offset_from_x_max(fr_xmax)
+
+    def _calculate_match_right(self):
+        middle_object = self.parent.parent.middle_carriage
+        xmax = middle_object.right_panel.detectors.x_max(
+            middle_object.right_panel.lateral_offset) - middle_object.refBeamCtr_x
+        angle_max = math.atan2(xmax, middle_object.ssd)
+        fr_xmin = math.tan(angle_max) * self.parent.ssd + self.refBeamCtr_x
+        self.lateral_offset = self.detectors.lateral_offset_from_x_min(fr_xmin)
+
+    def _calculate_q_helper(self, value):
+        return 4 * math.pi / self.parent.parent.get_wavelength() * math.sin(math.atan2(value, self.parent.ssd) / 2)
+
+    def calculate_qx_min(self):
+        xmin = self.detectors.x_min(self.lateral_offset) - self.refBeamCtr_x
+        self.qx_min = self._calculate_q_helper(value=xmin)
+
+    def calculate_qx_max(self):
+        xmax = self.detectors.x_max(self.lateral_offset) - self.refBeamCtr_x
+        self.qx_max = self._calculate_q_helper(value=xmax)
+
+    def calculate_qy_min(self):
+        ymin = self.detectors.y_min() - self.refBeamCtr_y
+        self.qy_min = self._calculate_q_helper(value=ymin)
+
+    def calculate_qy_max(self):
+        ymax = self.detectors.y_max() - self.refBeamCtr_y
+        self.qy_max = self._calculate_q_helper(value=ymax)
+
+    def create_detector_array(self):
+        """Creates 5 arrays of zeros based on the number of x and y pixels
+
+        :return: Nothing as it just sets the value of detector_array, q_to_t_array, qx_array, qy_array, and qz_array
+        :rtype: None
+        """
+        self.detector_array = np.zeros((int(self.pixel_num_x), int(self.pixel_num_y)))
+        self.q_to_t_array = np.copy(self.detector_array)
+        self.qx_array = np.copy(self.detector_array)
+        self.qy_array = np.copy(self.detector_array)
+        self.qz_array = np.copy(self.detector_array)
+        self.data_real_dist_x = np.copy(self.detector_array)
+        self.data_real_dist_y = np.copy(self.detector_array)
+        self.data = np.copy(self.detector_array)
+
+    def create_default_mask(self):
+        if 'L' in self.short_name:
+            inner_array = np.concatenate((np.ones(5), np.zeros(118), np.ones(5)))
+            self.default_mask = np.concatenate((np.zeros((4, 128)), np.tile(inner_array, (44, 1))))
+        else:
+            inner_array = np.concatenate((np.ones(5), np.zeros(118), np.ones(5)))
+            self.default_mask = np.concatenate((np.tile(inner_array, (44, 1)), np.zeros((4, 128))))
+
+    def create_tmp_array(self):
+        tmp_calib = np.zeros((3, 48))
+        for a in range(48):
+            tmp_calib[0][a] = -512
+            tmp_calib[1][a] = 8
+            tmp_calib[2][a] = 0
+        return tmp_calib
+
+    def calculate_panel(self):
+        # Update values to be used
+        self.refBeamCtr_x = self.parent.refBeamCtr_x
+        self.refBeamCtr_y = self.parent.refBeamCtr_y
+        self.calculate_match()  # This needs to run first as it affects the values for the rest of the calculations
+        self.calculate_qx_min()
+        self.calculate_qx_max()
+        self.calculate_qy_min()
+        self.calculate_qy_max()
+
+
+class HorizontalPanel:
+    """Top and bottom panels
+    """
+
+    def __init__(self, parent, params, name="HorizontalPanel", short_name="FT"):
+        self.parent = parent
+        self.name = name
+        self.short_name = short_name
+        self.horizontal_orientation = True
+        self.verticalOffset = 0.0
+        self.qy_min = 0.0  # Bottom
+        self.qy_max = 0.0  # Top
+        self.refBeamCtr_y = 0.0
+        self.is_valid = 0.0
+        self.match_button = False
+        self.detectors = Detector(where=short_name)
+
+        # Constants needed for plotting
+        self.x_pixel_size = 0.4
+        self.y_pixel_size = 0.84
+        self.pixel_num_x = 128.0
+        self.pixel_num_y = 48.0
+        self.beam_center_x = 0.0
+        self.beam_center_y = 0.0
+        self.setback = 41  # CM
+
+        # Detector Arrays
+        self.data = []  # Data though through a differnt path
+        self.detector_array = []  # det_FL
+        self.q_to_t_array = []  # qTot_FL
+        self.qx_array = []  # qTot_FL
+        self.qy_array = []  # qx_FL
+        self.qz_array = []  # qy_FL
+        self.default_mask = []  # qz_FL
+        self.data_real_dist_x = []  # data_realDistX
+        self.data_real_dist_y = []  # data_realDistY
+
+        set_params(instance=self, params=params)
+
+    def calculate_match(self):
+        if self.match_button is not None:
+            if self.match_button:
+                if self.short_name.find("T") != -1:
+                    self._calculate_match_top()
+                else:
+                    self._calculate_match_bottom()
+                self.parent.parent.options[self.name + "+verticalOffset"] = {"type": "readonly", "set_to": True}
+            else:
+                self.parent.parent.options[self.name + "+verticalOffset"] = {"type": "readonly", "set_to": False}
+
+    def _calculate_match_bottom(self):
+        middle_object = self.parent.parent.middle_carriage
+        ymin = middle_object.right_panel.detectors.y_min(0) - middle_object.refBeamCtr_y
+        angle_min = math.atan2(ymin, middle_object.ssd)
+        fr_ymax = math.tan(angle_min) * (self.parent.ssd + self.detectors.setback) + self.refBeamCtr_y
+        self.verticalOffset = self.detectors.vertical_offset_from_y_max(fr_ymax)
+
+    def _calculate_match_top(self):
+        middle_object = self.parent.parent.middle_carriage
+        ymax = middle_object.right_panel.detectors.y_max(0) - middle_object.refBeamCtr_y
+        angle_max = math.atan2(ymax, middle_object.ssd)
+        fr_ymin = math.tan(angle_max) * (self.parent.ssd + self.detectors.setback) + self.refBeamCtr_y
+        self.verticalOffset = self.detectors.vertical_offset_from_y_min(fr_ymin)
+
+    def _calculate_q_helper(self, value):
+        return 4 * math.pi / self.parent.parent.get_wavelength() * math.sin(
+            math.atan2(value, self.parent.ssd + self.detectors.setback) / 2)
+
+    def calculate_qy_min(self):
+        # var ymin = detectors.detector_FT.y_min(this.top_front_offset) - this.front_reference_yctr;;
+        # return 4 * Math.PI / this.lambda *Math.sin(Math.atan2(ymin, this.SDD_front + detectors.detector_FT.setback) / 2);
+        ymin = self.detectors.y_min(self.verticalOffset) - self.refBeamCtr_y
+        self.qy_min = self._calculate_q_helper(value=ymin)
+
+    def calculate_qy_max(self):
+        # var ymax = detectors.detector_FB.y_max(this.bottom_front_offset) - this.front_reference_yctr;
+        # return 4 * Math.PI / this.lambda *Math.sin(Math.atan2(ymax, this.SDD_front + detectors.detector_FB.setback) / 2)
+        ymax = self.detectors.y_max(self.verticalOffset) - self.refBeamCtr_y
+        self.qy_max = self._calculate_q_helper(value=ymax)
+
+    def create_detector_array(self):
+        """Creates 5 arrays of zeros based on the number of x and y pixels
+
+        :return: Nothing as it just sets the value of detector_array, q_to_t_array, qx_array, qy_array, and qz_array
+        :rtype: None
+        """
+        self.detector_array = np.zeros((int(self.pixel_num_x), int(self.pixel_num_y)))
+        self.q_to_t_array = np.copy(self.detector_array)
+        self.qx_array = np.copy(self.detector_array)
+        self.qy_array = np.copy(self.detector_array)
+        self.qz_array = np.copy(self.detector_array)
+        self.data_real_dist_x = np.copy(self.detector_array)
+        self.data_real_dist_y = np.copy(self.detector_array)
+        self.data = np.copy(self.detector_array)
+
+    def create_default_mask(self):
+        self.default_mask = np.concatenate((np.ones((50, 48)), np.zeros((28, 48)), np.ones((50, 48))))
+
+    def create_tmp_array(self):
+        tmp_calib = np.zeros((3, 48))
+        for a in range(48):
+            tmp_calib[0][a] = -256
+            tmp_calib[1][a] = 4
+            tmp_calib[2][a] = 0
+        return tmp_calib
+
+    def calculate_panel(self):
+        # Update values to be used
+        self.refBeamCtr_y = self.parent.refBeamCtr_y
+        self.calculate_match()  # This needs to run first as it affects the values for the rest of the calculations
+        self.calculate_qy_min()
+        self.calculate_qy_max()
+
+
+class Detector:
+    """ A class for the detector constants needed for calculations
+    """
+
+    def __init__(self, where="MR"):
+        self.name = where
+
+        # Default values needed
+        self.tube_width = 0.84  # cm
+        self.num_tubes = 48
+        self.num_bins = 128
+        # Other necessary object parameters
+        self._coord1_zero_pos = None
+        self.x = None
+        self.y = None
+        self._coord1_ctr_offset = None
+        self._coord0_ctr_offset = None
+        self.x_dim = None
+        self.y_dim = None
+        # Constants for this detector that are based on the position of the detector
+        self.id = ""
+        self.spatial_calibration = []
+        self.setback = 0.0
+        self.x_ctr_offset = 0.0
+        self.y_ctr_offset = 0.0
+        self.orientation = ""
+        self.left_or_bottom = 0.0
+        self.panel_gap = 0.0
+
+        # Set the constant value based on were it is
+        self.set_constants()
+
+        # Update the params now that the constants are set
+        self.update_params()
+
+    def set_constants(self):
+        # If statements based off the name of the detector
+        v_spatial_calibration = [-52.1, 0.814, 0]  # CM
+        h_spatial_calibration = [-26.6, 0.416, 0]
+        if self.name == "ML":
+            self.id = "detector_ML"
+            self.spatial_calibration = v_spatial_calibration
+            self.setback = 0
+            self.x_ctr_offset = 0.26
+            self.y_ctr_offset = -0.16
+            self.orientation = "VERTICAL"
+            self.left_or_bottom = True
+            self.panel_gap = 0.59
+
+        elif self.name == "MT":
+            self.id = "detector_MT"
+            self.spatial_calibration = h_spatial_calibration
+            self.setback = 41
+            self.x_ctr_offset = -0.28
+            self.y_ctr_offset = 0.6
+            self.orientation = "HORIZONTAL"
+            self.left_or_bottom = False
+            self.panel_gap = 1.83
+
+        elif self.name == "MB":
+            self.id = "detector_MB"
+            self.spatial_calibration = h_spatial_calibration
+            self.setback = 41
+            self.x_ctr_offset = -0.89
+            self.y_ctr_offset = 0.96
+            self.orientation = "HORIZONTAL"
+            self.left_or_bottom = True
+            self.panel_gap = 1.83
+
+        elif self.name == "FR":
+            self.id = "detector_FR"
+            self.spatial_calibration = v_spatial_calibration
+            self.setback = 0
+            self.x_ctr_offset = 0
+            self.y_ctr_offset = 0
+            self.orientation = "VERTICAL"
+            self.left_or_bottom = False
+            self.panel_gap = 0.35
+
+        elif self.name == "FL":
+            self.id = "detector_FL"
+            self.spatial_calibration = v_spatial_calibration
+            self.setback = 0
+            self.x_ctr_offset = 0.13
+            self.y_ctr_offset = 0.35
+            self.orientation = "VERTICAL"
+            self.left_or_bottom = True
+            self.panel_gap = 0.35
+
+        elif self.name == "FT":
+            self.id = "detector_FT"
+            self.spatial_calibration = h_spatial_calibration
+            self.setback = 41
+            self.x_ctr_offset = 1.59
+            self.y_ctr_offset = 0.09
+            self.orientation = "HORIZONTAL"
+            self.left_or_bottom = False
+            self.panel_gap = 0.33
+
+        elif self.name == "FB":
+            self.id = "detector_FB"
+            self.spatial_calibration = h_spatial_calibration
+            self.setback = 41
+            self.x_ctr_offset = 0.95
+            self.y_ctr_offset = 0.77
+            self.orientation = "HORIZONTAL"
+            self.left_or_bottom = True
+            self.panel_gap = 0.33
+        else:
+            self.id = "detector_MR"
+            self.spatial_calibration = v_spatial_calibration
+            self.setback = 0
+            self.x_ctr_offset = 0
+            self.y_ctr_offset = 0
+            self.orientation = "VERTICAL"
+            self.left_or_bottom = False
+            self.panel_gap = 0.59
+
+    def update_params(self):
+        # Fix the value of this as there are issues with this value
+
+        self._coord1_zero_pos = -(self.panel_gap / 2.0 + (
+                self.num_tubes * self.tube_width)) if self.left_or_bottom else self.panel_gap / 2.0
+        if self.orientation == 'VERTICAL':
+            self.x = self._pixel_to_coord1  # This is a method not a variable
+            self.y = self._pixel_to_coord0
+            self._coord1_ctr_offset = self.x_ctr_offset
+            self._coord0_ctr_offset = self.y_ctr_offset
+            self.x_dim = self.num_tubes
+            self.y_dim = self.num_bins
+        else:
+            self.x = self._pixel_to_coord0
+            self.y = self._pixel_to_coord1
+            self._coord0_ctr_offset = self.x_ctr_offset
+            self._coord1_ctr_offset = self.y_ctr_offset
+            self.x_dim = self.num_bins
+            self.y_dim = self.num_tubes
+
+    def _pixel_to_coord0(self, pixel):
+        # convert pixel to spatial dimension, along tube length;
+        return self.spatial_calibration[0] - self._coord0_ctr_offset + self.spatial_calibration[1] * pixel + \
+            self.spatial_calibration[2] * math.pow(pixel, 2)
+
+    def _pixel_to_coord1(self, pixel):
+        return (pixel + 0.5) * self.tube_width + self._coord1_zero_pos - self._coord1_ctr_offset
+
+    def _coord0_to_pixel(self, coord0):
+        beta = math.sqrt(self.spatial_calibration[2])
+        if beta == 0:
+            return (coord0 - self.spatial_calibration[0] + self._coord0_ctr_offset) / self.spatial_calibration[1]
+        else:
+            alpha = self.spatial_calibration[1] / (2 * beta)
+            # pick the right sign?
+            return (alpha + math.sqrt(coord0 - self.spatial_calibration[0] + self._coord0_ctr_offset + alpha)) / beta
+
+    def _coord1_to_pixel(self, coord1):
+        return (coord1 - self._coord1_zero_pos + self._coord0_ctr_offset) / self.tube_width - 0.5
+
+    def x_min(self, lateral_offset):
+        return self.x(0) + (lateral_offset or 0)
+
+    def x_max(self, lateral_offset):
+        return self.x(self.x_dim - 1) + (lateral_offset or 0)
+
+    def y_min(self, vertical_offset=None):
+        return self.y(0) + (vertical_offset or 0)
+
+    def y_max(self, vertical_offset=None):
+        return self.y(self.y_dim - 1) + (vertical_offset or 0)
+
+    def lateral_offset_from_x_max(self, x):
+        return x - self.x_max(0)
+
+    def lateral_offset_from_x_min(self, x):
+        return x - self.x_min(0)
+
+    def vertical_offset_from_y_max(self, y):
+        return y - self.y_max(0)
+
+    def vertical_offset_from_y_min(self, y):
+        return y - self.y_min(0)
+
+
+class VSANS_Constants:
+    def __init__(self):
+        self.constants = None
+
+    def get_constants(self, preset, VSANS_dict, js_only=False):
+        # Gets the constants based on the preset
+        if preset == "16m":
+            self.constants = self._preset_16m(VSANS_dict)
+        elif preset == "11m":
+            self.constants = self._preset_11m(VSANS_dict)
+        elif preset == "4.5m":
+            self.constants = self._preset_4_5m(VSANS_dict)
+        else:
+            self.constants = self._preset_19m(VSANS_dict)
+        # If you only want the Js params just return the user ones
+        if js_only:
+            return self.constants.get("user", {})
+        else:
+            return self.constants.get("other", {})
+
+    def _preset_4_5m(self, user_inaccessible):
+        other_constants = {}
+        other_constants["phi_0"] = 1.82e13
+        other_constants["lambda_T"] = 6.2
+        user_inaccessible["beam"]["wavelength"] = 6
+        user_inaccessible["beam"]["dlambda"] = 0.12
+        other_constants["T_Frontend"] = 1.0
+        user_inaccessible["collimation"]["guide_select"] = "9"
+        user_inaccessible["collimation"]["sourceAperture_js"] = "60.0"
+        user_inaccessible["collimation"]["sourceDistance"] = 579
+        user_inaccessible["collimation"]["extSampleAperture"] = 12.7
+        user_inaccessible["collimation"]["sampleToApGv"] = 22
+        user_inaccessible["collimation"]["sampleToGv"] = 11
+        user_inaccessible["middle_carriage"]["ssdInput"] = 450  # SDD_middle_input
+        other_constants["beamstop_index"] = 3 - 1
+        user_inaccessible["MidLeftPanel"]["lateralOffset"] = -6.0
+        user_inaccessible["mid_right_panel"]["lateralOffset"] = -5.5
+        user_inaccessible["front_carriage"]["ssd_input"] = 100
+        user_inaccessible["front_left_panel"]["lateralOffset"] = -10.344
+        user_inaccessible["front_right_panel"]["lateralOffset"] = 7.57
+        user_inaccessible["front_top_panel"]["verticalOffset"] = 0
+        user_inaccessible["front_bottom_panel"]["verticalOffset"] = 0
+        user_inaccessible["front_carriage"]["refBeamCtrX"] = 0
+        user_inaccessible["front_carriage"]["RefBeamCtrY"] = 0
+        user_inaccessible["middle_carriage"]["refBeamCtr_x"] = 0
+        user_inaccessible["middle_carriage"]["refBeamCtr_y"] = 0
+        return {"user": user_inaccessible, "other": other_constants}
+
+    def _preset_11m(self, user_inaccessible):
+        other_constants = {}
+        other_constants["phi_0"] = 1.82e13
+        other_constants["lambda_T"] = 6.2
+        user_inaccessible["beam"]["wavelength"] = 6
+        user_inaccessible["beam"]["dlambda"] = 0.12
+        other_constants["T_Frontend"] = 1.0
+        user_inaccessible["collimation"]["guide_select"] = "7"
+        user_inaccessible["collimation"]["sourceAperture_js"] = "60.0"
+        user_inaccessible["collimation"]["sourceDistance"] = 980
+        user_inaccessible["collimation"]["extSampleAperture"] = 12.7
+        user_inaccessible["collimation"]["sampleToApGv"] = 22
+        user_inaccessible["collimation"]["sampleToGv"] = 11
+        user_inaccessible["middle_carriage"]["ssdInput"] = 1100  # SDD_middle_input
+        other_constants["beamstop_index"] = 4 - 1
+        user_inaccessible["MidLeftPanel"]["lateralOffset"] = -6.0
+        user_inaccessible["mid_right_panel"]["lateralOffset"] = -5.5
+        user_inaccessible["front_carriage"]["ssd_input"] = 230
+        user_inaccessible["front_left_panel"]["lateralOffset"] = -9.32
+        user_inaccessible["front_right_panel"]["lateralOffset"] = 6.82
+        user_inaccessible["front_top_panel"]["verticalOffset"] = 0
+        user_inaccessible["front_bottom_panel"]["verticalOffset"] = 0
+        user_inaccessible["front_carriage"]["refBeamCtrX"] = 0
+        user_inaccessible["front_carriage"]["RefBeamCtrY"] = 0
+        user_inaccessible["middle_carriage"]["refBeamCtr_x"] = 0
+        user_inaccessible["middle_carriage"]["refBeamCtr_y"] = 0
+        return {"user": user_inaccessible, "other": other_constants}
+
+    def _preset_16m(self, user_inaccessible):
+        other_constants = {}
+        other_constants["phi_0"] = 1.82e13
+        other_constants["lambda_T"] = 6.2
+        user_inaccessible["beam"]["wavelength"] = 6
+        user_inaccessible["beam"]["dlambda"] = 0.12
+        other_constants["T_Frontend"] = 1.0
+        user_inaccessible["collimation"]["guide_select"] = "2"
+        user_inaccessible["collimation"]["sourceAperture_js"] = "60.0"
+        user_inaccessible["collimation"]["sourceDistance"] = 2157
+        user_inaccessible["collimation"]["extSampleAperture"] = 12.7
+        user_inaccessible["collimation"]["sampleToApGv"] = 22
+        user_inaccessible["collimation"]["sampleToGv"] = 11
+        user_inaccessible["middle_carriage"]["ssdInput"] = 1600  # SDD_middle_input
+        other_constants["beamstop_index"] = 3 - 1
+        user_inaccessible["MidLeftPanel"]["lateralOffset"] = -6.0
+        user_inaccessible["mid_right_panel"]["lateralOffset"] = -5.5
+        user_inaccessible["front_carriage"]["ssd_input"] = 350
+        user_inaccessible["front_left_panel"]["lateralOffset"] = -9.627
+        user_inaccessible["front_right_panel"]["lateralOffset"] = 7.0497
+        user_inaccessible["front_top_panel"]["verticalOffset"] = 0
+        user_inaccessible["front_bottom_panel"]["verticalOffset"] = 0
+        user_inaccessible["front_carriage"]["refBeamCtrX"] = 0
+        user_inaccessible["front_carriage"]["RefBeamCtrY"] = 0
+        user_inaccessible["middle_carriage"]["refBeamCtr_x"] = 0
+        user_inaccessible["middle_carriage"]["refBeamCtr_y"] = 0
+        return {"user": user_inaccessible, "other": other_constants}
+
+    def _preset_19m(self, user_inaccessible):
+        other_constants = {}
+        other_constants["phi_0"] = 1.82e13
+        other_constants["lambda_T"] = 6.2
+        user_inaccessible["beam"]["wavelength"] = 6  # lambda
+        user_inaccessible["beam"]["dlambda"] = 0.12
+        other_constants["T_Frontend"] = 1.0
+        user_inaccessible["collimation"]["guide_select"] = "0"
+        user_inaccessible["collimation"]["sourceAperture_js"] = "30.0"  # source_aperture_str
+        user_inaccessible["collimation"]["sourceDistance"] = 2441  # source_distance
+        user_inaccessible["collimation"]["extSampleAperture"] = 12.7
+        user_inaccessible["collimation"]["sampleToApGv"] = 22
+        user_inaccessible["collimation"]["sampleToGv"] = 11
+        user_inaccessible["middle_carriage"]["ssdInput"] = 1900  # SDD_middle_input
+        other_constants["beamstop_index"] = 2 - 1
+        user_inaccessible["mid_left_panel"]["lateralOffset"] = -6.0
+        user_inaccessible["mid_right_panel"]["lateralOffset"] = -5.5
+        user_inaccessible["front_carriage"]["ssd_input"] = 400
+        user_inaccessible["front_left_panel"]["lateralOffset"] = -9.24
+        user_inaccessible["front_right_panel"]["lateralOffset"] = 6.766
+        user_inaccessible["front_top_panel"]["verticalOffset"] = 0
+        user_inaccessible["front_bottom_panel"]["verticalOffset"] = 0
+        user_inaccessible["front_carriage"]["refBeamCtrX"] = 0
+        user_inaccessible["front_carriage"]["RefBeamCtrY"] = 0
+        user_inaccessible["middle_carriage"]["refBeamCtr_x"] = 0
+        user_inaccessible["middle_carriage"]["refBeamCtr_y"] = 0
+        return {"user": user_inaccessible, "other": other_constants}
+
+
+class PlotData:
+    def __init__(self, parent, params, name="PlotData"):
+        self.parent = parent
+        self.name = name
+        self.middle_carriage = None
+        self.mid_left_panel = None
+        self.mid_right_panel = None
+        self.mid_top_panel = None
+        self.mid_bottom_panel = None
+        self.front_carriage = None
+        self.front_left_panel = None
+        self.front_right_panel = None
+        self.front_top_panel = None
+        self.front_bottom_panel = None
+        self.all_detectors = None
+
+        # Not object params
+        self.lambda_val = 0.0
+        self.default_mask = None
+        self.k_bctr_cm = True  # set to 1 to use beam center in cm. O to use pixels
+
+        set_params(instance=self, params=params)
+
+    def run_plot_data(self):
+        # Initialize the space and all the variables
+        self.initialize_space()
+
+        # Open the panel
+        # self.draw_panel() # not necessary right now might be used later to set parameters
+
+        # Generates default mask
+        self.generate_default_mask()
+
+        # Some other update that starts with a preset
+
+        # Calculates all the data
+        self.calculate_all_detectors()
+
+        # Updates the views
+        self.update_views()
+
+    def initialize_space(self):
+        # All the other variables are set in their classes as they are constants
+
+        # Creates a object that contains all the detector objects and can be lopped through
+        self.all_detectors = [self.mid_left_panel, self.mid_right_panel, self.mid_top_panel, self.mid_bottom_panel,
+                              self.front_left_panel, self.front_right_panel, self.front_top_panel,
+                              self.front_bottom_panel]
+        # Creates each detector in the subclass
+        for panel in self.all_detectors:
+            panel.create_detector_array()
+
+    def generate_default_mask(self):
+        # if it matters we are using the gHighResBinning value of 4 as that is what is used for VCALC
+
+        # Overall Default Mask
+        inner_array = np.concatenate((np.ones(39), np.zeros(1496), np.ones(121)))
+        self.default_mask = np.concatenate(
+            (np.zeros((191, 1656)), np.tile(inner_array, (478, 1)), np.zeros((11, 1656))))
+
+        # Generate thde default mask for each indevidual detector
+        for panel in self.all_detectors:
+            panel.create_default_mask()
+
+    def calculate_all_detectors(self):
+        # calculates Q for each panel and fills 2D panels with model data then plots the 2D panel
+        # self.plot_back_panel() # We are not worrying about the back Panel
+        self.plot_all_panels()
+
+        # generate a proper mask based on hard + soft shadowing
+        self.reset_mask()
+        for panel in self.all_detectors:
+            self.draw_mask(panel)
+
+        # update values on the panel
+        self.calculate_beam_intensity()
+
+        # Fill in the Qmin and Qmax values, based on Q_Tot for the 2D panels ( not including mask)
+        # self.v_q_min_max_back() # We are not worrying about the back Panel
+        self.v_q_min_max_middle()
+        self.v_q_min_max_front()
+
+        # Calculate beam diameter and beamstop size
+        # V_BeamDiamDisplay("maximum", "MR") // TODO - - hard - wired here for the Middle carriage ( and in the
+        #  SetVar label)
+        # V_BeamStopDiamDisplay("MR")
+
+        self.beam_biam_display()
+        self.beam_stop_diam_display()
+        # Calculate the "real" QMin with the beamstop
+        # V_QMin_withBeamStop("MR") // TODO - - hard - wired
+        #
+        self.calculate_q_min_beam_stop()
+        #
+        # The 1 D I(q) - get the values, re - do the calc at the end
+        # popStr
+        # collimationStr = "pinhole"
+        # ControlInfo / W = VCALC
+        # popup_b
+        # popStr = S_Value
+        # V_QBinAllPanels_Circular("VCALC", V_BinTypeStr2Num(popStr), collimationStr)
+        self.bin_all_panels_circular()
+        #
+        # Plot the results(1 D)
+        # type = "VCALC"
+        # String
+        # str, winStr = "VCALC#Panels_IQ", workTypeStr
+        # workTypeStr = "root:Packages:NIST:VSANS:" + type
+        #
+        # sprintf
+        # str, "(\"%s\",%d,\"%s\")", workTypeStr, V_BinTypeStr2Num(popStr), winStr
+        # Execute("V_Back_IQ_Graph" + str)
+        #
+        # Execute("V_Middle_IQ_Graph" + str)
+        #
+        # Execute("V_Front_IQ_Graph" + str)
+        #
+        # Multiply the averaged data by the shadow factor to simulate a beamstop
+        self.iq_beam_stop_shadow()
+
+    def update_views(self):
+        pass
+
+    # Helper functions for the sub functions of run_plot_data
+    # Start calculate panel function
+    def plot_all_panels(self):
+        # fPlotMiddlePanels in IgorPro
+        # calculate Qtot, qxqyqz arrays from geometry
+        for panel in self.all_detectors:
+            self.plot_panel(panel)
+            self.fill_panel_w_model_data(
+                panel)  # Middle Panels AsQ()  # self.  # TODO self.panel_asq(  # self.middle_carriage) # This displays the panel and checks ot make sure everything is  #  right
+
+    def fill_panel_w_model_data(self, panel_object):
+        # FillPanel_wModelData in Igor
+        detector_array = panel_object.detector_array
+        q_to_t = panel_object.q_to_t_array
+        tmp_intren = np.copy(detector_array)
+        tmp_sig = np.copy(detector_array)
+        prob_i = np.copy(detector_array)
+
+        imon = 1e+11
+        trans = 0.8
+        thick = 0.1
+        ssd = self.get_ssd(panel_object)
+        # Get the setback value of each part
+        ssd = ssd + self.get_setback(panel_object)
+        pix_size_x = panel_object.x_pixel_size
+        pix_size_y = panel_object.y_pixel_size
+        add_emp_bgd = 0
+        func_str = "Debye"  # This is the model used for calculation
+
+        def debye(x):
+            scale = 10
+            rg = 300
+            bkg = 0.0001
+            qr2 = math.pow(x * rg, 2)
+            pq = 2 * (math.exp(-(qr2)) - 1 + qr2) / math.pow(qr2, 2)
+            pq = pq * scale
+            return pq + bkg
+
+        for a in range(len(tmp_intren)):
+            for b in range(len(tmp_intren[0])):
+                tmp_intren[a][b] = debye(panel_object.q_to_t_array[a][b])
+        # Id not implement if add_emp_bgd ad it did not seem necessary without model application
+        # I also did not implement if back detector as we do not have the back director at this time
+        prob_i = trans * thick * pix_size_x * pix_size_y / math.pow(ssd, 2) * tmp_intren
+        tmp_intren = (imon) * prob_i
+        for a in range(len(tmp_intren)):
+            for b in range(len(tmp_intren[a])):
+                tmp_sig[a][b] = math.sqrt(tmp_intren[a][b])
+        # TODO Implement gnoise
+        # tmpInten += gnoise(tmpSig)
+        for a in range(len(tmp_intren)):
+            for b in range(len(tmp_intren[a])):
+                tmp_intren[a][b] = math.trunc(tmp_intren[a][b])
+        det = tmp_intren
+        panel_object.detector_array = det / (trans * thick * pix_size_x * pix_size_y / math.pow(ssd, 2) * imon)
+
+    def plot_panel(self, panel_object):
+        self.make_real_dist_x_y_waves(panel_object)
+        m_sep = self.get_offset(panel_object)
+        pix_size_x = panel_object.x_pixel_size
+        pix_size_y = panel_object.y_pixel_size
+        n_pixels_x = int(panel_object.pixel_num_x)
+        n_pixels_y = int(panel_object.pixel_num_y)
+        panel_object.beam_center_x_pix = n_pixels_x - (m_sep / pix_size_x)
+        panel_object.beam_center_y_pix = n_pixels_y / 2
+
+        if self.k_bctr_cm:
+            data_real_dist_x = panel_object.data_real_dist_x
+            data_real_dist_y = panel_object.data_real_dist_y
+            panel_object.beam_center_x_pix = (data_real_dist_x[n_pixels_x - 1][0] / 10 + (
+                    panel_object.beam_center_x_pix - n_pixels_x - 1) * pix_size_x)
+            panel_object.beam_center_y_pix = data_real_dist_y[0][int(panel_object.beam_center_y_pix)] / 10
+        ssd = self.get_ssd(panel_object)
+        self.detector_2q_non_linear(panel_object=panel_object)  # Something to set scale
+
+    def detector_2q_non_linear(self, panel_object):
+        lam = self.lambda_val
+        tube_width = 8.4
+        dim_x = panel_object.pixel_num_x
+        dim_y = panel_object.pixel_num_y
+        data_real_dist_x = panel_object.data_real_dist_x
+        data_real_dist_y = panel_object.data_real_dist_y
+        ssd = self.get_ssd(panel_object)
+
+        def find_phi(dx, dy):
+
+            if dx == 0 and dy > 0:
+                return math.pi / 2
+            elif dx == 0 and dy < 0:
+                return 3 * math.pi / 2
+            elif dx >= 0 and dy == 0:
+                return 0
+            elif dx < 0 and dy == 0:
+                return math.pi
+
+            phi = math.atan(dx / dy)
+            if dx > 0 and dy > 0:
+                return phi
+            elif (dx < 0 < dy) or (dx < 0 and dy < 0):
+                return phi + math.pi
+            elif dx > 0 > dy:
+                return phi + 2 * math.pi
+            else:
+                return phi
+
+        def calc_q_val(a_q, b_q):
+            dx = data_real_dist_x[a_q][b_q] - dim_x
+            dy = data_real_dist_y[a_q][b_q] - dim_y
+            dist = math.sqrt(math.pow(dx, 2) + math.sqrt(math.pow(dy, 2)))
+            dist = dist / 10
+            two_theta = math.atan(dist / ssd)
+            q_val = 4 * math.pi / lam * math.sin(two_theta / 2)
+            return q_val
+
+        def calc_q_x(a_x, b_x):
+            q_val = calc_q_val(a_x, b_x)
+            dx = data_real_dist_x[a_x][b_x] - dim_x  # Delta x in mm
+            dy = data_real_dist_y[a_x][b_x] - dim_y  # Delta y in mm
+            phi = find_phi(dx, dy)
+
+            # get scattering angle to project onto flat detector => Qr = qval*cos(theta)
+            dist = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
+            dist = dist / 10  # Convert mm to cm
+            two_theta = math.atan(dist / ssd)
+            qx = q_val * math.cos(two_theta / 2) * math.cos(phi)
+            return qx
+
+        def calc_q_y(a_y, b_y):
+            qval = calc_q_val(a_y, b_y)
+            dx = data_real_dist_x[a_y][b_y] - dim_x
+            dy = data_real_dist_y[a_y][b_y] - dim_y
+            phi = find_phi(dx, dy)
+
+            # get scattering angle to project onto flat detector => Qr = qval*cos(theta)
+            dist = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
+            dist = dist / 10  # convert mm to cm
+
+            two_theta = math.atan(dist / ssd)
+            qy = qval * math.cos(two_theta / 2) * math.sin(phi)
+            return qy
+
+        def calc_q_z(a, b):
+            q_val = calc_q_val(a, b)
+            dx = data_real_dist_x[a][b] - dim_x
+            dy = data_real_dist_y[a][b] - dim_y
+
+            dist = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))
+            dist = dist / 10  # convert mm to cm
+
+            two_theta = math.atan(dist / ssd)
+            qz = q_val * math.sqrt(two_theta / 2)
+            return qz
+
+        if self.k_bctr_cm:  # And not the back detector
+            # Calculate all the q values
+            for a in range(len(panel_object.q_to_t_array)):
+                for b in range(len(panel_object.q_to_t_array[0])):
+                    panel_object.q_to_t_array[a][b] = calc_q_val(a, b)
+            for a in range(len(panel_object.qx_array)):
+                for b in range(len(panel_object.qx_array[0])):
+                    panel_object.qx_array[a][b] = calc_q_x(a, b)
+
+            for a in range(len(panel_object.qy_array)):
+                for b in range(len(panel_object.qy_array[0])):
+                    panel_object.qy_array[a][b] = calc_q_y(a, b)
+
+            for a in range(len(panel_object.qz_array)):
+                for b in range(len(panel_object.qz_array[0])):
+                    panel_object.qz_array[a][b] = calc_q_z(a, b)
+
+    def make_real_dist_x_y_waves(self, panel_object):
+        # VC_MakeRealDistXYWaves in IGORPro
+        # make the data_realDistX,Y Waves that are needed for the calculation of q
+        tmp_array = panel_object.create_tmp_array()
+        tube_width = 8.4
+        # self.non_linear_correction(data,tmpCalib,tube_width,detStr,destPath)
+
+        # The below is V_NonLinearCorrection in igor
+        horizontal_orientation = panel_object.horizontal_orientation
+        # FIXME Get panel gap code is returning a null value
+        diamX = len(panel_object.detector_array)
+        diamy = len(panel_object.detector_array[0])
+        # Find te panel gap from the list of constants
+        if 'F' in panel_object.short_name:
+            if not horizontal_orientation:
+                gap = 3.5
+            else:
+                gap = 3.3
+        else:
+            if not horizontal_orientation:
+                gap = 5.9
+            else:
+                gap = 18.3
+
+        # Params needed to calculate teh real_dist arrays
+        other_array_x = panel_object.data_real_dist_x  # The array we are editing
+        other_array_y = panel_object.data_real_dist_y  # The array we are editing
+        offset = self.get_offset(panel_object=panel_object)
+        offset = offset * 10
+
+        # Get the data in the real_dist arrays
+        if not horizontal_orientation:
+            if self.k_bctr_cm:  # Matches what is in IGOR:
+                if 'L' in panel_object.short_name:
+                    for a in range(len(other_array_x)):
+                        value = offset - (diamX - a - .5) * tube_width - gap / 2
+                        for b in range(len(other_array_x[0])):
+                            other_array_x[a][b] = value
+                else:  # Matches what is in IGOR
+                    # If it is on the right
+                    for a in range(len(other_array_x)):
+                        value = tube_width * (a + .5) + offset + gap / 2
+                        for b in range(len(other_array_x[0])):
+                            other_array_x[a][b] = value
+            else:
+                for a in range(len(other_array_x)):
+                    value = tube_width * a
+                    for b in range(len(other_array_x[0])):
+                        other_array_x[a][b] = value
+            # Set up the y array for the horizontal orientation
+            for a in range(len(other_array_y)):  # Matches what it says in IGOR
+                for b in range(len(other_array_y[0])):
+                    other_array_y[a][b] = tmp_array[0][a] + tmp_array[1][a] * b + tmp_array[2][a] * b * b
+        else:  # If it is a horizontal panel
+            if self.k_bctr_cm:
+                if 'T' in panel_object.short_name:
+                    for a in range(len(other_array_y)):
+                        for b in range(len(other_array_y[0])):
+                            other_array_y[a][b] = tube_width * (b + .5) + offset + gap / 2
+                else:
+                    for a in range(len(other_array_y)):
+                        for b in range(len(other_array_y[0])):
+                            other_array_y[a][b] = offset - (diamy - b - .5) * tube_width - gap / 2
+            else:
+                for a in range(len(other_array_y)):
+                    for b in range(len(other_array_y[0])):
+                        other_array_y[a][b] = tube_width * b
+            for a in range(len(other_array_x)):
+                for b in range(len(other_array_x[0])):
+                    other_array_x[a][b] = tmp_array[0][b] + tmp_array[1][b] * a + tmp_array[2][b] * a * a
+
+    # End calculate panel functions
+
+    def reset_mask(self):
+        # VC_ResetVCALCMask in Igor Pro
+        for panel in self.all_detectors:
+            panel.data = np.zeros((len(panel.detector_array), len(panel.detector_array[0])))
+
+    def draw_mask(self, panel_object):
+        # VC_DrawVCALCMask in Igor Pro
+
+        offset = self.get_offset(panel_object)
+        D2 = self.parent.get_sample_aperture()
+        l2 = self.get_l_2(panel_object)
+
+    def calculate_beam_intensity(self):
+        pass
+
+    def v_q_min_max_middle(self):
+        pass
+
+    def v_q_min_max_front(self):
+        pass
+
+    def beam_biam_display(self):
+        pass
+
+    def beam_stop_diam_display(self):
+        pass
+
+    def calculate_q_min_beam_stop(self):
+        pass
+
+    def bin_all_panels_circular(self):
+        pass
+
+    def iq_beam_stop_shadow(self):
+        pass
+
+    def get_l_2(self,panel_object):
+        if 'F' in panel_object.short_name:
+            return self.front_carriage.l_2
+        else:
+            return self.middle_carriage.l_2
+
+    @staticmethod
+    def get_offset(panel_object):
+        # VCALC_getPanelTranslation in IGOR
+        if panel_object.horizontal_orientation:
+            return panel_object.verticalOffset
+        else:
+            return panel_object.lateral_offset
+
+    @staticmethod
+    def get_setback(panel_object):
+        # VCALC_getPanelTranslation in IGOR
+        if panel_object.horizontal_orientation:
+            return panel_object.setback
+        else:
+            return 0
+
+    def get_ssd(self, panel_object):
+        # VCALC_getPanelTranslation in IGOR
+        if 'F' in panel_object.short_name:
+            return self.front_carriage.ssd
+        else:
+            return self.middle_carriage.ssd
