@@ -683,11 +683,34 @@ class VSANS:
 
 
 class Beam:
-    """
+    """A class for storing and manipulating Beam related data.
 
+    :param VSANS self.parent: The parent VSANS object
+    :param str self.name: The name of the class
+    :param float self.wavelength: The wavelength or lambda value
+    :param float self.dlambda: The dlambda value from the JS
+    :param float self.lambda_T: The lambdaT value from the JS
+    :param float self.phi_0:
+    :param float self.frontend_trans:
+    :param float self.flux:
+    :param float self.beam_current:
+    :param float self.i_sub_zero:
+    :param dict self.frontend_trans_options: A dictionary of options for front end trans baced on dlambda
     """
     def __init__(self, parent, params, name="beam"):
+        """ Creates object parameters for Beam class and runs set params method
+
+        Sets object parameters self.parent, self.name, self.wavelength, self.dlambda, self.lambda_T, self.phi_0,
+        self.frontend_trans, self.flux, self.beam_current, self.i_sub_zero, and self.frontend_trans_options
+
+        :param VSANS parent: The VSANS instance this Beam is a part of
+        :param dict params: A dictionary mapping <param_name>: <value>
+        :param str name: The name of the class
+        :return: None as it just sets the parameters
+        :rtype: None
+        """
         self.parent = parent
+        self.name = name
         self.wavelength = 0  # Known as lamda in the js
         self.dlambda = 0.0
         self.lambda_T = 0.0
@@ -697,24 +720,28 @@ class Beam:
         self.beam_current = 0.0
         self.i_sub_zero = 0.0  # or Incident_Intensity
         self.frontend_trans_options = {}
-        self.name = name
         set_params(instance=self, params=params)
 
     def dlambda_check_lambda(self):
         """ Makes sure the value of wavelength is correct based off dlambda
 
-        :return:
+        :return: None as it just sets the value of lambda if it is not correct
+        :rtype: None
         """
         if self.dlambda == 0.02:
             self.wavelength = 4.75
         elif self.dlambda == 0.4:
             self.wavelength = 5.3
+        else:
+            self.calculate_wavelength()
 
     def calculate_wavelength(self):
-        """If the value of the wavelength is in the wrong range brings it to the correct range
+        """Corrects the value of wavelength if it is in the wrong range
+
+        :return: None as it just sets the value of wavelength
+        :rtype: None
 
         """
-        self.dlambda_check_lambda()
         if self.wavelength < 4:
             self.wavelength = 4.0
         elif 8.5 < self.wavelength < 10.7:
@@ -723,25 +750,49 @@ class Beam:
             self.wavelength = 19.3
 
     def calculate_frontend_trans(self):
-        """Gets the value of frontend_trans from the list of options based on dlambda"""
+        """Gets the value of frontend_trans from the list of options based on dlambda
+
+        :return: Nothing as it just sets the front end trans value and moves on
+        :rtype: None
+        """
         self.frontend_trans = self.frontend_trans_options[str(self.dlambda)]
 
     def calculate_flux(self):
+        """ Calculates the value of flux from lambda_T wavelength, and dlambda
+
+        :return: None as it just sets the value of flux
+        :rtype: None
+        """
         lfrac = self.lambda_T / self.wavelength
         self.flux = (self.dlambda * math.pow(lfrac, 4) * math.exp(-math.pow(lfrac, 2)) * self.phi_0) / 2.0 * math.pi
 
     def calculate_beam_current(self):
+        """Calulcates the current beam value by getting the calculated t_filter value
+
+        :return: None as it just sets the beam current value
+        :rtype: None
+        """
         self.parent.collimation.calculate_t_filter()
         t_filter = self.parent.collimation.t_filter
         self.beam_current = self.frontend_trans * t_filter
 
     def calculate_iSub0(self):
+        """Calculates the value of i sub 0 from sample aperture and the current beam value
+
+        :return: None as it just sets i_sub_zero
+        :rtype: None
+        """
         collimation = self.parent.collimation
         collimation.calculate_sample_aperture()
         self.i_sub_zero = self.beam_current / (math.pi * math.pow(collimation.sample_aperture / 2.0, 2))
 
     def calculate_beam(self):
-        self.calculate_wavelength()
+        """Runs all the calculation methods nessasary to calculate the beam object
+
+        :return: None as it just runs calculations
+        :rtype: None
+        """
+        self.dlambda_check_lambda()
         self.calculate_frontend_trans()
         self.calculate_flux()
         self.calculate_beam_current()
@@ -749,7 +800,40 @@ class Beam:
 
 
 class Collimation:
+    """A class for storing and manipulating Beam related data.
+
+    :param VSANS self.parent: The parent VSANS object
+    :param str self.name: The name of the class
+    :param int self.guide_select: The value of the js guide select dropdown
+    :param int self.num_guides: The number of guides
+    :param boolean self.cov_beams: Whether there were cov_beams instead of guides
+    :param str self.source_aperture_js: The source aperture str directly from the js
+    :param int self.source_aperture: The aperture of the source you are using
+    :param int self.source_distance: The distance from the sources
+    :param array self.source_distance_options: All the options for source aperture
+    :param int self.t_filter: The calculated t filter value
+    :param int self.t_guide: The calculated t_guide value
+    :param int self.sample_aperture: The aperture of the sample
+    :param int self.ext_sample_aperture: A constant of the extended sample aperture
+    :param int self.sample_to_ap_gv: The sample to ap_gv distance
+    :param int self.sample_to_gv: The sample to gv distance
+    :param int self.l_1: The value of 1_1
+    :param int self.a_over_l: The value of a over l_1
+    """
     def __init__(self, parent, params, name="collimation"):
+        """Creates object parameters for Collimation class and runs set params method
+
+        Sets object parameters self.parent, self.name, self.guide_select, self.num_guides, self.cov_beams,
+        self.source_aperture_js, self.source_aperture, self.source_distance, self.source_distance_options,
+        self.t_filter, self.t_guide, self.sample_aperture, self.ext_sample_aperture, self.sample_to_ap_gv,
+        self.sample_to_gv, self.l_1, and self.a_over_l
+
+        :param VSANS parent: The VSANS instance this Collimation is a part of
+        :param dict params: A dictionary mapping <param_name>: <value>
+        :param str name: The name of the class
+        :return: None as it just sets the parameters
+        :rtype: None
+        """
         self.parent = parent
         self.name = name
         self.guide_select = 0
@@ -771,37 +855,80 @@ class Collimation:
         set_params(instance=self, params=params)
 
     def calculate_num_guides(self):
+        """Decides if guide select value is CONV BEAMS or NARROW SLITS and if not makes it the int value of what was
+        selected
+
+        :return: None as it just sets the value of num_guides
+        :rtype: None
+        """
         self.num_guides = 0 if self.guide_select == "CONV_BEAMS" or self.guide_select == "NARROW_SLITS" else int(
             self.guide_select)
 
     def calculate_source_aperture(self):
-        """Calculates the value of the source aperture
+        """Calculates the value of the source aperture from the value gotten from JS
 
         :return: None as it just sets a value
+        :rtype: None
         """
         self.source_aperture = float(self.source_aperture_js) / 10.0
 
     def calculate_sourceDistance(self):
+        """Calculates the source distance from whatever the number of guides index is in the source_distance_options
+
+        :return: None as it just sets a value
+        :rtype: None
+        """
         self.source_distance = self.source_distance_options[self.num_guides]
 
     def calculate_t_filter(self):
-        # Calculation run in beam.calculate_beam_current()
+        """Calculates the value of t_filter from the beam.Wavelength value
+
+        Is run from the beam.calculate_beam_current() method as it is needed for that calculation
+
+        :return: None as it just sets a value
+        :rtype: None
+        """
         lambda_val = self.parent.get_wavelength()
         self.t_filter = math.exp(-0.371 - 0.0305 * lambda_val - 0.00352 * math.pow(lambda_val, 2))
 
     def calculate_t_guide(self):
-        return math.pow(0.97, self.num_guides)
+        """Calculates the t_guide value using the value for the number of guides
+
+        :return: None as it just sets a value
+        :rtype: None
+        """
+        self.t_guide = math.pow(0.97, self.num_guides)
 
     def calculate_sample_aperture(self):
+        """Calculates the sample aperture value from the ext_sample_aperture
+
+        :return: None as it just sets a value
+        :rtype: None
+        """
         self.sample_aperture = self.ext_sample_aperture / 10.0
 
     def calculate_l_1(self):
+        """Calculates the l_1 value from source distance and sample_to_ap_gv value
+
+        :return: Nothing as it just sets the value of l_1 and returns
+        :rtype: None
+        """
         self.l_1 = self.source_distance - self.sample_to_ap_gv
 
     def calculate_aOverL(self):
+        """Calculates the value of a_over_l from the source and sample aperture as well as l_1
+
+        :return: None as it just sets a value
+        :rtype: None
+        """
         self.a_over_l = math.pow((math.pi / 4.0 * self.source_aperture * self.sample_aperture / self.l_1), 2)
 
     def calculate_collimation(self):
+        """Runs all the calculation methods nessasary to calculate the collimation object
+
+        :return: None as it just runs calculations
+        :rtype: None
+        """
         self.calculate_num_guides()
         self.calculate_source_aperture()
         self.calculate_sourceDistance()
@@ -812,13 +939,42 @@ class Collimation:
 
 
 class AllCarriage:
+    """A class for storing and manipulating AllCarriage related data.
+
+    :param VSANS self.parent: The parent VSANS object
+    :param str self.name: The name of the class
+    :param float self.imported_l_1:
+    :param float self.beam_drop: The beam drop or beam gravity drop mean
+    :param float self.gravity_drop_min: The max value of beam gravity drop
+    :param float self.gravity_drop_max: The min value of the beam gravity drop
+    :param float self.beamstop_required: Calculates the beamstop required value in CM
+    :param float self.beamstop: The beam stop value in inches
+    :param float self.beam_stop_cm: The beamstop value in cm
+    :param float self.two_theta_min: The min value of 2 theta
+    :param Boolean self.overall_dq_calculated: Whether the overall dq values had finished calculating yet
+    :param float self.dq_geometric: The dq geometric value
+    :param float self.dq_wavelength: The dq wavelength value
+    :param float self.dq_gravity: The dq gravity value
+    """
     def __init__(self, parent, params, name="all_carriage"):
+        """ Creates object parameters for All Carriage class and runs set params method
+
+        Sets object parameters self.imported_l_1, self.beam_drop, self.gravity_drop_min, self.gravity_drop_max,
+        self.beamstop_required, self.beamstop, self.beam_stop_cm, self.two_theta_min, self.overall_dq_calculated,
+        self.dq_geometric, self.dq_wavelength, and self.dq_gravity
+
+        :param VSANS parent: The VSANS instance this Beam is a part of
+        :param dict params: A dictionary mapping <param_name>: <value>
+        :param str name: The name of the class
+        :return: None as it just sets the parameters
+        :rtype: None
+        """
         self.parent = parent
         self.name = name
 
         # In Middle Carriage in the JS
         self.imported_l_1 = 0.0
-        self.beam_drop = 0.0  # Also know as Gravity_Drop_Mean in the JS
+        self.beam_drop = 0.0  # Also known as Gravity_Drop_Mean in the JS
         self.gravity_drop_min = 0.0
         self.gravity_drop_max = 0.0
         self.beamstop_required = 0.0
@@ -832,28 +988,55 @@ class AllCarriage:
         self.dq_gravity = 0.0
         set_params(instance=self, params=params)
 
-    def calculate_beam_drop(self):
-        # Also known as Gravity_Drop_Mean in the JS
-        lambda_val = self.parent.get_wavelength()
-        self.beam_drop = self._calculate_gravity_drop(lambda_val=lambda_val)
-
     def _calculate_gravity_drop(self, lambda_val=0.0):
+        """Calculates the gravity drop value from the lambda value, l_1, l_2 and from pre defined constants
+
+        :param float lambda_val: The value of lambda gotten from the function running it
+        :return: The value that it calculated
+        :rtype: Float
+        """
         h_over_mn = 395603.0  # Angstrom cm / s
         g = 981.0  # cm/s^2
         return g / 2.0 * math.pow((lambda_val / h_over_mn), 2) * (
                 math.pow((self.imported_l_1 + self.parent.get_l_2()), 2) - (
                 self.imported_l_1 + self.parent.get_l_2()) * self.imported_l_1)
 
+    def calculate_beam_drop(self):
+        """Calculates the beam drop(Or Gravity_Drop_Mean) value from the wavelength and calculate gravity drop
+
+        :return: None as it just sets the value of beam_drop
+        :rtype: None
+        """
+        lambda_val = self.parent.get_wavelength()
+        self.beam_drop = self._calculate_gravity_drop(lambda_val=lambda_val)
+
     def calculate_gravity_drop_min(self):
-        #         var lambda = this.lambda * (1.0 + this.dlambda);
+        """ Calculates the value of gravity drop min from the wavelength and dlambda and calculates using the gravity
+        drop method
+
+        :return: None as it just sets the value of gravity_drop_min
+        :rtype: None
+        """
         lambda_val = self.parent.get_wavelength() * (1.0 + self.parent.beam.dlambda)
         self.gravity_drop_min = self._calculate_gravity_drop(lambda_val=lambda_val)
 
     def calculate_gravity_drop_max(self):
+        """ Calculates the value of gravity drop max from the wavelength and dlambda and calculates using the gravity
+        drop method
+
+        :return: None as it just sets the value of gravity_drop_max
+        :rtype: None
+        """
         lambda_val = self.parent.get_wavelength() * (1.0 - self.parent.beam.dlambda)
         self.gravity_drop_max = self._calculate_gravity_drop(lambda_val=lambda_val)
 
     def calculate_beamstop_required(self):
+        """Calculates the beamstop required value in CM by calculating the drop min and max and using the values of l_!
+        and 2
+
+        :return: None as it just sets the value of beamstop_required
+        :rtype: None
+        """
         # Calculate the gravity drops needed for this problem
         self.calculate_gravity_drop_min()
         self.calculate_gravity_drop_max()
@@ -866,21 +1049,30 @@ class AllCarriage:
         self.beamstop_required = beamstopRequired / 2.54
 
     def calculate_beam_stop_cm(self):
+        """Calculates the beam stop value in CM by diving the value of beamstop by 2.54
+
+        :return: None as it just sets the value of beam_stop_cm
+        :rtype: None
+        """
         self.beam_stop_cm = self.beamstop * 2.54
 
-    def calculate_θ2_min(self):
-        # Also known as TwoTheta_min
-        # FIx the calculation of this value
+    def calculate_two_theta_min(self):
+        """Calculates the value of two theta min from the beamstop and ssd value
+
+        :return: None as it just sets the value of two_theta_min
+        :rtype: None
+        """
+        # Fix the calculation of this value???
         self.parent.middle_carriage.calculate_ssd()
         self.two_theta_min = math.atan2(self.beam_stop_cm / 2, self.parent.middle_carriage.ssd)
 
-    def calculate_overall_d_q_values(self):
-        self._calculate_dq_geometric()
-        self._calculate_dq_wavelength()
-        self._calculate_dq_gravity()
-        self.overall_dq_calculated = True
-
     def _calculate_dq_geometric(self):
+        """Calculates the value of dq_geometric from come constants as well as the sample/source aperture as well as
+        l_1 and 2
+
+        :return: None as it just sets the value of dq_geometric
+        :rtype: None
+        """
         pixel_size = 0.82  # cm
         a = 2 * math.pi / (self.parent.get_wavelength() * self.parent.get_l_2())
         b = math.pow((self.parent.get_l_2() * self.parent.get_source_aperture()) / (4 * self.parent.get_l_1()), 2)
@@ -890,10 +1082,20 @@ class AllCarriage:
         self.dq_geometric = a * math.sqrt(b + c + d)
 
     def _calculate_dq_wavelength(self):
+        """Calculates the dq wavelength value from a constants as well as dlambda
+
+        :return: None as it just sets the value of dq_wavelength
+        :rtype: None
+        """
         resolution_factor = 6.0
         self.dq_wavelength = self.parent.beam.dlambda / math.sqrt(resolution_factor)
 
     def _calculate_dq_gravity(self):
+        """Calculates the dq gravity value from some constants as well as wavelength and l_1 and 2
+
+        :return: None as it just sets the value of dq_gravity
+        :rtype: None
+        """
         g = 981.0  # CM/s^2
         h_over_mn = 395603.0  # Angstrom cm/s
         a = 2 * math.pi / (self.parent.get_wavelength() * self.parent.get_l_2())
@@ -902,19 +1104,66 @@ class AllCarriage:
         d = math.pow(self.parent.get_wavelength(), 4) * 2 / 3 * math.pow(self.parent.beam.dlambda, 2)
         self.dq_gravity = a * math.sqrt(b * c * d)
 
+    def calculate_overall_d_q_values(self):
+        """Runs all the calculation methods nessasary to calculate all the dq values and sets the calculated to True
+
+        :return: None as it just runs calculations
+        :rtype: None
+        """
+        self._calculate_dq_geometric()
+        self._calculate_dq_wavelength()
+        self._calculate_dq_gravity()
+        self.overall_dq_calculated = True
+
     def calculate_all_Carriage(self):
+        """Runs all the calculation methods nessasary to calculate the All Carriage object
+
+        :return: None as it just runs calculations
+        :rtype: None
+        """
         self.imported_l_1 = self.parent.get_l_1()
         self.parent.middle_carriage.calculate_L_2()
         self.calculate_beam_drop()
         self.calculate_beamstop_required()  # Also Calls the gravity drop ones too
         self.calculate_beam_stop_cm()
-        self.calculate_θ2_min()
+        self.calculate_two_theta_min()
         # Runs more calculation statements
         self.calculate_overall_d_q_values()
 
 
 class MiddleCarriage:
+    """A class for storing and manipulating Middle Carriage related data and objects
+
+    :param VSANS self.parent: The parent VSANS object
+    :param str self.name: The name of the class
+    :param VerticalPanel self.left_panel: A vertical panel object that represents the left panel
+    :param VerticalPanel self.right_panel: A vertical panel object that represents the right panel
+    :param HorizontalPanel self.top_panel: A horizontal panel object that represents the top panel
+    :param HorizontalPanel self.bottom_panel: A horizontal panel object that represents the bottom panel
+    :param DqCalculator self.dq_calc: The DqCalculator object to calculate all the DQ value
+    :param float self.ssd_input: The ssd value inputted by the user into the JS
+    :param float self.ssd: The calculated value of SSD
+    :param float self.l_2: The calculated value of l_2
+    :param float self.refBeamCtr_x: The reference center X
+    :param float self.refBeamCtr_y: The reference center Y
+    :param float self.middle_lr_w: The Middle Left Right Panel width
+    :param float self.middle_lr_h: The Middle Left Right Panel height
+    :param float self.middle_tb_w: The Middle Top Bottom Panel width
+    :param float self.middle_tb_h: The Middle Top Bottom Panel heights
+    :param float self.middle_ssd_setback: The ssd setback value for the middle
+    """
     def __init__(self, parent, params, name="middle_carriage"):
+        """ Creates sub object and object parameters for Middle Carriage class and runs set params method
+
+        Sets object parameters self.parent, self.name, self.wavelength, self.dlambda, self.lambda_T, self.phi_0,
+                self.frontend_trans, self.flux, self.beam_current, self.i_sub_zero, and self.frontend_trans_options
+
+        :param VSANS parent: The VSANS instance this Beam is a part of
+        :param dict params: A dictionary mapping <param_name>: <value>
+        :param str name: The name of the class
+        :return: None as it just sets the parameters
+        :rtype: None
+        """
         self.parent = parent
         self.name = name
 
@@ -947,17 +1196,30 @@ class MiddleCarriage:
         set_params(instance=self, params=params)
 
     def calculate_ssd(self):
+        """Calculates the SSD value from the ssd JS value and sample to gv
+
+        :return: None as it just sets the value of ssd
+        :rtype: None
+        """
         self.ssd = self.ssd_input + self.parent.collimation.sample_to_gv
 
-    # create a class for the chnaging dq values and the constant calculated values are kept in the front apature clas
-    # sbut there is a paramater that will be set saying the calculations can be done in the dependet classes
-
     def calculate_L_2(self):
+        """Calculates the value of l_2 from the ssd JS value and the sample to ap_gv
+
+        :return: None as it just sets the value of l_2
+        :rtype: None
+        """
         self.l_2 = self.ssd_input + self.parent.collimation.sample_to_ap_gv
 
     def calculate_middleCarriage(self):
+        """Runs all the calculation methods nessasary to calculate the Middle Carriage object and sub objects
+
+        :return: None as it just runs calculations
+        :rtype: None
+        """
         # Calculates all the parameters of this object
         self.calculate_ssd()
+        self.calculate_L_2()
         # Calculates the 2 other panels
         self.left_panel.calculate_panel()
         self.right_panel.calculate_panel()
@@ -967,7 +1229,39 @@ class MiddleCarriage:
 
 
 class FrontCarriage:
+    """A class for storing and manipulating Middle Carriage related data and objects
+
+    :param VSANS self.parent: The parent VSANS object
+    :param str self.name: The name of the class
+    :param VerticalPanel self.left_panel: A vertical panel object that represents the left panel
+    :param VerticalPanel self.right_panel: A vertical panel object that represents the right panel
+    :param HorizontalPanel self.top_panel: A horizontal panel object that represents the top panel
+    :param HorizontalPanel self.bottom_panel: A horizontal panel object that represents the bottom panel
+    :param DqCalculator self.dq_calc: The DqCalculator object to calculate all the DQ value
+    :param float self.ssd_input: The ssd value inputted by the user into the JS
+    :param float self.ssd: The calculated value of SSD
+    :param float self.l_2: The calculated value of l_2
+    :param float self.refBeamCtr_x: The reference center X
+    :param float self.refBeamCtr_y: The reference center Y
+    :param float self.front_lr_w: The Middle Left Right Panel width
+    :param float self.front_lr_h: The Middle Left Right Panel height
+    :param float self.front_tb_w: The Middle Top Bottom Panel width
+    :param float self.front_tb_h: The Middle Top Bottom Panel heights
+    :param float self.front_ssd_setback: The ssd setback value for the middle
+    """
     def __init__(self, parent, params, name="front_carriage"):
+        """ Creates sub object and object parameters for Middle Carriage class and runs set params method
+
+        Sets object parameters self.left_panel, self.right_panel, self.top_panel, self.bottom_panel,
+        self.dq_calc, self.ssd_input, self.ssd, self.l_2, self.refBeamCtr_x, self.refBeamCtr_y,
+        self.front_lr_w, self.front_lr_h, self.front_tb_w, self.front_tb_h, and self.front_ssd_setback
+
+        :param VSANS parent: The VSANS instance this Beam is a part of
+        :param dict params: A dictionary mapping <param_name>: <value>
+        :param str name: The name of the class
+        :return: None as it just sets the parameters
+        :rtype: None
+        """
         self.parent = parent
         self.name = name
         # Create the secondary object off the main object
@@ -999,12 +1293,27 @@ class FrontCarriage:
         set_params(instance=self, params=params)
 
     def calculate_ssd(self):
+        """Calculates the SSD value from the ssd JS value and sample to gv
+
+        :return: None as it just sets the value of ssd
+        :rtype: None
+        """
         self.ssd = self.ssd_input + self.parent.collimation.sample_to_gv
 
     def calculate_L_2(self):
+        """Calculates the value of l_2 from the ssd JS value and the sample to ap_gv
+
+        :return: None as it just sets the value of l_2
+        :rtype: None
+        """
         self.l_2 = self.ssd_input + self.parent.collimation.sample_to_ap_gv
 
     def calculate_frontCarriage(self):
+        """Runs all the calculation methods nessasary to calculate the Front Carriage object and sub objects
+
+        :return: None as it just runs calculations
+        :rtype: None
+        """
         self.calculate_ssd()
         self.calculate_L_2()
         # Calculate the other objects
@@ -1016,7 +1325,33 @@ class FrontCarriage:
 
 
 class DqCalculator:
+    """A class for storing and manipulating Beam related data.
+
+    :param FrontCarriage or MiddleCarriage self.parent: The parent FrontCarriage or MiddleCarriage object
+    :param str self.name: The name of the class
+    :param float self.q_min: The minimum value for Q
+    :param method self.calculate_q_min: The method used to calculate the min q value based on which carriage it is in
+    :param float self.dqx_min: The min x dq value
+    :param float self.dqy_min: The min y dq value
+    :param float self.q_max: The max q value
+    :param float self.dqx_max: The max x dq value
+    :param float self.dqy_max: The max y dq value
+    :param float self.dq_geometric: The geometric dq value
+    :param float self.dq_wavelength: The wavelength dq value
+    :param float self.dq_gravity: The gravity dq value
+    """
     def __init__(self, parent, params, name="DqCalculator"):
+        """ Creates object parameters for Dq Calculator class and runs set params method
+
+        Sets object parameters self.q_min, self.calculate_q_min, self.dqx_min, self.dqy_min, self.q_max, self.dqx_max,
+        self.dqy_max, self.dq_geometric, self.dq_wavelength, and self.dq_gravity
+
+        :param FrontCarriage or MiddleCarriage parent: The VSANS instance this Beam is a part of
+        :param dict params: A dictionary mapping <param_name>: <value>
+        :param str name: The name of the class
+        :return: None as it just sets the parameters
+        :rtype: None
+        """
         self.parent = parent
         self.name = name
 
@@ -1034,36 +1369,79 @@ class DqCalculator:
         set_params(instance=self, params=params)
 
     def update_dq_values(self):
+        """Updates the local copy of the dq geometric, wavelength and gravity to the one in the all carriage class
+
+        :return: None as it just sets values
+        :rtype: None
+        """
         self.dq_geometric = self.parent.parent.all_carriage.dq_geometric
         self.dq_wavelength = self.parent.parent.all_carriage.dq_wavelength
         self.dq_gravity = self.parent.parent.all_carriage.dq_gravity
 
     def _calculate_dq(self, q=0.0, y_value=False):
+        """A private helper method that helps with dq calculations using the dq gravity, wavelength, and geometric
+        values
+
+        :return: The value calculated by the helper method
+        :rtype: None
+        """
         addition = math.pow(self.dq_gravity, 2) if y_value else 0.0
         return math.sqrt(math.pow(self.dq_geometric, 2) + math.pow(self.dq_wavelength * q, 2) + addition) / q
 
     def _calculate_q_min_middle(self):
+        """Calculates the q min value for the middle carriage through using the wavelength and two_theta_min
+
+        :return: None as it just sets the value of q_min
+        :rtype: None
+        """
         # The min values of Middle and front are different
         self.q_min = 4 * math.pi / self.parent.parent.get_wavelength() * math.sin(
             self.parent.parent.all_carriage.two_theta_min / 2.0)
 
     def _calculate_q_min_front(self):
+        """Calculates the q min value for the front carriage through using the wqx max and min values of the left and right panels
+
+        :return: None as it just sets the value of q_min
+        :rtype: None
+        """
         self.q_min = min(abs(self.parent.left_panel.qx_min), abs(self.parent.left_panel.qx_max),
                          abs(self.parent.right_panel.qx_min), abs(self.parent.right_panel.qx_max))
 
     def _calculate_dQx_min(self):
+        """Calculates the dqx min value from the q_min value without a y value using the _calculate_dq
+
+        :return: None as it just sets the value of dqx_min
+        :rtype: None
+        """
         q = self.q_min
         self.dqx_min = self._calculate_dq(q=q, y_value=False)
 
     def _calculate_dQy_min(self):
+        """Calculates the dqy min value from the q_min value with a y value using the _calculate_dq
+
+        :return: None as it just sets the value of dqy_min
+        :rtype: None
+        """
         q = self.q_min
         self.dqy_min = self._calculate_dq(q=q, y_value=True)
 
     @staticmethod
     def _q_abs(qx, qy):
+        """Helper private method that square roots 2 values squared and then added together
+
+        :param float qx: The x value to be squared
+        :param float qy: The y value to be squared
+        :return: The square rooted value
+        :rtype: Float
+        """
         return math.sqrt(math.pow(qx, 2) + math.pow(qy, 2))
 
     def calculate_qMax(self):
+        """Calculates the qmax value using the q_abs method and all the qx and y min and max values from the left and right panel
+
+        :return: None as it just sets the value of q_max
+        :rtype: None
+        """
         self.q_max = max(self._q_abs(self.parent.left_panel.qx_min, self.parent.left_panel.qy_min),
                          self._q_abs(self.parent.left_panel.qx_max, self.parent.left_panel.qy_min),
                          self._q_abs(self.parent.left_panel.qx_min, self.parent.left_panel.qy_max),
@@ -1074,20 +1452,40 @@ class DqCalculator:
                          self._q_abs(self.parent.right_panel.qx_max, self.parent.right_panel.qy_max))
 
     def _calculate_dQx_max(self):
+        """Calculates the dqx max value from the q_max value without a y value using the _calculate_dq
+
+        :return: None as it just sets the value of dqx_max
+        :rtype: None
+        """
         q = self.q_max
         self.dqx_max = self._calculate_dq(q=q, y_value=False)
 
     def _calculate_dQy_max(self):
+        """Calculates the dqy max value from the q_max value with a y value using the _calculate_dq
+
+        :return: None as it just sets the value of dqy_max
+        :rtype: None
+        """
         q = self.q_max
         self.dqy_max = self._calculate_dq(q=q, y_value=True)
 
     def calculate_d_q_values(self):
+        """Calculates all the dqx and y values
+
+        :return: None as it just runs calculations
+        :rtype: None
+        """
         self._calculate_dQx_min()
         self._calculate_dQy_min()
         self._calculate_dQx_max()
         self._calculate_dQy_max()
 
     def calculate_all_dq(self):
+        """Runs all the calculation methods nessasary to calculate the dq object
+
+        :return: None as it just runs calculations
+        :rtype: None
+        """
         if self.parent.name == "front_carriage":
             self.calculate_q_min = self._calculate_q_min_front
         self.update_dq_values()
@@ -1097,11 +1495,60 @@ class DqCalculator:
 
 
 class VerticalPanel:
-    """Left and right panels
+    """A class for storing and manipulating VerticalPanel related data.
 
+    This is used for left and right panel data
+
+    :param FrontCarriage or MiddleCarriage self.parent: The parent FrontCarriage or MiddleCarriage object
+    :param str self.name: The name of the class
+    :param str self.short_name: The short name for this panel (First letter is carriage)(Second Letter is Panel
+        Position)
+    :param Boolean self.horizontal_orientation: A boolean whether the panel is horizontal or vertical
+    :param float self.lateral_offset: The lateral offset set the user
+    :param float self.qx_min: The min value of qx
+    :param float self.qx_max: The max value of qx
+    :param float self.qy_min: The min value of qy
+    :param float self.qy_max: The max value of qy
+    :param float self.refBeamCtr_x: The amount the panel assembly is off in the x direction(From Parent Class)
+    :param float self.refBeamCtr_y: The amount the panel assembly is off in the y direction(From Parent Class)
+    :param Boolean self.is_valid: Is this a valid position of it
+    :param Boolean self.match_button: Whether the match checkbox is checked or not
+    :param Detector self.detectors: The detector object for this specific panel position
+    :param float self.x_pixel_size: The size of the panel in cm
+    :param float self.y_pixel_size: The size of the panel in pixels
+    :param float self.pixel_num_x: The number of x pixels in the panel
+    :param float self.pixel_num_y: The number of y pixels in the panel
+    :param float self.beam_center_x: The location of the center x coordinate
+    :param float self.beam_center_y: The location of the center y coordinate
+    :param float self.beam_center_x_pix: The location of the x beam center in pixels
+    :param float self.beam_center_y_pix: The location of the y beam center in pixels
+    :param Array self.data: The data array needed for the calculations of plots
+    :param Array self.detector_array: The array of data needed for calculation of plot
+    :param Array self.q_to_t_array: An array of q to t values
+    :param Array self.qx_array: An array of the qx values
+    :param Array self.qy_array: An array of the qy values
+    :param Array self.qz_array: An array of the qz values
+    :param Array self.default_mask: An array containing the default  mask
+    :param Array self.data_real_dist_x: An array containing the data_real distance x
+    :param Array self.data_real_dist_y: An array containing the data_real distance y
     """
 
     def __init__(self, parent, params, name="VerticalPanel", short_name="MR"):
+        """ Creates object parameters for VerticalPanel class and runs set params method
+
+        Sets object parameters self.short_name, self.horizontal_orientation, self.lateral_offset, self.qx_min,
+        self.qx_max, self.qy_min, self.qy_max, self.refBeamCtr_x, self.refBeamCtr_y, self.is_valid, self.match_button,
+        self.detectors, self.x_pixel_size, self.y_pixel_size, self.pixel_num_x, self.pixel_num_y, self.beam_center_x,
+        self.beam_center_y, self.beam_center_x_pix, self.beam_center_y_pix, self.data, self.detector_array,
+        self.q_to_t_array, self.qx_array, self.qy_array, self.qz_array, self.default_mask, self.data_real_dist_x,
+        and self.data_real_dist_y
+
+        :param FrontCarriage or MiddleCarriage parent: The FrontCarriage or MiddleCarriage instance this Beam is a part of
+        :param dict params: A dictionary mapping <param_name>: <value>
+        :param str name: The name of the class
+        :return: None as it just sets the parameters
+        :rtype: None
+        """
         self.parent = parent
         self.name = name
         self.short_name = short_name
@@ -1141,6 +1588,13 @@ class VerticalPanel:
         set_params(instance=self, params=params)
 
     def calculate_match(self):
+        """If the match button is true set it to match correctly and set its return to disable the lateral offset
+        field and if not enable the lateral offset field
+
+
+        :return: None as it just sets the value of options array to update
+        :rtype: None
+        """
         if self.match_button is not None:
             if self.match_button:
                 if self.short_name.find("L") != -1:
@@ -1152,6 +1606,12 @@ class VerticalPanel:
                 self.parent.parent.options[self.name + "+lateral_offset"] = {"type": "readonly", "set_to": False}
 
     def _calculate_match_left(self):
+        """Calculates how to match the front panel selected to  the left side using the middle lateral offset ssd and
+        center as well as the front center ssd
+
+        :return: None as it just sets the value of lateral_offset
+        :rtype: None
+        """
         middle_object = self.parent.parent.middle_carriage
         xmin = middle_object.left_panel.detectors.x_min(
             middle_object.left_panel.lateral_offset) - middle_object.refBeamCtr_x
@@ -1160,6 +1620,12 @@ class VerticalPanel:
         self.lateral_offset = self.detectors.lateral_offset_from_x_max(fr_xmax)
 
     def _calculate_match_right(self):
+        """Calculates how to match the front panel selected to the right side using the middle lateral offset ssd and
+        center as well as the front center ssd
+
+        :return: None as it just sets the value of lateral_offset
+        :rtype: None
+        """
         middle_object = self.parent.parent.middle_carriage
         xmax = middle_object.right_panel.detectors.x_max(
             middle_object.right_panel.lateral_offset) - middle_object.refBeamCtr_x
@@ -1168,21 +1634,51 @@ class VerticalPanel:
         self.lateral_offset = self.detectors.lateral_offset_from_x_min(fr_xmin)
 
     def _calculate_q_helper(self, value):
+        """A help function that helps to calculate the q min and max values by using the wavelength and ssd
+
+        :param float value: The value given to the function that allows it ot run
+        :return: The calculated value
+        :rtype: Float
+        """
         return 4 * math.pi / self.parent.parent.get_wavelength() * math.sin(math.atan2(value, self.parent.ssd) / 2)
 
     def calculate_qx_min(self):
+        """Calculates the qx min of this detector using the lateral offset and center into the _x_min function from
+        the detector object
+
+        :return: None as it just sets the value of qx_min
+        :rtype: None
+        """
         xmin = self.detectors.x_min(self.lateral_offset) - self.refBeamCtr_x
         self.qx_min = self._calculate_q_helper(value=xmin)
 
     def calculate_qx_max(self):
+        """Calculates the qx max of this detector using the lateral offset and center into the _x_min function from the
+        detector object
+
+        :return: None as it just sets the value of qx_max
+        :rtype: None
+        """
         xmax = self.detectors.x_max(self.lateral_offset) - self.refBeamCtr_x
         self.qx_max = self._calculate_q_helper(value=xmax)
 
     def calculate_qy_min(self):
+        """Calculates the qy min of this detector using the lateral offset and center into the _y_min function from
+        the detector object
+
+        :return: None as it just sets the value of qy_min
+        :rtype: None
+        """
         ymin = self.detectors.y_min() - self.refBeamCtr_y
         self.qy_min = self._calculate_q_helper(value=ymin)
 
     def calculate_qy_max(self):
+        """Calculates the qy max of this detector using the lateral offset and center into the _y_max function from
+        the detector object
+
+        :return: None as it just sets the value of qy_max
+        :rtype: None
+        """
         ymax = self.detectors.y_max() - self.refBeamCtr_y
         self.qy_max = self._calculate_q_helper(value=ymax)
 
@@ -1202,6 +1698,11 @@ class VerticalPanel:
         self.data = np.copy(self.detector_array)
 
     def create_default_mask(self):
+        """ Creates the default mask defending on the orientation of the panel
+
+        :return: None as it just sets the value of the default_mask array
+        :rtype: None
+        """
         if 'L' in self.short_name:
             inner_array = np.concatenate((np.ones(5), np.zeros(118), np.ones(5)))
             self.default_mask = np.concatenate((np.zeros((4, 128)), np.tile(inner_array, (44, 1))))
@@ -1209,7 +1710,13 @@ class VerticalPanel:
             inner_array = np.concatenate((np.ones(5), np.zeros(118), np.ones(5)))
             self.default_mask = np.concatenate((np.tile(inner_array, (44, 1)), np.zeros((4, 128))))
 
-    def create_tmp_array(self):
+    @staticmethod
+    def create_tmp_array():
+        """Creates the tmp calib array based on certain parameters needed for plotting
+
+        :return: The tmp_calib array that it created
+        :rtype: None
+        """
         tmp_calib = np.zeros((3, 48))
         for a in range(48):
             tmp_calib[0][a] = -512
@@ -1218,6 +1725,11 @@ class VerticalPanel:
         return tmp_calib
 
     def calculate_panel(self):
+        """Runs all the calculation methods nessasary to calculate the panel object without the plots
+
+        :return: None as it just runs calculations
+        :rtype: None
+        """
         # Update values to be used
         self.refBeamCtr_x = self.parent.refBeamCtr_x
         self.refBeamCtr_y = self.parent.refBeamCtr_y
@@ -1229,10 +1741,58 @@ class VerticalPanel:
 
 
 class HorizontalPanel:
-    """Top and bottom panels
+    """A class for storing and manipulating HorizontalPanel related data.
+
+    This is used for top and bottom panel data
+
+    :param FrontCarriage or MiddleCarriage self.parent: The parent FrontCarriage or MiddleCarriage object
+    :param str self.name: The name of the class
+    :param str self.short_name: The short name for this panel (First letter is carriage)(Second Letter is Panel
+        Position)
+    :param Boolean self.horizontal_orientation: A boolean whether the panel is horizontal or vertical
+    :param float self.verticalOffset: The vertical offset set the user
+    :param float self.qx_min: The min value of qx
+    :param float self.qx_max: The max value of qx
+    :param float self.qy_min: The min value of qy
+    :param float self.qy_max: The max value of qy
+    :param float self.refBeamCtr_y: The amount the panel assembly is off in the y direction(From Parent Class)
+    :param Boolean self.is_valid: Is this a valid position of it
+    :param Boolean self.match_button: Whether the match checkbox is checked or not
+    :param Detector self.detectors: The detector object for this specific panel position
+    :param float self.x_pixel_size: The size of the panel in cm
+    :param float self.y_pixel_size: The size of the panel in pixels
+    :param float self.pixel_num_x: The number of x pixels in the panel
+    :param float self.pixel_num_y: The number of y pixels in the panel
+    :param float self.beam_center_x: The location of the center x coordinate
+    :param float self.beam_center_y: The location of the center y coordinate
+    :param float self.setback: The setback value for the horizontal panel class
+    :param Array self.data: The data array needed for the calculations of plots
+    :param Array self.detector_array: The array of data needed for calculation of plot
+    :param Array self.q_to_t_array: An array of q to t values
+    :param Array self.qx_array: An array of the qx values
+    :param Array self.qy_array: An array of the qy values
+    :param Array self.qz_array: An array of the qz values
+    :param Array self.default_mask: An array containing the default  mask
+    :param Array self.data_real_dist_x: An array containing the data_real distance x
+    :param Array self.data_real_dist_y: An array containing the data_real distance y
     """
 
     def __init__(self, parent, params, name="HorizontalPanel", short_name="FT"):
+        """ Creates object parameters for HorizontalPanel class and runs set params method
+
+        Sets object parameters self.short_name, self.horizontal_orientation, self.verticalOffset, self.qx_min,
+        self.qx_max, self.qy_min, self.qy_max, self.refBeamCtr_y, self.is_valid, self.match_button,
+        self.detectors, self.x_pixel_size, self.y_pixel_size, self.pixel_num_x, self.pixel_num_y, self.beam_center_x,
+        self.beam_center_y, self.setback, self.data, self.detector_array,
+        self.q_to_t_array, self.qx_array, self.qy_array, self.qz_array, self.default_mask, self.data_real_dist_x,
+        and self.data_real_dist_y
+
+        :param FrontCarriage or MiddleCarriage parent: The FrontCarriage or MiddleCarriage instance this Beam is a part of
+        :param dict params: A dictionary mapping <param_name>: <value>
+        :param str name: The name of the class
+        :return: None as it just sets the parameters
+        :rtype: None
+        """
         self.parent = parent
         self.name = name
         self.short_name = short_name
@@ -1255,7 +1815,7 @@ class HorizontalPanel:
         self.setback = 41  # CM
 
         # Detector Arrays
-        self.data = []  # Data though through a differnt path
+        self.data = []  # Data though through a different path
         self.detector_array = []  # det_FL
         self.q_to_t_array = []  # qTot_FL
         self.qx_array = []  # qTot_FL
@@ -1268,6 +1828,13 @@ class HorizontalPanel:
         set_params(instance=self, params=params)
 
     def calculate_match(self):
+        """If the match button is true set it to match correctly and set its return to disable the lateral offset
+            field and if not enable the vertical offset field
+
+
+        :return: None as it just sets the value of options array to update
+        :rtype: None
+        """
         if self.match_button is not None:
             if self.match_button:
                 if self.short_name.find("T") != -1:
@@ -1279,6 +1846,12 @@ class HorizontalPanel:
                 self.parent.parent.options[self.name + "+verticalOffset"] = {"type": "readonly", "set_to": False}
 
     def _calculate_match_bottom(self):
+        """Calculates how to match the front panel selected to  the bottom side using the middle vertical offset ssd and
+        center as well as the front center ssd
+
+        :return: None as it just sets the value of verticalOffset
+        :rtype: None
+        """
         middle_object = self.parent.parent.middle_carriage
         ymin = middle_object.right_panel.detectors.y_min(0) - middle_object.refBeamCtr_y
         angle_min = math.atan2(ymin, middle_object.ssd)
@@ -1286,6 +1859,12 @@ class HorizontalPanel:
         self.verticalOffset = self.detectors.vertical_offset_from_y_max(fr_ymax)
 
     def _calculate_match_top(self):
+        """Calculates how to match the front panel selected to the right side using the middle vertical offset ssd and
+        center as well as the front center ssd
+
+        :return: None as it just sets the value of verticalOffset
+        :rtype: None
+        """
         middle_object = self.parent.parent.middle_carriage
         ymax = middle_object.right_panel.detectors.y_max(0) - middle_object.refBeamCtr_y
         angle_max = math.atan2(ymax, middle_object.ssd)
@@ -1293,16 +1872,34 @@ class HorizontalPanel:
         self.verticalOffset = self.detectors.vertical_offset_from_y_min(fr_ymin)
 
     def _calculate_q_helper(self, value):
+        """A help function that helps to calculate the q min and max values by using the wavelength and ssd
+
+        :param float value: The value given to the function that allows it ot run
+        :return: The calculated value
+        :rtype: Float
+        """
         return 4 * math.pi / self.parent.parent.get_wavelength() * math.sin(
             math.atan2(value, self.parent.ssd + self.detectors.setback) / 2)
 
     def calculate_qy_min(self):
+        """Calculates the qy min of this detector using the lateral offset and center into the _y_min function from
+        the detector object
+
+        :return: None as it just sets the value of qx_min
+        :rtype: None
+        """
         # var ymin = detectors.detector_FT.y_min(this.top_front_offset) - this.front_reference_yctr;;
         # return 4 * Math.PI / this.lambda *Math.sin(Math.atan2(ymin, this.SDD_front + detectors.detector_FT.setback) / 2);
         ymin = self.detectors.y_min(self.verticalOffset) - self.refBeamCtr_y
         self.qy_min = self._calculate_q_helper(value=ymin)
 
     def calculate_qy_max(self):
+        """Calculates the qy max of this detector using the lateral offset and center into the _y_max function from
+        the detector object
+
+        :return: None as it just sets the value of qy_max
+        :rtype: None
+        """
         # var ymax = detectors.detector_FB.y_max(this.bottom_front_offset) - this.front_reference_yctr;
         # return 4 * Math.PI / this.lambda *Math.sin(Math.atan2(ymax, this.SDD_front + detectors.detector_FB.setback) / 2)
         ymax = self.detectors.y_max(self.verticalOffset) - self.refBeamCtr_y
@@ -1324,9 +1921,20 @@ class HorizontalPanel:
         self.data = np.copy(self.detector_array)
 
     def create_default_mask(self):
+        """ Creates the default mask defending on the orientation of the panel
+
+        :return: None as it just sets the value of the default_mask array
+        :rtype: None
+        """
         self.default_mask = np.concatenate((np.ones((50, 48)), np.zeros((28, 48)), np.ones((50, 48))))
 
+    @staticmethod
     def create_tmp_array(self):
+        """Creates the tmp calib array based on certain parameters needed for plotting
+
+        :return: The tmp_calib array that it created
+        :rtype: None
+        """
         tmp_calib = np.zeros((3, 48))
         for a in range(48):
             tmp_calib[0][a] = -256
@@ -1335,6 +1943,11 @@ class HorizontalPanel:
         return tmp_calib
 
     def calculate_panel(self):
+        """Runs all the calculation methods nessasary to calculate the panel object without the plots
+
+        :return: None as it just runs calculations
+        :rtype: None
+        """
         # Update values to be used
         self.refBeamCtr_y = self.parent.refBeamCtr_y
         self.calculate_match()  # This needs to run first as it affects the values for the rest of the calculations
@@ -1344,9 +1957,40 @@ class HorizontalPanel:
 
 class Detector:
     """ A class for the detector constants needed for calculations
+
+    :param str self.name: The 2 letter name of the detector to use
+    :param float self.tube_width: A constant for the tube width
+    :param float self.num_tubes: A constant for the number of tubes
+    :param float self.num_bins: A constants for the number of bins
+    :param float self._coord1_zero_pos:
+    :param Method self.x: The method activated when x is called
+    :param Method self.y: The method activated when y is called
+    :param float self._coord1_ctr_offset: The center offset from corrd 1
+    :param float self._coord0_ctr_offset: The center offset form corrd 2
+    :param float self.x_dim: The diameter of x
+    :param float self.y_dim: The diameter of y
+    :param str self.id: The id of the detector
+    :param Array self.spatial_calibration: An array that contains special calibration
+    :param float self.setback: The value of the detector setback
+    :param float self.x_ctr_offset: The center offset of x
+    :param float self.y_ctr_offset: The center offset of y
+    :param str self.orientation: The orientation of the panel
+    :param Boolean self.left_or_bottom: Whether the panel is left/bottom or not
+    :param Float self.panel_gap: The gap in between the panel
     """
 
     def __init__(self, where="MR"):
+        """ Creates object parameters for Detector class and runs set params method
+
+        Sets object parameters self.name, self.tube_width, self.num_tubes, self.num_bins, self._coord1_zero_pos,
+        self.x, self.y, self._coord1_ctr_offset, self._coord0_ctr_offset, self.x_dim, self.y_dim, self.id,
+        self.spatial_calibration, self.setback, self.x_ctr_offset, self.y_ctr_offset, self.orientation,
+        self.left_or_bottom, and self.panel_gap
+
+        :param str where: The location of the pamel
+        :return: None as it just sets the parameters
+        :rtype: None
+        """
         self.name = where
 
         # Default values needed
@@ -1378,6 +2022,12 @@ class Detector:
         self.update_params()
 
     def set_constants(self):
+        """Sets all the constant values needed to run this detector
+
+        :return: Nothing as it just sets the values of id, spatial_calibration, setback, x_ctr_offset, y_ctr_offset,
+        orientation, left_or_bottom, and panel_gap
+        :rtype: None
+        """
         # If statements based off the name of the detector
         v_spatial_calibration = [-52.1, 0.814, 0]  # CM
         h_spatial_calibration = [-26.6, 0.416, 0]
@@ -1481,14 +2131,32 @@ class Detector:
             self.y_dim = self.num_tubes
 
     def _pixel_to_coord0(self, pixel):
+        """A private function that returns a value calculated from the calibration and the offset
+
+        :param float pixel: The value to add to the calculation
+        :return: The calculated value
+        :rtype: Float
+        """
         # convert pixel to spatial dimension, along tube length;
         return self.spatial_calibration[0] - self._coord0_ctr_offset + self.spatial_calibration[1] * pixel + \
             self.spatial_calibration[2] * math.pow(pixel, 2)
 
     def _pixel_to_coord1(self, pixel):
+        """A private function that returns a value calculated from the tube width and the offset
+
+        :param float pixel: The value to add to the calculation
+        :return: The calculated value
+        :rtype: Float
+        """
         return (pixel + 0.5) * self.tube_width + self._coord1_zero_pos - self._coord1_ctr_offset
 
     def _coord0_to_pixel(self, coord0):
+        """A private function that returns a value calculated from the calibration and the offset
+
+        :param float coord0: The value the calculation is subtracted from
+        :return: The calculated value
+        :rtype: Float
+        """
         beta = math.sqrt(self.spatial_calibration[2])
         if beta == 0:
             return (coord0 - self.spatial_calibration[0] + self._coord0_ctr_offset) / self.spatial_calibration[1]
@@ -1498,30 +2166,84 @@ class Detector:
             return (alpha + math.sqrt(coord0 - self.spatial_calibration[0] + self._coord0_ctr_offset + alpha)) / beta
 
     def _coord1_to_pixel(self, coord1):
+        """A private function that returns a value calculated from the tube width and the offset
+
+        :param float coord1: The value the calculation is subtracted from
+        :return: The calculated value
+        :rtype: Float
+        """
         return (coord1 - self._coord1_zero_pos + self._coord0_ctr_offset) / self.tube_width - 0.5
 
     def x_min(self, lateral_offset):
+        """Calculates and returns the minimum value of x from the x method and lateral offset
+
+        :param float lateral_offset: The offset to include
+        :return: The calculated min value of x
+        :rtype: Float
+        """
         return self.x(0) + (lateral_offset or 0)
 
     def x_max(self, lateral_offset):
+        """Calculates and returns the maximum value of x from the x method, x_dim, and lateral offset
+
+        :param float lateral_offset: The offset to include
+        :return: The calculated min value of x
+        :rtype: Float
+        """
         return self.x(self.x_dim - 1) + (lateral_offset or 0)
 
     def y_min(self, vertical_offset=None):
+        """Calculates and returns the minimum value of y from the y method and lateral offset
+
+        :param float vertical_offset: The offset to include
+        :return: The calculated min value of y
+        :rtype: Float
+        """
         return self.y(0) + (vertical_offset or 0)
 
     def y_max(self, vertical_offset=None):
+        """Calculates and returns the maximum value of y from the y method, y_dim, and lateral offset
+
+        :param float vertical_offset: The offset to include
+        :return: The calculated min value of y
+        :rtype: Float
+        """
         return self.y(self.y_dim - 1) + (vertical_offset or 0)
 
     def lateral_offset_from_x_max(self, x):
+        """Gets the lateral offset of x_max from x_max by subtracting x and x_max
+
+        :param float x: The value of x to subtract from
+        :return: The value calculated
+        :rtype: Float
+        """
         return x - self.x_max(0)
 
     def lateral_offset_from_x_min(self, x):
+        """Gets the lateral offset of x_min from x_min by subtracting x and x_min
+
+        :param float x: The value of x to subtract from
+        :return: The value calculated
+        :rtype: Float
+        """
         return x - self.x_min(0)
 
     def vertical_offset_from_y_max(self, y):
+        """Gets the lateral offset of y_max from y_max by subtracting y and y_max
+
+        :param float y: The value of y to subtract from
+        :return: The value calculated
+        :rtype: Float
+        """
         return y - self.y_max(0)
 
     def vertical_offset_from_y_min(self, y):
+        """Gets the lateral offset of y_min from y_min by subtracting y and y_min
+
+        :param float y: The value of y to subtract from
+        :return: The value calculated
+        :rtype: Float
+        """
         return y - self.y_min(0)
 
 
