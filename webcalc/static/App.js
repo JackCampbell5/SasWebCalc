@@ -167,26 +167,26 @@ export default {
       let info_provided = ""
       if(this.active_instrument=== "VSANS"){
         // Check for if the preset has changed
-        let preset_object = this.instrument_params["presets"]["preset"]
+        let preset_object = this.instrument_params["presets"]["preset"];
         if (preset_object.extra !== preset_object.default) {
           run = true;
-          info_provided = this.active_instrument+ "%preset@" + preset_object.default
-          preset_object.extra = preset_object.default
+          info_provided = this.active_instrument+ "%preset@" + preset_object.default;
+          preset_object.extra = preset_object.default;
         }//End preset object
         // Check if the number of guides has changed
-        let guide_select_Object = this.instrument_params["collimation"]["guide_select"]
+        let guide_select_Object = this.instrument_params["collimation"]["guide_select"];
         if(guide_select_Object.extra !== guide_select_Object.default){
           run = true;
-          let sourceAperture_js = this.instrument_params["collimation"]["source_aperture_js"].default
-          let guide_select = guide_select_Object.default
-          info_provided = this.active_instrument+ "%guideUpdate@" + sourceAperture_js+'+'+guide_select
-          guide_select_Object.extra = guide_select_Object.default
+          let sourceAperture_js = this.instrument_params["collimation"]["source_aperture_js"].default;
+          let guide_select = guide_select_Object.default;
+          info_provided = this.active_instrument+ "%guideUpdate@" + sourceAperture_js+'+'+guide_select;
+          guide_select_Object.extra = guide_select_Object.default;
         }
         if(run){
           const fetch_result = await fetch(`/get/preset_params/instrument/${info_provided}`);
           results = await fetch_result.json()
           if("options" in results){
-            this.check_options(results)
+            this.check_options(results);
           }
           for (const type in results) {
             if(type === "options"){continue;}
@@ -231,6 +231,7 @@ export default {
         for(const option in options_dict){
           let option_dict = options_dict[option]
           let arrayParams = option.split("+")
+          console.log(this.instrument_params[arrayParams[0]][arrayParams[1]])
           this.instrument_params[arrayParams[0]][arrayParams[1]][option_dict["type"]] = option_dict["set_to"]
         }//End for loop
       }

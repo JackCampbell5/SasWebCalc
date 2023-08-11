@@ -570,7 +570,7 @@ class VSANS:
                 source_aperture_js = '60.0'
             valid_ops = ['60.0']
         results["collimation"]["source_aperture_js"] = source_aperture_js
-        results["options"]["collimation+ source_aperture_js"] = {"type": "options", "set_to": valid_ops}
+        results["options"]["collimation+source_aperture_js"] = {"type": "options", "set_to": valid_ops}
         return results
 
     @staticmethod
@@ -881,7 +881,7 @@ class Collimation:
         """
         self.source_aperture = float(self.source_aperture_js) / 10.0
 
-    def calculate_sourceDistance(self):
+    def calculate_source_distance(self):
         """Calculates the source distance from whatever the number of guides index is in the source_distance_options
 
         :return: None as it just sets a value
@@ -940,7 +940,7 @@ class Collimation:
         """
         self.calculate_num_guides()
         self.calculate_source_aperture()
-        self.calculate_sourceDistance()
+        self.calculate_source_distance()
         self.calculate_t_guide()
         self.calculate_sample_aperture()
         self.calculate_l_1()
@@ -1942,7 +1942,7 @@ class HorizontalPanel:
         self.default_mask = np.concatenate((np.ones((50, 48)), np.zeros((28, 48)), np.ones((50, 48))))
 
     @staticmethod
-    def create_tmp_array(self):
+    def create_tmp_array():
         """Creates the tmp calib array based on certain parameters needed for plotting
 
         :return: The tmp_calib array that it created
@@ -2309,22 +2309,22 @@ class VSANSConstants:
         user_inaccessible["beam"]["dlambda"] = 0.12
         other_constants["T_Frontend"] = 1.0
         user_inaccessible["collimation"]["guide_select"] = "9"
-        user_inaccessible["collimation"]["sourceAperture_js"] = "60.0"
-        user_inaccessible["collimation"]["sourceDistance"] = 579
-        user_inaccessible["collimation"]["extSampleAperture"] = 12.7
-        user_inaccessible["collimation"]["sampleToApGv"] = 22
-        user_inaccessible["collimation"]["sampleToGv"] = 11
-        user_inaccessible["middle_carriage"]["ssdInput"] = 450  # SDD_middle_input
+        user_inaccessible["collimation"]["source_aperture_js"] = "60.0"
+        user_inaccessible["collimation"]["source_distance"] = 579
+        user_inaccessible["collimation"]["ext_sample_aperture"] = 12.7
+        user_inaccessible["collimation"]["sample_to_ap_gv"] = 22
+        user_inaccessible["collimation"]["sample_to_gv"] = 11
+        user_inaccessible["middle_carriage"]["ssd_input"] = 450  # SDD_middle_input
         other_constants["beamstop_index"] = 3 - 1
-        user_inaccessible["MidLeftPanel"]["lateralOffset"] = -6.0
-        user_inaccessible["mid_right_panel"]["lateralOffset"] = -5.5
+        user_inaccessible["mid_left_panel"]["lateral_offset"] = -6.0
+        user_inaccessible["mid_right_panel"]["lateral_offset"] = -5.5
         user_inaccessible["front_carriage"]["ssd_input"] = 100
-        user_inaccessible["front_left_panel"]["lateralOffset"] = -10.344
-        user_inaccessible["front_right_panel"]["lateralOffset"] = 7.57
+        user_inaccessible["front_left_panel"]["lateral_offset"] = -10.344
+        user_inaccessible["front_right_panel"]["lateral_offset"] = 7.57
         user_inaccessible["front_top_panel"]["verticalOffset"] = 0
         user_inaccessible["front_bottom_panel"]["verticalOffset"] = 0
-        user_inaccessible["front_carriage"]["refBeamCtrX"] = 0
-        user_inaccessible["front_carriage"]["RefBeamCtrY"] = 0
+        user_inaccessible["front_carriage"]["refBeamCtr_x"] = 0
+        user_inaccessible["front_carriage"]["refBeamCtr_y"] = 0
         user_inaccessible["middle_carriage"]["refBeamCtr_x"] = 0
         user_inaccessible["middle_carriage"]["refBeamCtr_y"] = 0
         return {"user": user_inaccessible, "other": other_constants}
@@ -2343,22 +2343,22 @@ class VSANSConstants:
         user_inaccessible["beam"]["dlambda"] = 0.12
         other_constants["T_Frontend"] = 1.0
         user_inaccessible["collimation"]["guide_select"] = "7"
-        user_inaccessible["collimation"]["sourceAperture_js"] = "60.0"
-        user_inaccessible["collimation"]["sourceDistance"] = 980
-        user_inaccessible["collimation"]["extSampleAperture"] = 12.7
-        user_inaccessible["collimation"]["sampleToApGv"] = 22
-        user_inaccessible["collimation"]["sampleToGv"] = 11
-        user_inaccessible["middle_carriage"]["ssdInput"] = 1100  # SDD_middle_input
+        user_inaccessible["collimation"]["source_aperture_js"] = "60.0"
+        user_inaccessible["collimation"]["source_distance"] = 980
+        user_inaccessible["collimation"]["ext_sample_aperture"] = 12.7
+        user_inaccessible["collimation"]["sample_to_ap_gv"] = 22
+        user_inaccessible["collimation"]["sample_to_gv"] = 11
+        user_inaccessible["middle_carriage"]["ssd_input"] = 1100  # SDD_middle_input
         other_constants["beamstop_index"] = 4 - 1
-        user_inaccessible["MidLeftPanel"]["lateralOffset"] = -6.0
-        user_inaccessible["mid_right_panel"]["lateralOffset"] = -5.5
+        user_inaccessible["mid_left_panel"]["lateral_offset"] = -6.0
+        user_inaccessible["mid_right_panel"]["lateral_offset"] = -5.5
         user_inaccessible["front_carriage"]["ssd_input"] = 230
-        user_inaccessible["front_left_panel"]["lateralOffset"] = -9.32
-        user_inaccessible["front_right_panel"]["lateralOffset"] = 6.82
+        user_inaccessible["front_left_panel"]["lateral_offset"] = -9.32
+        user_inaccessible["front_right_panel"]["lateral_offset"] = 6.82
         user_inaccessible["front_top_panel"]["verticalOffset"] = 0
         user_inaccessible["front_bottom_panel"]["verticalOffset"] = 0
-        user_inaccessible["front_carriage"]["refBeamCtrX"] = 0
-        user_inaccessible["front_carriage"]["RefBeamCtrY"] = 0
+        user_inaccessible["front_carriage"]["refBeamCtr_x"] = 0
+        user_inaccessible["front_carriage"]["refBeamCtr_y"] = 0
         user_inaccessible["middle_carriage"]["refBeamCtr_x"] = 0
         user_inaccessible["middle_carriage"]["refBeamCtr_y"] = 0
         return {"user": user_inaccessible, "other": other_constants}
@@ -2377,22 +2377,22 @@ class VSANSConstants:
         user_inaccessible["beam"]["dlambda"] = 0.12
         other_constants["T_Frontend"] = 1.0
         user_inaccessible["collimation"]["guide_select"] = "2"
-        user_inaccessible["collimation"]["sourceAperture_js"] = "60.0"
-        user_inaccessible["collimation"]["sourceDistance"] = 2157
-        user_inaccessible["collimation"]["extSampleAperture"] = 12.7
-        user_inaccessible["collimation"]["sampleToApGv"] = 22
-        user_inaccessible["collimation"]["sampleToGv"] = 11
-        user_inaccessible["middle_carriage"]["ssdInput"] = 1600  # SDD_middle_input
+        user_inaccessible["collimation"]["source_aperture_js"] = "60.0"
+        user_inaccessible["collimation"]["source_distance"] = 2157
+        user_inaccessible["collimation"]["ext_sample_aperture"] = 12.7
+        user_inaccessible["collimation"]["sample_to_ap_gv"] = 22
+        user_inaccessible["collimation"]["sample_to_gv"] = 11
+        user_inaccessible["middle_carriage"]["ssd_input"] = 1600  # SDD_middle_input
         other_constants["beamstop_index"] = 3 - 1
-        user_inaccessible["MidLeftPanel"]["lateralOffset"] = -6.0
-        user_inaccessible["mid_right_panel"]["lateralOffset"] = -5.5
+        user_inaccessible["mid_left_panel"]["lateral_offset"] = -6.0
+        user_inaccessible["mid_right_panel"]["lateral_offset"] = -5.5
         user_inaccessible["front_carriage"]["ssd_input"] = 350
-        user_inaccessible["front_left_panel"]["lateralOffset"] = -9.627
-        user_inaccessible["front_right_panel"]["lateralOffset"] = 7.0497
+        user_inaccessible["front_left_panel"]["lateral_offset"] = -9.627
+        user_inaccessible["front_right_panel"]["lateral_offset"] = 7.0497
         user_inaccessible["front_top_panel"]["verticalOffset"] = 0
         user_inaccessible["front_bottom_panel"]["verticalOffset"] = 0
-        user_inaccessible["front_carriage"]["refBeamCtrX"] = 0
-        user_inaccessible["front_carriage"]["RefBeamCtrY"] = 0
+        user_inaccessible["front_carriage"]["refBeamCtr_x"] = 0
+        user_inaccessible["front_carriage"]["refBeamCtr_y"] = 0
         user_inaccessible["middle_carriage"]["refBeamCtr_x"] = 0
         user_inaccessible["middle_carriage"]["refBeamCtr_y"] = 0
         return {"user": user_inaccessible, "other": other_constants}
@@ -2411,22 +2411,22 @@ class VSANSConstants:
         user_inaccessible["beam"]["dlambda"] = 0.12
         other_constants["T_Frontend"] = 1.0
         user_inaccessible["collimation"]["guide_select"] = "0"
-        user_inaccessible["collimation"]["sourceAperture_js"] = "30.0"  # source_aperture_str
-        user_inaccessible["collimation"]["sourceDistance"] = 2441  # source_distance
-        user_inaccessible["collimation"]["extSampleAperture"] = 12.7
-        user_inaccessible["collimation"]["sampleToApGv"] = 22
-        user_inaccessible["collimation"]["sampleToGv"] = 11
-        user_inaccessible["middle_carriage"]["ssdInput"] = 1900  # SDD_middle_input
+        user_inaccessible["collimation"]["source_aperture_js"] = "30.0"  # source_aperture_str
+        user_inaccessible["collimation"]["source_distance"] = 2441  # source_distance
+        user_inaccessible["collimation"]["ext_sample_aperture"] = 12.7
+        user_inaccessible["collimation"]["sample_to_ap_gv"] = 22
+        user_inaccessible["collimation"]["sample_to_gv"] = 11
+        user_inaccessible["middle_carriage"]["ssd_input"] = 1900  # SDD_middle_input
         other_constants["beamstop_index"] = 2 - 1
-        user_inaccessible["mid_left_panel"]["lateralOffset"] = -6.0
-        user_inaccessible["mid_right_panel"]["lateralOffset"] = -5.5
+        user_inaccessible["mid_left_panel"]["lateral_offset"] = -6.0
+        user_inaccessible["mid_right_panel"]["lateral_offset"] = -5.5
         user_inaccessible["front_carriage"]["ssd_input"] = 400
-        user_inaccessible["front_left_panel"]["lateralOffset"] = -9.24
-        user_inaccessible["front_right_panel"]["lateralOffset"] = 6.766
+        user_inaccessible["front_left_panel"]["lateral_offset"] = -9.24
+        user_inaccessible["front_right_panel"]["lateral_offset"] = 6.766
         user_inaccessible["front_top_panel"]["verticalOffset"] = 0
         user_inaccessible["front_bottom_panel"]["verticalOffset"] = 0
-        user_inaccessible["front_carriage"]["refBeamCtrX"] = 0
-        user_inaccessible["front_carriage"]["RefBeamCtrY"] = 0
+        user_inaccessible["front_carriage"]["refBeamCtr_x"] = 0
+        user_inaccessible["front_carriage"]["refBeamCtr_y"] = 0
         user_inaccessible["middle_carriage"]["refBeamCtr_x"] = 0
         user_inaccessible["middle_carriage"]["refBeamCtr_y"] = 0
         return {"user": user_inaccessible, "other": other_constants}
