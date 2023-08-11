@@ -75,7 +75,7 @@ class VSANS:
         self.middle_carriage = None
         self.front_carriage = None
         self.plot_data = None
-        self.constants = VSANS_Constants().get_constants(self.preset, _create_vsans_dict(name=False))  # TODO Look at
+        self.constants = VSANSConstants().get_constants(self.preset, _create_vsans_dict(name=False))  # TODO Look at
         # if this is necessary
         # Super is the Instrument class
         params = params["instrument_params"]
@@ -519,7 +519,7 @@ class VSANS:
         :return: A dictionary of the values to be updated
         :rtype: Dict
         """
-        constants = VSANS_Constants()
+        constants = VSANSConstants()
         results = constants.get_constants(preset, _create_vsans_dict(name=False), True)
         results = VSANS.update_source_aperture_with_data(results)
         return check_params(params=results)
@@ -1031,8 +1031,8 @@ class AllCarriage:
         self.gravity_drop_max = self._calculate_gravity_drop(lambda_val=lambda_val)
 
     def calculate_beamstop_required(self):
-        """Calculates the beamstop required value in CM by calculating the drop min and max and using the values of l_!
-        and 2
+        """Calculates the beamstop required value in CM by calculating the drop min and max and using the values of l_1
+            and 2
 
         :return: None as it just sets the value of beamstop_required
         :rtype: None
@@ -2025,7 +2025,7 @@ class Detector:
         """Sets all the constant values needed to run this detector
 
         :return: Nothing as it just sets the values of id, spatial_calibration, setback, x_ctr_offset, y_ctr_offset,
-        orientation, left_or_bottom, and panel_gap
+            orientation, left_or_bottom, and panel_gap
         :rtype: None
         """
         # If statements based off the name of the detector
@@ -2247,11 +2247,25 @@ class Detector:
         return y - self.y_min(0)
 
 
-class VSANS_Constants:
+class VSANSConstants:
+    """A class for storing and manipulating Consents for the VSANS instruments related data.
+
+   :param Dict self.constants: The dictionary containing the constants
+    """
     def __init__(self):
+        """Initializes the constants objects and creates the constants parameter
+        """
         self.constants = None
 
     def get_constants(self, preset, VSANS_dict, js_only=False):
+        """Gets the constants form the required preset method
+
+        :param str preset: The preset to get the
+        :param dict VSANS_dict: The list of js parameters already created
+        :param js_only: Weather to get the JS parameter only or just other parameters
+        :return: The constants dictionary that is gotten
+        :rtype: Dict
+        """
         # Gets the constants based on the preset
         if preset == "16m":
             self.constants = self._preset_16m(VSANS_dict)
@@ -2268,6 +2282,12 @@ class VSANS_Constants:
             return self.constants.get("other", {})
 
     def _preset_4_5m(self, user_inaccessible):
+        """Updates the user_inaccessible with the consents for the 4.5m preset
+
+        :param dict user_inaccessible: The dictionary of pre created JS values or vsans dict
+        :return:The created dictionary with sub dictionaries user_inaccessible for the js and other_constants for the
+        rest of the constants
+        """
         other_constants = {}
         other_constants["phi_0"] = 1.82e13
         other_constants["lambda_T"] = 6.2
@@ -2296,6 +2316,12 @@ class VSANS_Constants:
         return {"user": user_inaccessible, "other": other_constants}
 
     def _preset_11m(self, user_inaccessible):
+        """Updates the user_inaccessible with the consents for the 11m preset
+
+        :param dict user_inaccessible: The dictionary of pre created JS values or vsans dict
+        :return:The created dictionary with sub dictionaries user_inaccessible for the js and other_constants for the
+        rest of the constants
+        """
         other_constants = {}
         other_constants["phi_0"] = 1.82e13
         other_constants["lambda_T"] = 6.2
@@ -2324,6 +2350,12 @@ class VSANS_Constants:
         return {"user": user_inaccessible, "other": other_constants}
 
     def _preset_16m(self, user_inaccessible):
+        """Updates the user_inaccessible with the consents for the 16m preset
+
+        :param dict user_inaccessible: The dictionary of pre created JS values or vsans dict
+        :return:The created dictionary with sub dictionaries user_inaccessible for the js and other_constants for the
+        rest of the constants
+        """
         other_constants = {}
         other_constants["phi_0"] = 1.82e13
         other_constants["lambda_T"] = 6.2
@@ -2352,6 +2384,12 @@ class VSANS_Constants:
         return {"user": user_inaccessible, "other": other_constants}
 
     def _preset_19m(self, user_inaccessible):
+        """Updates the user_inaccessible with the consents for the 19m preset
+
+        :param dict user_inaccessible: The dictionary of pre created JS values or vsans dict
+        :return:The created dictionary with sub dictionaries user_inaccessible for the js and other_constants for the
+        rest of the constants
+        """
         other_constants = {}
         other_constants["phi_0"] = 1.82e13
         other_constants["lambda_T"] = 6.2
