@@ -697,6 +697,7 @@ class Beam:
     :param float self.i_sub_zero:
     :param dict self.frontend_trans_options: A dictionary of options for front end trans baced on dlambda
     """
+
     def __init__(self, parent, params, name="beam"):
         """ Creates object parameters for Beam class and runs set params method
 
@@ -820,6 +821,7 @@ class Collimation:
     :param int self.l_1: The value of 1_1
     :param int self.a_over_l: The value of a over l_1
     """
+
     def __init__(self, parent, params, name="collimation"):
         """Creates object parameters for Collimation class and runs set params method
 
@@ -956,6 +958,7 @@ class AllCarriage:
     :param float self.dq_wavelength: The dq wavelength value
     :param float self.dq_gravity: The dq gravity value
     """
+
     def __init__(self, parent, params, name="all_carriage"):
         """ Creates object parameters for All Carriage class and runs set params method
 
@@ -1152,6 +1155,7 @@ class MiddleCarriage:
     :param float self.middle_tb_h: The Middle Top Bottom Panel heights
     :param float self.middle_ssd_setback: The ssd setback value for the middle
     """
+
     def __init__(self, parent, params, name="middle_carriage"):
         """ Creates sub object and object parameters for Middle Carriage class and runs set params method
 
@@ -1249,6 +1253,7 @@ class FrontCarriage:
     :param float self.front_tb_h: The Middle Top Bottom Panel heights
     :param float self.front_ssd_setback: The ssd setback value for the middle
     """
+
     def __init__(self, parent, params, name="front_carriage"):
         """ Creates sub object and object parameters for Middle Carriage class and runs set params method
 
@@ -1340,6 +1345,7 @@ class DqCalculator:
     :param float self.dq_wavelength: The wavelength dq value
     :param float self.dq_gravity: The gravity dq value
     """
+
     def __init__(self, parent, params, name="DqCalculator"):
         """ Creates object parameters for Dq Calculator class and runs set params method
 
@@ -2252,6 +2258,7 @@ class VSANSConstants:
 
    :param Dict self.constants: The dictionary containing the constants
     """
+
     def __init__(self):
         """Initializes the constants objects and creates the constants parameter
         """
@@ -2419,7 +2426,42 @@ class VSANSConstants:
 
 
 class PlotData:
+    """A class for storing and manipulating Plotting related data.
+
+    To make the code easier to read and calculations smoother all the panel and carriage objects have been
+    imported when the class was created and will be assigned on the set params
+
+    :param VSANS self.parent: The parent VSANS object
+    :param str self.name: The name of the class
+    :param MiddleCarriage self.middle_carriage: The middle carriage object from the Parent class
+    :param VerticalPanel self.mid_left_panel: The left panel object from the parent.middleCarriage class
+    :param VerticalPanel self.mid_right_panel: The right panel object from the parent.middleCarriage class
+    :param HorizontalPanel self.mid_top_panel: The top panel object from the parent.middleCarriage class
+    :param HorizontalPanel self.mid_bottom_panel: The bottom panel object from the parent.middleCarriage class
+    :param FrontCarriage self.front_carriage: The front carriage object from the parent class
+    :param VerticalPanel self.front_left_panel: The left panel object from the parent.frontCarriage class
+    :param VerticalPanel self.front_right_panel: The right panel object from the parent.frontCarriage class
+    :param HorizontalPanel self.front_top_panel: The top panel object from the parent.frontCarriage class
+    :param HorizontalPanel self.front_bottom_panel: The bottom panel object from the parent.frontCarriage class
+    :param Array self.all_detectors: An array that contains all the detectors to be looped through easily
+    :param Float self.lambda_val: The wavelength value from the parent.beam.wavelength value
+    :param Array self.default_mask: An array that contains the default mask
+    :param Boolean self.k_bctr_cm: A boolean value that is used in the calculations
+    """
+
     def __init__(self, parent, params, name="PlotData"):
+        """ Creates object parameters for PlotData class and runs set params method
+
+        Sets object parameters self.middle_carriage, self.mid_left_panel, self.mid_right_panel, self.mid_top_panel,
+        self.mid_bottom_panel, self.front_carriage, self.front_left_panel, self.front_right_panel, self.front_top_panel,
+         self.front_bottom_panel, self.all_detectors, self.lambda_val, self.default_mask, and self.k_bctr_cm
+
+        :param VSANS parent: The VSANS instance this PlotData is a part of
+        :param dict params: A dictionary mapping <param_name>: <value>
+        :param str name: The name of the class
+        :return: None as it just sets the parameters
+        :rtype: None
+        """
         self.parent = parent
         self.name = name
         self.middle_carriage = None
@@ -2442,11 +2484,16 @@ class PlotData:
         set_params(instance=self, params=params)
 
     def run_plot_data(self):
+        """Runs all the calculation methods nessasary to calculate the plots object
+
+        :return: None as it just runs calculations
+        :rtype: None
+        """
         # Initialize the space and all the variables
         self.initialize_space()
 
         # Open the panel
-        # self.draw_panel() # not necessary right now might be used later to set parameters
+        # self.draw_panel() # DEVNote not necessary right now might be used later to set parameters
 
         # Generates default mask
         self.generate_default_mask()
@@ -2460,6 +2507,12 @@ class PlotData:
         self.update_views()
 
     def initialize_space(self):
+        """Creates the all detectors array based on all the panel objects that exist in this panel and then loops
+        through that array creating all of the detector
+
+        :return: None as it just creates arrays
+        :rtype: None
+        """
         # All the other variables are set in their classes as they are constants
 
         # Creates a object that contains all the detector objects and can be lopped through
@@ -2471,18 +2524,29 @@ class PlotData:
             panel.create_detector_array()
 
     def generate_default_mask(self):
-        # if it matters we are using the gHighResBinning value of 4 as that is what is used for VCALC
+        """Generates the default mask based on some constants and then calls the create default mask method
+
+        :return: None as it just sets default_mask and calls create_default_mask
+        :rtype: None
+        """
+
+        # DEVNote if it matters we are using the gHighResBinning value of 4 as that is what is used for VCALC
 
         # Overall Default Mask
         inner_array = np.concatenate((np.ones(39), np.zeros(1496), np.ones(121)))
         self.default_mask = np.concatenate(
             (np.zeros((191, 1656)), np.tile(inner_array, (478, 1)), np.zeros((11, 1656))))
 
-        # Generate thde default mask for each indevidual detector
+        # Generate the default mask for each individual detector
         for panel in self.all_detectors:
             panel.create_default_mask()
 
     def calculate_all_detectors(self):
+        """Calculation method to calculate the 1 and 2d plots
+
+        :return: None as it just calls a lot of methods
+        :rtype: None
+        """
         # calculates Q for each panel and fills 2D panels with model data then plots the 2D panel
         # self.plot_back_panel() # We are not worrying about the back Panel
         self.plot_all_panels()
@@ -2493,24 +2557,24 @@ class PlotData:
             self.draw_mask(panel)
 
         # update values on the panel
-        self.calculate_beam_intensity()
+        # self.calculate_beam_intensity()
 
         # Fill in the Qmin and Qmax values, based on Q_Tot for the 2D panels ( not including mask)
         # self.v_q_min_max_back() # We are not worrying about the back Panel
-        self.v_q_min_max_middle()
-        self.v_q_min_max_front()
+        # self.v_q_min_max_middle()
+        # self.v_q_min_max_front()
 
         # Calculate beam diameter and beamstop size
         # V_BeamDiamDisplay("maximum", "MR") // TODO - - hard - wired here for the Middle carriage ( and in the
         #  SetVar label)
         # V_BeamStopDiamDisplay("MR")
 
-        self.beam_biam_display()
-        self.beam_stop_diam_display()
+        # self.beam_biam_display()
+        # self.beam_stop_diam_display()
         # Calculate the "real" QMin with the beamstop
         # V_QMin_withBeamStop("MR") // TODO - - hard - wired
         #
-        self.calculate_q_min_beam_stop()
+        # self.calculate_q_min_beam_stop()
         #
         # The 1 D I(q) - get the values, re - do the calc at the end
         # popStr
@@ -2519,7 +2583,7 @@ class PlotData:
         # popup_b
         # popStr = S_Value
         # V_QBinAllPanels_Circular("VCALC", V_BinTypeStr2Num(popStr), collimationStr)
-        self.bin_all_panels_circular()
+        # self.bin_all_panels_circular()
         #
         # Plot the results(1 D)
         # type = "VCALC"
@@ -2536,23 +2600,43 @@ class PlotData:
         # Execute("V_Front_IQ_Graph" + str)
         #
         # Multiply the averaged data by the shadow factor to simulate a beamstop
-        self.iq_beam_stop_shadow()
+        # self.iq_beam_stop_shadow()
 
     def update_views(self):
+        """Updates the views and plots in igor
+
+        :return: None as it does not do anything yet
+        :rtype: None
+        """
         pass
 
     # Helper functions for the sub functions of run_plot_data
     # Start calculate panel function
     def plot_all_panels(self):
-        # fPlotMiddlePanels in IgorPro
+        """Runs the plot calculations and fills with model data on all panels
+
+        fPlotMiddlePanels in IgorPro
+
+        :return: None as it just runs methods
+        :rtype: None
+        """
         # calculate Qtot, qxqyqz arrays from geometry
         for panel in self.all_detectors:
             self.plot_panel(panel)
             self.fill_panel_w_model_data(
-                panel)  # Middle Panels AsQ()  # self.  # TODO self.panel_asq(  # self.middle_carriage) # This displays the panel and checks ot make sure everything is  #  right
+                panel)  # Middle Panels AsQ()  # self.  # TODO self.panel_asq(self.middle_carriage) # This displays the panel and checks ot make sure everything  #  is right
 
     def fill_panel_w_model_data(self, panel_object):
-        # FillPanel_wModelData in Igor
+        """Takes the specified panel object and added model data to the data parameter based on some parameters and
+        then runs detector_2q_non_linear
+
+        Debye is the model implemented in till we can implement sasModels
+        FillPanel_wModelData in Igor
+
+        :param HorizontalPanel or VerticalPanel panel_object: The panel that the calculations are being done on
+        :return: None as it just runs calculations and calls detector_2q_non_linear
+        :rtype: None
+        """
         detector_array = panel_object.detector_array
         q_to_t = panel_object.q_to_t_array
         tmp_intren = np.copy(detector_array)
@@ -2571,6 +2655,12 @@ class PlotData:
         func_str = "Debye"  # This is the model used for calculation
 
         def debye(x):
+            """The calculations for the specified x in the debye model
+
+            :param float x: A value from the q_to_t_array array
+            :return: The calculated value based on that value of x
+            :rtype: Float
+            """
             scale = 10
             rg = 300
             bkg = 0.0001
@@ -2598,6 +2688,12 @@ class PlotData:
         panel_object.detector_array = det / (trans * thick * pix_size_x * pix_size_y / math.pow(ssd, 2) * imon)
 
     def plot_panel(self, panel_object):
+        """Creates the data_real_dist_x and data_real_dist_y arrays and then runs detector_2q_non_linear
+
+        :param HorizontalPanel or VerticalPanel panel_object: The panel that is being ploted
+        :return: None as it just sets values of many things
+        :rtype: None
+        """
         self.make_real_dist_x_y_waves(panel_object)
         m_sep = self.get_offset(panel_object)
         pix_size_x = panel_object.x_pixel_size
@@ -2617,6 +2713,12 @@ class PlotData:
         self.detector_2q_non_linear(panel_object=panel_object)  # Something to set scale
 
     def detector_2q_non_linear(self, panel_object):
+        """Calculates the q_to_t_array, qx_array, qy_array, and qy_array
+
+        :param HorizontalPanel or VerticalPanel panel_object: The object that the methods are being set on
+        :return: None as it just sets of values of many arrays
+        :rtype: None
+        """
         lam = self.lambda_val
         tube_width = 8.4
         dim_x = panel_object.pixel_num_x
@@ -2626,6 +2728,14 @@ class PlotData:
         ssd = self.get_ssd(panel_object)
 
         def find_phi(dx, dy):
+            """Find the phi from the specified dx and dy values
+
+            :param float dx: The dx value to be used in the calculations
+            :param float dy: The dy value to be used in the calculations
+            :return: The value that is found ot be phi from the specified dx and dy
+            :rtype: Float
+
+            """
 
             if dx == 0 and dy > 0:
                 return math.pi / 2
@@ -2647,6 +2757,14 @@ class PlotData:
                 return phi
 
         def calc_q_val(a_q, b_q):
+            """Calculates a q value based on the given value of a_q and b_q in data_real_dist as well as the
+            distance, ssd and two_theta value
+
+            :param float a_q: The value of a_q to use
+            :param float b_q: The value of b_q to use
+            :return: The calculated q value
+            :rtype: Float
+            """
             dx = data_real_dist_x[a_q][b_q] - dim_x
             dy = data_real_dist_y[a_q][b_q] - dim_y
             dist = math.sqrt(math.pow(dx, 2) + math.sqrt(math.pow(dy, 2)))
@@ -2656,6 +2774,14 @@ class PlotData:
             return q_val
 
         def calc_q_x(a_x, b_x):
+            """Calculates a q_x value based on the given value of a_x and b_x in data_real_dist as well as the
+            distance, ssd and two_theta value
+
+            :param float a_x: The value of a_x to use
+            :param float b_x: The value of b_x to use
+            :return: The calculated q_x value
+            :rtype: Float
+            """
             q_val = calc_q_val(a_x, b_x)
             dx = data_real_dist_x[a_x][b_x] - dim_x  # Delta x in mm
             dy = data_real_dist_y[a_x][b_x] - dim_y  # Delta y in mm
@@ -2669,6 +2795,14 @@ class PlotData:
             return qx
 
         def calc_q_y(a_y, b_y):
+            """Calculates a q_y value based on the given value of a_y and b_y in data_real_dist as well as the
+            distance, ssd and two_theta value
+
+            :param float a_y: The value of a_y to use
+            :param float b_y: The value of b_y to use
+            :return: The calculated q_x value
+            :rtype: Float
+            """
             qval = calc_q_val(a_y, b_y)
             dx = data_real_dist_x[a_y][b_y] - dim_x
             dy = data_real_dist_y[a_y][b_y] - dim_y
@@ -2683,6 +2817,14 @@ class PlotData:
             return qy
 
         def calc_q_z(a, b):
+            """Calculates a q_z value based on the given value of a_z and b_z in data_real_dist as well as the
+            distance, ssd and two_theta value
+
+            :param float a_z: The value of a_z to use
+            :param float b_z: The value of b_z to use
+            :return: The calculated q_x value
+            :rtype: Float
+            """
             q_val = calc_q_val(a, b)
             dx = data_real_dist_x[a][b] - dim_x
             dy = data_real_dist_y[a][b] - dim_y
@@ -2712,7 +2854,14 @@ class PlotData:
                     panel_object.qz_array[a][b] = calc_q_z(a, b)
 
     def make_real_dist_x_y_waves(self, panel_object):
-        # VC_MakeRealDistXYWaves in IGORPro
+        """Updates the other_array_x and other_array_y arrays based on the orientation of the panel and the gap
+
+        VC_MakeRealDistXYWaves in IGORPro
+
+        :param HorizontalPanel or VerticalPanel panel_object: The panel that the calculations are being done on
+        :return: Nothing as it just runs calculations and sets values
+        :rtype: None
+        """
         # make the data_realDistX,Y Waves that are needed for the calculation of q
         tmp_array = panel_object.create_tmp_array()
         tube_width = 8.4
@@ -2785,42 +2934,62 @@ class PlotData:
     # End calculate panel functions
 
     def reset_mask(self):
-        # VC_ResetVCALCMask in Igor Pro
+        """Resets the panel.data array to zeros to allow for better calculations
+
+        VC_ResetVCALCMask in Igor Pro
+
+        :return: Noting as it just resets all panels data
+        :rtype: None
+        """
         for panel in self.all_detectors:
             panel.data = np.zeros((len(panel.detector_array), len(panel.detector_array[0])))
 
     def draw_mask(self, panel_object):
-        # VC_DrawVCALCMask in Igor Pro
+        """Creates the mask based on the given panel object
+
+        VC_DrawVCALCMask in Igor Pro
+
+        :param HorizontalPanel or VerticalPanel panel_object: The panel to do the calculations on
+        :return: Non as it just sets values
+        """
+        # DEVNotes- this is where I stopped
 
         offset = self.get_offset(panel_object)
         D2 = self.parent.get_sample_aperture()
         l2 = self.get_l_2(panel_object)
 
-    def calculate_beam_intensity(self):
-        pass
+    # DEVNote- Functions created as they were used in igorPro but I did not have time to implement
+    # def calculate_beam_intensity(self):
+    #     pass
+    #
+    # def v_q_min_max_middle(self):
+    #     pass
+    #
+    # def v_q_min_max_front(self):
+    #     pass
+    #
+    # def beam_biam_display(self):
+    #     pass
+    #
+    # def beam_stop_diam_display(self):
+    #     pass
+    #
+    # def calculate_q_min_beam_stop(self):
+    #     pass
+    #
+    # def bin_all_panels_circular(self):
+    #     pass
+    #
+    # def iq_beam_stop_shadow(self):
+    #     pass
 
-    def v_q_min_max_middle(self):
-        pass
+    def get_l_2(self, panel_object):
+        """Gets the l_2 of the specified parent panel object based on the carriage
 
-    def v_q_min_max_front(self):
-        pass
-
-    def beam_biam_display(self):
-        pass
-
-    def beam_stop_diam_display(self):
-        pass
-
-    def calculate_q_min_beam_stop(self):
-        pass
-
-    def bin_all_panels_circular(self):
-        pass
-
-    def iq_beam_stop_shadow(self):
-        pass
-
-    def get_l_2(self,panel_object):
+        :param HorizontalPanel or VerticalPanel panel_object: The panel to do the calculations on
+        :return: The value of l_2 that was gotten
+        :rtype: Float
+        """
         if 'F' in panel_object.short_name:
             return self.front_carriage.l_2
         else:
@@ -2828,6 +2997,12 @@ class PlotData:
 
     @staticmethod
     def get_offset(panel_object):
+        """Gets the offset value based on the orientation of the panel
+
+        :param HorizontalPanel or VerticalPanel panel_object: The panel to do the calculations on
+        :return: The value of offset that was gotten
+        :rtype: Float
+        """
         # VCALC_getPanelTranslation in IGOR
         if panel_object.horizontal_orientation:
             return panel_object.verticalOffset
@@ -2836,6 +3011,11 @@ class PlotData:
 
     @staticmethod
     def get_setback(panel_object):
+        """Gets the setback if its horizontal and 0 if it is not
+
+        :param HorizontalPanel or VerticalPanel panel_object: The panel to do the calculations on
+        :return: The value of setback that was gotten
+        :rtype: Float        """
         # VCALC_getPanelTranslation in IGOR
         if panel_object.horizontal_orientation:
             return panel_object.setback
@@ -2843,6 +3023,12 @@ class PlotData:
             return 0
 
     def get_ssd(self, panel_object):
+        """Gets the SSD value from the parent panel
+
+        :param HorizontalPanel or VerticalPanel panel_object: The panel to do the calculations on
+        :return: The value of SSD that was gotten
+        :rtype: Float
+        """
         # VCALC_getPanelTranslation in IGOR
         if 'F' in panel_object.short_name:
             return self.front_carriage.ssd
