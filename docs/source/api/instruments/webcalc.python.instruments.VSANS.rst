@@ -3,14 +3,9 @@ webcalc\.python\.instruments\.VSANS file
 This is the overall organization of the variables in the VSANS class
 
 .. toctree::
+    :maxdepth: 3
 
     VSANS/webcalc.python.instruments.VSANS.VSANS
-
-Other objects needed for calculations-
-
-.. toctree::
-    :maxdepth: 1
-
     VSANS/webcalc.python.instruments.VSANS.beam
     VSANS/webcalc.python.instruments.VSANS.collimation
     VSANS/webcalc.python.instruments.VSANS.allCarriage
@@ -20,4 +15,6 @@ Other objects needed for calculations-
     VSANS/webcalc.python.instruments.VSANS.horizontalPanel
     VSANS/webcalc.python.instruments.VSANS.verticalPanel
     VSANS/webcalc.python.instruments.VSANS.detector
+    VSANS/webcalc.python.instruments.VSANS.VSANSConstants
+    VSANS/webcalc.python.instruments.VSANS.PlotData
 
