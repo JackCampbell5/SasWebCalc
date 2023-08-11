@@ -2,6 +2,12 @@ webcalc\.python\.instruments\.VSANS file
 ========================================
 This is the overall organization of the variables in the VSANS class
 
+.. automodule:: webcalc.python.instruments.VSANS
+    :members: _create_vsans_dict
+    :show-inheritance:
+    :undoc-members:
+
+
 .. toctree::
     :maxdepth: 3
 

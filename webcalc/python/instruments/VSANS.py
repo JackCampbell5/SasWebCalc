@@ -11,9 +11,16 @@ def _create_vsans_dict(name=True, additional=False):
     """Creates the sub dictionary necessary for the VSANS instrument to work properly and returns the all in 1
     dictionary
 
-    :param Boolean name:
-    :param Boolean additional:
-    :return:
+    The sub dictionary include presets, beam, collimation, middle_carriage, mid_left_panel, mid_right_panel,
+    mid_top_panel, mid_bottom_panel, front_carriage, front_left_panel, front_right_panel, front_top_panel,
+    front_bottom_panel, and options
+
+    The additional dictionary's include all_carriage, mid_dq_values, and front_dq_values
+
+    :param Boolean name: Whether to include name as the first part of the dictionary
+    :param Boolean additional: Whether the additional sub dictionary are included
+    :return: The dictionary created by the parameters defined
+    :rtype: Dict
     """
     vsans_dict = {}
     vsans_dict["presets"] = {"name": "Presets"} if name else {}

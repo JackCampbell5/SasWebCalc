@@ -73,6 +73,12 @@ def create_app():
 
     @app.route('/get/preset_params/instrument/<preset_info>', methods=['GET'])
     def on_preset_change(preset_info):
+        """If there is a field change that needs dynamic updates
+
+        :param preset_info: The str containing the nessasary info to do a dynamic field update
+        :return: The encoded json of the results
+        :rtype: Json
+        """
         print("Updating Values Based on Preset")
         instrument_name = preset_info[:preset_info.find('%')]
         preset = preset_info[preset_info.find('%') + 1:]
