@@ -311,7 +311,8 @@ def create_app():
             result = inspect.getmembers(module, inspect.isclass)
             for name, cls in result:
                 if hasattr(cls, "class_name"):
-                    instruments_dict[name] = cls
+                    if name !="Example":
+                        instruments_dict[name] = cls
         return instruments_dict
 
     def _calculate_instrument(instrument: str, params: dict) -> Dict[str, Union[Number, str, List[Union[Number, str]]]]:
