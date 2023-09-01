@@ -1,33 +1,34 @@
+from typing import Dict, List, Union
+
 from ..instrumentJSParams import *  # You need this to create JS the easy way
+from ..instrument import Instrument, set_params
 
-"""This is an example file to show how to create a class to allow it to correctly be modular
+"""This is an example file to show how to create a pluggable instrument that can be added to webcalc.
 
++ Many calculation methods can be reused from other classes, such as the averaging methods and models calculations.
+    + Instrumental resolution should be calculated in the class here and passed to the other calculations.
 
-+ In making an instrument it is recommended to do all of the calculations in sub objects and just create the JS and run 
-    the calculations from this class
-
-+ The set params method can be used to set all the self values in an object from the params dictionary 
-    + You can get set params by running from ..instrument import set_params
++ The set params method can be used to set all the values in an object from the params dictionary.
+    + You can get `set_params` using the import `from ..instrument import set_params`
 """
 
+DictType = Dict[str, Union[str, float, int, bool, List[str]]]
 
-class Example:
+
+class Example(Instrument):
     """ Documentation about this example class
 
-    + Here you should list all the self params and there uses that are found in the __init__ statement
-    + You need 2 things defined at the top of your class not in the __init__ statement
-        + First is a class name which is the name of the class so in this example is Example
-        + Next is a name shown which will be the name shown in the drop-down of instruments
+    + Here you should list all the parameters and their uses
+    + 2 class-level variables should be defined. The two should be unique
+        + `class_name` which is the name of the class so in this example it should be 'Example'
+        + `name_shown` which will be the name in the combobox listing all available instruments
     +
-
-
-    :param str self.name: The name of the instrument
     """
-    class_name = "NG7SANS"
-    name_shown = "NG7 SANS"
+    class_name = "Example"
+    name_shown = "Example"
 
-    # Constructor for the NG7SANS instrument
-    def __init__(self, name, params):
+    # Constructor for the Example instrument
+    def __init__(self, name: str, params: DictType):
         """This the constructor method for an object and is used to define the sub objects and run the set params
         methods
 
@@ -37,9 +38,10 @@ class Example:
         :rtype: None
         """
         self.name = name if name else "example"
-        params = self.param_restructure(params)  # Super is the Instrument class
+        params = self.param_restructure(params)
+        super().__init__(name, params)
 
-    def param_restructure(self, calculate_params):
+    def param_restructure(self, calculate_params: DictType) -> DictType:
         """ This method takes all the parameters provided in the JS format and translates it into something python can understand
 
         :param dict calculate_params: A dictionary of the values gotten from the js
@@ -79,7 +81,7 @@ class Example:
         self.load_params(params=params)
         return params
 
-    def load_params(self, params):
+    def load_params(self, params: DictType):
         """A method that loads the constants to be added to the params dict
 
         :param dict params: The dictionary of parameters from the __init__ statement
@@ -88,7 +90,7 @@ class Example:
         """
         print("Example Load Params")
 
-    def sas_calc(self):
+    def sas_calc(self) -> DictType:
         """ The main function that runs all the calculation and returns the results runs
         calculate_instrument_parameters and then writes the return array which each value of user inaccessible
         corresponds to a  js  and the rest of the dictionary's are used for graphing
@@ -116,22 +118,38 @@ class Example:
         return python_return
 
     def calculate_instrument_parameters(self):
+        """The base instrumental calculations should be performed here for the resolution."""
         pass
 
     @staticmethod
-    def get_js_params():
+    def get_js_params() -> DictType:
         """Creates a dictionary of js element_parameters to create html elements for the example
 
-        params[category][elementName] = {element_parameters}
+        `params[category][elementName] = {element_parameters}`
+            + This creates an HTML heading called 'category' with an indented input with the id 'elementName'.
+            + Values not provided are given default values specified below.
+            + The **element_parameters** dictionary takes the form:
+                + `name`: The label that accompanies the input. *Required*
+                    If no name is provided, no HTML input will be created.
+                + `default`: The default value the input should use when first loaded. Default: Empty/None
+                + `type_val`: The input type that should be displayed, e.g. 'select' for a combobox, 'range' for
+                    a slider, and 'number' for a numerical input. Text boxes are not allowed. Default: numeric
+                + `unit`: The expected units of the input. The units will be displayed to the left of the input.
+                    Default: None
+                + `readonly`: True if the value in the input is for display only and should not be user editable.
+                    Default: False
+                + `options`: A list of selectable values for a combobox or defaults for a slider element. Default: None
+                + `range_id`:
+                + `hidden`: Should the element be hidden by default, e.g. an input box should be visible only when a
+                    specific option or options are selected from a combobox. Default: False
+                + `lower_limit`: The lowest value a numerical input should allow. Default: -infinity
+                + `upper_limit`: The largest value a numerical input should allow. Default: infinity
 
-        + **User editable elements:** -- List here
+        Helper methods available in instrumentJSParams
+            + generate_js_array(): Generates a base set of categories used by most neutron instruments.
+            + create_js(): Accepts named parameters and generates a dictionary mapping arg to value.
 
-        + **Read only elements:** -- List here
-
-        + **element_parameters**:  -- list here
-
-
-        :return: Completed dictionary params[category][paramName] = js_element_array
+        :return: Completed dictionary params[category][paramName] = {element_parameters}
         :rtype: Dict
         """
         params = generate_js_array()
