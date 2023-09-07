@@ -7,7 +7,12 @@ const template = `
   <input type="button" v-model="doFreeze" @click="freezeCalculation" />
   <input type="button" v-if="frozen" v-model="unFrozen" @click="unfreezeCalculations" />
 </div>
-<div id="sasCalcCharts">
+<div id="results">
+  <div id="status">
+      <div class="calculatingText" v-show="calculating">
+        <p id="calculating">Calculating</p>
+      </div>
+  </div>
   <div id="sasCalc1DChart"></div>
   <div id="sasCalc2DChart"></div>
 </div>
@@ -18,6 +23,7 @@ export default {
     data_1d: Object,
     data_2d: Object,
     shapes: Array,
+    calculating_shown: Boolean,
   },
   watch: {
       data_1d: {
@@ -40,6 +46,11 @@ export default {
       offsetTraces: {
           handler(newValue, oldValue) {
             this.scaleFrozenDataSets();
+          }
+      },
+      calculating_shown: {
+          handler(newValue, oldValue) {
+            this.calculating = newValue;
           }
       },
   },
@@ -144,6 +155,7 @@ export default {
     frozen_data: [],
     doFreeze: "Freeze Calculation",
     unFrozen: "Unfreeze Calculations",
+    calculating: false,
   }),
   computed: {
     frozen() {
