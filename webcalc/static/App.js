@@ -100,10 +100,11 @@ export default {
     instruments: {},
     documentation_shown: false,
     calculating_shown: false,
+    log: "",
   }),
   methods: {
     async getParamsInstrument(){
-      const fetch_result = await fetch(`/get/params/instrument/${this.active_instrument_change}`);
+      const fetch_result = await this.fetch_without_data(`/get/params/instrument/${this.active_instrument_change}`);
       this.instrument_params =  await fetch_result.json();
       this.active_instrument = this.active_instrument_change
       await this.onChange();
@@ -111,7 +112,7 @@ export default {
     async populateModelParams() {
       if(this.active_model !== ""){
         let model_name = this.active_structure !== this.structure_names[0] ? this.active_model+'@'+this.active_structure :  this.active_model
-        const fetch_result = await fetch(`/get/params/model/${model_name}`);
+        const fetch_result = await this.fetch_without_data(`/get/params/model/${model_name}`);
         this.model_params = await fetch_result.json();
       }//End if statement
       },
@@ -190,7 +191,12 @@ export default {
       }//End if statement to check instrument existence
 
     },
+    async fetch_without_data(location) {
+      this.logging(location);
+      return await fetch(location);
+    },
     async fetch_with_data(location, data) {
+      this.logging(location);
       const fetch_result = await fetch(
           location,
           {
@@ -202,6 +208,17 @@ export default {
             body: JSON.stringify(data)
       })
       return fetch_result.json();
+    },
+    logging(location) {
+      let elemStr = "status";
+      let today = new Date();
+      let dateTime = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate()+' '+today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+      let newElem = document.createElement("p");
+      newElem.textContent = `${dateTime}: Sending updated values to ${location}`;
+      let elem = document.getElementById(elemStr);
+      if (elem != null) {
+        elem.insertBefore(newElem, elem.firstChild);
+      }
     },
     persist() {
       /*
@@ -227,7 +244,7 @@ export default {
     }
   },
   async beforeMount() {
-    const fetch_result_structure = await fetch("/get/onLoad/");
+    const fetch_result_structure = await this.fetch_without_data("/get/onLoad/");
     let structures_result = await fetch_result_structure.json()
     this.structure_names_original = structures_result["structures"];
     this.structure_names = Array.from(this.structure_names_original);
