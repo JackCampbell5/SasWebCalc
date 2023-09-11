@@ -217,7 +217,7 @@ export default {
       newElem.textContent = `${dateTime}: Sending updated values to ${location}`;
       let elem = document.getElementById(elemStr);
       if (elem != null) {
-        elem.insertBefore(newElem, elem.firstChild);
+        elem.appendChild(newElem);
       }
     },
     persist() {
