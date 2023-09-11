@@ -44,6 +44,7 @@ input.fixed-width-input {
 
 #results {
     clear: both;
+    max-height: 500px;
 }
 #sasCalc1DChart, #sasCalc2DChart, #status {
     width: 33%;
@@ -51,7 +52,8 @@ input.fixed-width-input {
     border: black 1px solid;
 }
 #status {
-   overflow-scrolling: auto;
+   overflow-y: auto;
+    max-height: 450px;
 }
 
 div.freezer {
