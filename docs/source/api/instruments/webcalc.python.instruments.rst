@@ -4,6 +4,7 @@ This is all of the instruments used in the SasWebCalc project
 
 .. toctree::
 
+    webcalc.python.instruments.example
     webcalc.python.instruments.NoInstrument
     webcalc.python.instruments.ng7sans
     webcalc.python.instruments.ngb30sans
