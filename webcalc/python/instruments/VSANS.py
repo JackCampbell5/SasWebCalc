@@ -1,10 +1,10 @@
-from ..instrumentJSParams import *
-from typing import Dict, List, Union
-import numpy as np
-from ..instrument import set_params
 import math
+import numpy as np
 
-Number = Union[float, int]
+from .InstrumentBase import Instrument
+from ..instrument import set_params, CALC_TYPE
+from ..instrumentJSParams import *
+
 
 
 def _create_vsans_dict(name=True, additional=False):
@@ -44,7 +44,7 @@ def _create_vsans_dict(name=True, additional=False):
     return vsans_dict
 
 
-class VSANS:
+class VSANS(Instrument):
     """ A class to manipulate VSANS calculations and parameters
 
     :param str self.name: The name of the instrument
@@ -410,7 +410,7 @@ class VSANS:
 
     # Get methods before here
 
-    def sas_calc(self) -> Dict[str, Union[Number, str, List[Union[Number, str]]]]:
+    def sas_calc(self) -> CALC_TYPE:
         """ The main function that runs all the calculation though the calculate objects and calculate plot methods and
         returns the results
 

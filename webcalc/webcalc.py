@@ -2,7 +2,6 @@
 import json
 import sys
 import importlib
-import inspect
 import os
 import mimetypes
 import numpy as np
@@ -324,12 +323,12 @@ def create_app():
         instruments_dict = {}
         # Import all classes from the files
         for file in files:
-            module = importlib.import_module(directory.replace("/", ".")+'.' + file)
-            result = inspect.getmembers(module, inspect.isclass)
-            for name, cls in result:
-                if hasattr(cls, "class_name"):
-                    if name !="Example":
-                        instruments_dict[name] = cls
+            importlib.import_module(directory.replace("/", ".")+'.' + file)
+        from python.instruments.InstrumentBase import Instrument
+        for class_ in Instrument.__subclasses__():
+            if class_.__name__ != "Example":
+                instruments_dict[class_.__name__] = class_.class_name
+
         return instruments_dict
 
     def _calculate_instrument(instrument: str, params: dict) -> Dict[str, Union[Number, str, List[Union[Number, str]]]]:

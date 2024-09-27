@@ -1,10 +1,13 @@
-import numpy as np
-from typing import Dict, Union
 import math
+import numpy as np
+from typing import Dict
+
+from .InstrumentBase import Instrument
+from ..instrument import PARAM_TYPE
 from ..instrumentJSParams import create_number_input, create_js
 
 
-class NoInstrument:
+class NoInstrument(Instrument):
     """A class for storing and manipulating The No Instrument related data.
 
     :param str self.name: The name of the instrument
@@ -97,7 +100,7 @@ class NoInstrument:
         ]
         self.q_max = max(corners)
 
-    def load_params(self, params: Dict[str, Dict[str, Union[float, int, str]]]):
+    def load_params(self, params: PARAM_TYPE):
         """Loads the parameters from the parameters dictionary into the object values
 
         :param dict params: A dictionary of parameters
