@@ -4,6 +4,7 @@ import sys
 import importlib
 import inspect
 import os
+import mimetypes
 import numpy as np
 
 from typing import Optional, Union, Dict, List
@@ -19,6 +20,8 @@ Number = Union[float, int]
 
 def create_app():
     app = Flask(__name__)
+    mimetypes.add_type('application/javascript', '.js')
+    mimetypes.add_type('text/css', '.css')
 
     # Launches the main program based on a basic link
     @app.route('/', methods=['GET', 'POST'])
