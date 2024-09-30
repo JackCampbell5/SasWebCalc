@@ -23,10 +23,10 @@ Issues = 'https://gitlab.nist.gov/gitlab/jkrzywon/saswebcalc/-/issues'
 webcalc = ['numpy', 'flask', 'sasmodels', 'gunicorn']
 
 [project.scripts]
-local-host = "webcalc:webcalc:main"
+local-host = "webcalc:main"
 
 [project.gui-scripts]
-production = "webcalc:wsgi:application"
+production = "wsgi:application"
 
 [project.entry-points."docker"]
-gunicorn = "webcalc:wsgi:application"
+gunicorn = "wsgi:application"
