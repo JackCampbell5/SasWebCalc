@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "SasWebCalc"
+version = "1.0.1"
+authors = [
+    {name = "Brian Maranville", email = 'brian.maranville@nist.gov'},
+    {name = "Jack Campbell"}
+]
+maintainers = [
+    {name = "Jeff Krzywon", email = 'jkrzywon@nist.gov'},
+]
+description = 'A web-based small-angle scattering (SAS) tool for calculating theoretical I vs. Q and 2D scattering patterns based off an instrumental configuration and SAS model.'
+readme = {file = "README.md", content-type = "text/markdown"}
+
+[project.urls]
+Repository = 'https://gitlab.nist.gov/gitlab/jkrzywon/saswebcalc.git'
+Issues = 'https://gitlab.nist.gov/gitlab/jkrzywon/saswebcalc/-/issues'
+
+[project.optional-dependencies]
+webcalc = ['numpy', 'flask', 'sasmodels', 'gunicorn']
+
+[project.scripts]
+local-host = "webcalc:webcalc:main"
+
+[project.gui-scripts]
+production = "webcalc:wsgi:application"
+
+[project.entry-points."docker"]
+gunicorn = "webcalc:wsgi:application"
