@@ -327,7 +327,7 @@ def create_app():
         from python.instruments.InstrumentBase import Instrument
         for class_ in Instrument.__subclasses__():
             if class_.__name__ != "Example":
-                instruments_dict[class_.__name__] = class_.class_name
+                instruments_dict[class_.__name__] = class_
 
         return instruments_dict
 
