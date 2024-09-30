@@ -16,14 +16,13 @@ def create_js(**kwargs):
     # Add to the correct category
     js_array = {}
     known_keys = ["step", "range_id", "hidden", "lower_limit", "upper_limit", "name", "default",
-                  "type", "unit", "readonly", "options"]
+                  "type", "unit", "readonly", "options", "extra"]
     for key, value in kwargs.items():
         # Step through values to ensure proper keywords are used
         if str(key) not in known_keys:
             print(f"WARNING: {key} not an expected keyword")
         elif value:
             js_array[str(key)] = value
-    print(js_array)
     return js_array  # Ones that are not none add to the array
 
 
@@ -101,14 +100,14 @@ def create_attenuation_factor(name='Attenuation Factor', default='', type='numbe
 
 
 def create_guide_config(name='Guides', default=0, type='select', unit=None, readonly=None, options=None,
-                        hidden=None):
+                        hidden=None,extra = None):
     """Function that creates a js element based on the parameters given(All parameters are defined in create JS)
 
     :returns: A dictionary of parameters encoded by create js
     """
     if options is None: options = [0, 1, 2, 3, 4, 5, 6, 7, 8, 'LENS']
     return create_js(name=name, default=default, type=type, unit=unit, readonly=readonly, options=options,
-                     hidden=hidden)
+                     hidden=hidden,extra= extra)
 
 
 def create_source_aperture(name='Source Aperture', default=1.43, type='select', unit='cm', readonly=None,
@@ -277,6 +276,38 @@ def create_number_input(name=None, default=0.0, type='number', unit='Å', readon
                      step=step, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit, hidden=hidden)
 
 
+def create_number_output(name=None, default=0.0, type='number', unit=None, readonly=True, options=None, step=None,
+                         range_id=None, hidden=None):
+    """Function that creates an un user editable js input based on the parameters given(All parameters are defined in
+    create JS)
+
+    :returns: A dictionary of parameters encoded by create js
+    """
+    return create_js(name=name, default=default, type=type, unit=unit, readonly=readonly, options=options,
+                     step=step, range_id=range_id, hidden=hidden)
+
+
+def create_checkbox(name=None, default=None, type='checkbox', unit=None, readonly=None, options=None, step=None,
+                  range_id=None, hidden=None):
+    """Function that creates a js checkbox based on the parameters given(All parameters are defined in create JS)
+
+    :returns: A dictionary of parameters encoded by create js
+    """
+    return create_js(name=name, default=default, type=type, unit=unit, readonly=readonly, options=options,
+                     step=step, range_id=range_id, hidden=hidden)
+
+
+def create_number_select(name=None, default=None, type='select', unit=None, readonly=False, options=None, step=None,
+                         range_id=None, hidden=None,extra = None):
+    """Function that creates a selection js element based on the parameters given(All parameters are defined in
+    create JS)
+
+    :returns: A dictionary of parameters encoded by create js
+    """
+    return create_js(name=name, default=default, type=type, unit=unit, readonly=readonly, options=options,
+                     step=step, range_id=range_id, hidden=hidden,extra=extra)
+
+
 def encode_secondary_elements(more_data=None, ssd=True, offset=True):
     """Checks if the element changed is a key in the dictionary and then changed values based on the dictionary in
     result[key]
@@ -328,7 +359,7 @@ def check_params(params=None):
     if params is None: params = None
     return_array = params.copy()
     for name in params.keys():
-        if len(params[name]) < 2 and name != "hidden":
+        if "name" in return_array[name] and len(params[name]) < 2:
             return_array.pop(name)
     return return_array
 

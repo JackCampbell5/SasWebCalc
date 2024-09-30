@@ -2,8 +2,8 @@
 import json
 import sys
 import importlib
-import inspect
 import os
+import mimetypes
 import numpy as np
 
 from typing import Optional, Union, Dict, List
@@ -19,6 +19,8 @@ Number = Union[float, int]
 
 def create_app():
     app = Flask(__name__)
+    mimetypes.add_type('application/javascript', '.js')
+    mimetypes.add_type('text/css', '.css')
 
     # Launches the main program based on a basic link
     @app.route('/', methods=['GET', 'POST'])
@@ -63,6 +65,20 @@ def create_app():
         return_array["models"] = get_model_list()
         return_array["instruments"] = _get_all_instruments()
         return encode_json(return_array)
+
+    @app.route('/get/preset_params/instrument/<preset_info>', methods=['GET'])
+    def on_preset_change(preset_info):
+        """If there is a field change that needs dynamic updates
+
+        :param preset_info: The str containing the nessasary info to do a dynamic field update
+        :return: The encoded json of the results
+        :rtype: Json
+        """
+        print("Updating Values Based on Preset")
+        instrument_name = preset_info[:preset_info.find('%')]
+        preset = preset_info[preset_info.find('%') + 1:]
+        instrument = _import_instruments()[instrument_name]
+        return encode_json(instrument.update_values(preset))
 
     def _get_all_instruments():
         """Gets a list of all the instruments that are in the python.instruments directory
@@ -307,12 +323,12 @@ def create_app():
         instruments_dict = {}
         # Import all classes from the files
         for file in files:
-            module = importlib.import_module(directory.replace("/", ".")+'.' + file)
-            result = inspect.getmembers(module, inspect.isclass)
-            for name, cls in result:
-                if hasattr(cls, "class_name"):
-                    if name !="Example":
-                        instruments_dict[name] = cls
+            importlib.import_module(directory.replace("/", ".")+'.' + file)
+        from python.instruments.InstrumentBase import Instrument
+        for class_ in Instrument.__subclasses__():
+            if class_.__name__ != "Example":
+                instruments_dict[class_.__name__] = class_
+
         return instruments_dict
 
     def _calculate_instrument(instrument: str, params: dict) -> Dict[str, Union[Number, str, List[Union[Number, str]]]]:

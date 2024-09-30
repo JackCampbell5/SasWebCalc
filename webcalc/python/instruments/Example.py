@@ -1,7 +1,7 @@
 from typing import Dict, List, Union
 
+from .InstrumentBase import Instrument
 from ..instrumentJSParams import *  # You need this to create JS the easy way
-from ..instrument import Instrument, set_params
 
 """This is an example file to show how to create a pluggable instrument that can be added to webcalc.
 

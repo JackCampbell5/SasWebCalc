@@ -1,4 +1,4 @@
-from ..instrument import Instrument
+from .InstrumentBase import Instrument
 from ..instrumentJSParams import *
 
 
