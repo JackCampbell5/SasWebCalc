@@ -30,7 +30,6 @@ class NGB10SANS(Instrument):
         :return: Nothing, just runs the instrument load objects method
         :rtype: None
         """
-        print("NGB10SANS Load Params")
         params["data"] = {}
         params["beam_stops"] = [2.54, 3.81, 5.08, 7.62]
         params["beam_stops"] = [{"beam_stop_diameter": beam_stop} for beam_stop in params.get("beam_stops", 2.54)]

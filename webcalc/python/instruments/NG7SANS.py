@@ -31,7 +31,6 @@ class NG7SANS(Instrument):
         :return: Nothing, just runs the instrument load objects method
         :rtype: None
         """
-        print("NG7SANS Load Params")
         params["beam_stops"] = [2.54, 5.08, 7.62, 10.16]
         params["beam_stops"] = [{"beam_stop_diameter": beam_stop} for beam_stop in params.get("beam_stops", 2.54)]
         params["collimation"]["guides"]["gap_at_start"] = 188

@@ -229,7 +229,6 @@ export default {
         for(const option in options_dict){
           let option_dict = options_dict[option]
           let arrayParams = option.split("+")
-          console.log(this.instrument_params[arrayParams[0]][arrayParams[1]])
           this.instrument_params[arrayParams[0]][arrayParams[1]][option_dict["type"]] = option_dict["set_to"]
         }//End for loop
       }

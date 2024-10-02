@@ -107,7 +107,6 @@ class NoInstrument(Instrument):
         :return: Nothing as it just sets values
         :rtype: None
         """
-        print("No Instrument Load Params")
         values = {}
         # Simplify the parameters passed into a key:value pairing instead of a key: {sub_key: value} pairing
         params = params.get('instrument_params', None).get('Settings',None)

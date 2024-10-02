@@ -95,7 +95,6 @@ class VSANS(Instrument):
         :return: Nothing, just runs the instrument load objects method
         :rtype: None
         """
-        print("VSANS Load Params")
         params = self.param_restructure(old_params)
 
         # Temporary constants not in use any more
@@ -153,7 +152,6 @@ class VSANS(Instrument):
             :return: The value at the keys position in the dictionary or None
             :rtype: str, None
             """
-            # TODO get default values if possible from constants.py
             params = old_params.get(category, {}).get(name, {})
             try:
                 result = params.get(key, default_value)

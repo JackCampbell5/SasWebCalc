@@ -419,7 +419,6 @@ class Instrument:
         # and sampleAperture differently
         slicer_params["source_aperture"] = self.get_source_aperture_size()
         slicer_params["sample_aperture"] = self.get_sample_aperture_size()
-        print(self.data.get_calculated_beam_stop_diameter())
         slicer_params["beam_stop_size"] = self.data.get_calculated_beam_stop_diameter()
         slicer_params["SSD"] = self.get_source_to_sample_aperture_distance()
         slicer_params["SDD"] = self.get_sample_to_detector_distance()
