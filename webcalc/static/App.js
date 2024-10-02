@@ -135,8 +135,7 @@ export default {
           'model': this.active_model,
           'model_params': this.model_params,
         });
-        let results = await this.fetch_with_data(location, data);
-        this.model_params = results;
+        this.model_params = await this.fetch_with_data(location, data);
 
       await this.onChange();
     },

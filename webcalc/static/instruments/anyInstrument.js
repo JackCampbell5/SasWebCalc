@@ -53,7 +53,7 @@ export default {
   }),
   methods: {
     onChangeValue(event) {
-      this.run= true;
+      this.run = true;
       this.updateSecondaryElements(event.target);
       if (!event.target.disabled && this.run) {
         this.$emit('valueChange', this.instrument_params_local);
@@ -63,7 +63,7 @@ export default {
       if(!("hidden" in this.instrument_params_local)){
         return;
       }
-      if (target.value === '' || "hidden"){
+      if (target.value === ''){
         this.run = false;
         return;
       }
