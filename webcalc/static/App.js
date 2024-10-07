@@ -91,14 +91,11 @@ export default {
     instrument_params: {},
     data_1d: {},
     data_2d: {},
-    frozen: [],
-    offset: false,
     averaging_params: {},
     shapes: [],
     instruments: {},
     documentation_shown: false,
     calculating_shown: false,
-    log: "",
   }),
   methods: {
     async getParamsInstrument(){
@@ -273,8 +270,6 @@ export default {
       localStorage.setItem(this.active_model + "_model_params", JSON.stringify(this.model_params));
       localStorage.setItem(this.active_instrument + "_instrument_params", JSON.stringify(this.instrument_params));
       localStorage.setItem(this.active_averaging_type + "_averaging_params", JSON.stringify(this.averaging_params));
-      localStorage.setItem("frozen", JSON.stringify(this.frozen));
-      localStorage.setItem("offset", this.offset);
     },
     async loadPersistentState() {
       this.active_instrument_change = localStorage.getItem('active_instrument') || "";
@@ -290,7 +285,8 @@ export default {
         this.model_params = JSON.parse(localStorage.getItem(this.active_model + "_model_params"))
         await this.onModelParamChange()
       }
-      this.active_averaging_type = JSON.parse(localStorage.getItem("active_averaging_type")) || "Circular";
+      this.active_averaging_type = localStorage.getItem("active_averaging_type") || "Circular";
+      this.averaging_params = JSON.parse(localStorage.getItem(this.active_averaging_type + "_averaging_params"))
     },
     docsDisplay(){
       this.documentation_shown = !this.documentation_shown
