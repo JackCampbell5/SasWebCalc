@@ -109,7 +109,8 @@ export default {
     },
     async populateModelParams() {
       if(this.active_model !== ""){
-        let model_name = this.active_structure !== this.structure_names[0] ? this.active_model+'@'+this.active_structure :  this.active_model
+        let model_name = (this.active_structure !== "None" && this.active_structure !== "")?
+            this.active_model+'@'+this.active_structure :  this.active_model
         const fetch_result = await this.fetch_without_data(`/get/params/model/${model_name}`);
         this.model_params = await fetch_result.json();
       }//End if statement
@@ -268,17 +269,28 @@ export default {
       localStorage.setItem("active_instrument", this.active_instrument);
       localStorage.setItem("active_averaging_type", this.active_averaging_type);
       localStorage.setItem("active_model", this.active_model);
-      localStorage.setItem("active_structure",this.active_structure);
+      localStorage.setItem("active_structure", this.active_structure);
       localStorage.setItem(this.active_model + "_model_params", JSON.stringify(this.model_params));
       localStorage.setItem(this.active_instrument + "_instrument_params", JSON.stringify(this.instrument_params));
       localStorage.setItem(this.active_averaging_type + "_averaging_params", JSON.stringify(this.averaging_params));
       localStorage.setItem("frozen", JSON.stringify(this.frozen));
       localStorage.setItem("offset", this.offset);
     },
-    loadPersistentState() {
-      this.active_instrument = localStorage.getItem('active_instrument') || "";
-      this.active_averaging_type = localStorage.getItem("active_averaging_type") || "Circular";
+    async loadPersistentState() {
+      this.active_instrument_change = localStorage.getItem('active_instrument') || "";
+      this.active_instrument = this.active_instrument_change
+      if (this.active_instrument_change !== "") {
+        await this.getParamsInstrument()
+        await this.onInstrumentParamChange(JSON.parse(localStorage.getItem(this.active_instrument + "_instrument_params")))
+      }
       this.active_model = localStorage.getItem("active_model") || "";
+      this.active_structure = localStorage.getItem("active_structure") || "";
+      if (this.active_model !== "") {
+        await this.onModelChange()
+        this.model_params = JSON.parse(localStorage.getItem(this.active_model + "_model_params"))
+        await this.onModelParamChange()
+      }
+      this.active_averaging_type = JSON.parse(localStorage.getItem("active_averaging_type")) || "Circular";
     },
     docsDisplay(){
       this.documentation_shown = !this.documentation_shown
@@ -294,11 +306,9 @@ export default {
     this.model_names = structures_result["models"];
       this.instruments = structures_result["instruments"]
   },
-  mounted() {
+  async mounted() {
     // Sets the dropdowns to automatically choose for testing
-    if (this.active_instrument !== "" && this.active_model !== "") {
-      this.onChange();
-    }
+    await this.loadPersistentState()
   },
   template: template,
 }
