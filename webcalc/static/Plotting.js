@@ -87,6 +87,7 @@ export default {
       dataSets.push(dataSet)
         dataSets.push.apply(dataSets, this.frozen_data);
       Plotly.newPlot('sasCalc1DChart', dataSets, layout);
+      this.persist()
     },
     update2DChart() {
       let dataSet = {
@@ -110,6 +111,7 @@ export default {
         shapes: this.shapes,
       };
       Plotly.newPlot('sasCalc2DChart', [dataSet], layout);
+      this.persist()
     },
     freezeCalculation() {
         let dataSet = {
@@ -129,10 +131,12 @@ export default {
           };
         this.frozen_data.push(dataSet);
         this.scaleFrozenDataSets();
+        this.persist()
     },
     unfreezeCalculations() {
         this.frozen_data = [];
         this.update1DChart();
+        this.persist()
     },
     scaleFrozenDataSets() {
         let scale = 1.0;
@@ -142,12 +146,24 @@ export default {
             this.frozen_data[x].x = this.frozen_data[x].raw.map(function(element) {return element * scale;})
         }
         this.update1DChart();
+        this.persist()
       },
     getMax(array) {
         return Math.max(...array.map(e => Array.isArray(e) ? this.getMax(e) : e))
     },
     getMin(array) {
         return Math.min(...array.map(e => Array.isArray(e) ? this.getMin(e) : e))
+    },
+    persist() {
+      /*
+      Store the current values into active memory to be recalled if the page is refreshed.
+       */
+        localStorage.setItem("offsetTraces", this.offsetTraces);
+        localStorage.setItem("frozen_data", JSON.stringify(this.frozen_data));
+    },
+    loadPersistentState() {
+        this.offsetTraces = localStorage.getItem("offsetTraces");
+        this.frozen_data = JSON.parse(localStorage.getItem("frozen_data")) || [];
     }
   },
   data: () => ({
@@ -161,6 +177,9 @@ export default {
     frozen() {
       return this.frozen_data !== [];
     }
+  },
+  mounted() {
+    this.loadPersistentState()
   },
   template: template,
 }

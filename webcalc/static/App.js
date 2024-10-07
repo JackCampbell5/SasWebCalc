@@ -303,7 +303,6 @@ export default {
       this.instruments = structures_result["instruments"]
   },
   async mounted() {
-    // Sets the dropdowns to automatically choose for testing
     await this.loadPersistentState()
   },
   template: template,
