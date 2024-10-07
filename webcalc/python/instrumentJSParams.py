@@ -158,8 +158,6 @@ def create_sdd_input_box(name='Detector Distance', default=100, type='number', u
 
     :returns: A dictionary of parameters encoded by create js
     """
-    print(create_js(name=name, default=default, type=type, unit=unit, readonly=readonly, options=options,
-                     step=step, hidden=hidden, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit))
     return create_js(name=name, default=default, type=type, unit=unit, readonly=readonly, options=options,
                      step=step, hidden=hidden, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit)
 
@@ -181,8 +179,6 @@ def create_offset_input_box(name='Detector Offset', default=0, type='number', un
 
     :returns: A dictionary of parameters encoded by create js
     """
-    print(create_js(name=name, default=default, type=type, unit=unit, readonly=readonly, options=options,
-                     step=step, hidden=hidden, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit))
     return create_js(name=name, default=default, type=type, unit=unit, readonly=readonly, options=options,
                      step=step, hidden=hidden, range_id=range_id, lower_limit=lower_limit, upper_limit=upper_limit)
 
