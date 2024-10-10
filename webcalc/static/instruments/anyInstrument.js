@@ -25,7 +25,8 @@ const template = `
               <option v-for="option in param.options" :key="option" :value="option">{{option}}</option>
             </datalist>
           </span>
-          <input v-else type="number" v-model.number="param.default" :id="key" class="fixed-width-input" 
+          <input v-else type="number" v-model.number="param.default" :id="key"
+              :class="(param.warn === true) ? 'fixed-width-input warn' : 'fixed-width-input'"
               :min="(param.lower_limit == '-inf') ? null : param.lower_limit"
               :max="(param.upper_limit == 'inf') ? null : param.upper_limit"
               :step="(param.step!== undefined) ? param.step : null"
@@ -55,8 +56,26 @@ export default {
     onChangeValue(event) {
       this.run = true;
       this.updateSecondaryElements(event.target);
+      this.checkInputsAreValid();
       if (!event.target.disabled && this.run) {
         this.$emit('valueChange', this.instrument_params_local);
+      }
+    },
+    checkInputsAreValid() {
+      for (const [category, params] of Object.entries(this.instrument_params_local)) {
+        for (const [key, param] of Object.entries(params)) {
+          if (key === 'name') {
+            continue;
+          }
+          if (param.default === "") {
+            this.run = false;
+            param["warn"] = true;
+          }
+          else {
+            param["warn"] = false;
+          }
+          this.instrument_params_local[category][key] = param
+        }
       }
     },
     updateSecondaryElements(target) {

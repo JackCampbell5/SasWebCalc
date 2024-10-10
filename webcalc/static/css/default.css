@@ -41,6 +41,9 @@ div.instrument-section {
 input.fixed-width-input {
     width: 10em;
 }
+.warn {
+    background-color: yellow;
+}
 
 #results {
     clear: both;
