@@ -2,7 +2,6 @@ import math
 from typing import Union
 
 from ..units import Converter
-from ..constants import Constants
 from ..instrument import BeamStop, Collimation, Detector, Data, NUMBER_TYPE, Wavelength
 from ..instrumentJSParams import generate_js_array
 from ..slicers import Circular, Sector, Rectangular, Elliptical
@@ -25,7 +24,6 @@ class Instrument:
     :param Dict self.one_dimensional: One denominational data
     :param Dict self.two_dimensional: Two denominational data
     :param String self.name: The name of the selected instrument
-    :param Constant self.constants: A constant object that handles the constant s for the data
     :param Dict self.params: A dictionary of parameters received from the JavaScript
     """
     isReal = False
@@ -55,7 +53,6 @@ class Instrument:
         if not params:
             params = {}  # Only store values used for calculations in Instrument class
         self.name = name
-        self.constants = Constants()
         self.params = params
 
     @property
