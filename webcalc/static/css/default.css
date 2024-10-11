@@ -36,6 +36,7 @@ div.instrument-section {
     margin-bottom: 1em;
     margin-left: 20px;
     margin-right: 20px;
+    clear: both;
 }
 
 input.fixed-width-input {
@@ -53,6 +54,7 @@ input.fixed-width-input {
     width: 33%;
     float: left;
     border: black 1px solid;
+    min-width: 400px;
 }
 #status {
    overflow-y: auto;
@@ -63,6 +65,7 @@ div.freezer {
     float: left;
     clear: both;
     margin-bottom: 5px;
+    flex-wrap: wrap;
 }
 
 div.parameter > div, span.parameter, ul.parameter > li {
