@@ -8,13 +8,14 @@ const template = `
   <input type="button" v-if="frozen" v-model="unFrozen" @click="unfreezeCalculations" />
 </div>
 <div id="results">
-  <div id="status">
-      <div class="calculatingText" v-show="calculating">
-        <p id="calculating">Calculating</p>
-      </div>
+  <div class="calculatingText" v-show="calculating">
+    <p id="calculating"></p>
   </div>
-  <div id="sasCalc1DChart"></div>
-  <div id="sasCalc2DChart"></div>
+  <div class="plots" v-show="!calculating">
+    <div id="status"></div>
+    <div id="sasCalc1DChart"></div>
+    <div id="sasCalc2DChart"></div> 
+  </div>
 </div>
 `
 
