@@ -293,8 +293,8 @@ class Slicer:
     def generate_standard_mask(self):
         """ Generate an array that uses 1 to represent a masked pixel and 0 otherwise. The outer two pixels are masked
         by default."""
-        self.mask = [[1 if i <= 1 or i >= self.x_pixels - 2 or j <= 1 or j >= (self.y_pixels - 2) else 0
-                      for i in range(self.x_pixels)] for j in range(self.y_pixels)]
+        self.mask = np.array([[1 if i <= 1 or i >= self.x_pixels - 2 or j <= 1 or j >= (self.y_pixels - 2) else 0
+                      for i in range(self.x_pixels)] for j in range(self.y_pixels)])
 
     def include_pixel(self, x_val, y_val, mask):
         return mask == 0
