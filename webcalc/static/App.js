@@ -280,8 +280,9 @@ export default {
       this.active_model = localStorage.getItem("active_model") || "";
       this.active_structure = localStorage.getItem("active_structure") || "";
       if (this.active_model !== "") {
+        let params_local = JSON.parse(localStorage.getItem(this.active_model + "_model_params"));
         await this.onModelChange()
-        this.model_params = JSON.parse(localStorage.getItem(this.active_model + "_model_params"))
+        this.model_params = params_local
         await this.onModelParamChange()
       }
       this.active_averaging_type = localStorage.getItem("active_averaging_type") || "Circular";
