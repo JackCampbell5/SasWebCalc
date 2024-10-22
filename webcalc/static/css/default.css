@@ -34,8 +34,8 @@ div.instrument {
 div.instrument-section {
     margin-top: 1em;
     margin-bottom: 1em;
-    margin-left: 20px;
-    margin-right: 20px;
+    margin-left: 5px;
+    margin-right: 5px;
     clear: both;
 }
 
@@ -47,15 +47,17 @@ input.fixed-width-input {
 }
 
 #results {
+    width: 100%;
     clear: both;
-    max-height: 500px;
+    max-height: 300px;
 }
 #sasCalc1DChart, #sasCalc2DChart, #status {
-    width: 33%;
+    width: 32%;
     float: left;
+    max-height: 450px;
+    max-width: 450px;
     border: black 1px solid;
-    max-height: 400px;
-    max-width: 400px;
+    margin: 1px;
     aspect-ratio: 1 / 1;
 }
 #status {
@@ -95,6 +97,7 @@ button.top-level-button {
   border: 10px solid #f3f3f3; /* Light grey */
   border-top: 10px solid #1574b3; /* Blue */
   border-radius: 50%;
+  padding: 100px;
   width: 75px;
   height: 75px;
   animation: spin 1.5s linear infinite;

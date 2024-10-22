@@ -47,9 +47,7 @@ const template = `
   <div class="documentation" v-show="documentation_shown">
   <iframe src="/docs/index.html" title="SasWebCalc Documentation"  width="100%" height="500" style="border:1px solid black;"></iframe>
   </div>
-  <div class="instrument-section" id="plottingArea">
-    <plotting ref="plotting" :data_1d="data_1d" :data_2d="data_2d" :shapes="shapes" :calculating_shown="calculating_shown"/>
-  </div>
+  <plotting ref="plotting" :data_1d="data_1d" :data_2d="data_2d" :shapes="shapes" :calculating_shown="calculating_shown"/>
   <div class="instrument-section" id="modelAndAveragingParams">
     <averaging-params ref="averaging_params" :active_averaging_type="active_averaging_type" :data_1d="data_1d"
         :data_2d="data_2d" @change-shapes="onShapeChange" @change-ave-params="onAveragingChange"/>
