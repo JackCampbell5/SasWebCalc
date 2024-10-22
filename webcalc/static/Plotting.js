@@ -1,4 +1,4 @@
-import 'https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.17.1/plotly.min.js';
+import 'https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.0/plotly.min.js';
 import {chartColors} from "./constants.js";
 
 const template = `
@@ -159,11 +159,11 @@ export default {
       /*
       Store the current values into active memory to be recalled if the page is refreshed.
        */
-        localStorage.setItem("offsetTraces", this.offsetTraces);
+        localStorage.setItem("offsetTraces", String(this.offsetTraces));
         localStorage.setItem("frozen_data", JSON.stringify(this.frozen_data));
     },
     loadPersistentState() {
-        this.offsetTraces = localStorage.getItem("offsetTraces");
+        this.offsetTraces = localStorage.getItem("offsetTraces") === "true";
         this.frozen_data = JSON.parse(localStorage.getItem("frozen_data")) || [];
     }
   },
