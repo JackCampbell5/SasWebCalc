@@ -652,7 +652,7 @@ class Wavelength:
         try:
             calculated_max = self.wavelength_constants[0] + (self.wavelength_constants[1] / self.rpm_range[0])
         except ZeroDivisionError:
-            calculated_max = np.Inf
+            calculated_max = np.inf
         self.wavelength_max = calculated_max if calculated_max < self.wavelength_max else self.wavelength_max
 
 

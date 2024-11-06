@@ -240,23 +240,24 @@ def create_app():
 
         # Calculate the instrument and slicer
         params = _calculate_instrument(instrument, calculate_params)
-        # Get q in proper format
+        # Get q values in proper format
         q_1d = [np.asarray(params.get('qValues', []))]
-        # qx and qy values are 1D arrays of base values -> Need to create 2D arrays for each
-        qx = np.asarray(params.get('qxValues', []))
-        qy = np.asarray(params.get('qyValues', []))
+        q_2d = [np.asarray(params.get('q2DValues', []))]
+        # Get sigma Q for resolution
+        # TODO: Reinstate the resolution once I have figured out why it is overcorrecting
+        # resolution = params.get('sigmaAve', [])
+        # model_params['resolution'] = np.flip(np.array(resolution).reshape(1, len(resolution)))
         # Need size of 1D arrays for 2D array sizes
-        len_x = len(qx)
-        len_y = len(qy)
-        qx = np.tile(qx, [len_y, 1])
-        qy = np.transpose(np.tile(qy, [len_x, 1])[::-1])
-        q_2d = [qx, qy]
 
         # Calculate the 1D model
         model_1d = _calculate_model(model, model_params, q_1d)
-        comb_1d = np.asarray(model_1d) * np.asarray(params.get('fSubs', []))
+        comb_1d = np.asarray(model_1d)
         params['fSubs'] = comb_1d.tolist()
         # Calculate the 2D model
+        model_params.pop('resolution', None)
+        # TODO: Reinstate the resolution once I have figured out why it is overcorrecting
+        # resolution = params.get('sigmaQ', [])
+        # model_params['resolution'] = np.array(resolution).reshape(1, len(resolution) * len(resolution))
         model_2d = _calculate_model(model, model_params, q_2d)
         i_2d = np.asarray(params.get('intensity2D', []))
         comb_2d = np.asarray(model_2d).reshape(i_2d.shape) * i_2d
