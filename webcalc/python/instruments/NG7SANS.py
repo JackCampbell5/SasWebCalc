@@ -58,7 +58,7 @@ class NG7SANS(Instrument):
         params["slicer"]["y_pixels"] = 128
         params["collimation"]["guides"]["maximum_length"] = 1632
         params["collimation"]["guides"]["length_per_guide"] = 155
-        if params.get("collimation").get("sample_space", "Huber") == "Huber":
+        if params.get("collimation").get("sample_space", "Chamber") == "Huber":
             params["collimation"]["space_offset"] = 54.8  # HuberOffset
         else:
             params["collimation"]["space_offset"] = 0.0  # ChamberOffset
