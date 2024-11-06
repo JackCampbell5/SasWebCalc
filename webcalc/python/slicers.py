@@ -198,6 +198,7 @@ class Slicer:
         diff = ave_isq - ave_sq
         self.sigma_ave = np.asarray([large_number if diff[i] < 0 or self.n_cells[i] <= 1
                                      else math.sqrt(diff[i] / (self.n_cells[i] - 1)) for i in nq_array])
+
         self.calculate_resolution()
 
     def calculate_q(self, i: Union[np.ndarray, int]):
@@ -207,7 +208,7 @@ class Slicer:
         Args:
             i: Either an integer or an array of integers
         """
-        radius = i * self.pixel_size
+        radius = (i + 1) * self.pixel_size
         theta = np.arctan(radius / self.SDD) / 2
         if isinstance(i, (np.ndarray, np.generic)):
             self.q_values = (4 * np.pi / self.lambda_val) * np.sin(theta)
@@ -225,35 +226,41 @@ class Slicer:
         # Pixel size in mm
         pixel_size = self.pixel_size * 0.1
         # Base calculations
+        l1 = self.SSD
+        l2 = self.SDD
+        a1 = self.source_aperture
+        a2 = self.sample_aperture
+        bs = 0.5 * self.beam_stop_size
         # self.ssd is the issue
-        lp = 1 / (1 / self.SDD + 1 / self.SSD)
+        lp = 1 / (1 / l2 + 1 / l1)
         # Calculate variance
         var_lambda = self.lambda_width * self.lambda_width / 6.0
-        if is_lenses:
-            var_beam = 0.25 * math.pow(self.source_aperture * self.SDD / self.SSD, 2) + 0.25 * (2 / 3) * math.pow(
-                self.lambda_width / self.lambda_val, 2) * math.pow(self.sample_aperture * self.SDD / lp, 2)
-        else:
-            var_beam = 0.25 * math.pow(self.source_aperture * self.SDD / self.SSD, 2) + 0.25 * math.pow(
-                self.sample_aperture * self.SDD / lp, 2)
-        var_detector = math.pow(pixel_size / 2.3548, 2) + (pixel_size + pixel_size) / 12
+        term_1 = 0.25 * math.pow(a1 * l2 / l1, 2)
+        term_2 = 0.25 * math.pow(a2 * l2 / lp , 2)
+        term_lens = 0.25 * (2. / 3.) * math.pow(self.lambda_width / self.lambda_val, 2) if is_lenses else 1
+        var_beam = term_1 + term_lens * term_2
+        var_detector = math.pow(pixel_size / 2.3548, 2) + (pixel_size * pixel_size) / 12
         velocity_neutron = velocity_neutron_1a / self.lambda_val
-        var_gravity = 0.5 * gravity_constant * self.SDD * (self.SSD + self.SDD) / math.pow(velocity_neutron, 2)
-        r_zero = self.SDD * np.tan(2.0 * np.arcsin(self.lambda_val * np.asarray(self.q_values) / (4.0 * np.pi)))
+        var_y_gravity = 0.5 * gravity_constant * l2 * (l1 + l2) / math.pow(velocity_neutron, 2)
+        var_gravity = 2.0 * var_lambda * var_y_gravity * var_y_gravity
+        r_zero = l2 * np.tan(2.0 * np.arcsin(self.lambda_val * np.asarray(self.q_values) / (4.0 * np.pi)))
         r_zero[r_zero < small_number] = small_number
-        delta = 0.5 * np.power(self.beam_stop_size - r_zero, 2) / var_detector
-        inc_gamma = np.asarray([np.exp(np.log(gamma(1.5))) * (1 + gammainc(1.5, delta) / gamma(1.5)) if r_zero[i] >= self.beam_stop_size
-                                else np.exp(np.log(gamma(1.5))) * (1 - gammainc(1.5, delta) / gamma(1.5)) for i in range(len(r_zero))])
-        f_sub_s = 0.5 * (1.0 + erf((r_zero - self.beam_stop_size) / math.sqrt(2.0 * var_detector)))
+        delta = 0.5 * np.power(bs - r_zero, 2) / var_detector
+        inc_gamma = np.asarray([np.exp(np.log(gamma(1.5))) * (1 + gammainc(1.5, delta) / gamma(1.5))
+                                if r_zero[i] >= bs
+                                else np.exp(np.log(gamma(1.5))) * (1 - gammainc(1.5, delta) / gamma(1.5))
+                                for i in range(len(r_zero))])
+        f_sub_s = 0.5 * (1.0 + erf((r_zero - bs) / math.sqrt(2.0 * var_detector)))
         f_sub_s[f_sub_s < small_number] = small_number
         fr = 1.0 + np.sqrt(var_detector) * np.exp(-1.0 * delta) / (r_zero * f_sub_s * np.sqrt(2.0 + np.pi))
-        fv = inc_gamma / (f_sub_s * np.sqrt(math.pi)) - r_zero * r_zero * np.power(fr - 1.0, 2) / var_detector
-        rmd = fr + r_zero
+        fv = inc_gamma / (f_sub_s * np.sqrt(math.pi)) - np.power(r_zero * (fr - 1.0), 2) / var_detector
+        rmd = fr * r_zero
         var_r1 = var_beam + var_detector * fv + var_gravity
         rm = rmd + 0.5 * var_r1 / rmd
         var_r = var_r1 - 0.5 * (var_r1 / rmd) * (var_r1 / rmd)
         var_r[var_r < 0] = 0.0
-        self.q_average = (4.0 * np.pi / self.lambda_val) * np.sin(0.5 * np.arctan(rm / self.SDD))
-        self.sigma_q = self.q_average * np.sqrt((var_r / rmd) * (var_r / rmd) + var_lambda)
+        self.q_average = (4.0 * np.pi / self.lambda_val) * np.sin(0.5 * np.arctan(rm / l2))
+        self.sigma_q = self.q_average * np.sqrt((var_r / rmd) * (1 / rmd) + var_lambda)
         self.f_subs = f_sub_s
 
     def calculate_distance_from_beam_center(self, pixel_value, x_or_y):
