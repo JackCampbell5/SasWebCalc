@@ -211,8 +211,14 @@ def create_app():
         model = json_like.get('model', '')
         if is_structure_factor:
             model = model + "@" + structure_factor
-        model_params = json_like.get('model_params', {})
-        model_params = _model_params_restructure(model_params)
+        model_params_base = json_like.get('model_params', {})
+        model_params_base = _model_params_restructure(model_params_base)
+        model_params = {}
+        for k, v in model_params_base.items():
+            try:
+                model_params[k] = float(v)
+            except ValueError:
+                model_params[k] = v
 
         # Gets slicer and Slicer params out of dict
         slicer = json_like.get('averaging_type', '')
