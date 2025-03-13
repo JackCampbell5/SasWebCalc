@@ -12,9 +12,11 @@ const template = `
     <p id="calculating"></p>
   </div>
   <div class="plots" v-show="!calculating">
-    <div id="status"></div>
     <div id="sasCalc1DChart"></div>
     <div id="sasCalc2DChart"></div> 
+  </div>
+  <div class="plots" v-show="log">
+    <div id="status"></div>
   </div>
 </div>
 `
@@ -25,6 +27,7 @@ export default {
     data_2d: Object,
     shapes: Array,
     calculating_shown: Boolean,
+    log_shown: Boolean,
   },
   watch: {
       data_1d: {
@@ -52,6 +55,11 @@ export default {
       calculating_shown: {
           handler(newValue, oldValue) {
             this.calculating = newValue;
+          }
+      },
+      log_shown: {
+          handler(newValue, oldValue) {
+            this.log = newValue;
           }
       },
   },
@@ -173,6 +181,7 @@ export default {
     doFreeze: "Freeze Calculation",
     unFrozen: "Unfreeze Calculations",
     calculating: false,
+    log: false,
   }),
   computed: {
     frozen() {
