@@ -27,6 +27,7 @@ export default {
     data_2d: Object,
     shapes: Array,
     calculating_shown: Boolean,
+    log_shown: Boolean,
   },
   watch: {
       data_1d: {
@@ -54,6 +55,11 @@ export default {
       calculating_shown: {
           handler(newValue, oldValue) {
             this.calculating = newValue;
+          }
+      },
+      log_shown: {
+          handler(newValue, oldValue) {
+            this.log = newValue;
           }
       },
   },
@@ -175,6 +181,7 @@ export default {
     doFreeze: "Freeze Calculation",
     unFrozen: "Unfreeze Calculations",
     calculating: false,
+    log: false,
   }),
   computed: {
     frozen() {

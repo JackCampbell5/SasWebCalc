@@ -15,8 +15,9 @@ const template = `
 <h1>SASCALC on the Web</h1>
  <div class = "section_subheader">
     <a href="https://gitlab.nist.gov/gitlab/jkrzywon/saswebcalc/-/issues/new"  target="_blank">
-      <button class="top-level-button" title="Bug submission tool">!</button>
+      <button class="top-level-button" title="Bug submission tool">+</button>
     </a>
+      <button class="top-level-button" title="View Logs" @click="showLog">!</button>
       <button class="top-level-button" title="Docs Access" @click="docsDisplay">?</button>
 
 </div>
@@ -47,7 +48,8 @@ const template = `
   <div class="documentation" v-show="documentation_shown">
   <iframe src="/docs/index.html" title="SasWebCalc Documentation"  width="100%" height="500" style="border:1px solid black;"></iframe>
   </div>
-  <plotting ref="plotting" :data_1d="data_1d" :data_2d="data_2d" :shapes="shapes" :calculating_shown="calculating_shown"/>
+  <plotting ref="plotting" :data_1d="data_1d" :data_2d="data_2d" :shapes="shapes" :calculating_shown="calculating_shown"
+  :log_shown="log_shown"/>
   <div class="instrument-section" id="modelAndAveragingParams">
     <averaging-params ref="averaging_params" :active_averaging_type="active_averaging_type" :data_1d="data_1d"
         :data_2d="data_2d" @change-shapes="onShapeChange" @change-ave-params="onAveragingChange"/>
@@ -95,6 +97,7 @@ export default {
     instruments: {},
     documentation_shown: false,
     calculating_shown: false,
+    log_shown: false,
   }),
   methods: {
     async getParamsInstrument(){
@@ -289,7 +292,10 @@ export default {
       this.averaging_params = JSON.parse(localStorage.getItem(this.active_averaging_type + "_averaging_params"))
     },
     docsDisplay(){
-      this.documentation_shown = !this.documentation_shown
+      this.documentation_shown = !this.documentation_shown;
+    },
+    showLog() {
+      this.log_shown = !this.log_shown;
     }
   },
   async beforeMount() {
