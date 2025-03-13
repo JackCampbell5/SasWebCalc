@@ -19,7 +19,6 @@ const template = `
     </a>
       <button class="top-level-button" title="View Logs" @click="showLog">!</button>
       <button class="top-level-button" title="Docs Access" @click="docsDisplay">?</button>
-
 </div>
 </header>
 <main>
@@ -253,12 +252,15 @@ export default {
     logging(location) {
       let elemStr = "status";
       let today = new Date();
-      let dateTime = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate()+' '+today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+      let dateTime = today.toLocaleString(undefined, {year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hour12: false, minute:'2-digit', second:'2-digit'});
       let newElem = document.createElement("p");
-      newElem.textContent = `${dateTime}: Sending updated values to ${location}`;
+      let strong = document.createElement("strong")
+      strong.textContent = `${dateTime}: `
+      newElem.appendChild(strong)
+      newElem.innerHTML = `<strong>${dateTime}:</strong> Sending updated values to ${location}`;
       let elem = document.getElementById(elemStr);
       if (elem != null) {
-        elem.appendChild(newElem);
+        elem.insertBefore(newElem, elem.firstChild);
       }
     },
     persist() {

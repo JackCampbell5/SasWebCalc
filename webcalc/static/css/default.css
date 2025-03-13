@@ -52,17 +52,17 @@ input.fixed-width-input {
     max-height: 300px;
 }
 #sasCalc1DChart, #sasCalc2DChart, #status {
-    width: 32%;
+    width: 49%;
     float: left;
-    max-height: 450px;
-    max-width: 450px;
+    max-height: 500px;
     border: black 1px solid;
-    margin: 1px;
-    aspect-ratio: 1 / 1;
 }
 #status {
-    overflow-y: auto;
-    padding: 4px;
+    width: 98%;
+    overflow: auto;
+    max-height: 100px;
+    display: flex;
+    flex-direction: column-reverse;
 }
 
 div.freezer {
