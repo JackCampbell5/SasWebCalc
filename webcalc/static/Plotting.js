@@ -12,9 +12,11 @@ const template = `
     <p id="calculating"></p>
   </div>
   <div class="plots" v-show="!calculating">
-    <div id="status"></div>
     <div id="sasCalc1DChart"></div>
     <div id="sasCalc2DChart"></div> 
+  </div>
+  <div class="plots" v-show="log">
+    <div id="status"></div>
   </div>
 </div>
 `
