@@ -215,14 +215,18 @@ export default {
             }//End type for loop
           }// End value or loop
         }
+        let one_d = {};
+        let two_d = {}
         for (const [key, value] of Object.entries(results['data'])) {
-          this.data_1d[key] = {qValues: value['qValues'], intensity: value['fSubs']};
-          this.data_2d[key] = {
+          one_d[key] = {qValues: value['qValues'], intensity: value['fSubs']};
+          two_d[key] = {
             qxValues: value["qxValues"],
             qyValues: value["qyValues"],
             intensity2D: value["intensity2D"]
           };
         }
+        this.data_1d = one_d;
+        this.data_2d = two_d;
         this.calculating_shown = false;
 
       }//End if statement to check instrument existence
