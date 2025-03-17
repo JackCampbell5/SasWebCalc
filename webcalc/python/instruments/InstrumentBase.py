@@ -39,7 +39,7 @@ class Instrument:
         # Unit converters
         self.averaging_type = None
         self.slicer_params = None
-        self.slicer = None
+        self.slicer = []
         self.d_converter = Converter('cm')
         self.t_converter = Converter('s')
         self.data = None
@@ -273,19 +273,21 @@ class Instrument:
         python_return["user_inaccessible"]["QRange"]["maximumHorizontalQ"] = self.data.q_max_horizon
         python_return["user_inaccessible"]["QRange"]["maximumQ"] = self.data.q_max
         python_return["user_inaccessible"]["QRange"]["minimumQ"] = self.data.q_min
-        # TODO Question: Do we even use half of thease
-        python_return["nCells"] = self.slicer.n_cells.tolist()
-        python_return["qsq"] = self.slicer.d_sq.tolist()
-        python_return["sigmaAve"] = self.slicer.sigma_ave.tolist()
-        python_return["qAverage"] = self.slicer.q_average.tolist()
-        python_return["sigmaQ"] = self.slicer.sigma_q.tolist()
-        python_return["fSubs"] = self.slicer.f_subs.tolist()
-        python_return["qxValues"] = self.slicer.qx_values.tolist()
-        python_return["qyValues"] = self.slicer.qy_values.tolist()
-        python_return["q2DValues"] = self.slicer.q_2d_values.tolist()
-        python_return["intensity2D"] = self.slicer.intensity_2D.tolist()
-        python_return["qValues"] = self.slicer.q_values.tolist()
-        python_return["slicer_params"] = self.slicer.slicer_return()
+        python_return["data"] = {}
+        for i, slicer in enumerate(self.slicer):
+            python_return["data"][i] = {}
+            python_return["data"][i]["nCells"] = slicer.n_cells.tolist()
+            python_return["data"][i]["qsq"] = slicer.d_sq.tolist()
+            python_return["data"][i]["sigmaAve"] = slicer.sigma_ave.tolist()
+            python_return["data"][i]["qAverage"] = slicer.q_average.tolist()
+            python_return["data"][i]["sigmaQ"] = slicer.sigma_q.tolist()
+            python_return["data"][i]["fSubs"] = slicer.f_subs.tolist()
+            python_return["data"][i]["qxValues"] = slicer.qx_values.tolist()
+            python_return["data"][i]["qyValues"] = slicer.qy_values.tolist()
+            python_return["data"][i]["q2DValues"] = slicer.q_2d_values.tolist()
+            python_return["data"][i]["intensity2D"] = slicer.intensity_2D.tolist()
+            python_return["data"][i]["qValues"] = slicer.q_values.tolist()
+            python_return["data"][i]["slicer_params"] = slicer.slicer_return()
         # Return bare dictionary to allow easier access to data upstream
         #  Note - this forces JSON encoding upstream
         return python_return
@@ -421,13 +423,13 @@ class Instrument:
         slicer_params["SDD"] = self.get_sample_to_detector_distance()
         averaging_type = self.averaging_type
         if averaging_type == "sector":
-            self.slicer = Sector(slicer_params)
+            self.slicer.insert(index, Sector(slicer_params))
         elif averaging_type == "rectangular":
-            self.slicer = Rectangular(slicer_params)
+            self.slicer.insert(index, Rectangular(slicer_params))
         elif averaging_type == "elliptical":
-            self.slicer = Elliptical(slicer_params)
+            self.slicer.insert(index, Elliptical(slicer_params))
         else:
-            self.slicer = Circular(slicer_params)
+            self.slicer.insert(index, Circular(slicer_params))
 
     # TODO Fix these run functions and should just be getting values
     def get_attenuation_factor(self):
