@@ -64,21 +64,30 @@ export default {
       },
   },
   methods: {
+    get1DCharts() {
+      let dataSets= [];
+      for (const [key, value] of Object.entries(this.data_1d))
+      {
+          let dataSet = {
+            x: this.data_1d[key].qValues,
+            y: this.data_1d[key].intensity,
+            mode: 'lines+markers',
+            marker: {
+                color: chartColors.black,
+                size: 5,
+            },
+            line: {
+                color: chartColors.black,
+                size: 1,
+            },
+            name: 'name' in value ? value.name : "SASCALC"
+          };
+          dataSets.push(dataSet);
+      }
+      return dataSets;
+    },
     update1DChart() {
-      let dataSet = {
-        x: this.data_1d.qValues,
-        y: this.data_1d.intensity,
-        mode: 'lines+markers',
-        marker: {
-            color: chartColors.black,
-            size: 5,
-        },
-        line: {
-            color: chartColors.black,
-            size: 1,
-        },
-        name: "SASCALC"
-      };
+      let dataSets = this.get1DCharts();
       let layout = {
         title: "SASCALC 1D Plot",
         xaxis: {
@@ -92,9 +101,7 @@ export default {
             type: 'log'
         },
       };
-      let dataSets = [];
-      dataSets.push(dataSet)
-        dataSets.push.apply(dataSets, this.frozen_data);
+      dataSets.push.apply(dataSets, this.frozen_data);
       Plotly.newPlot('sasCalc1DChart', dataSets, layout);
       this.persist()
     },
