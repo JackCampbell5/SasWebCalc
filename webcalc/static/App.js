@@ -207,16 +207,22 @@ export default {
         });
         results = await this.fetch_with_data(location, data);
         this.check_options(results)
-        if("user_inaccessible" in results){
+        if("user_inaccessible" in results) {
           let value = results["user_inaccessible"];
-          for (const type in value){
+          for (const type in value) {
             for (const param in value[type]) {
               this.instrument_params[type][param].default = value[type][param];
             }//End type for loop
           }// End value or loop
         }
-        this.data_1d = {qValues:results["qValues"],intensity:results["fSubs"]};
-        this.data_2d = {qxValues:results["qxValues"],qyValues:results["qyValues"],intensity2D: results["intensity2D"]};
+        for (const [key, value] of Object.entries(results['data'])) {
+          this.data_1d[key] = {qValues: value['qValues'], intensity: value['fSubs']};
+          this.data_2d[key] = {
+            qxValues: value["qxValues"],
+            qyValues: value["qyValues"],
+            intensity2D: value["intensity2D"]
+          };
+        }
         this.calculating_shown = false;
 
       }//End if statement to check instrument existence
