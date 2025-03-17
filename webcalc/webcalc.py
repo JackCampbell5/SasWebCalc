@@ -240,9 +240,8 @@ def create_app():
 
         # Calculate the instrument and slicer
         params = _calculate_instrument(instrument, calculate_params)
-        # Get q values in proper format
-        q_1d = [np.asarray(params.get('qValues', []))]
-        q_2d = [np.asarray(params.get('q2DValues', []))]
+        q_1d = [np.asarray(array['qValues']) for i, array in params.get('data', {}).items()]
+        q_2d = [np.asarray(array['q2DValues']) for i, array in params.get('data', {}).items()]
         # Get sigma Q for resolution
         # TODO: Reinstate the resolution once I have figured out why it is overcorrecting
         # resolution = params.get('sigmaAve', [])
@@ -251,20 +250,23 @@ def create_app():
 
         # Calculate the 1D model
         model_1d = _calculate_model(model, model_params, q_1d)
-        comb_1d = np.asarray(model_1d)
-        params['fSubs'] = comb_1d.tolist()
+        if len(q_1d) == 1:
+            model_1d = [model_1d]
+        for i, data in enumerate(params['data']):
+            params['data'][i]['fSubs'] = list(np.asarray(model_1d[i]) * np.asarray(params['data'][i]['fSubs']))
         # Calculate the 2D model
         model_params.pop('resolution', None)
         # TODO: Reinstate the resolution once I have figured out why it is overcorrecting
         # resolution = params.get('sigmaQ', [])
         # model_params['resolution'] = np.array(resolution).reshape(1, len(resolution) * len(resolution))
         model_2d = _calculate_model(model, model_params, q_2d)
-        i_2d = np.asarray(params.get('intensity2D', []))
-        comb_2d = np.asarray(model_2d).reshape(i_2d.shape) * i_2d
-        params['intensity2D'] = comb_2d.tolist()
-
+        if len(model_2d) == 1:
+            model_2d = [model_2d]
+        for i, data in enumerate(params['data']):
+            i_2d = np.asarray(params['data'][i]['intensity2D'])
+            comb_2d = np.asarray(model_2d).reshape(i_2d.shape) * i_2d
+            params['data'][i]['intensity2D'] = comb_2d.tolist()
         # Return all data
-
         return encode_json(params)
 
     def _model_params_restructure(model_params):
