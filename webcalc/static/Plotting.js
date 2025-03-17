@@ -130,39 +130,37 @@ export default {
       this.persist()
     },
     freezeCalculation() {
-        let dataSet = {
-            x: this.data_1d.qValues,
-            y: this.data_1d.intensity,
-            raw: this.data_1d.qValues,
-            mode: 'lines+markers',
-            marker: {
-                color: chartColors[this.frozen_data.length],
-                size: 5,
-            },
-            line: {
-                color: chartColors[this.frozen_data.length],
-                size: 1,
-            },
-            name: "frozen" + this.frozen_data.length,
-          };
-        this.frozen_data.push(dataSet);
-        this.scaleFrozenDataSets();
-        this.persist()
+      let dataSets = this.get1DCharts();
+      for (const [key, frozen] in Object.entries(dataSets)) {
+          dataSets[key].raw = dataSets[key].y;
+          dataSets[key].mode = 'lines+markers';
+          this.frozen_data.push(dataSets[key]);
+      }
+      this.scaleFrozenDataSets();
     },
     unfreezeCalculations() {
         this.frozen_data = [];
         this.update1DChart();
-        this.persist()
+        this.persist();
     },
     scaleFrozenDataSets() {
         let scale = 1.0;
-        let offset = this.offsetTraces ? 1.0 : 0.0;
+        let offset = this.offsetTraces ? 1 : 0;
         for (let x in this.frozen_data) {
-            scale = scale + offset;
-            this.frozen_data[x].x = this.frozen_data[x].raw.map(function(element) {return element * scale;})
+            this.frozen_data[x].name = 'frozen_' + x;
+            this.frozen_data[x].marker = {
+                color: chartColors[this.frozen_data.length],
+                size: 1,
+            };
+            this.frozen_data[x].line = {
+                color: chartColors[this.frozen_data.length],
+                size: 1,
+            };
+            scale = scale * Math.exp(offset);
+            this.frozen_data[x].y = this.frozen_data[x].raw.map(element => element * scale);
         }
         this.update1DChart();
-        this.persist()
+        this.persist();
       },
     getMax(array) {
         return Math.max(...array.map(e => Array.isArray(e) ? this.getMax(e) : e))
