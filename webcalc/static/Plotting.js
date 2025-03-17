@@ -107,9 +107,10 @@ export default {
     },
     update2DChart() {
       let dataSet = {
-        x: this.data_2d.qxValues,
-        y: this.data_2d.qyValues,
-        z: this.data_2d.intensity2D,
+        // TODO: Allow any number of 2D data sets - for now only show the 1st
+        x: this.data_2d[0].qxValues,
+        y: this.data_2d[0].qyValues,
+        z: this.data_2d[0].intensity2D,
         type: 'heatmap',
         colorscale: 'Portland'
       };
