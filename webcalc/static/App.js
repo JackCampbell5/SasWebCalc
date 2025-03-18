@@ -158,40 +158,7 @@ export default {
     async onChange() {
       //Does not run the function if the instrument or model is blank
       // This is so when the python objects are created they have the correct data
-      let run = false;
       let results = {}
-      let info_provided = ""
-      if(this.active_instrument=== "VSANS"){
-        // Check for if the preset has changed
-        let preset_object = this.instrument_params["presets"]["preset"];
-        if (preset_object.extra !== preset_object.default) {
-          run = true;
-          info_provided = this.active_instrument+ "%preset@" + preset_object.default;
-          preset_object.extra = preset_object.default;
-        }//End preset object
-        // Check if the number of guides has changed
-        let guide_select_Object = this.instrument_params["collimation"]["guide_select"];
-        if(guide_select_Object.extra !== guide_select_Object.default){
-          run = true;
-          let sourceAperture_js = this.instrument_params["collimation"]["source_aperture_js"].default;
-          let guide_select = guide_select_Object.default;
-          info_provided = this.active_instrument+ "%guideUpdate@" + sourceAperture_js+'+'+guide_select;
-          guide_select_Object.extra = guide_select_Object.default;
-        }
-        if(run){
-          const fetch_result = await fetch(`/get/preset_params/instrument/${info_provided}`);
-          results = await fetch_result.json()
-          if("options" in results){
-            this.check_options(results);
-          }
-          for (const type in results) {
-            if(type === "options"){continue;}
-            for (const param in results[type]) {
-              this.instrument_params[type][param].default = results[type][param];
-            }//End type for loop
-          }// End value or loop
-        }
-      }//End else if statement
       if(this.active_instrument !== "" && this.active_model !== "") {
         this.calculating_shown = true;
         let location = `/calculate/`;

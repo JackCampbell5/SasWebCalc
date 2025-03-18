@@ -6,7 +6,6 @@ from ..instrument import set_params, CALC_TYPE
 from ..instrumentJSParams import *
 
 
-
 def _create_vsans_dict(name=True, additional=False):
     """Creates the sub dictionary necessary for the VSANS instrument to work properly and returns the all in 1
     dictionary
@@ -85,6 +84,7 @@ class VSANS(Instrument):
         self.constants = VSANSConstants().get_constants(self.preset, _create_vsans_dict(name=False))  # TODO Look at
         # if this is necessary
         # Super is the Instrument class
+        super().__init__(name, params)
         params = params["instrument_params"]
         self.load_params(params)
 
@@ -517,19 +517,6 @@ class VSANS(Instrument):
             return VSANS.update_source_aperture(source_aperture_js=source_aperture_js, guide_select=guide_select)
 
     @staticmethod
-    def preset_change(preset):
-        """If the value being updated is a preset then create a constants object and get the constants from it
-
-        :param str preset: The preset which was decoded by the update values funtion
-        :return: A dictionary of the values to be updated
-        :rtype: Dict
-        """
-        constants = VSANSConstants()
-        results = constants.get_constants(preset, _create_vsans_dict(name=False), True)
-        results = VSANS.update_source_aperture_with_data(results)
-        return check_params(params=results)
-
-    @staticmethod
     def update_source_aperture_with_data(results):
         """Updates the value of the source aperture based on the guide number and current value gotten from an array
         of params by calling the update_source_aperture method
@@ -682,6 +669,14 @@ class VSANS(Instrument):
         params["front_bottom_panel"]["qy_max"] = create_number_output(name="Q_Top", unit="1/Å", default=-0.003139)
         params["front_bottom_panel"]["qy_min"] = create_number_output(name="Q_Bottom", unit="1/Å", default=-0.09432)
         params["front_bottom_panel"]["match_button"] = create_checkbox(name="Match Bottom Edge of MR", default=False)
+
+        # Add hidden params
+        params["hidden"] = {}
+        constants = VSANSConstants()
+        params["hidden"]["19m"] = constants.get_constants('19m')
+        params["hidden"]["16m"] = constants.get_constants('16m')
+        params["hidden"]["11m"] = constants.get_constants('11m')
+        params["hidden"]["4.5m"] = constants.get_constants('4.5m')
 
         params = check_params(params=params)
         return params
@@ -2269,43 +2264,57 @@ class VSANSConstants:
         """
         self.constants = None
 
-    def get_constants(self, preset, VSANS_dict, js_only=False):
+    def get_constants(self, preset, js_only=False):
         """Gets the constants form the required preset method
 
-        :param str preset: The preset to get the
-        :param dict VSANS_dict: The list of js parameters already created
-        :param js_only: Weather to get the JS parameter only or just other parameters
+        :param str preset: The configuration name being fetched
+        :param js_only: Wether to get the JS parameter only or just other parameters
         :return: The constants dictionary that is gotten
         :rtype: Dict
         """
         # Gets the constants based on the preset
         if preset == "16m":
-            self.constants = self._preset_16m(VSANS_dict)
+            self.constants = self._preset_16m()
         elif preset == "11m":
-            self.constants = self._preset_11m(VSANS_dict)
+            self.constants = self._preset_11m()
         elif preset == "4.5m":
-            self.constants = self._preset_4_5m(VSANS_dict)
+            self.constants = self._preset_4_5m()
         else:
-            self.constants = self._preset_19m(VSANS_dict)
+            self.constants = self._preset_19m()
         # If you only want the Js params just return the user ones
         if js_only:
             return self.constants.get("user", {})
         else:
-            return self.constants.get("other", {})
+            return self.constants
 
-    def _preset_4_5m(self, user_inaccessible):
+    def _initialize_presets(self) -> dict:
+        user_inaccessible = dict()
+        user_inaccessible["beam"] = {}
+        user_inaccessible["collimation"] = {}
+        user_inaccessible["middle_carriage"] = {}
+        user_inaccessible["mid_left_panel"] = {}
+        user_inaccessible["mid_right_panel"] = {}
+        user_inaccessible["front_carriage"] = {}
+        user_inaccessible["front_left_panel"] = {}
+        user_inaccessible["front_right_panel"] = {}
+        user_inaccessible["front_top_panel"] = {}
+        user_inaccessible["front_bottom_panel"] = {}
+        return user_inaccessible
+
+    def _preset_4_5m(self):
         """Updates the user_inaccessible with the consents for the 4.5m preset
 
-        :param dict user_inaccessible: The dictionary of pre created JS values or vsans dict
         :return:The created dictionary with sub dictionaries user_inaccessible for the js and other_constants for the
         rest of the constants
         """
-        other_constants = {}
+        other_constants = dict()
         other_constants["phi_0"] = 1.82e13
         other_constants["lambda_T"] = 6.2
+        other_constants["T_Frontend"] = 1.0
+        other_constants["beamstop_index"] = 3 - 1
+        user_inaccessible = self._initialize_presets()
         user_inaccessible["beam"]["wavelength"] = 6
         user_inaccessible["beam"]["dlambda"] = 0.12
-        other_constants["T_Frontend"] = 1.0
         user_inaccessible["collimation"]["guide_select"] = "9"
         user_inaccessible["collimation"]["source_aperture_js"] = "60.0"
         user_inaccessible["collimation"]["source_distance"] = 579
@@ -2313,7 +2322,6 @@ class VSANSConstants:
         user_inaccessible["collimation"]["sample_to_ap_gv"] = 22
         user_inaccessible["collimation"]["sample_to_gv"] = 11
         user_inaccessible["middle_carriage"]["ssd_input"] = 450  # SDD_middle_input
-        other_constants["beamstop_index"] = 3 - 1
         user_inaccessible["mid_left_panel"]["lateral_offset"] = -6.0
         user_inaccessible["mid_right_panel"]["lateral_offset"] = -5.5
         user_inaccessible["front_carriage"]["ssd_input"] = 100
@@ -2327,19 +2335,20 @@ class VSANSConstants:
         user_inaccessible["middle_carriage"]["refBeamCtr_y"] = 0
         return {"user": user_inaccessible, "other": other_constants}
 
-    def _preset_11m(self, user_inaccessible):
+    def _preset_11m(self):
         """Updates the user_inaccessible with the consents for the 11m preset
 
-        :param dict user_inaccessible: The dictionary of pre created JS values or vsans dict
         :return:The created dictionary with sub dictionaries user_inaccessible for the js and other_constants for the
         rest of the constants
         """
         other_constants = {}
         other_constants["phi_0"] = 1.82e13
         other_constants["lambda_T"] = 6.2
+        other_constants["T_Frontend"] = 1.0
+        other_constants["beamstop_index"] = 4 - 1
+        user_inaccessible = self._initialize_presets()
         user_inaccessible["beam"]["wavelength"] = 6
         user_inaccessible["beam"]["dlambda"] = 0.12
-        other_constants["T_Frontend"] = 1.0
         user_inaccessible["collimation"]["guide_select"] = "7"
         user_inaccessible["collimation"]["source_aperture_js"] = "60.0"
         user_inaccessible["collimation"]["source_distance"] = 980
@@ -2347,33 +2356,33 @@ class VSANSConstants:
         user_inaccessible["collimation"]["sample_to_ap_gv"] = 22
         user_inaccessible["collimation"]["sample_to_gv"] = 11
         user_inaccessible["middle_carriage"]["ssd_input"] = 1100  # SDD_middle_input
-        other_constants["beamstop_index"] = 4 - 1
+        user_inaccessible["middle_carriage"]["refBeamCtr_x"] = 0
+        user_inaccessible["middle_carriage"]["refBeamCtr_y"] = 0
         user_inaccessible["mid_left_panel"]["lateral_offset"] = -6.0
         user_inaccessible["mid_right_panel"]["lateral_offset"] = -5.5
         user_inaccessible["front_carriage"]["ssd_input"] = 230
+        user_inaccessible["front_carriage"]["refBeamCtr_x"] = 0
+        user_inaccessible["front_carriage"]["refBeamCtr_y"] = 0
         user_inaccessible["front_left_panel"]["lateral_offset"] = -9.32
         user_inaccessible["front_right_panel"]["lateral_offset"] = 6.82
         user_inaccessible["front_top_panel"]["verticalOffset"] = 0
         user_inaccessible["front_bottom_panel"]["verticalOffset"] = 0
-        user_inaccessible["front_carriage"]["refBeamCtr_x"] = 0
-        user_inaccessible["front_carriage"]["refBeamCtr_y"] = 0
-        user_inaccessible["middle_carriage"]["refBeamCtr_x"] = 0
-        user_inaccessible["middle_carriage"]["refBeamCtr_y"] = 0
         return {"user": user_inaccessible, "other": other_constants}
 
-    def _preset_16m(self, user_inaccessible):
+    def _preset_16m(self):
         """Updates the user_inaccessible with the consents for the 16m preset
 
-        :param dict user_inaccessible: The dictionary of pre created JS values or vsans dict
         :return:The created dictionary with sub dictionaries user_inaccessible for the js and other_constants for the
         rest of the constants
         """
         other_constants = {}
         other_constants["phi_0"] = 1.82e13
         other_constants["lambda_T"] = 6.2
+        other_constants["T_Frontend"] = 1.0
+        other_constants["beamstop_index"] = 3 - 1
+        user_inaccessible = self._initialize_presets()
         user_inaccessible["beam"]["wavelength"] = 6
         user_inaccessible["beam"]["dlambda"] = 0.12
-        other_constants["T_Frontend"] = 1.0
         user_inaccessible["collimation"]["guide_select"] = "2"
         user_inaccessible["collimation"]["source_aperture_js"] = "60.0"
         user_inaccessible["collimation"]["source_distance"] = 2157
@@ -2381,7 +2390,6 @@ class VSANSConstants:
         user_inaccessible["collimation"]["sample_to_ap_gv"] = 22
         user_inaccessible["collimation"]["sample_to_gv"] = 11
         user_inaccessible["middle_carriage"]["ssd_input"] = 1600  # SDD_middle_input
-        other_constants["beamstop_index"] = 3 - 1
         user_inaccessible["mid_left_panel"]["lateral_offset"] = -6.0
         user_inaccessible["mid_right_panel"]["lateral_offset"] = -5.5
         user_inaccessible["front_carriage"]["ssd_input"] = 350
@@ -2395,19 +2403,20 @@ class VSANSConstants:
         user_inaccessible["middle_carriage"]["refBeamCtr_y"] = 0
         return {"user": user_inaccessible, "other": other_constants}
 
-    def _preset_19m(self, user_inaccessible):
+    def _preset_19m(self):
         """Updates the user_inaccessible with the consents for the 19m preset
 
-        :param dict user_inaccessible: The dictionary of pre created JS values or vsans dict
         :return:The created dictionary with sub dictionaries user_inaccessible for the js and other_constants for the
         rest of the constants
         """
         other_constants = {}
         other_constants["phi_0"] = 1.82e13
         other_constants["lambda_T"] = 6.2
+        other_constants["T_Frontend"] = 1.0
+        other_constants["beamstop_index"] = 2 - 1
+        user_inaccessible = self._initialize_presets()
         user_inaccessible["beam"]["wavelength"] = 6  # lambda
         user_inaccessible["beam"]["dlambda"] = 0.12
-        other_constants["T_Frontend"] = 1.0
         user_inaccessible["collimation"]["guide_select"] = "0"
         user_inaccessible["collimation"]["source_aperture_js"] = "30.0"  # source_aperture_str
         user_inaccessible["collimation"]["source_distance"] = 2441  # source_distance
@@ -2415,7 +2424,6 @@ class VSANSConstants:
         user_inaccessible["collimation"]["sample_to_ap_gv"] = 22
         user_inaccessible["collimation"]["sample_to_gv"] = 11
         user_inaccessible["middle_carriage"]["ssd_input"] = 1900  # SDD_middle_input
-        other_constants["beamstop_index"] = 2 - 1
         user_inaccessible["mid_left_panel"]["lateral_offset"] = -6.0
         user_inaccessible["mid_right_panel"]["lateral_offset"] = -5.5
         user_inaccessible["front_carriage"]["ssd_input"] = 400

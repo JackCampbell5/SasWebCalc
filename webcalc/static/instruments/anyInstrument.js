@@ -116,6 +116,15 @@ export default {
       else if (target.id === "sampleAperture") {
         this.instrument_params_local['Collimation']['customAperture'].hidden = !(target.value === 'Custom');
       }
+      else if(target.id === "preset"){
+        let values = this.instrument_params_local["hidden"][target.value]
+        for (const type in values) {
+            if(type === "options"){continue;}
+            for (const param in values[type]) {
+              this.instrument_params[type][param].default = values[type][param];
+            }//End type for loop
+          }
+      }//End else if statement
 
     },
     updateApertureOptions(target) {
