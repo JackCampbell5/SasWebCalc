@@ -858,12 +858,8 @@ class AllCarriage:
     :param float self.dq_gravity: The dq gravity value
     """
 
-    def __init__(self, parent, params, name="all_carriage"):
+    def __init__(self, parent: VSANS, params: dict, name: str = "all_carriage"):
         """ Creates object parameters for All Carriage class and runs set params method
-
-        Sets object parameters self.imported_l_1, self.beam_drop, self.gravity_drop_min, self.gravity_drop_max,
-        self.beamstop_required, self.beamstop, self.beam_stop_cm, self.two_theta_min, self.overall_dq_calculated,
-        self.dq_geometric, self.dq_wavelength, and self.dq_gravity
 
         :param VSANS parent: The VSANS instance this Beam is a part of
         :param dict params: A dictionary mapping <param_name>: <value>
@@ -890,8 +886,8 @@ class AllCarriage:
         self.dq_gravity = 0.0
         set_params(instance=self, params=params)
 
-    def _calculate_gravity_drop(self, lambda_val=0.0):
-        """Calculates the gravity drop value from the lambda value, l_1, l_2 and from pre defined constants
+    def _calculate_gravity_drop(self, lambda_val: float = 0.0) -> float:
+        """Calculates the gravity drop value from the lambda value, l_1, l_2 and from predefined constants
 
         :param float lambda_val: The value of lambda gotten from the function running it
         :return: The value that it calculated
@@ -904,77 +900,48 @@ class AllCarriage:
                 self.imported_l_1 + self.parent.get_l_2()) * self.imported_l_1)
 
     def calculate_beam_drop(self):
-        """Calculates the beam drop(Or Gravity_Drop_Mean) value from the wavelength and calculate gravity drop
-
-        :return: None as it just sets the value of beam_drop
-        :rtype: None
-        """
-        lambda_val = self.parent.get_wavelength()
-        self.beam_drop = self._calculate_gravity_drop(lambda_val=lambda_val)
+        """Calculates the beam drop(Or Gravity_Drop_Mean) value from the wavelength and calculate gravity drop"""
+        self.beam_drop = self._calculate_gravity_drop(self.parent.get_wavelength())
 
     def calculate_gravity_drop_min(self):
         """ Calculates the value of gravity drop min from the wavelength and dlambda and calculates using the gravity
-        drop method
-
-        :return: None as it just sets the value of gravity_drop_min
-        :rtype: None
-        """
+        drop method"""
         lambda_val = self.parent.get_wavelength() * (1.0 + self.parent.beam.dlambda)
         self.gravity_drop_min = self._calculate_gravity_drop(lambda_val=lambda_val)
 
     def calculate_gravity_drop_max(self):
         """ Calculates the value of gravity drop max from the wavelength and dlambda and calculates using the gravity
-        drop method
-
-        :return: None as it just sets the value of gravity_drop_max
-        :rtype: None
-        """
+        drop method"""
         lambda_val = self.parent.get_wavelength() * (1.0 - self.parent.beam.dlambda)
         self.gravity_drop_max = self._calculate_gravity_drop(lambda_val=lambda_val)
 
     def calculate_beamstop_required(self):
         """Calculates the beamstop required value in CM by calculating the drop min and max and using the values of l_1
-            and 2
-
-        :return: None as it just sets the value of beamstop_required
-        :rtype: None
-        """
+            and 2"""
         # Calculate the gravity drops needed for this problem
         self.calculate_gravity_drop_min()
         self.calculate_gravity_drop_max()
         # The actual calculations being done
-        beam_size_geometric = self.parent.get_source_aperture() * self.parent.get_l_2() / self.imported_l_1 + self.parent.get_sample_aperture() * (
-                self.imported_l_1 + self.parent.get_l_2()) / self.imported_l_1
+        beam_size_geometric = self.parent.get_source_aperture() * (self.parent.get_l_2() / self.imported_l_1) + (
+                self.parent.get_sample_aperture() * (self.imported_l_1 + self.parent.get_l_2()) / self.imported_l_1)
         gravity_width = abs(self.gravity_drop_max - self.gravity_drop_min)
-        beamstopRequired = beam_size_geometric + gravity_width
+        beamstop_required = beam_size_geometric + gravity_width
         # UNITS to get into CM
-        self.beamstop_required = beamstopRequired / 2.54
+        self.beamstop_required = beamstop_required / 2.54
 
     def calculate_beam_stop_cm(self):
-        """Calculates the beam stop value in CM by diving the value of beamstop by 2.54
-
-        :return: None as it just sets the value of beam_stop_cm
-        :rtype: None
-        """
+        """Calculates the beam stop value in CM by diving the value of beamstop by 2.54"""
         self.beam_stop_cm = self.beamstop * 2.54
 
     def calculate_two_theta_min(self):
-        """Calculates the value of two theta min from the beamstop and ssd value
-
-        :return: None as it just sets the value of two_theta_min
-        :rtype: None
-        """
+        """Calculates the value of two theta min from the beamstop and ssd value"""
         # Fix the calculation of this value???
         self.parent.middle_carriage.calculate_ssd()
         self.two_theta_min = math.atan2(self.beam_stop_cm / 2, self.parent.middle_carriage.ssd)
 
     def _calculate_dq_geometric(self):
         """Calculates the value of dq_geometric from come constants as well as the sample/source aperture as well as
-        l_1 and 2
-
-        :return: None as it just sets the value of dq_geometric
-        :rtype: None
-        """
+        l_1 and 2"""
         pixel_size = 0.82  # cm
         a = 2 * math.pi / (self.parent.get_wavelength() * self.parent.get_l_2())
         b = math.pow((self.parent.get_l_2() * self.parent.get_source_aperture()) / (4 * self.parent.get_l_1()), 2)
@@ -984,20 +951,12 @@ class AllCarriage:
         self.dq_geometric = a * math.sqrt(b + c + d)
 
     def _calculate_dq_wavelength(self):
-        """Calculates the dq wavelength value from a constants as well as dlambda
-
-        :return: None as it just sets the value of dq_wavelength
-        :rtype: None
-        """
-        resolution_factor = 6.0
+        """Calculates the dq wavelength value from a constants as well as dlambda"""
+        resolution_factor = 6.0  # Why is this hard-coded?
         self.dq_wavelength = self.parent.beam.dlambda / math.sqrt(resolution_factor)
 
     def _calculate_dq_gravity(self):
-        """Calculates the dq gravity value from some constants as well as wavelength and l_1 and 2
-
-        :return: None as it just sets the value of dq_gravity
-        :rtype: None
-        """
+        """Calculates the dq gravity value from some constants as well as wavelength and l_1 and 2"""
         g = 981.0  # CM/s^2
         h_over_mn = 395603.0  # Angstrom cm/s
         a = 2 * math.pi / (self.parent.get_wavelength() * self.parent.get_l_2())
@@ -1007,22 +966,14 @@ class AllCarriage:
         self.dq_gravity = a * math.sqrt(b * c * d)
 
     def calculate_overall_d_q_values(self):
-        """Runs all the calculation methods nessasary to calculate all the dq values and sets the calculated to True
-
-        :return: None as it just runs calculations
-        :rtype: None
-        """
+        """Runs all the calculation methods nessasary to calculate all the dq values and sets the calculated to True"""
         self._calculate_dq_geometric()
         self._calculate_dq_wavelength()
         self._calculate_dq_gravity()
         self.overall_dq_calculated = True
 
     def calculate_all_Carriage(self):
-        """Runs all the calculation methods nessasary to calculate the All Carriage object
-
-        :return: None as it just runs calculations
-        :rtype: None
-        """
+        """Runs all the calculation methods nessasary to calculate the All Carriage object"""
         self.imported_l_1 = self.parent.get_l_1()
         self.parent.middle_carriage.calculate_L_2()
         self.calculate_beam_drop()
