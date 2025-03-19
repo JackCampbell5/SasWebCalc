@@ -1500,336 +1500,88 @@ class DqCalculator:
         self.calculate_d_q_values()
 
 
-class VerticalPanel:
-    """A class for storing and manipulating VerticalPanel related data.
+class Panel:
+    """A class for storing and manipulating detector panel related data.
 
-    This is used for left and right panel data
+        :param FrontCarriage or MiddleCarriage self.parent: The parent FrontCarriage or MiddleCarriage object
+        :param str self.name: The name of the class
+        :param str self.short_name: The short name for this panel (First letter is carriage)(Second Letter is Panel
+            Position)
+        :param Boolean self.horizontal_orientation: A boolean whether the panel is horizontal or vertical
+        :param float self.offset: The offset set the user relative to the paired detector
+        :param float self.qx_min: The min value of qx
+        :param float self.qx_max: The max value of qx
+        :param float self.qy_min: The min value of qy
+        :param float self.qy_max: The max value of qy
+        :param float self.refBeamCtr_x: The amount the panel assembly is off in the x direction(From Parent Class)
+        :param float self.refBeamCtr_y: The amount the panel assembly is off in the y direction(From Parent Class)
+        :param Boolean self.is_valid: Is this a valid position of it
+        :param Boolean self.match_button: Whether the match checkbox is checked or not
+        :param Detector self.detectors: The detector object for this specific panel position
+        :param float self.x_pixel_size: The size of the panel in cm
+        :param float self.y_pixel_size: The size of the panel in pixels
+        :param float self.pixel_num_x: The number of x pixels in the panel
+        :param float self.pixel_num_y: The number of y pixels in the panel
+        :param float self.beam_center_x: The location of the center x coordinate
+        :param float self.beam_center_y: The location of the center y coordinate
+        :param float self.beam_center_x_pix: The location of the x beam center in pixels
+        :param float self.beam_center_y_pix: The location of the y beam center in pixels
+        :param Array self.data: The data array needed for the calculations of plots
+        :param Array self.detector_array: The array of data needed for calculation of plot
+        :param Array self.q_to_t_array: An array of q to t values
+        :param Array self.qx_array: An array of the qx values
+        :param Array self.qy_array: An array of the qy values
+        :param Array self.qz_array: An array of the qz values
+        :param Array self.default_mask: An array containing the default  mask
+        :param Array self.data_real_dist_x: An array containing the data_real distance x
+        :param Array self.data_real_dist_y: An array containing the data_real distance y
+        """
 
-    :param FrontCarriage or MiddleCarriage self.parent: The parent FrontCarriage or MiddleCarriage object
-    :param str self.name: The name of the class
-    :param str self.short_name: The short name for this panel (First letter is carriage)(Second Letter is Panel
-        Position)
-    :param Boolean self.horizontal_orientation: A boolean whether the panel is horizontal or vertical
-    :param float self.lateral_offset: The lateral offset set the user
-    :param float self.qx_min: The min value of qx
-    :param float self.qx_max: The max value of qx
-    :param float self.qy_min: The min value of qy
-    :param float self.qy_max: The max value of qy
-    :param float self.refBeamCtr_x: The amount the panel assembly is off in the x direction(From Parent Class)
-    :param float self.refBeamCtr_y: The amount the panel assembly is off in the y direction(From Parent Class)
-    :param Boolean self.is_valid: Is this a valid position of it
-    :param Boolean self.match_button: Whether the match checkbox is checked or not
-    :param Detector self.detectors: The detector object for this specific panel position
-    :param float self.x_pixel_size: The size of the panel in cm
-    :param float self.y_pixel_size: The size of the panel in pixels
-    :param float self.pixel_num_x: The number of x pixels in the panel
-    :param float self.pixel_num_y: The number of y pixels in the panel
-    :param float self.beam_center_x: The location of the center x coordinate
-    :param float self.beam_center_y: The location of the center y coordinate
-    :param float self.beam_center_x_pix: The location of the x beam center in pixels
-    :param float self.beam_center_y_pix: The location of the y beam center in pixels
-    :param Array self.data: The data array needed for the calculations of plots
-    :param Array self.detector_array: The array of data needed for calculation of plot
-    :param Array self.q_to_t_array: An array of q to t values
-    :param Array self.qx_array: An array of the qx values
-    :param Array self.qy_array: An array of the qy values
-    :param Array self.qz_array: An array of the qz values
-    :param Array self.default_mask: An array containing the default  mask
-    :param Array self.data_real_dist_x: An array containing the data_real distance x
-    :param Array self.data_real_dist_y: An array containing the data_real distance y
-    """
-
-    def __init__(self, parent, params, name="VerticalPanel", short_name="MR"):
+    def __init__(self, parent, params: dict, short_name: str = "MR"):
         """ Creates object parameters for VerticalPanel class and runs set params method
 
-        Sets object parameters self.short_name, self.horizontal_orientation, self.lateral_offset, self.qx_min,
-        self.qx_max, self.qy_min, self.qy_max, self.refBeamCtr_x, self.refBeamCtr_y, self.is_valid, self.match_button,
-        self.detectors, self.x_pixel_size, self.y_pixel_size, self.pixel_num_x, self.pixel_num_y, self.beam_center_x,
-        self.beam_center_y, self.beam_center_x_pix, self.beam_center_y_pix, self.data, self.detector_array,
-        self.q_to_t_array, self.qx_array, self.qy_array, self.qz_array, self.default_mask, self.data_real_dist_x,
-        and self.data_real_dist_y
-
-        :param FrontCarriage or MiddleCarriage parent: The FrontCarriage or MiddleCarriage instance this Beam is a part of
+        :param FrontCarriage or MiddleCarriage parent: The FrontCarriage or MiddleCarriage instance this is a part of
         :param dict params: A dictionary mapping <param_name>: <value>
-        :param str name: The name of the class
-        :return: None as it just sets the parameters
-        :rtype: None
+        :param short_name: A one or two character short name of the detector panel of the form (F|M|B)(T|B|L|R| )
         """
         self.parent = parent
-        self.name = name
+        self.name = self.__class__.__name__
         self.short_name = short_name
         self.horizontal_orientation = False
-        self.lateral_offset = 0.0
+        self.offset = 0.0
         self.qx_min = 0.0  # Left
         self.qx_max = 0.0  # Right
         self.qy_min = 0.0  # Bottom
         self.qy_max = 0.0  # Top
         self.refBeamCtr_x = 0.0
         self.refBeamCtr_y = 0.0
-        self.is_valid = 0.0
+        self.offset = 0.0
+        self.is_valid = False
         self.match_button = None
         self.detectors = Detector(where=short_name)
 
         # Constants needed for plotting
-        self.x_pixel_size = 0.84
-        self.y_pixel_size = 0.8
-        self.pixel_num_x = 48.0
-        self.pixel_num_y = 128.0
+        self.x_pixel_size = 0.0
+        self.y_pixel_size = 0.0
+        self.pixel_num_x = 0
+        self.pixel_num_y = 0
         self.beam_center_x = 0.0
         self.beam_center_y = 0.0
         self.beam_center_x_pix = 0.0
         self.beam_center_y_pix = 0.0
+        self.setback = 0.0
+        self.tmp_calib = [-512, 8, 0]
 
         # Detector Arrays
-        self.data = []
-        self.detector_array = []
-        self.q_to_t_array = []
-        self.qx_array = []
-        self.qy_array = []
-        self.qz_array = []
-        self.default_mask = []
-        self.data_real_dist_x = []  # data_realDistX
-        self.data_real_dist_y = []  # data_realDistY
-
-        set_params(instance=self, params=params)
-
-    def calculate_match(self):
-        """If the match button is true set it to match correctly and set its return to disable the lateral offset
-        field and if not enable the lateral offset field
-
-
-        :return: None as it just sets the value of options array to update
-        :rtype: None
-        """
-        if self.match_button is not None:
-            if self.match_button:
-                if self.short_name.find("L") != -1:
-                    self._calculate_match_left()
-                else:
-                    self._calculate_match_right()
-                self.parent.parent.options[self.name + "+lateral_offset"] = {"type": "readonly", "set_to": True}
-            else:
-                self.parent.parent.options[self.name + "+lateral_offset"] = {"type": "readonly", "set_to": False}
-
-    def _calculate_match_left(self):
-        """Calculates how to match the front panel selected to  the left side using the middle lateral offset ssd and
-        center as well as the front center ssd
-
-        :return: None as it just sets the value of lateral_offset
-        :rtype: None
-        """
-        middle_object = self.parent.parent.middle_carriage
-        xmin = middle_object.left_panel.detectors.x_min(
-            middle_object.left_panel.lateral_offset) - middle_object.refBeamCtr_x
-        angle_min = math.atan2(xmin, middle_object.ssd)
-        fr_xmax = math.tan(angle_min) * self.parent.ssd + self.refBeamCtr_x
-        self.lateral_offset = self.detectors.lateral_offset_from_x_max(fr_xmax)
-
-    def _calculate_match_right(self):
-        """Calculates how to match the front panel selected to the right side using the middle lateral offset ssd and
-        center as well as the front center ssd
-
-        :return: None as it just sets the value of lateral_offset
-        :rtype: None
-        """
-        middle_object = self.parent.parent.middle_carriage
-        xmax = middle_object.right_panel.detectors.x_max(
-            middle_object.right_panel.lateral_offset) - middle_object.refBeamCtr_x
-        angle_max = math.atan2(xmax, middle_object.ssd)
-        fr_xmin = math.tan(angle_max) * self.parent.ssd + self.refBeamCtr_x
-        self.lateral_offset = self.detectors.lateral_offset_from_x_min(fr_xmin)
-
-    def _calculate_q_helper(self, value):
-        """A help function that helps to calculate the q min and max values by using the wavelength and ssd
-
-        :param float value: The value given to the function that allows it ot run
-        :return: The calculated value
-        :rtype: Float
-        """
-        return 4 * math.pi / self.parent.parent.get_wavelength() * math.sin(math.atan2(value, self.parent.ssd) / 2)
-
-    def calculate_qx_min(self):
-        """Calculates the qx min of this detector using the lateral offset and center into the _x_min function from
-        the detector object
-
-        :return: None as it just sets the value of qx_min
-        :rtype: None
-        """
-        xmin = self.detectors.x_min(self.lateral_offset) - self.refBeamCtr_x
-        self.qx_min = self._calculate_q_helper(value=xmin)
-
-    def calculate_qx_max(self):
-        """Calculates the qx max of this detector using the lateral offset and center into the _x_min function from the
-        detector object
-
-        :return: None as it just sets the value of qx_max
-        :rtype: None
-        """
-        xmax = self.detectors.x_max(self.lateral_offset) - self.refBeamCtr_x
-        self.qx_max = self._calculate_q_helper(value=xmax)
-
-    def calculate_qy_min(self):
-        """Calculates the qy min of this detector using the lateral offset and center into the _y_min function from
-        the detector object
-
-        :return: None as it just sets the value of qy_min
-        :rtype: None
-        """
-        ymin = self.detectors.y_min() - self.refBeamCtr_y
-        self.qy_min = self._calculate_q_helper(value=ymin)
-
-    def calculate_qy_max(self):
-        """Calculates the qy max of this detector using the lateral offset and center into the _y_max function from
-        the detector object
-
-        :return: None as it just sets the value of qy_max
-        :rtype: None
-        """
-        ymax = self.detectors.y_max() - self.refBeamCtr_y
-        self.qy_max = self._calculate_q_helper(value=ymax)
-
-    def create_detector_array(self):
-        """Creates 5 arrays of zeros based on the number of x and y pixels
-
-        :return: Nothing as it just sets the value of detector_array, q_to_t_array, qx_array, qy_array, and qz_array
-        :rtype: None
-        """
-        self.detector_array = np.zeros((int(self.pixel_num_x), int(self.pixel_num_y)))
-        self.q_to_t_array = np.copy(self.detector_array)
-        self.qx_array = np.copy(self.detector_array)
-        self.qy_array = np.copy(self.detector_array)
-        self.qz_array = np.copy(self.detector_array)
-        self.data_real_dist_x = np.copy(self.detector_array)
-        self.data_real_dist_y = np.copy(self.detector_array)
-        self.data = np.copy(self.detector_array)
-
-    def create_default_mask(self):
-        """ Creates the default mask defending on the orientation of the panel
-
-        :return: None as it just sets the value of the default_mask array
-        :rtype: None
-        """
-        if 'L' in self.short_name:
-            inner_array = np.concatenate((np.ones(5), np.zeros(118), np.ones(5)))
-            self.default_mask = np.concatenate((np.zeros((4, 128)), np.tile(inner_array, (44, 1))))
-        else:
-            inner_array = np.concatenate((np.ones(5), np.zeros(118), np.ones(5)))
-            self.default_mask = np.concatenate((np.tile(inner_array, (44, 1)), np.zeros((4, 128))))
-
-    @staticmethod
-    def create_tmp_array():
-        """Creates the tmp calib array based on certain parameters needed for plotting
-
-        :return: The tmp_calib array that it created
-        :rtype: None
-        """
-        tmp_calib = np.zeros((3, 48))
-        for a in range(48):
-            tmp_calib[0][a] = -512
-            tmp_calib[1][a] = 8
-            tmp_calib[2][a] = 0
-        return tmp_calib
-
-    def calculate_panel(self):
-        """Runs all the calculation methods nessasary to calculate the panel object without the plots
-
-        :return: None as it just runs calculations
-        :rtype: None
-        """
-        # Update values to be used
-        self.refBeamCtr_x = self.parent.refBeamCtr_x
-        self.refBeamCtr_y = self.parent.refBeamCtr_y
-        self.calculate_match()  # This needs to run first as it affects the values for the rest of the calculations
-        self.calculate_qx_min()
-        self.calculate_qx_max()
-        self.calculate_qy_min()
-        self.calculate_qy_max()
-
-
-class HorizontalPanel:
-    """A class for storing and manipulating HorizontalPanel related data.
-
-    This is used for top and bottom panel data
-
-    :param FrontCarriage or MiddleCarriage self.parent: The parent FrontCarriage or MiddleCarriage object
-    :param str self.name: The name of the class
-    :param str self.short_name: The short name for this panel (First letter is carriage)(Second Letter is Panel
-        Position)
-    :param Boolean self.horizontal_orientation: A boolean whether the panel is horizontal or vertical
-    :param float self.verticalOffset: The vertical offset set the user
-    :param float self.qx_min: The min value of qx
-    :param float self.qx_max: The max value of qx
-    :param float self.qy_min: The min value of qy
-    :param float self.qy_max: The max value of qy
-    :param float self.refBeamCtr_y: The amount the panel assembly is off in the y direction(From Parent Class)
-    :param Boolean self.is_valid: Is this a valid position of it
-    :param Boolean self.match_button: Whether the match checkbox is checked or not
-    :param Detector self.detectors: The detector object for this specific panel position
-    :param float self.x_pixel_size: The size of the panel in cm
-    :param float self.y_pixel_size: The size of the panel in pixels
-    :param float self.pixel_num_x: The number of x pixels in the panel
-    :param float self.pixel_num_y: The number of y pixels in the panel
-    :param float self.beam_center_x: The location of the center x coordinate
-    :param float self.beam_center_y: The location of the center y coordinate
-    :param float self.setback: The setback value for the horizontal panel class
-    :param Array self.data: The data array needed for the calculations of plots
-    :param Array self.detector_array: The array of data needed for calculation of plot
-    :param Array self.q_to_t_array: An array of q to t values
-    :param Array self.qx_array: An array of the qx values
-    :param Array self.qy_array: An array of the qy values
-    :param Array self.qz_array: An array of the qz values
-    :param Array self.default_mask: An array containing the default  mask
-    :param Array self.data_real_dist_x: An array containing the data_real distance x
-    :param Array self.data_real_dist_y: An array containing the data_real distance y
-    """
-
-    def __init__(self, parent, params, name="HorizontalPanel", short_name="FT"):
-        """ Creates object parameters for HorizontalPanel class and runs set params method
-
-        Sets object parameters self.short_name, self.horizontal_orientation, self.verticalOffset, self.qx_min,
-        self.qx_max, self.qy_min, self.qy_max, self.refBeamCtr_y, self.is_valid, self.match_button,
-        self.detectors, self.x_pixel_size, self.y_pixel_size, self.pixel_num_x, self.pixel_num_y, self.beam_center_x,
-        self.beam_center_y, self.setback, self.data, self.detector_array,
-        self.q_to_t_array, self.qx_array, self.qy_array, self.qz_array, self.default_mask, self.data_real_dist_x,
-        and self.data_real_dist_y
-
-        :param FrontCarriage or MiddleCarriage parent: The FrontCarriage or MiddleCarriage instance this Beam is a part of
-        :param dict params: A dictionary mapping <param_name>: <value>
-        :param str name: The name of the class
-        :return: None as it just sets the parameters
-        :rtype: None
-        """
-        self.parent = parent
-        self.name = name
-        self.short_name = short_name
-        self.horizontal_orientation = True
-        self.verticalOffset = 0.0
-        self.qy_min = 0.0  # Bottom
-        self.qy_max = 0.0  # Top
-        self.refBeamCtr_y = 0.0
-        self.is_valid = 0.0
-        self.match_button = False
-        self.detectors = Detector(where=short_name)
-
-        # Constants needed for plotting
-        self.x_pixel_size = 0.4
-        self.y_pixel_size = 0.84
-        self.pixel_num_x = 128.0
-        self.pixel_num_y = 48.0
-        self.beam_center_x = 0.0
-        self.beam_center_y = 0.0
-        self.setback = 41  # CM
-
-        # Detector Arrays
-        self.data = []  # Data though through a different path
-        self.detector_array = []  # det_FL
-        self.q_to_t_array = []  # qTot_FL
-        self.qx_array = []  # qTot_FL
-        self.qy_array = []  # qx_FL
-        self.qz_array = []  # qy_FL
-        self.default_mask = []  # qz_FL
-        self.data_real_dist_x = []  # data_realDistX
-        self.data_real_dist_y = []  # data_realDistY
+        self.data = None
+        self.detector_array = None
+        self.q_to_t_array = None
+        self.qx_array = None
+        self.qy_array = None
+        self.qz_array = None
+        self.default_mask = None
+        self.data_real_dist_x = None  # data_realDistX
+        self.data_real_dist_y = None  # data_realDistY
 
         set_params(instance=self, params=params)
 
@@ -1843,120 +1595,195 @@ class HorizontalPanel:
         """
         if self.match_button is not None:
             if self.match_button:
-                if self.short_name.find("T") != -1:
-                    self._calculate_match_top()
-                else:
-                    self._calculate_match_bottom()
-                self.parent.parent.options[self.name + "+verticalOffset"] = {"type": "readonly", "set_to": True}
+                self._calculate_match()
+                self.parent.parent.options[self.name + "_offset"] = {"type": "readonly", "set_to": True}
             else:
-                self.parent.parent.options[self.name + "+verticalOffset"] = {"type": "readonly", "set_to": False}
+                self.parent.parent.options[self.name + "_offset"] = {"type": "readonly", "set_to": False}
 
-    def _calculate_match_bottom(self):
-        """Calculates how to match the front panel selected to  the bottom side using the middle vertical offset ssd and
-        center as well as the front center ssd
+    def _calculate_match(self):
+        """Pseudo-Abstract method: Child Classes must implement or error will be thrown."""
+        raise NotImplementedError
 
-        :return: None as it just sets the value of verticalOffset
-        :rtype: None
-        """
-        middle_object = self.parent.parent.middle_carriage
-        ymin = middle_object.right_panel.detectors.y_min(0) - middle_object.refBeamCtr_y
-        angle_min = math.atan2(ymin, middle_object.ssd)
-        fr_ymax = math.tan(angle_min) * (self.parent.ssd + self.detectors.setback) + self.refBeamCtr_y
-        self.verticalOffset = self.detectors.vertical_offset_from_y_max(fr_ymax)
-
-    def _calculate_match_top(self):
-        """Calculates how to match the front panel selected to the right side using the middle vertical offset ssd and
-        center as well as the front center ssd
-
-        :return: None as it just sets the value of verticalOffset
-        :rtype: None
-        """
-        middle_object = self.parent.parent.middle_carriage
-        ymax = middle_object.right_panel.detectors.y_max(0) - middle_object.refBeamCtr_y
-        angle_max = math.atan2(ymax, middle_object.ssd)
-        fr_ymin = math.tan(angle_max) * (self.parent.ssd + self.detectors.setback) + self.refBeamCtr_y
-        self.verticalOffset = self.detectors.vertical_offset_from_y_min(fr_ymin)
-
-    def _calculate_q_helper(self, value):
+    def _calculate_q_helper(self, value: np.ndarray | float) -> np.ndarray | float:
         """A help function that helps to calculate the q min and max values by using the wavelength and ssd
 
         :param float value: The value given to the function that allows it ot run
         :return: The calculated value
         :rtype: Float
         """
-        return 4 * math.pi / self.parent.parent.get_wavelength() * math.sin(
-            math.atan2(value, self.parent.ssd + self.detectors.setback) / 2)
+        return 4 * np.pi / self.parent.parent.get_wavelength() * np.sin(
+            np.atan2(value, self.parent.ssd + self.detectors.setback) / 2)
+
+    def create_detector_array(self):
+        """Creates 5 arrays of zeros based on the number of x and y pixels"""
+        self.detector_array = np.zeros((self.pixel_num_x, self.pixel_num_y))
+        self.q_to_t_array = np.zeros((self.pixel_num_x, self.pixel_num_y))
+        self.qx_array = np.zeros((self.pixel_num_x, self.pixel_num_y))
+        self.qy_array = np.zeros((self.pixel_num_x, self.pixel_num_y))
+        self.qz_array = np.zeros((self.pixel_num_x, self.pixel_num_y))
+        self.data_real_dist_x = np.ones((self.pixel_num_x, self.pixel_num_y))
+        self.data_real_dist_y = np.ones((self.pixel_num_x, self.pixel_num_y))
+        self.data = np.zeros((self.pixel_num_x, self.pixel_num_y))
+
+    def calculate_panel(self):
+        """Runs all the calculation methods necessary to calculate the panel object without the plots"""
+        self.refBeamCtr_x = self.parent.refBeamCtr_x
+        self.refBeamCtr_y = self.parent.refBeamCtr_y
+        self.calculate_match()  # This needs to run first as it affects the values for the rest of the calculations
+
+
+class VerticalPanel(Panel):
+    """A class for storing and manipulating VerticalPanel related data based on the generic Panel class.
+
+    This is used for left and right panel data"""
+    def __init__(self, parent, params, short_name="MR"):
+        """ Creates object parameters for VerticalPanel class and runs set params method
+
+        :param FrontCarriage or MiddleCarriage parent: The FrontCarriage or MiddleCarriage instance this is a part of
+        :param dict params: A dictionary mapping <param_name>: <value>
+        :param str short_name: A one or two character short name of the detector panel of the form (F|M|B)(T|B|L|R| )
+        """
+        super().__init__(parent, params, short_name)
+        self.horizontal_orientation = False
+
+        # Constants needed for plotting
+        self.x_pixel_size = 0.84
+        self.y_pixel_size = 0.8
+        self.pixel_num_x = 48
+        self.pixel_num_y = 128
+        self.tmp_calib = [-512, 8, 0]
+
+    def _calculate_match(self):
+        """If the match button is true set it to match correctly and set its return to disable the lateral offset
+        field and if not enable the lateral offset field"""
+        if self.short_name.find("L") != -1:
+            self._calculate_match_left()
+        else:
+            self._calculate_match_right()
+
+    def _calculate_match_left(self):
+        """Calculates how to match the front panel selected to  the left side using the middle lateral offset ssd and
+        center as well as the front center ssd"""
+        middle_object = self.parent.parent.middle_carriage
+        xmin = middle_object.left_panel.detectors.x_min(
+            middle_object.left_panel.lateral_offset) - middle_object.refBeamCtr_x
+        angle_min = math.atan2(xmin, middle_object.ssd)
+        fr_xmax = math.tan(angle_min) * self.parent.ssd + self.refBeamCtr_x
+        self.offset = self.detectors.lateral_offset_from_x_max(fr_xmax)
+
+    def _calculate_match_right(self):
+        """Calculates how to match the front panel selected to the right side using the middle lateral offset ssd and
+        center as well as the front center ssd"""
+        middle_object = self.parent.parent.middle_carriage
+        xmax = middle_object.right_panel.detectors.x_max(
+            middle_object.right_panel.lateral_offset) - middle_object.refBeamCtr_x
+        angle_max = math.atan2(xmax, middle_object.ssd)
+        fr_xmin = math.tan(angle_max) * self.parent.ssd + self.refBeamCtr_x
+        self.offset = self.detectors.lateral_offset_from_x_min(fr_xmin)
+
+    def calculate_qx_min(self):
+        """Calculates the qx min of this detector using the lateral offset and center into the _x_min function from
+        the detector object"""
+        self.qx_min = self._calculate_q_helper(self.detectors.x_min(self.offset) - self.refBeamCtr_x)
+
+    def calculate_qx_max(self):
+        """Calculates the qx max of this detector using the lateral offset and center into the _x_min function from the
+        detector object"""
+        self.qx_max = self._calculate_q_helper(self.detectors.x_max(self.offset) - self.refBeamCtr_x)
 
     def calculate_qy_min(self):
         """Calculates the qy min of this detector using the lateral offset and center into the _y_min function from
-        the detector object
-
-        :return: None as it just sets the value of qx_min
-        :rtype: None
-        """
-        # var ymin = detectors.detector_FT.y_min(this.top_front_offset) - this.front_reference_yctr;;
-        # return 4 * Math.PI / this.lambda *Math.sin(Math.atan2(ymin, this.SDD_front + detectors.detector_FT.setback) / 2);
-        ymin = self.detectors.y_min(self.verticalOffset) - self.refBeamCtr_y
-        self.qy_min = self._calculate_q_helper(value=ymin)
+        the detector object"""
+        self.qy_min = self._calculate_q_helper(self.detectors.y_min() - self.refBeamCtr_y)
 
     def calculate_qy_max(self):
         """Calculates the qy max of this detector using the lateral offset and center into the _y_max function from
-        the detector object
-
-        :return: None as it just sets the value of qy_max
-        :rtype: None
-        """
-        # var ymax = detectors.detector_FB.y_max(this.bottom_front_offset) - this.front_reference_yctr;
-        # return 4 * Math.PI / this.lambda *Math.sin(Math.atan2(ymax, this.SDD_front + detectors.detector_FB.setback) / 2)
-        ymax = self.detectors.y_max(self.verticalOffset) - self.refBeamCtr_y
-        self.qy_max = self._calculate_q_helper(value=ymax)
-
-    def create_detector_array(self):
-        """Creates 5 arrays of zeros based on the number of x and y pixels
-
-        :return: Nothing as it just sets the value of detector_array, q_to_t_array, qx_array, qy_array, and qz_array
-        :rtype: None
-        """
-        self.detector_array = np.zeros((int(self.pixel_num_x), int(self.pixel_num_y)))
-        self.q_to_t_array = np.copy(self.detector_array)
-        self.qx_array = np.copy(self.detector_array)
-        self.qy_array = np.copy(self.detector_array)
-        self.qz_array = np.copy(self.detector_array)
-        self.data_real_dist_x = np.copy(self.detector_array)
-        self.data_real_dist_y = np.copy(self.detector_array)
-        self.data = np.copy(self.detector_array)
+        the detector object"""
+        self.qy_max = self._calculate_q_helper(self.detectors.y_max() - self.refBeamCtr_y)
 
     def create_default_mask(self):
-        """ Creates the default mask defending on the orientation of the panel
-
-        :return: None as it just sets the value of the default_mask array
-        :rtype: None
-        """
-        self.default_mask = np.concatenate((np.ones((50, 48)), np.zeros((28, 48)), np.ones((50, 48))))
-
-    @staticmethod
-    def create_tmp_array():
-        """Creates the tmp calib array based on certain parameters needed for plotting
-
-        :return: The tmp_calib array that it created
-        :rtype: None
-        """
-        tmp_calib = np.zeros((3, 48))
-        for a in range(48):
-            tmp_calib[0][a] = -256
-            tmp_calib[1][a] = 4
-            tmp_calib[2][a] = 0
-        return tmp_calib
+        """ Creates the default mask defending on the orientation of the panel"""
+        if 'L' in self.short_name:
+            inner_array = np.concatenate((np.ones(5), np.zeros(118), np.ones(5)))
+            self.default_mask = np.concatenate((np.zeros((4, 128)), np.tile(inner_array, (44, 1))))
+        else:
+            inner_array = np.concatenate((np.ones(5), np.zeros(118), np.ones(5)))
+            self.default_mask = np.concatenate((np.tile(inner_array, (44, 1)), np.zeros((4, 128))))
 
     def calculate_panel(self):
-        """Runs all the calculation methods nessasary to calculate the panel object without the plots
+        """Runs all the calculation methods nessasary to calculate the panel object without the plots"""
+        super().calculate_panel()
+        self.calculate_qx_min()
+        self.calculate_qx_max()
+        self.calculate_qy_min()
+        self.calculate_qy_max()
 
-        :return: None as it just runs calculations
-        :rtype: None
+
+class HorizontalPanel(Panel):
+    """A class for storing and manipulating HorizontalPanel related data based on the generic Panel class.
+
+    This is used for top and bottom panel data"""
+    def __init__(self, parent, params: dict, short_name: str = "FT"):
+        """ Creates object parameters for HorizontalPanel class and runs set params method
+
+        :param FrontCarriage or MiddleCarriage parent: The FrontCarriage or MiddleCarriage instance this is a part of
+        :param dict params: A dictionary mapping <param_name>: <value>
+        :param short_name: A one or two character short name of the detector panel of the form (F|M|B)(T|B|L|R| )
         """
-        # Update values to be used
-        self.refBeamCtr_y = self.parent.refBeamCtr_y
-        self.calculate_match()  # This needs to run first as it affects the values for the rest of the calculations
+        super().__init__(parent, params, short_name)
+        self.horizontal_orientation = True
+
+        # Constants needed for plotting
+        self.x_pixel_size = 0.4
+        self.y_pixel_size = 0.84
+        self.pixel_num_x = 128
+        self.pixel_num_y = 48
+        self.setback = 41
+        self.tmp_calib = [-256, 4, 0]
+
+    def _calculate_match(self):
+        """If the match button is true set it to match correctly and set its return to disable the lateral offset
+        field and if not enable the lateral offset field"""
+        if self.short_name.find("T") != -1:
+            self._calculate_match_top()
+        else:
+            self._calculate_match_bottom()
+
+    def _calculate_match_bottom(self):
+        """Calculates how to match the front panel selected to  the bottom side using the middle vertical offset ssd and
+        center as well as the front center ssd"""
+        middle_object = self.parent.parent.middle_carriage
+        ymin = middle_object.right_panel.detectors.y_min(0) - middle_object.refBeamCtr_y
+        angle_min = math.atan2(ymin, middle_object.ssd)
+        fr_ymax = math.tan(angle_min) * (self.parent.ssd + self.detectors.setback) + self.refBeamCtr_y
+        self.offset = self.detectors.vertical_offset_from_y_max(fr_ymax)
+
+    def _calculate_match_top(self):
+        """Calculates how to match the front panel selected to the right side using the middle vertical offset ssd and
+        center as well as the front center ssd"""
+        middle_object = self.parent.parent.middle_carriage
+        ymax = middle_object.right_panel.detectors.y_max(0) - middle_object.refBeamCtr_y
+        angle_max = math.atan2(ymax, middle_object.ssd)
+        fr_ymin = math.tan(angle_max) * (self.parent.ssd + self.detectors.setback) + self.refBeamCtr_y
+        self.offset = self.detectors.vertical_offset_from_y_min(fr_ymin)
+
+    def calculate_qy_min(self):
+        """Calculates the qy min of this detector using the lateral offset and center into the _y_min function from
+        the detector object"""
+        self.qy_min = self._calculate_q_helper(self.detectors.y_min(self.offset) - self.refBeamCtr_y)
+
+    def calculate_qy_max(self):
+        """Calculates the qy max of this detector using the lateral offset and center into the _y_max function from
+        the detector object"""
+        self.qy_max = self._calculate_q_helper(self.detectors.y_max(self.offset) - self.refBeamCtr_y)
+
+    def create_default_mask(self):
+        """ Creates the default mask defending on the orientation of the panel"""
+        self.default_mask = np.concatenate((np.ones((50, 48)), np.zeros((28, 48)), np.ones((50, 48))))
+
+    def calculate_panel(self):
+        """Runs all the calculation methods necessary to calculate the panel object without the plots"""
+        super().calculate_panel()
         self.calculate_qy_min()
         self.calculate_qy_max()
 
