@@ -6,7 +6,7 @@ from ..instrument import set_params, CALC_TYPE
 from ..instrumentJSParams import *
 
 
-def _create_vsans_dict(name=True, additional=False):
+def _create_vsans_dict(is_named: bool = True, has_additional: bool = False):
     """Creates the sub dictionary necessary for the VSANS instrument to work properly and returns the all in 1
     dictionary
 
@@ -16,27 +16,27 @@ def _create_vsans_dict(name=True, additional=False):
 
     The additional dictionary's include all_carriage, mid_dq_values, and front_dq_values
 
-    :param Boolean name: Whether to include name as the first part of the dictionary
-    :param Boolean additional: Whether the additional sub dictionary are included
+    :param Boolean is_named: Whether to include name as the first part of the dictionary
+    :param Boolean has_additional: Whether the additional sub dictionary are included
     :return: The dictionary created by the parameters defined
     :rtype: Dict
     """
-    vsans_dict = {}
-    vsans_dict["presets"] = {"name": "Presets"} if name else {}
-    vsans_dict["beam"] = {"name": "Beam"} if name else {}
-    vsans_dict["collimation"] = {"name": "Collimation"} if name else {}
-    vsans_dict["middle_carriage"] = {"name": "Middle Carriage"} if name else {}
-    vsans_dict["mid_left_panel"] = {"name": "Middle Carriage Left Panel"} if name else {}
-    vsans_dict["mid_right_panel"] = {"name": "Middle Carriage Right Panel"} if name else {}
-    vsans_dict["mid_top_panel"] = {"name": "Middle Carriage Top Panel"} if name else {}
-    vsans_dict["mid_bottom_panel"] = {"name": "Middle Carriage Bottom Panel"} if name else {}
-    vsans_dict["front_carriage"] = {"name": "Front Carriage"} if name else {}
-    vsans_dict["front_left_panel"] = {"name": "Front Carriage Left Panel"} if name else {}
-    vsans_dict["front_right_panel"] = {"name": "Front Carriage Right Panel"} if name else {}
-    vsans_dict["front_top_panel"] = {"name": "Front Carriage Top Panel"} if name else {}
-    vsans_dict["front_bottom_panel"] = {"name": "Front Carriage Bottom Panel"} if name else {}
+    vsans_dict = dict()
+    vsans_dict["presets"] = {"name": "Presets"} if is_named else {}
+    vsans_dict["beam"] = {"name": "Beam"} if is_named else {}
+    vsans_dict["collimation"] = {"name": "Collimation"} if is_named else {}
+    vsans_dict["middle_carriage"] = {"name": "Middle Carriage"} if is_named else {}
+    vsans_dict["mid_left_panel"] = {"name": "Middle Carriage Left Panel"} if is_named else {}
+    vsans_dict["mid_right_panel"] = {"name": "Middle Carriage Right Panel"} if is_named else {}
+    vsans_dict["mid_top_panel"] = {"name": "Middle Carriage Top Panel"} if is_named else {}
+    vsans_dict["mid_bottom_panel"] = {"name": "Middle Carriage Bottom Panel"} if is_named else {}
+    vsans_dict["front_carriage"] = {"name": "Front Carriage"} if is_named else {}
+    vsans_dict["front_left_panel"] = {"name": "Front Carriage Left Panel"} if is_named else {}
+    vsans_dict["front_right_panel"] = {"name": "Front Carriage Right Panel"} if is_named else {}
+    vsans_dict["front_top_panel"] = {"name": "Front Carriage Top Panel"} if is_named else {}
+    vsans_dict["front_bottom_panel"] = {"name": "Front Carriage Bottom Panel"} if is_named else {}
     vsans_dict["options"] = {}
-    if additional:
+    if has_additional:
         vsans_dict["all_carriage"] = {}
         vsans_dict["mid_dq_values"] = {}
         vsans_dict["front_dq_values"] = {}
@@ -63,14 +63,12 @@ class VSANS(Instrument):
     class_name = "VSANS"
     name_shown = "VSANS"
 
-    # Constructor for the NG7SANS instrument
-    def __init__(self, name, params):
+    # Constructor for the VSANS instrument
+    def __init__(self, name: str | None, params: dict):
         """The constructor method that creates the necessary parameters and runs the instrument classes constructor
 
         :param str name: The name of the instrument
         :param dict params: A dictionary of the parameters passed from the calculate instrument method
-        :return: Nothing just runs the message
-        :rtype: None
         """
         self.name = name if name else "VSANS"
         self.preset = params.get('preset', "19m")
@@ -88,21 +86,19 @@ class VSANS(Instrument):
         params = params["instrument_params"]
         self.load_params(params)
 
-    def load_params(self, old_params):
+    def load_params(self, old_params: dict):
         """A method that loads the constants of the VSANS Instrument
 
         :param dict old_params: The dictionary of parameters from the __init__ statement
-        :return: Nothing, just runs the instrument load objects method
-        :rtype: None
         """
         params = self.param_restructure(old_params)
 
-        # Temporary constants not in use any more
-        params["temp"] = {}
-        params["temp"]["serverName"] = "VSANS.ncnr.nist.gov"
+        params["temp"] = dict()
+        params["temp"]["serverName"] = "vsans.ncnr.nist.gov"
         params["beam"]["frontend_trans_options"] = {"0.02": 0.5, "0.12": 1.0, "0.4": 0.7}
         params["beam"]["lambda_T"] = self.constants.get("lambda_T", 6.2)
         params["beam"]["phi_0"] = self.constants.get("phi_0", 1.82e13)
+        # Front carriage constants
         params["front_carriage"]["front_lr_w"] = 40.3
         params["front_carriage"]["front_lr_h"] = 100.0
         params["front_carriage"]["front_tb_w"] = 50.0
@@ -133,38 +129,40 @@ class VSANS(Instrument):
 
         self.load_objects(params)
 
-    @staticmethod
-    def param_restructure(old_params):
-        """ A method that takes the list of params from the Javascript and assigns it to a dictionary allowing the python to assign variables to objects
+    def param_restructure(self, old_params: dict):
+        """ A method that takes the list of params from the Javascript and assigns it to a dictionary allowing the
+        python to assign variables to objects
 
         :param dict old_params: A dictionary of the values gotten from the js
         :return: An dictionary of the params that has been restructured correctly
         :rtype: Dict
         """
 
-        def _param_get_helper(name="", category="", key="default", default_value=None, division=1):
+        def _param_get_helper(name: str = "", category: str = "", key: str = "default",
+                              default_value: str | float | int | None = None, division: float = 1.0):
             """ Checks if a value exists at a certain key and if not sets the value to none ot be removed later
 
             :param str name: the dictionary of parameters to get the value from
             :param str key: The name of the key you want the value of
             :param default_value: The default value if none exists at that location in the params dictionary
-            :param int division: The number to device by if necessary for debuting
+            :param int division: The number to divide by if necessary for debuting
             :return: The value at the keys position in the dictionary or None
-            :rtype: str, None
+            :rtype: str | None
             """
-            params = old_params.get(category, {}).get(name, {})
+            help_params = old_params.get(category, {}).get(name, {})
             try:
-                result = params.get(key, default_value)
-                if division != 1:
-                    result = result / 100
+                result_raw = help_params.get(key, default_value)
+                return result_raw / division
             except AttributeError:
                 return None
-            # If it is blank make the value none
-            if result == "":
-                return default_value
-            return result
+            except (ZeroDivisionError, TypeError):
+                # Only reachable if attempting division
+                # If it is blank use the default value
+                if result_raw == "":
+                    return default_value
+                return result_raw
 
-        params = _create_vsans_dict(name=False, additional=True)
+        params = _create_vsans_dict(False, True)
         params["preset"] = _param_get_helper(name="presets", category="presets", default_value="19m")
         params["beam"]["wavelength"] = _param_get_helper(name="wavelength", category="beam", default_value=6.0)
         params["beam"]["dlambda"] = _param_get_helper(name="dlambda", category="beam", default_value=0.12)
@@ -300,16 +298,14 @@ class VSANS(Instrument):
         params["front_bottom_panel"]["match_button"] = _param_get_helper(name="match_button",
                                                                          category="front_bottom_panel",
                                                                          default_value=False)
-        return params
+        return self._remove_nones(params)
 
-    def load_objects(self, params):
+    def load_objects(self, params: dict):
         """A function that creates the objects necessary for the calculations
 
         Create objects beam_stops, detectors, collimation, and wavelength
 
         :param dict params: A dictionary of parameters to send to the initialization of the objects
-        :return: Nothing as it just sets up all the objects
-        :rtype: None
         """
         self.beam = Beam(self, params.get('beam', {}))
         self.collimation = Collimation(self, params.get('collimation', {}))
@@ -332,11 +328,7 @@ class VSANS(Instrument):
         self.front_carriage = FrontCarriage(self, front_carriage_params)
 
     def calculate_objects(self):
-        """Runs the calculate method of all the objects created in load objects
-
-        :return: Nothing as it just runs methods
-        :rtype: None
-        """
+        """Runs the calculate method of all the objects created in load objects"""
         self.beam.calculate_beam()
         self.collimation.calculate_collimation()
         self.all_carriage.calculate_all_Carriage()
@@ -345,12 +337,8 @@ class VSANS(Instrument):
 
     def calculate_plots(self):
         """A method that  takes in all the params from the other classes needed to calculate the plot data and passes it
-        as a parameter to the innit statement of the PLotData class
-
-        :return: None as it just creates a dictionary and then runs functions
-        :rtype: None
-        """
-        plot_params = {}
+        as a parameter to the innit statement of the PLotData class"""
+        plot_params = dict()
         plot_params["middle_carriage"] = self.middle_carriage
         plot_params["mid_left_panel"] = self.middle_carriage.left_panel
         plot_params["mid_right_panel"] = self.middle_carriage.right_panel
@@ -366,7 +354,7 @@ class VSANS(Instrument):
         self.plot_data.run_plot_data()
 
     # Get methods After here
-    def get_wavelength(self):
+    def get_wavelength(self) -> float:
         """Gets the wavelength parameter from the beam object
 
         :return: The values of the wavelength parameter
@@ -374,7 +362,7 @@ class VSANS(Instrument):
         """
         return self.beam.wavelength
 
-    def get_l_1(self):
+    def get_l_1(self) -> float:
         """Gets the l_1 parameter from the collimation object
 
         :return: The values of the l_1 parameter
@@ -382,7 +370,7 @@ class VSANS(Instrument):
         """
         return self.collimation.l_1
 
-    def get_l_2(self):
+    def get_l_2(self) -> float:
         """Gets the l_2 parameter from the middle carriage object
 
         :return: The values of the l_2 parameter
@@ -390,7 +378,7 @@ class VSANS(Instrument):
         """
         return self.middle_carriage.l_2
 
-    def get_source_aperture(self):
+    def get_source_aperture(self) -> float:
         """Gets the source aperture parameter from the collimation object
 
         :return: The values of the source aperture parameter
@@ -398,15 +386,13 @@ class VSANS(Instrument):
         """
         return self.collimation.source_aperture
 
-    def get_sample_aperture(self):
+    def get_sample_aperture(self) -> float:
         """Gets the sample aperture parameter from the collimation object
 
         :return: The values of the sample aperture parameter
         :rtype: Float
         """
         return self.collimation.sample_aperture
-
-    # Get methods before here
 
     def sas_calc(self) -> CALC_TYPE:
         """ The main function that runs all the calculation though the calculate objects and calculate plot methods and
@@ -421,7 +407,7 @@ class VSANS(Instrument):
         self.calculate_objects()
         self.calculate_plots()
         # Calculate all the Plots
-        user_inaccessible = _create_vsans_dict(name=False)
+        user_inaccessible = _create_vsans_dict(is_named=False)
         user_inaccessible["beam"]["wavelength"] = self.beam.wavelength
         user_inaccessible["beam"]["dlambda"] = self.beam.dlambda
         user_inaccessible["beam"]["frontend_trans"] = self.beam.frontend_trans
@@ -493,31 +479,14 @@ class VSANS(Instrument):
         user_inaccessible["front_bottom_panel"]["qy_max"] = self.front_carriage.bottom_panel.qy_max
         user_inaccessible["front_bottom_panel"]["qy_min"] = self.front_carriage.bottom_panel.qy_min
         user_inaccessible["front_bottom_panel"]["match_button"] = self.front_carriage.bottom_panel.match_button
-        python_return = {"user_inaccessible": user_inaccessible}
+        python_return = {"user_inaccessible": user_inaccessible,
+                         'qValues': [detector.q_to_t_array for detector in self.plot_data.all_detectors],
+                         'q2DValues': [detector.q_to_t_array for detector in self.plot_data.all_detectors]}
         if self.options is not {}:
             python_return['options'] = self.options
         return python_return
 
-    @staticmethod
-    def update_values(info):
-        """The update values method for the VSANS instrument which happens when a js value is changed and other
-        values need to be updated because of it
-
-        :param str info: What is being sent by the server
-        :return: A dictionary of the values to be changed
-        :rtype: Dict
-        """
-        type_info = info[:info.find('@')]
-        rest_info = info[info.find('@') + 1:]
-        if type_info == "preset":
-            return VSANS.preset_change(rest_info)
-        elif type_info == "guideUpdate":
-            source_aperture_js = rest_info[:rest_info.find('+')]
-            guide_select = rest_info[rest_info.find('+') + 1:]
-            return VSANS.update_source_aperture(source_aperture_js=source_aperture_js, guide_select=guide_select)
-
-    @staticmethod
-    def update_source_aperture_with_data(results):
+    def update_source_aperture_with_data(self, results: dict) -> dict:
         """Updates the value of the source aperture based on the guide number and current value gotten from an array
         of params by calling the update_source_aperture method
 
@@ -528,11 +497,11 @@ class VSANS(Instrument):
         # Update the number of guides to be correct
         source_aperture_js = results["collimation"]["source_aperture_js"]
         guide_select = results["collimation"]["guide_select"]
-        return VSANS.update_source_aperture(results=results, source_aperture_js=source_aperture_js,
+        return self.update_source_aperture(results=results, source_aperture_js=source_aperture_js,
                                             guide_select=guide_select)
 
     @staticmethod
-    def update_source_aperture(results=None, source_aperture_js='0.0', guide_select='0'):
+    def update_source_aperture(results: dict | None = None, source_aperture_js: str = '0.0', guide_select: str = '0'):
         """Updates the value of the source aperture based on the number of guides
 
         :param dict results: A dictionary to output the results
@@ -541,7 +510,7 @@ class VSANS(Instrument):
         :return: The results dictionary
         :rtype: Dict
         """
-        if results is None: results = {"collimation": {}, "options": {}}
+        results = {"collimation": {}, "options": {}} if results is None else results
         if guide_select == '0':
             valid_ops = ['7.5', '15.0', '30.0']
             if not source_aperture_js in valid_ops:
@@ -573,7 +542,6 @@ class VSANS(Instrument):
 
         + **element_parameters**: name, default, type_val, unit, readonly, options, step, range_id,hidden, lower_limit,
           and upper_limit
-
 
         :return: Completed dictionary params[category][paramName] = js_element_array
         :rtype: Dict
