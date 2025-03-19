@@ -698,11 +698,8 @@ class Beam:
     :param dict self.frontend_trans_options: A dictionary of options for front end trans baced on dlambda
     """
 
-    def __init__(self, parent, params, name="beam"):
+    def __init__(self, parent: VSANS, params: dict, name: str = "beam"):
         """ Creates object parameters for Beam class and runs set params method
-
-        Sets object parameters self.parent, self.name, self.wavelength, self.dlambda, self.lambda_T, self.phi_0,
-        self.frontend_trans, self.flux, self.beam_current, self.i_sub_zero, and self.frontend_trans_options
 
         :param VSANS parent: The VSANS instance this Beam is a part of
         :param dict params: A dictionary mapping <param_name>: <value>
@@ -724,11 +721,7 @@ class Beam:
         set_params(instance=self, params=params)
 
     def dlambda_check_lambda(self):
-        """ Makes sure the value of wavelength is correct based off dlambda
-
-        :return: None as it just sets the value of lambda if it is not correct
-        :rtype: None
-        """
+        """ Makes sure the value of wavelength is correct based off dlambda"""
         if self.dlambda == 0.02:
             self.wavelength = 4.75
         elif self.dlambda == 0.4:
@@ -737,12 +730,7 @@ class Beam:
             self.calculate_wavelength()
 
     def calculate_wavelength(self):
-        """Corrects the value of wavelength if it is in the wrong range
-
-        :return: None as it just sets the value of wavelength
-        :rtype: None
-
-        """
+        """Corrects the value of wavelength if it is in the wrong range"""
         if self.wavelength < 4:
             self.wavelength = 4.0
         elif 8.5 < self.wavelength < 10.7:
@@ -751,48 +739,27 @@ class Beam:
             self.wavelength = 19.3
 
     def calculate_frontend_trans(self):
-        """Gets the value of frontend_trans from the list of options based on dlambda
-
-        :return: Nothing as it just sets the front end trans value and moves on
-        :rtype: None
-        """
+        """Gets the value of frontend_trans from the list of options based on dlambda"""
         self.frontend_trans = self.frontend_trans_options[str(self.dlambda)]
 
     def calculate_flux(self):
-        """ Calculates the value of flux from lambda_T wavelength, and dlambda
-
-        :return: None as it just sets the value of flux
-        :rtype: None
-        """
+        """ Calculates the value of flux from lambda_T wavelength, and dlambda"""
         lfrac = self.lambda_T / self.wavelength
-        self.flux = (self.dlambda * math.pow(lfrac, 4) * math.exp(-math.pow(lfrac, 2)) * self.phi_0) / 2.0 * math.pi
+        self.flux = (self.dlambda * np.pow(lfrac, 4) * np.exp(-np.pow(lfrac, 2)) * self.phi_0) / 2.0 * np.pi
 
     def calculate_beam_current(self):
-        """Calulcates the current beam value by getting the calculated t_filter value
-
-        :return: None as it just sets the beam current value
-        :rtype: None
-        """
+        """Calculates the current beam value by getting the calculated t_filter value"""
         self.parent.collimation.calculate_t_filter()
-        t_filter = self.parent.collimation.t_filter
-        self.beam_current = self.frontend_trans * t_filter
+        self.beam_current = self.frontend_trans * self.parent.collimation.t_filter
 
     def calculate_iSub0(self):
-        """Calculates the value of i sub 0 from sample aperture and the current beam value
-
-        :return: None as it just sets i_sub_zero
-        :rtype: None
-        """
+        """Calculates the value of i sub 0 from sample aperture and the current beam value"""
         collimation = self.parent.collimation
         collimation.calculate_sample_aperture()
-        self.i_sub_zero = self.beam_current / (math.pi * math.pow(collimation.sample_aperture / 2.0, 2))
+        self.i_sub_zero = self.beam_current / (np.pi * np.pow(collimation.sample_aperture / 2.0, 2))
 
     def calculate_beam(self):
-        """Runs all the calculation methods nessasary to calculate the beam object
-
-        :return: None as it just runs calculations
-        :rtype: None
-        """
+        """Runs all the calculation methods nessasary to calculate the beam object"""
         self.dlambda_check_lambda()
         self.calculate_frontend_trans()
         self.calculate_flux()
@@ -822,7 +789,7 @@ class Collimation:
     :param int self.a_over_l: The value of a over l_1
     """
 
-    def __init__(self, parent, params, name="collimation"):
+    def __init__(self, parent: VSANS, params: dict, name: str = "collimation"):
         """Creates object parameters for Collimation class and runs set params method
 
         Sets object parameters self.parent, self.name, self.guide_select, self.num_guides, self.cov_beams,
@@ -858,86 +825,50 @@ class Collimation:
 
     def calculate_num_guides(self):
         """Decides if guide select value is CONV BEAMS or NARROW SLITS and if not makes it the int value of what was
-        selected
-
-        :return: None as it just sets the value of num_guides
-        :rtype: None
-        """
+        selected"""
         self.num_guides = 0 if self.guide_select == "CONV_BEAMS" or self.guide_select == "NARROW_SLITS" else int(
             self.guide_select)
 
     def calculate_source_aperture(self):
-        """Calculates the value of the source aperture from the value gotten from JS
-
-        :return: None as it just sets a value
-        :rtype: None
-        """
+        """Calculates the value of the source aperture from the value gotten from JS"""
         self.source_aperture = float(self.source_aperture_js) / 10.0
 
     def calculate_source_distance(self):
-        """Calculates the source distance from whatever the number of guides index is in the source_distance_options
-
-        :return: None as it just sets a value
-        :rtype: None
-        """
+        """Calculates the source distance from whatever the number of guides index is in the source_distance_options"""
         self.source_distance = self.source_distance_options[self.num_guides]
 
     def calculate_t_filter(self):
         """Calculates the value of t_filter from the beam.Wavelength value
 
-        Is run from the beam.calculate_beam_current() method as it is needed for that calculation
-
-        :return: None as it just sets a value
-        :rtype: None
-        """
+        Is run from the beam.calculate_beam_current() method as it is needed for that calculation"""
         lambda_val = self.parent.get_wavelength()
-        self.t_filter = math.exp(-0.371 - 0.0305 * lambda_val - 0.00352 * math.pow(lambda_val, 2))
+        self.t_filter = np.exp(-0.371 - 0.0305 * lambda_val - 0.00352 * np.pow(lambda_val, 2))
 
     def calculate_t_guide(self):
-        """Calculates the t_guide value using the value for the number of guides
-
-        :return: None as it just sets a value
-        :rtype: None
-        """
-        self.t_guide = math.pow(0.97, self.num_guides)
+        """Calculates the t_guide value using the value for the number of guides"""
+        self.t_guide = np.pow(0.97, self.num_guides)
 
     def calculate_sample_aperture(self):
-        """Calculates the sample aperture value from the ext_sample_aperture
-
-        :return: None as it just sets a value
-        :rtype: None
-        """
+        """Calculates the sample aperture value from the ext_sample_aperture"""
         self.sample_aperture = self.ext_sample_aperture / 10.0
 
     def calculate_l_1(self):
-        """Calculates the l_1 value from source distance and sample_to_ap_gv value
-
-        :return: Nothing as it just sets the value of l_1 and returns
-        :rtype: None
-        """
+        """Calculates the l_1 value from source distance and sample_to_ap_gv value"""
         self.l_1 = self.source_distance - self.sample_to_ap_gv
 
-    def calculate_aOverL(self):
-        """Calculates the value of a_over_l from the source and sample aperture as well as l_1
-
-        :return: None as it just sets a value
-        :rtype: None
-        """
-        self.a_over_l = math.pow((math.pi / 4.0 * self.source_aperture * self.sample_aperture / self.l_1), 2)
+    def calculate_a_over_l(self):
+        """Calculates the value of a_over_l from the source and sample aperture as well as l_1"""
+        self.a_over_l = np.pow((math.pi / 4.0 * self.source_aperture * self.sample_aperture / self.l_1), 2)
 
     def calculate_collimation(self):
-        """Runs all the calculation methods nessasary to calculate the collimation object
-
-        :return: None as it just runs calculations
-        :rtype: None
-        """
+        """Runs all the calculation methods nessasary to calculate the collimation object"""
         self.calculate_num_guides()
         self.calculate_source_aperture()
         self.calculate_source_distance()
         self.calculate_t_guide()
         self.calculate_sample_aperture()
         self.calculate_l_1()
-        self.calculate_aOverL()
+        self.calculate_a_over_l()
 
 
 class AllCarriage:
