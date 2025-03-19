@@ -1134,11 +1134,10 @@ class AllCarriage:
         self.calculate_overall_d_q_values()
 
 
-class MiddleCarriage:
-    """A class for storing and manipulating Middle Carriage related data and objects
+class Carriage:
+    """A class for storing and manipulating Carriage related data and objects
 
     :param VSANS self.parent: The parent VSANS object
-    :param str self.name: The name of the class
     :param VerticalPanel self.left_panel: A vertical panel object that represents the left panel
     :param VerticalPanel self.right_panel: A vertical panel object that represents the right panel
     :param HorizontalPanel self.top_panel: A horizontal panel object that represents the top panel
@@ -1152,40 +1151,29 @@ class MiddleCarriage:
     :param float self.middle_lr_w: The Middle Left Right Panel width
     :param float self.middle_lr_h: The Middle Left Right Panel height
     :param float self.middle_tb_w: The Middle Top Bottom Panel width
-    :param float self.middle_tb_h: The Middle Top Bottom Panel heights
+    :param float self.middle_tb_h: The Middle Top Bottom Panel height
     :param float self.middle_ssd_setback: The ssd setback value for the middle
     """
-
-    def __init__(self, parent, params, name="middle_carriage"):
+    def __init__(self, parent: Instrument, params: dict, name: str = "middle_carriage"):
         """ Creates sub object and object parameters for Middle Carriage class and runs set params method
 
-        Sets object parameters self.parent, self.name, self.wavelength, self.dlambda, self.lambda_T, self.phi_0,
-                self.frontend_trans, self.flux, self.beam_current, self.i_sub_zero, and self.frontend_trans_options
-
-        :param VSANS parent: The VSANS instance this Beam is a part of
+        :param parent: The VSANS Instrument instance this Carriage is a part of
         :param dict params: A dictionary mapping <param_name>: <value>
-        :param str name: The name of the class
-        :return: None as it just sets the parameters
-        :rtype: None
+        :param str name: The detector carriage name (not the class name)
         """
         self.parent = parent
         self.name = name
-
-        # Create the secondary object off the main object
-        self.left_panel = VerticalPanel(self, params.get("mid_left_panel", {}), name="mid_left_panel", short_name="ML")
-        self.right_panel = VerticalPanel(self, params.get("mid_right_panel", {}), name="mid_right_panel",
-                                         short_name="MR")
-        self.top_panel = HorizontalPanel(self, params.get("mid_top_panel", {}), name="front_top_panel", short_name="MT")
-        self.bottom_panel = HorizontalPanel(self, params.get("mid_bottom_panel", {}), name="front_bottom_panel",
-                                            short_name="MB")
-        self.dq_calc = DqCalculator(self, params.get("mid_dq_values", {}))
-
-        params = params.get("middle_carriage", {})
+        self.left_panel = None
+        self.right_panel = None
+        self.top_panel = None
+        self.bottom_panel = None
+        self.dq_calc = None
 
         # Creates all the necessary parameters for the middle carriage class
-        self.ssd_input = 0.0  # This is just the value input by the user, not the actual SSD value
+        self.ssd_input = 0.0
         self.ssd = 0.0
         self.l_2 = 0.0
+
         # DQ Values that are used for both classes
         self.refBeamCtr_x = 0.0
         self.refBeamCtr_y = 0.0
@@ -1197,30 +1185,16 @@ class MiddleCarriage:
         self.middle_tb_h = 0.0
         self.middle_ssd_setback = 0.0
 
-        set_params(instance=self, params=params)
-
     def calculate_ssd(self):
-        """Calculates the SSD value from the ssd JS value and sample to gv
-
-        :return: None as it just sets the value of ssd
-        :rtype: None
-        """
+        """Calculates the SSD value from the ssd JS value and sample to gv"""
         self.ssd = self.ssd_input + self.parent.collimation.sample_to_gv
 
     def calculate_L_2(self):
-        """Calculates the value of l_2 from the ssd JS value and the sample to ap_gv
-
-        :return: None as it just sets the value of l_2
-        :rtype: None
-        """
+        """Calculates the value of l_2 from the ssd JS value and the sample to ap_gv"""
         self.l_2 = self.ssd_input + self.parent.collimation.sample_to_ap_gv
 
     def calculate_middleCarriage(self):
-        """Runs all the calculation methods nessasary to calculate the Middle Carriage object and sub objects
-
-        :return: None as it just runs calculations
-        :rtype: None
-        """
+        """Runs all the calculation methods nessasary to calculate the Middle Carriage object and sub objects"""
         # Calculates all the parameters of this object
         self.calculate_ssd()
         self.calculate_L_2()
@@ -1232,101 +1206,33 @@ class MiddleCarriage:
         self.dq_calc.calculate_all_dq()
 
 
-class FrontCarriage:
-    """A class for storing and manipulating Middle Carriage related data and objects
-
-    :param VSANS self.parent: The parent VSANS object
-    :param str self.name: The name of the class
-    :param VerticalPanel self.left_panel: A vertical panel object that represents the left panel
-    :param VerticalPanel self.right_panel: A vertical panel object that represents the right panel
-    :param HorizontalPanel self.top_panel: A horizontal panel object that represents the top panel
-    :param HorizontalPanel self.bottom_panel: A horizontal panel object that represents the bottom panel
-    :param DqCalculator self.dq_calc: The DqCalculator object to calculate all the DQ value
-    :param float self.ssd_input: The ssd value inputted by the user into the JS
-    :param float self.ssd: The calculated value of SSD
-    :param float self.l_2: The calculated value of l_2
-    :param float self.refBeamCtr_x: The reference center X
-    :param float self.refBeamCtr_y: The reference center Y
-    :param float self.front_lr_w: The Middle Left Right Panel width
-    :param float self.front_lr_h: The Middle Left Right Panel height
-    :param float self.front_tb_w: The Middle Top Bottom Panel width
-    :param float self.front_tb_h: The Middle Top Bottom Panel heights
-    :param float self.front_ssd_setback: The ssd setback value for the middle
-    """
-
-    def __init__(self, parent, params, name="front_carriage"):
-        """ Creates sub object and object parameters for Middle Carriage class and runs set params method
-
-        Sets object parameters self.left_panel, self.right_panel, self.top_panel, self.bottom_panel,
-        self.dq_calc, self.ssd_input, self.ssd, self.l_2, self.refBeamCtr_x, self.refBeamCtr_y,
-        self.front_lr_w, self.front_lr_h, self.front_tb_w, self.front_tb_h, and self.front_ssd_setback
-
-        :param VSANS parent: The VSANS instance this Beam is a part of
-        :param dict params: A dictionary mapping <param_name>: <value>
-        :param str name: The name of the class
-        :return: None as it just sets the parameters
-        :rtype: None
-        """
-        self.parent = parent
-        self.name = name
+class MiddleCarriage(Carriage):
+    """A class for storing and manipulating Middle Carriage related data and objects"""
+    def __init__(self, parent: Instrument, params: dict, name: str = "middle_carriage"):
+        """ Creates sub object and object parameters for Middle Carriage class and runs set params method"""
+        super().__init__(parent, params, name)
         # Create the secondary object off the main object
-        self.left_panel = VerticalPanel(self, params.get("front_left_panel", {}), name="front_left_panel",
-                                        short_name="FL")
-        self.right_panel = VerticalPanel(self, params.get("front_right_panel", {}), name="front_right_panel",
-                                         short_name="FR")
-        self.top_panel = HorizontalPanel(self, params.get("front_top_panel", {}), name="front_top_panel",
-                                         short_name="FT")
-        self.bottom_panel = HorizontalPanel(self, params.get("front_bottom_panel", {}), name="front_bottom_panel",
-                                            short_name="FB")
+        self.left_panel = VerticalPanel(self, params.get("mid_left_panel", {}), short_name="ML")
+        self.right_panel = VerticalPanel(self, params.get("mid_right_panel", {}), short_name="MR")
+        self.top_panel = HorizontalPanel(self, params.get("mid_top_panel", {}), short_name="MT")
+        self.bottom_panel = HorizontalPanel(self, params.get("mid_bottom_panel", {}), short_name="MB")
+        self.dq_calc = DqCalculator(self, params.get("mid_dq_values", {}))
+        carriage_params = params.get("middle_carriage", {})
+        set_params(instance=self, params=carriage_params)
+
+
+class FrontCarriage(Carriage):
+    """A class for storing and manipulating Middle Carriage related data and objects"""
+    def __init__(self, parent: Instrument, params: dict, name: str = "front_carriage"):
+        """ Creates sub object and object parameters for Middle Carriage class and runs set params method"""
+        super().__init__(parent, params, name)
+        self.left_panel = VerticalPanel(self, params.get("front_left_panel", {}), short_name="FL")
+        self.right_panel = VerticalPanel(self, params.get("front_right_panel", {}), short_name="FR")
+        self.top_panel = HorizontalPanel(self, params.get("front_top_panel", {}), short_name="FT")
+        self.bottom_panel = HorizontalPanel(self, params.get("front_bottom_panel", {}), short_name="FB")
         self.dq_calc = DqCalculator(self, params.get("front_dq_values", {}))
-        params = params.get("front_carriage", {})
-
-        # Creates all the necessary parameters for the Front carriage class
-        self.ssd_input = 0.0
-        self.ssd = 0.0
-        self.l_2 = 0.0
-        self.refBeamCtr_x = 0.0
-        self.refBeamCtr_y = 0.0
-
-        # Front detector dimensions
-        self.front_lr_w = 0.0
-        self.front_lr_h = 0.0
-        self.front_tb_w = 0.0
-        self.front_tb_h = 0.0
-        self.front_ssd_setback = 0.0
-
-        set_params(instance=self, params=params)
-
-    def calculate_ssd(self):
-        """Calculates the SSD value from the ssd JS value and sample to gv
-
-        :return: None as it just sets the value of ssd
-        :rtype: None
-        """
-        self.ssd = self.ssd_input + self.parent.collimation.sample_to_gv
-
-    def calculate_L_2(self):
-        """Calculates the value of l_2 from the ssd JS value and the sample to ap_gv
-
-        :return: None as it just sets the value of l_2
-        :rtype: None
-        """
-        self.l_2 = self.ssd_input + self.parent.collimation.sample_to_ap_gv
-
-    def calculate_frontCarriage(self):
-        """Runs all the calculation methods nessasary to calculate the Front Carriage object and sub objects
-
-        :return: None as it just runs calculations
-        :rtype: None
-        """
-        self.calculate_ssd()
-        self.calculate_L_2()
-        # Calculate the other objects
-        self.left_panel.calculate_panel()
-        self.right_panel.calculate_panel()
-        self.top_panel.calculate_panel()
-        self.bottom_panel.calculate_panel()
-        self.dq_calc.calculate_all_dq()
+        carriage_params = params.get("front_carriage", {})
+        set_params(instance=self, params=carriage_params)
 
 
 class DqCalculator:
@@ -1537,7 +1443,7 @@ class Panel:
         :param Array self.data_real_dist_y: An array containing the data_real distance y
         """
 
-    def __init__(self, parent, params: dict, short_name: str = "MR"):
+    def __init__(self, parent: Carriage, params: dict, short_name: str = "MR"):
         """ Creates object parameters for VerticalPanel class and runs set params method
 
         :param FrontCarriage or MiddleCarriage parent: The FrontCarriage or MiddleCarriage instance this is a part of
@@ -1636,7 +1542,7 @@ class VerticalPanel(Panel):
     """A class for storing and manipulating VerticalPanel related data based on the generic Panel class.
 
     This is used for left and right panel data"""
-    def __init__(self, parent, params, short_name="MR"):
+    def __init__(self, parent: Carriage, params: dict, short_name: str = "MR"):
         """ Creates object parameters for VerticalPanel class and runs set params method
 
         :param FrontCarriage or MiddleCarriage parent: The FrontCarriage or MiddleCarriage instance this is a part of
@@ -1723,7 +1629,7 @@ class HorizontalPanel(Panel):
     """A class for storing and manipulating HorizontalPanel related data based on the generic Panel class.
 
     This is used for top and bottom panel data"""
-    def __init__(self, parent, params: dict, short_name: str = "FT"):
+    def __init__(self, parent: Carriage, params: dict, short_name: str = "FT"):
         """ Creates object parameters for HorizontalPanel class and runs set params method
 
         :param FrontCarriage or MiddleCarriage parent: The FrontCarriage or MiddleCarriage instance this is a part of
