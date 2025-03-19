@@ -2343,9 +2343,6 @@ class PlotData:
         # Calculates all the data
         self.calculate_all_detectors()
 
-        # Updates the views
-        self.update_views()
-
     def initialize_space(self):
         """Creates the all detectors array based on all the panel objects that exist in this panel and then loops
         through that array creating all of the detector
@@ -2441,14 +2438,6 @@ class PlotData:
         #
         # Multiply the averaged data by the shadow factor to simulate a beamstop
         # self.iq_beam_stop_shadow()
-
-    def update_views(self):
-        """Updates the views and plots in igor
-
-        :return: None as it does not do anything yet
-        :rtype: None
-        """
-        pass
 
     # Helper functions for the sub functions of run_plot_data
     # Start calculate panel function
