@@ -87,9 +87,9 @@ export default {
         return;
       }
       if(this.first_run && "hidden" in this.instrument_params_local){
-        this.source_apertures = this.instrument_params_local["hidden"]["source_apertures"];
-        this.wavelength_ranges = this.instrument_params_local["hidden"]["wavelength_ranges"];
-        this.secondary_elements = this.instrument_params_local["hidden"]["secondary_elements"];
+        this.source_apertures = this.instrument_params_local["hidden"]["source_apertures"] || {};
+        this.wavelength_ranges = this.instrument_params_local["hidden"]["wavelength_ranges"] || {};
+        this.secondary_elements = this.instrument_params_local["hidden"]["secondary_elements"] || {};
         this.first_run = false;
       }else if (!("hidden" in this.instrument_params_local)){
         return;
@@ -116,15 +116,15 @@ export default {
       else if (target.id === "sampleAperture") {
         this.instrument_params_local['Collimation']['customAperture'].hidden = !(target.value === 'Custom');
       }
-      else if(target.id === "preset"){
+      else if(target.id === "preset") {
         let values = this.instrument_params_local["hidden"][target.value]
         for (const type in values) {
             if(type === "options"){continue;}
             for (const param in values[type]) {
-              this.instrument_params[type][param].default = values[type][param];
-            }//End type for loop
+              this.instrument_params_local[type][param].default = values[type][param];
+            }
           }
-      }//End else if statement
+      }
 
     },
     updateApertureOptions(target) {
