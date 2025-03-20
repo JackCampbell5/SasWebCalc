@@ -79,7 +79,7 @@ class VSANS(Instrument):
         self.middle_carriage = None
         self.front_carriage = None
         self.plot_data = None
-        self.constants = VSANSConstants().get_constants(self.preset, _create_vsans_dict(name=False))  # TODO Look at
+        self.constants = VSANSConstants().get_constants(self.preset, _create_vsans_dict(is_named=False))
         # if this is necessary
         # Super is the Instrument class
         super().__init__(name, params)
@@ -216,13 +216,13 @@ class VSANS(Instrument):
                                                                       default_value=0)
         params["middle_carriage"]["refBeamCtr_y"] = _param_get_helper(name="refBeamCtr_y", category="middle_carriage",
                                                                       default_value=0)
-        params["mid_left_panel"]["lateral_offset"] = _param_get_helper(name="lateral_offset", category="mid_left_panel",
+        params["mid_left_panel"]["offset"] = _param_get_helper(name="offset", category="mid_left_panel",
                                                                        default_value=-6)
         params["mid_left_panel"]["qx_max"] = _param_get_helper(name="qx_max", category="mid_left_panel",
                                                                default_value=0.003822)
         params["mid_left_panel"]["qx_min"] = _param_get_helper(name="qx_min", category="mid_left_panel",
                                                                default_value=-0.02545)
-        params["mid_right_panel"]["lateral_offset"] = _param_get_helper(name="lateral_offset",
+        params["mid_right_panel"]["offset"] = _param_get_helper(name="offset",
                                                                         category="mid_right_panel", default_value=-5.5)
         params["mid_right_panel"]["qx_min"] = _param_get_helper(name="qx_min", category="mid_right_panel",
                                                                 default_value=-0.002622)
@@ -232,11 +232,11 @@ class VSANS(Instrument):
                                                                 default_value=0.02854)
         params["mid_right_panel"]["qy_max"] = _param_get_helper(name="qy_max", category="mid_right_panel",
                                                                 default_value=0.02809)
-        params["mid_top_panel"]["verticalOffset"] = _param_get_helper(name="verticalOffset", category="mid_top_panel",
+        params["mid_top_panel"]["offset"] = _param_get_helper(name="offset", category="mid_top_panel",
                                                                       default_value=0)
         params["mid_top_panel"]["qy_min"] = _param_get_helper(name="qy_min", category="mid_top_panel", default_value=0)
         params["mid_top_panel"]["qy_max"] = _param_get_helper(name="qy_max", category="mid_top_panel", default_value=0)
-        params["mid_bottom_panel"]["verticalOffset"] = _param_get_helper(name="verticalOffset",
+        params["mid_bottom_panel"]["offset"] = _param_get_helper(name="offset",
                                                                          category="mid_bottom_panel", default_value=0)
         params["mid_bottom_panel"]["qy_max"] = _param_get_helper(name="qy_max", category="mid_bottom_panel",
                                                                  default_value=0)
@@ -261,7 +261,7 @@ class VSANS(Instrument):
                                                                      default_value=0)
         params["front_carriage"]["refBeamCtr_y"] = _param_get_helper(name="refBeamCtr_y", category="front_carriage",
                                                                      default_value=0)
-        params["front_left_panel"]["lateral_offset"] = _param_get_helper(name="lateral_offset",
+        params["front_left_panel"]["offset"] = _param_get_helper(name="offset",
                                                                          category="front_left_panel",
                                                                          default_value=-9.24)
         params["front_left_panel"]["qx_max"] = _param_get_helper(name="qx_max", category="front_left_panel",
@@ -270,7 +270,7 @@ class VSANS(Instrument):
                                                                  default_value=-0.1253)
         params["front_left_panel"]["match_button"] = _param_get_helper(name="match_button", category="front_left_panel",
                                                                        default_value=False)
-        params["front_right_panel"]["lateral_offset"] = _param_get_helper(name="lateral_offset",
+        params["front_right_panel"]["offset"] = _param_get_helper(name="offset",
                                                                           category="front_right_panel",
                                                                           default_value=6.766)
         params["front_right_panel"]["qx_min"] = _param_get_helper(name="qx_min", category="front_right_panel",
@@ -280,7 +280,7 @@ class VSANS(Instrument):
         params["front_right_panel"]["match_button"] = _param_get_helper(name="match_button",
                                                                         category="front_right_panel",
                                                                         default_value=False)
-        params["front_top_panel"]["verticalOffset"] = _param_get_helper(name="verticalOffset",
+        params["front_top_panel"]["offset"] = _param_get_helper(name="offset",
                                                                         category="front_top_panel", default_value=0)
         params["front_top_panel"]["qy_min"] = _param_get_helper(name="qy_min", category="front_top_panel",
                                                                 default_value=0.001147)
@@ -288,7 +288,7 @@ class VSANS(Instrument):
                                                                 default_value=0.09234)
         params["front_top_panel"]["match_button"] = _param_get_helper(name="match_button", category="front_top_panel",
                                                                       default_value=False)
-        params["front_bottom_panel"]["verticalOffset"] = _param_get_helper(name="verticalOffset",
+        params["front_bottom_panel"]["offset"] = _param_get_helper(name="offset",
                                                                            category="front_bottom_panel",
                                                                            default_value=0)
         params["front_bottom_panel"]["qy_max"] = _param_get_helper(name="qy_max", category="front_bottom_panel",
@@ -332,8 +332,8 @@ class VSANS(Instrument):
         self.beam.calculate_beam()
         self.collimation.calculate_collimation()
         self.all_carriage.calculate_all_Carriage()
-        self.middle_carriage.calculate_middleCarriage()
-        self.front_carriage.calculate_frontCarriage()
+        self.middle_carriage.calculate_carriage()
+        self.front_carriage.calculate_carriage()
 
     def calculate_plots(self):
         """A method that  takes in all the params from the other classes needed to calculate the plot data and passes it
@@ -439,18 +439,18 @@ class VSANS(Instrument):
         user_inaccessible["middle_carriage"]["dqy_max"] = self.middle_carriage.dq_calc.dqy_max
         user_inaccessible["middle_carriage"]["refBeamCtr_x"] = self.middle_carriage.refBeamCtr_x
         user_inaccessible["middle_carriage"]["refBeamCtr_y"] = self.middle_carriage.refBeamCtr_y
-        user_inaccessible["mid_left_panel"]["lateral_offset"] = self.middle_carriage.left_panel.lateral_offset
+        user_inaccessible["mid_left_panel"]["offset"] = self.middle_carriage.left_panel.offset
         user_inaccessible["mid_left_panel"]["qx_max"] = self.middle_carriage.left_panel.qx_max
         user_inaccessible["mid_left_panel"]["qx_min"] = self.middle_carriage.left_panel.qx_min
-        user_inaccessible["mid_right_panel"]["lateral_offset"] = self.middle_carriage.right_panel.lateral_offset
+        user_inaccessible["mid_right_panel"]["offset"] = self.middle_carriage.right_panel.offset
         user_inaccessible["mid_right_panel"]["qx_min"] = self.middle_carriage.right_panel.qx_min
         user_inaccessible["mid_right_panel"]["qx_max"] = self.middle_carriage.right_panel.qx_max
         user_inaccessible["mid_right_panel"]["qy_min"] = self.middle_carriage.right_panel.qy_min
         user_inaccessible["mid_right_panel"]["qy_max"] = self.middle_carriage.right_panel.qy_max
-        user_inaccessible["mid_top_panel"]["verticalOffset"] = self.middle_carriage.top_panel.verticalOffset
+        user_inaccessible["mid_top_panel"]["offset"] = self.middle_carriage.top_panel.offset
         user_inaccessible["mid_top_panel"]["qy_min"] = self.middle_carriage.top_panel.qy_min
         user_inaccessible["mid_top_panel"]["qy_max"] = self.middle_carriage.top_panel.qy_max
-        user_inaccessible["mid_bottom_panel"]["verticalOffset"] = self.middle_carriage.bottom_panel.verticalOffset
+        user_inaccessible["mid_bottom_panel"]["offset"] = self.middle_carriage.bottom_panel.offset
         user_inaccessible["mid_bottom_panel"]["qy_max"] = self.middle_carriage.bottom_panel.qy_max
         user_inaccessible["mid_bottom_panel"]["qy_min"] = self.middle_carriage.bottom_panel.qy_min
         user_inaccessible["front_carriage"]["q_min"] = self.front_carriage.dq_calc.q_min
@@ -463,19 +463,19 @@ class VSANS(Instrument):
         user_inaccessible["front_carriage"]["ssd"] = self.front_carriage.ssd
         user_inaccessible["front_carriage"]["refBeamCtr_x"] = self.front_carriage.refBeamCtr_x
         user_inaccessible["front_carriage"]["refBeamCtr_y"] = self.front_carriage.refBeamCtr_y
-        user_inaccessible["front_left_panel"]["lateral_offset"] = self.front_carriage.left_panel.lateral_offset
+        user_inaccessible["front_left_panel"]["offset"] = self.front_carriage.left_panel.offset
         user_inaccessible["front_left_panel"]["qx_max"] = self.front_carriage.left_panel.qx_max
         user_inaccessible["front_left_panel"]["qx_min"] = self.front_carriage.left_panel.qx_min
         user_inaccessible["front_left_panel"]["match_button"] = self.front_carriage.left_panel.match_button
-        user_inaccessible["front_right_panel"]["lateral_offset"] = self.front_carriage.right_panel.lateral_offset
+        user_inaccessible["front_right_panel"]["offset"] = self.front_carriage.right_panel.offset
         user_inaccessible["front_right_panel"]["qx_min"] = self.front_carriage.right_panel.qx_min
         user_inaccessible["front_right_panel"]["qx_max"] = self.front_carriage.right_panel.qx_max
         user_inaccessible["front_right_panel"]["match_button"] = self.front_carriage.right_panel.match_button
-        user_inaccessible["front_top_panel"]["verticalOffset"] = self.front_carriage.top_panel.verticalOffset
+        user_inaccessible["front_top_panel"]["offset"] = self.front_carriage.top_panel.offset
         user_inaccessible["front_top_panel"]["qy_min"] = self.front_carriage.top_panel.qy_min
         user_inaccessible["front_top_panel"]["qy_max"] = self.front_carriage.top_panel.qy_max
         user_inaccessible["front_top_panel"]["match_button"] = self.front_carriage.top_panel.match_button
-        user_inaccessible["front_bottom_panel"]["verticalOffset"] = self.front_carriage.bottom_panel.verticalOffset
+        user_inaccessible["front_bottom_panel"]["offset"] = self.front_carriage.bottom_panel.offset
         user_inaccessible["front_bottom_panel"]["qy_max"] = self.front_carriage.bottom_panel.qy_max
         user_inaccessible["front_bottom_panel"]["qy_min"] = self.front_carriage.bottom_panel.qy_min
         user_inaccessible["front_bottom_panel"]["match_button"] = self.front_carriage.bottom_panel.match_button
@@ -557,7 +557,6 @@ class VSANS(Instrument):
                                                                 options=[0.5, 1.0, 0.7], unit=None)
         params["beam"]["flux"] = create_number_output(name="Flux", unit="Φ", default=1.362e+11)
         params["beam"]["beam_current"] = create_number_output(name="Beam Current", unit="1/s", default=1.055e+5)
-        params["beam"]["i_sub_zero"] = create_number_output(name="I0", unit="1/s/cm^2", default=8.332e+4)
         params["collimation"]["guide_select"] = create_guide_config(
             options=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, "CONV_BEAMS"], extra=0)
         params["collimation"]["source_aperture_js"] = create_source_aperture(unit="mm", options=[7.5, 15.0, 30.0],
@@ -591,19 +590,19 @@ class VSANS(Instrument):
                                                                         unit="cm")
         params["middle_carriage"]["refBeamCtr_y"] = create_number_input(name="Ref Beam Ctr_y", default=0, step=0.1,
                                                                         unit="cm")
-        params["mid_left_panel"]["lateral_offset"] = create_number_input(name="Lateral Offset", unit="cm", default=-6)
+        params["mid_left_panel"]["offset"] = create_number_input(name="Lateral Offset", unit="cm", default=-6)
         params["mid_left_panel"]["qx_max"] = create_number_output(name="Q_right", unit="1/Å", default=-0.003822)
         params["mid_left_panel"]["qx_min"] = create_number_output(name="Q_left", unit="1/Å", default=-0.02545)
-        params["mid_right_panel"]["lateral_offset"] = create_number_input(name="Lateral Offset", unit="cm",
+        params["mid_right_panel"]["offset"] = create_number_input(name="Lateral Offset", unit="cm",
                                                                           default=-5.5)
         params["mid_right_panel"]["qx_min"] = create_number_output(name="Q_left", unit="1/Å", default=-0.002622)
         params["mid_right_panel"]["qx_max"] = create_number_output(name="Q_right", unit="1/Å", default=0.01901)
         params["mid_right_panel"]["qy_min"] = create_number_output(name="Q_bottom", unit="1/Å", default=-0.02854)
         params["mid_right_panel"]["qy_max"] = create_number_output(name="Qtop", unit="1/Å", default=0.02809)
-        params["mid_top_panel"]["verticalOffset"] = create_number_input(name="Vertical Offset", unit="cm", default=0)
+        params["mid_top_panel"]["offset"] = create_number_input(name="Vertical Offset", unit="cm", default=0)
         params["mid_top_panel"]["qy_min"] = create_number_output(name="Qbottom", unit="1/Å", default=0.0)
         params["mid_top_panel"]["qy_max"] = create_number_output(name="q_top", unit="1/Å", default=0.0)
-        params["mid_bottom_panel"]["verticalOffset"] = create_number_input(name="Vertical Offset", unit="cm", default=0)
+        params["mid_bottom_panel"]["offset"] = create_number_input(name="Vertical Offset", unit="cm", default=0)
         params["mid_bottom_panel"]["qy_max"] = create_number_output(name="Q_Top", unit="1/Å", default=-0.0)
         params["mid_bottom_panel"]["qy_min"] = create_number_output(name="Q_Bottom", unit="1/Å", default=-0.0)
 
@@ -618,21 +617,21 @@ class VSANS(Instrument):
         params["front_carriage"]["ssd"] = create_ssd(default=411, readonly=True)
         params["front_carriage"]["refBeamCtr_x"] = create_number_input(name="Ref Beam Ctr X", unit="cm", default=0)
         params["front_carriage"]["refBeamCtr_y"] = create_number_input(name="Ref Beam Ctr Y", unit="cm", default=0)
-        params["front_left_panel"]["lateral_offset"] = create_number_input(name="Lateral Offset", unit="cm",
+        params["front_left_panel"]["offset"] = create_number_input(name="Lateral Offset", unit="cm",
                                                                            default=-9.24)
         params["front_left_panel"]["qx_max"] = create_number_output(name="Q_right", unit="1/Å", default=-0.02538)
         params["front_left_panel"]["qx_min"] = create_number_output(name="Q_left", unit="1/Å", default=-0.1253)
         params["front_left_panel"]["match_button"] = create_checkbox(name="Match to left edge of ML?", default=False)
-        params["front_right_panel"]["lateral_offset"] = create_number_input(name="Lateral Offset", unit="cm",
+        params["front_right_panel"]["offset"] = create_number_input(name="Lateral Offset", unit="cm",
                                                                             default=6.766)
         params["front_right_panel"]["qx_min"] = create_number_output(name="Q_left", unit="1/Å", default=0.01875)
         params["front_right_panel"]["qx_max"] = create_number_output(name="Q_right", unit="1/Å", default=0.1188)
         params["front_right_panel"]["match_button"] = create_checkbox(name="Match right edge to of MR", default=False)
-        params["front_top_panel"]["verticalOffset"] = create_number_input(name="Vertical Offset", unit="cm", default=0)
+        params["front_top_panel"]["offset"] = create_number_input(name="Vertical Offset", unit="cm", default=0)
         params["front_top_panel"]["qy_min"] = create_number_output(name="Qbottom", unit="1/Å", default=0.001147)
         params["front_top_panel"]["qy_max"] = create_number_output(name="q_top", unit="1/Å", default=0.09234)
         params["front_top_panel"]["match_button"] = create_checkbox(name="Match Top Edge to MR", default=False)
-        params["front_bottom_panel"]["verticalOffset"] = create_number_input(name="Vertical Offset", unit="cm",
+        params["front_bottom_panel"]["offset"] = create_number_input(name="Vertical Offset", unit="cm",
                                                                              default=0)
         params["front_bottom_panel"]["qy_max"] = create_number_output(name="Q_Top", unit="1/Å", default=-0.003139)
         params["front_bottom_panel"]["qy_min"] = create_number_output(name="Q_Bottom", unit="1/Å", default=-0.09432)
@@ -794,8 +793,7 @@ class Collimation:
     def calculate_num_guides(self):
         """Decides if guide select value is CONV BEAMS or NARROW SLITS and if not makes it the int value of what was
         selected"""
-        self.num_guides = 0 if self.guide_select == "CONV_BEAMS" or self.guide_select == "NARROW_SLITS" else int(
-            self.guide_select)
+        self.num_guides = 0 if self.guide_select in ["CONV_BEAMS", "NARROW_SLITS"] else int(self.guide_select)
 
     def calculate_source_aperture(self):
         """Calculates the value of the source aperture from the value gotten from JS"""
@@ -1043,7 +1041,7 @@ class Carriage:
         """Calculates the value of l_2 from the ssd JS value and the sample to ap_gv"""
         self.l_2 = self.ssd_input + self.parent.collimation.sample_to_ap_gv
 
-    def calculate_middleCarriage(self):
+    def calculate_carriage(self):
         """Runs all the calculation methods nessasary to calculate the Middle Carriage object and sub objects"""
         # Calculates all the parameters of this object
         self.calculate_ssd()
@@ -1081,8 +1079,7 @@ class FrontCarriage(Carriage):
         self.top_panel = HorizontalPanel(self, params.get("front_top_panel", {}), short_name="FT")
         self.bottom_panel = HorizontalPanel(self, params.get("front_bottom_panel", {}), short_name="FB")
         self.dq_calc = DqCalculator(self, params.get("front_dq_values", {}))
-        carriage_params = params.get("front_carriage", {})
-        set_params(instance=self, params=carriage_params)
+        set_params(instance=self, params=params)
 
 
 class DqCalculator:
@@ -1257,7 +1254,6 @@ class Panel:
         self.qy_max = 0.0  # Top
         self.refBeamCtr_x = 0.0
         self.refBeamCtr_y = 0.0
-        self.offset = 0.0
         self.is_valid = False
         self.k_bctr_cm = True
         self.match_button = None
@@ -1341,8 +1337,6 @@ class Panel:
     def fill_panel_w_ones(self):
         """Takes the specified panel object and added model data to the data parameter based on some parameters and
         then runs detector_2q_non_linear"""
-        q_to_t = np.asarray(self.q_to_t_array)
-
         IMON = 1e+11
         TRANS = 0.8
         THICK = 0.1
@@ -1352,7 +1346,7 @@ class Panel:
         pix_size_x = self.x_pixel_size
         pix_size_y = self.y_pixel_size
 
-        tmp_inten = np.ones(q_to_t.shape())
+        tmp_inten = np.ones(self.q_to_t_array.shape)
         # Id not implement if add_emp_bgd ad it did not seem necessary without model application
         # I also did not implement if back detector as we do not have the back director at this time
         tmp_inten *= TRANS * THICK * pix_size_x * pix_size_y / np.pow(ssd, 2)
@@ -1395,8 +1389,8 @@ class Panel:
         self.two_theta = np.atan(dist / self.parent.ssd)
         self.q_val = (4 * np.pi / self.parent.parent.get_wavelength()) * np.sin(self.two_theta / 2)
         self.qx = self.q_val * np.cos(self.two_theta / 2) * np.cos(self.phi)
-        self.qy = self.q_val * math.cos(self.two_theta / 2) * math.sin(self.phi)
-        self.qz = self.q_val * math.sqrt(self.two_theta / 2)
+        self.qy = self.q_val * np.cos(self.two_theta / 2) * np.sin(self.phi)
+        self.qz = self.q_val * np.sqrt(self.two_theta / 2)
 
     def make_real_dist_x_y_waves(self):
         """Updates the other_array_x and other_array_y arrays based on the orientation of the panel and the gap
@@ -1468,7 +1462,7 @@ class Panel:
         # DEVNotes- this is where I stopped
 
         offset = self.offset
-        D2 = self.data.parent.get_sample_aperture()
+        D2 = self.parent.parent.get_sample_aperture()
         l2 = self.parent.l_2
         # TODO: Finish me!
 
@@ -1507,7 +1501,7 @@ class VerticalPanel(Panel):
         center as well as the front center ssd"""
         middle_object = self.parent.parent.middle_carriage
         xmin = middle_object.left_panel.detectors.x_min(
-            middle_object.left_panel.lateral_offset) - middle_object.refBeamCtr_x
+            middle_object.left_panel.offset) - middle_object.refBeamCtr_x
         angle_min = math.atan2(xmin, middle_object.ssd)
         fr_xmax = math.tan(angle_min) * self.parent.ssd + self.refBeamCtr_x
         self.offset = self.detectors.lateral_offset_from_x_max(fr_xmax)
@@ -1517,7 +1511,7 @@ class VerticalPanel(Panel):
         center as well as the front center ssd"""
         middle_object = self.parent.parent.middle_carriage
         xmax = middle_object.right_panel.detectors.x_max(
-            middle_object.right_panel.lateral_offset) - middle_object.refBeamCtr_x
+            middle_object.right_panel.offset) - middle_object.refBeamCtr_x
         angle_max = math.atan2(xmax, middle_object.ssd)
         fr_xmin = math.tan(angle_max) * self.parent.ssd + self.refBeamCtr_x
         self.offset = self.detectors.lateral_offset_from_x_min(fr_xmin)
@@ -1945,13 +1939,13 @@ class VSANSConstants:
         user_inaccessible["collimation"]["sample_to_ap_gv"] = 22
         user_inaccessible["collimation"]["sample_to_gv"] = 11
         user_inaccessible["middle_carriage"]["ssd_input"] = 450  # SDD_middle_input
-        user_inaccessible["mid_left_panel"]["lateral_offset"] = -6.0
-        user_inaccessible["mid_right_panel"]["lateral_offset"] = -5.5
+        user_inaccessible["mid_left_panel"]["offset"] = -6.0
+        user_inaccessible["mid_right_panel"]["offset"] = -5.5
         user_inaccessible["front_carriage"]["ssd_input"] = 100
-        user_inaccessible["front_left_panel"]["lateral_offset"] = -10.344
-        user_inaccessible["front_right_panel"]["lateral_offset"] = 7.57
-        user_inaccessible["front_top_panel"]["verticalOffset"] = 0
-        user_inaccessible["front_bottom_panel"]["verticalOffset"] = 0
+        user_inaccessible["front_left_panel"]["offset"] = -10.344
+        user_inaccessible["front_right_panel"]["offset"] = 7.57
+        user_inaccessible["front_top_panel"]["offset"] = 0
+        user_inaccessible["front_bottom_panel"]["offset"] = 0
         user_inaccessible["front_carriage"]["refBeamCtr_x"] = 0
         user_inaccessible["front_carriage"]["refBeamCtr_y"] = 0
         user_inaccessible["middle_carriage"]["refBeamCtr_x"] = 0
@@ -1981,15 +1975,15 @@ class VSANSConstants:
         user_inaccessible["middle_carriage"]["ssd_input"] = 1100  # SDD_middle_input
         user_inaccessible["middle_carriage"]["refBeamCtr_x"] = 0
         user_inaccessible["middle_carriage"]["refBeamCtr_y"] = 0
-        user_inaccessible["mid_left_panel"]["lateral_offset"] = -6.0
-        user_inaccessible["mid_right_panel"]["lateral_offset"] = -5.5
+        user_inaccessible["mid_left_panel"]["offset"] = -6.0
+        user_inaccessible["mid_right_panel"]["offset"] = -5.5
         user_inaccessible["front_carriage"]["ssd_input"] = 230
         user_inaccessible["front_carriage"]["refBeamCtr_x"] = 0
         user_inaccessible["front_carriage"]["refBeamCtr_y"] = 0
-        user_inaccessible["front_left_panel"]["lateral_offset"] = -9.32
-        user_inaccessible["front_right_panel"]["lateral_offset"] = 6.82
-        user_inaccessible["front_top_panel"]["verticalOffset"] = 0
-        user_inaccessible["front_bottom_panel"]["verticalOffset"] = 0
+        user_inaccessible["front_left_panel"]["offset"] = -9.32
+        user_inaccessible["front_right_panel"]["offset"] = 6.82
+        user_inaccessible["front_top_panel"]["offset"] = 0
+        user_inaccessible["front_bottom_panel"]["offset"] = 0
         return {"user": user_inaccessible, "other": other_constants}
 
     def _preset_16m(self):
@@ -2013,13 +2007,13 @@ class VSANSConstants:
         user_inaccessible["collimation"]["sample_to_ap_gv"] = 22
         user_inaccessible["collimation"]["sample_to_gv"] = 11
         user_inaccessible["middle_carriage"]["ssd_input"] = 1600  # SDD_middle_input
-        user_inaccessible["mid_left_panel"]["lateral_offset"] = -6.0
-        user_inaccessible["mid_right_panel"]["lateral_offset"] = -5.5
+        user_inaccessible["mid_left_panel"]["offset"] = -6.0
+        user_inaccessible["mid_right_panel"]["offset"] = -5.5
         user_inaccessible["front_carriage"]["ssd_input"] = 350
-        user_inaccessible["front_left_panel"]["lateral_offset"] = -9.627
-        user_inaccessible["front_right_panel"]["lateral_offset"] = 7.0497
-        user_inaccessible["front_top_panel"]["verticalOffset"] = 0
-        user_inaccessible["front_bottom_panel"]["verticalOffset"] = 0
+        user_inaccessible["front_left_panel"]["offset"] = -9.627
+        user_inaccessible["front_right_panel"]["offset"] = 7.0497
+        user_inaccessible["front_top_panel"]["offset"] = 0
+        user_inaccessible["front_bottom_panel"]["offset"] = 0
         user_inaccessible["front_carriage"]["refBeamCtr_x"] = 0
         user_inaccessible["front_carriage"]["refBeamCtr_y"] = 0
         user_inaccessible["middle_carriage"]["refBeamCtr_x"] = 0
@@ -2047,13 +2041,13 @@ class VSANSConstants:
         user_inaccessible["collimation"]["sample_to_ap_gv"] = 22
         user_inaccessible["collimation"]["sample_to_gv"] = 11
         user_inaccessible["middle_carriage"]["ssd_input"] = 1900  # SDD_middle_input
-        user_inaccessible["mid_left_panel"]["lateral_offset"] = -6.0
-        user_inaccessible["mid_right_panel"]["lateral_offset"] = -5.5
+        user_inaccessible["mid_left_panel"]["offset"] = -6.0
+        user_inaccessible["mid_right_panel"]["offset"] = -5.5
         user_inaccessible["front_carriage"]["ssd_input"] = 400
-        user_inaccessible["front_left_panel"]["lateral_offset"] = -9.24
-        user_inaccessible["front_right_panel"]["lateral_offset"] = 6.766
-        user_inaccessible["front_top_panel"]["verticalOffset"] = 0
-        user_inaccessible["front_bottom_panel"]["verticalOffset"] = 0
+        user_inaccessible["front_left_panel"]["offset"] = -9.24
+        user_inaccessible["front_right_panel"]["offset"] = 6.766
+        user_inaccessible["front_top_panel"]["offset"] = 0
+        user_inaccessible["front_bottom_panel"]["offset"] = 0
         user_inaccessible["front_carriage"]["refBeamCtr_x"] = 0
         user_inaccessible["front_carriage"]["refBeamCtr_y"] = 0
         user_inaccessible["middle_carriage"]["refBeamCtr_x"] = 0
@@ -2115,6 +2109,7 @@ class PlotData:
         # Not object params
         self.lambda_val = 0.0
         self.default_mask = None
+        self.intensity = 0.0
 
         set_params(instance=self, params=params)
 
@@ -2164,8 +2159,7 @@ class PlotData:
         for panel in self.all_detectors:
             panel.draw_mask()
 
-        # update values on the panel
-        # self.calculate_beam_intensity()
+        self.calculate_beam_intensity()
 
         # Fill in the Qmin and Qmax values, based on Q_Tot for the 2D panels ( not including mask)
         # self.v_q_min_max_back() # We are not worrying about the back Panel
@@ -2227,8 +2221,21 @@ class PlotData:
             panel.data = np.zeros((len(panel.detector_array), len(panel.detector_array[0])))
 
     # DEVNote- Functions created as they were used in igorPro but I did not have time to implement
-    # def calculate_beam_intensity(self):
-    #     pass
+    def calculate_beam_intensity(self):
+        """Calculate the beam intensity at the closest detector"""
+        lambda_t = 6.20
+        phi_0 = 1.82e13
+        wavelength = self.parent.get_wavelength()
+        t_special = 1  # Placeholder for future use
+        t_total = self.parent.collimation.t_filter * self.parent.collimation.t_guide * t_special
+        a1_area = math.pi * math.pow(self.parent.collimation.source_aperture / 2., 2)
+        a2_area = math.pi * math.pow(self.parent.collimation.sample_aperture / 2., 2)
+        d2_phi = phi_0 / (2 * math.pi)
+        print(f"{lambda_t=}, {wavelength=}")
+        d2_phi *= math.exp(4 * math.log(lambda_t / wavelength))
+        d2_phi *= math.exp(-1 * (lambda_t * lambda_t / wavelength / wavelength ))
+        solid_angle = a1_area/ math.pow(self.parent.get_l_1(), 2)
+        self.intensity = a2_area * d2_phi * self.parent.beam.dlambda * solid_angle * t_total
     #
     # def v_q_min_max_middle(self):
     #     pass
@@ -2243,9 +2250,6 @@ class PlotData:
     #     pass
     #
     # def calculate_q_min_beam_stop(self):
-    #     pass
-    #
-    # def bin_all_panels_circular(self):
     #     pass
     #
     # def iq_beam_stop_shadow(self):
