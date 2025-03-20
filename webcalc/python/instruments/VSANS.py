@@ -1517,14 +1517,7 @@ class Detector:
     def __init__(self, where="MR"):
         """ Creates object parameters for Detector class and runs set params method
 
-        Sets object parameters self.name, self.tube_width, self.num_tubes, self.num_bins, self._coord1_zero_pos,
-        self.x, self.y, self._coord1_ctr_offset, self._coord0_ctr_offset, self.x_dim, self.y_dim, self.id,
-        self.spatial_calibration, self.setback, self.x_ctr_offset, self.y_ctr_offset, self.orientation,
-        self.left_or_bottom, and self.panel_gap
-
         :param str where: The location of the pamel
-        :return: None as it just sets the parameters
-        :rtype: None
         """
         self.name = where
 
@@ -1557,99 +1550,61 @@ class Detector:
         self.update_params()
 
     def set_constants(self):
-        """Sets all the constant values needed to run this detector
-
-        :return: Nothing as it just sets the values of id, spatial_calibration, setback, x_ctr_offset, y_ctr_offset,
-            orientation, left_or_bottom, and panel_gap
-        :rtype: None
-        """
-        # If statements based off the name of the detector
-        v_spatial_calibration = [-52.1, 0.814, 0]  # CM
+        """Sets all the constant values needed to run this detector"""
+        v_spatial_calibration = [-52.1, 0.814, 0]
         h_spatial_calibration = [-26.6, 0.416, 0]
-        if self.name == "ML":
-            self.id = "detector_ML"
-            self.spatial_calibration = v_spatial_calibration
-            self.setback = 0
-            self.x_ctr_offset = 0.26
-            self.y_ctr_offset = -0.16
-            self.orientation = "VERTICAL"
-            self.left_or_bottom = True
-            self.panel_gap = 0.59
 
-        elif self.name == "MT":
-            self.id = "detector_MT"
-            self.spatial_calibration = h_spatial_calibration
-            self.setback = 41
-            self.x_ctr_offset = -0.28
-            self.y_ctr_offset = 0.6
-            self.orientation = "HORIZONTAL"
-            self.left_or_bottom = False
-            self.panel_gap = 1.83
+        value_map = {
+            "ML": {
+                'id': "detector_ML", 'spatial_calibration': v_spatial_calibration, 'setback': 0, 'x_ctr_offset': 0.26,
+                'y_ctr_offset': -0.16, 'orientation': 'VERTICAL', 'left_or_bottom': True, 'panel_gap': 0.59
+            },
+            "MT": {
+                'id': "detector_MT", 'spatial_calibration': h_spatial_calibration, 'setback': 41, 'x_ctr_offset': -0.28,
+                'y_ctr_offset': 0.6, 'orientation': 'HORIZONTAL', 'left_or_bottom': False, 'panel_gap': 1.83
+            },
+            "MR": {
+                'id': "detector_MR", 'spatial_calibration': v_spatial_calibration, 'setback': 0, 'x_ctr_offset': 0.0,
+                'y_ctr_offset': 0.0, 'orientation': 'VERTICAL', 'left_or_bottom': False, 'panel_gap': 0.59
+            },
+            "MB": {
+                'id': "detector_MB", 'spatial_calibration': h_spatial_calibration, 'setback': 41, 'x_ctr_offset': -0.89,
+                'y_ctr_offset': 0.96, 'orientation': 'HORIZONTAL', 'left_or_bottom': True, 'panel_gap': 1.83
+            },
+            "FL": {
+                'id': "detector_FL", 'spatial_calibration': v_spatial_calibration, 'setback': 0, 'x_ctr_offset': 0.13,
+                'y_ctr_offset': 0.35, 'orientation': 'VERTICAL', 'left_or_bottom': True, 'panel_gap': 0.35
+            },
+            "FT": {
+                'id': "detector_FT", 'spatial_calibration': h_spatial_calibration, 'setback': 41, 'x_ctr_offset': 1.59,
+                'y_ctr_offset': 0.33, 'orientation': 'HORIZONTAL', 'left_or_bottom': False, 'panel_gap': 0.33
+            },
+            "FR": {
+                'id': "detector_FR", 'spatial_calibration': v_spatial_calibration, 'setback': 0, 'x_ctr_offset': 0.0,
+                'y_ctr_offset': 0.0, 'orientation': 'VERTICAL', 'left_or_bottom': False, 'panel_gap': 0.35
+            },
+            "FB": {
+                'id': "detector_FB", 'spatial_calibration': h_spatial_calibration, 'setback': 41, 'x_ctr_offset': 0.95,
+                'y_ctr_offset': 0.95, 'orientation': 'HORIZONTAL', 'left_or_bottom': True, 'panel_gap': 0.33
+            },
+        }
 
-        elif self.name == "MB":
-            self.id = "detector_MB"
-            self.spatial_calibration = h_spatial_calibration
-            self.setback = 41
-            self.x_ctr_offset = -0.89
-            self.y_ctr_offset = 0.96
-            self.orientation = "HORIZONTAL"
-            self.left_or_bottom = True
-            self.panel_gap = 1.83
-
-        elif self.name == "FR":
-            self.id = "detector_FR"
-            self.spatial_calibration = v_spatial_calibration
-            self.setback = 0
-            self.x_ctr_offset = 0
-            self.y_ctr_offset = 0
-            self.orientation = "VERTICAL"
-            self.left_or_bottom = False
-            self.panel_gap = 0.35
-
-        elif self.name == "FL":
-            self.id = "detector_FL"
-            self.spatial_calibration = v_spatial_calibration
-            self.setback = 0
-            self.x_ctr_offset = 0.13
-            self.y_ctr_offset = 0.35
-            self.orientation = "VERTICAL"
-            self.left_or_bottom = True
-            self.panel_gap = 0.35
-
-        elif self.name == "FT":
-            self.id = "detector_FT"
-            self.spatial_calibration = h_spatial_calibration
-            self.setback = 41
-            self.x_ctr_offset = 1.59
-            self.y_ctr_offset = 0.09
-            self.orientation = "HORIZONTAL"
-            self.left_or_bottom = False
-            self.panel_gap = 0.33
-
-        elif self.name == "FB":
-            self.id = "detector_FB"
-            self.spatial_calibration = h_spatial_calibration
-            self.setback = 41
-            self.x_ctr_offset = 0.95
-            self.y_ctr_offset = 0.77
-            self.orientation = "HORIZONTAL"
-            self.left_or_bottom = True
-            self.panel_gap = 0.33
-        else:
-            self.id = "detector_MR"
-            self.spatial_calibration = v_spatial_calibration
-            self.setback = 0
-            self.x_ctr_offset = 0
-            self.y_ctr_offset = 0
-            self.orientation = "VERTICAL"
-            self.left_or_bottom = False
-            self.panel_gap = 0.59
+        vmap = value_map.get(self.name, value_map['MR'])
+        self.id = vmap.get('id', f"detector_{self.name}")
+        self.spatial_calibration = vmap.get('spatial_calibration', v_spatial_calibration)
+        self.setback = vmap.get('setback', 0)
+        self.x_ctr_offset = vmap.get('x_ctr_offset', 0.0)
+        self.y_ctr_offset = vmap.get('y_ctr_offset', 0.0)
+        self.orientation = vmap.get('orientation', "VERTICAL")
+        self.left_or_bottom = vmap.get('left_or_bottom', False)
+        self.panel_gap = vmap.get('panel_gap', 0.0)
 
     def update_params(self):
         # Fix the value of this as there are issues with this value
 
         self._coord1_zero_pos = -(self.panel_gap / 2.0 + (
                 self.num_tubes * self.tube_width)) if self.left_or_bottom else self.panel_gap / 2.0
+        # The remaining class variables will be set to callable methods to allos other calculations to remain generic
         if self.orientation == 'VERTICAL':
             self.x = self._pixel_to_coord1  # This is a method not a variable
             self.y = self._pixel_to_coord0
