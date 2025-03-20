@@ -1259,6 +1259,7 @@ class Panel:
         self.refBeamCtr_y = 0.0
         self.offset = 0.0
         self.is_valid = False
+        self.k_bctr_cm = True
         self.match_button = None
         self.detectors = Detector(where=short_name)
 
@@ -1284,17 +1285,21 @@ class Panel:
         self.default_mask = None
         self.data_real_dist_x = None  # data_realDistX
         self.data_real_dist_y = None  # data_realDistY
+        # Calculated Arrays
+        self.dx = None
+        self.dy = None
+        self.phi = None
+        self.two_theta = None
+        self.q_val = None
+        self.qx = None
+        self.qy = None
+        self.qz = None
 
         set_params(instance=self, params=params)
 
     def calculate_match(self):
         """If the match button is true set it to match correctly and set its return to disable the lateral offset
-            field and if not enable the vertical offset field
-
-
-        :return: None as it just sets the value of options array to update
-        :rtype: None
-        """
+            field and if not enable the vertical offset field"""
         if self.match_button is not None:
             if self.match_button:
                 self._calculate_match()
@@ -1332,6 +1337,140 @@ class Panel:
         self.refBeamCtr_x = self.parent.refBeamCtr_x
         self.refBeamCtr_y = self.parent.refBeamCtr_y
         self.calculate_match()  # This needs to run first as it affects the values for the rest of the calculations
+
+    def fill_panel_w_ones(self):
+        """Takes the specified panel object and added model data to the data parameter based on some parameters and
+        then runs detector_2q_non_linear"""
+        q_to_t = np.asarray(self.q_to_t_array)
+
+        IMON = 1e+11
+        TRANS = 0.8
+        THICK = 0.1
+        ssd = self.parent.ssd
+        # Get the setback value of each part
+        ssd = ssd + self.setback
+        pix_size_x = self.x_pixel_size
+        pix_size_y = self.y_pixel_size
+
+        tmp_inten = np.ones(q_to_t.shape())
+        # Id not implement if add_emp_bgd ad it did not seem necessary without model application
+        # I also did not implement if back detector as we do not have the back director at this time
+        tmp_inten *= TRANS * THICK * pix_size_x * pix_size_y / np.pow(ssd, 2)
+        tmp_inten *= IMON
+        tmp_inten = np.sqrt(tmp_inten)
+        tmp_inten = np.random.normal(tmp_inten)
+        self.detector_array = tmp_inten / (TRANS * THICK * pix_size_x * pix_size_y / np.pow(ssd, 2) * IMON)
+
+    def plot_panel(self):
+        """Creates the data_real_dist_x and data_real_dist_y arrays and then runs detector_2q_non_linear"""
+        self.make_real_dist_x_y_waves()
+        m_sep = self.offset
+        pix_size_x = self.x_pixel_size
+        pix_size_y = self.y_pixel_size
+        n_pixels_x = int(self.pixel_num_x)
+        n_pixels_y = int(self.pixel_num_y)
+        self.beam_center_x_pix = n_pixels_x - (m_sep / pix_size_x)
+        self.beam_center_y_pix = n_pixels_y / 2
+
+        if self.k_bctr_cm:
+            data_real_dist_x = self.data_real_dist_x
+            data_real_dist_y = self.data_real_dist_y
+            self.beam_center_x_pix = (data_real_dist_x[n_pixels_x - 1][0] / 10 + (
+                    self.beam_center_x_pix - n_pixels_x - 1) * pix_size_x)
+            self.beam_center_y_pix = data_real_dist_y[0][int(self.beam_center_y_pix)] / 10
+        self.detector_2q_non_linear()  # Something to set scale
+
+    def detector_2q_non_linear(self):
+        """Calculates the q_to_t_array, qx_array, qy_array, and qy_array
+
+        :param HorizontalPanel or VerticalPanel panel_object: The object that the methods are being set on
+        :return: None as it just sets of values of many arrays
+        :rtype: None
+        """
+        self.dx = np.asarray(self.data_real_dist_x) - self.pixel_num_x
+        self.dy = np.asarray(self.data_real_dist_y) - self.pixel_num_y
+        self.phi = np.arctan2(self.dy, self.dx)
+        dist = np.sqrt(np.pow(self.dx, 2) + np.sqrt(np.pow(self.dy, 2)))
+        dist = dist / 10
+        self.two_theta = np.atan(dist / self.parent.ssd)
+        self.q_val = (4 * np.pi / self.parent.parent.get_wavelength()) * np.sin(self.two_theta / 2)
+        self.qx = self.q_val * np.cos(self.two_theta / 2) * np.cos(self.phi)
+        self.qy = self.q_val * math.cos(self.two_theta / 2) * math.sin(self.phi)
+        self.qz = self.q_val * math.sqrt(self.two_theta / 2)
+
+    def make_real_dist_x_y_waves(self):
+        """Updates the other_array_x and other_array_y arrays based on the orientation of the panel and the gap
+
+        VC_MakeRealDistXYWaves in IGORPro
+
+        :param HorizontalPanel or VerticalPanel panel_object: The panel that the calculations are being done on
+        :return: Nothing as it just runs calculations and sets values
+        :rtype: None
+        """
+        # make the data_realDistX,Y Waves that are needed for the calculation of q
+        tmp_array = self.tmp_calib
+        tube_width = 8.4
+        # self.non_linear_correction(data,tmpCalib,tube_width,detStr,destPath)
+
+        # The below is V_NonLinearCorrection in igor
+        horizontal_orientation = self.horizontal_orientation
+        diamX = len(self.detector_array)
+        diamy = len(self.detector_array[0])
+        # Find the panel gap from the list of constants
+        if 'F' in self.short_name:
+            if not horizontal_orientation:
+                gap = 3.5
+            else:
+                gap = 3.3
+        elif 'M' in self.short_name:
+            if not horizontal_orientation:
+                gap = 5.9
+            else:
+                gap = 18.3
+        else:
+            gap = 0.0
+
+        # Params needed to calculate teh real_dist arrays
+        self.data_real_dist_x = np.asarray(self.data_real_dist_x)
+        self.data_real_dist_y = np.asarray(self.data_real_dist_y)
+        offset = self.offset * 10
+
+        # Get the data in the real_dist arrays
+        if not horizontal_orientation:
+            if self.k_bctr_cm:  # Matches what is in IGOR:
+                if 'L' in self.short_name:
+                    self.data_real_dist_x = offset - (diamX - self.data_real_dist_x - .5) * tube_width - gap / 2
+                else:  # Matches what is in IGOR
+                    # If it is on the right
+                    self.data_real_dist_x = tube_width * (self.data_real_dist_x + .5) + offset + gap / 2
+            else:
+                self.data_real_dist_x *= tube_width
+            # Set up the y array for the horizontal orientation
+            self.data_real_dist_x = (tmp_array[0] + tmp_array[1] * self.data_real_dist_x +
+                                     tmp_array[2] * self.data_real_dist_x * self.data_real_dist_x)
+        else:  # If it is a horizontal panel
+            if self.k_bctr_cm:
+                if 'T' in self.short_name:
+                    self.data_real_dist_y = tube_width * (self.data_real_dist_y + .5) + offset + gap / 2
+                else:
+                    self.data_real_dist_y = offset - (diamy - self.data_real_dist_y - .5) * tube_width - gap / 2
+            else:
+                self.data_real_dist_y = tube_width * self.data_real_dist_y
+            self.data_real_dist_x = (tmp_array[0] + tmp_array[1] * self.data_real_dist_x +
+                                     tmp_array[2] * self.data_real_dist_x * self.data_real_dist_x)
+
+    def draw_mask(self):
+        """Creates the mask based on the given panel object
+
+        VC_DrawVCALCMask in Igor Pro
+
+        :param HorizontalPanel or VerticalPanel panel_object: The panel to do the calculations on"""
+        # DEVNotes- this is where I stopped
+
+        offset = self.offset
+        D2 = self.data.parent.get_sample_aperture()
+        l2 = self.parent.l_2
+        # TODO: Finish me!
 
 
 class VerticalPanel(Panel):
@@ -1976,40 +2115,25 @@ class PlotData:
         # Not object params
         self.lambda_val = 0.0
         self.default_mask = None
-        self.k_bctr_cm = True  # set to 1 to use beam center in cm. O to use pixels
 
         set_params(instance=self, params=params)
 
     def run_plot_data(self):
-        """Runs all the calculation methods nessasary to calculate the plots object
-
-        :return: None as it just runs calculations
-        :rtype: None
-        """
+        """Runs all the calculation methods nessasary to calculate the plots object"""
         # Initialize the space and all the variables
         self.initialize_space()
 
-        # Open the panel
-        # self.draw_panel() # DEVNote not necessary right now might be used later to set parameters
-
         # Generates default mask
         self.generate_default_mask()
-
-        # Some other update that starts with a preset
 
         # Calculates all the data
         self.calculate_all_detectors()
 
     def initialize_space(self):
         """Creates the all detectors array based on all the panel objects that exist in this panel and then loops
-        through that array creating all of the detector
-
-        :return: None as it just creates arrays
-        :rtype: None
-        """
+        through that array, creating all of the detectors"""
         # All the other variables are set in their classes as they are constants
-
-        # Creates a object that contains all the detector objects and can be lopped through
+        # Creates an object that contains all the detector objects and can be lopped through
         self.all_detectors = [self.mid_left_panel, self.mid_right_panel, self.mid_top_panel, self.mid_bottom_panel,
                               self.front_left_panel, self.front_right_panel, self.front_top_panel,
                               self.front_bottom_panel]
@@ -2018,13 +2142,7 @@ class PlotData:
             panel.create_detector_array()
 
     def generate_default_mask(self):
-        """Generates the default mask based on some constants and then calls the create default mask method
-
-        :return: None as it just sets default_mask and calls create_default_mask
-        :rtype: None
-        """
-
-        # DEVNote if it matters we are using the gHighResBinning value of 4 as that is what is used for VCALC
+        """Generates the default mask based on some constants and then calls the create default mask method"""
 
         # Overall Default Mask
         inner_array = np.concatenate((np.ones(39), np.zeros(1496), np.ones(121)))
@@ -2036,11 +2154,7 @@ class PlotData:
             panel.create_default_mask()
 
     def calculate_all_detectors(self):
-        """Calculation method to calculate the 1 and 2d plots
-
-        :return: None as it just calls a lot of methods
-        :rtype: None
-        """
+        """Calculation method to calculate the 1 and 2d plots"""
         # calculates Q for each panel and fills 2D panels with model data then plots the 2D panel
         # self.plot_back_panel() # We are not worrying about the back Panel
         self.plot_all_panels()
@@ -2048,7 +2162,7 @@ class PlotData:
         # generate a proper mask based on hard + soft shadowing
         self.reset_mask()
         for panel in self.all_detectors:
-            self.draw_mask(panel)
+            panel.draw_mask()
 
         # update values on the panel
         # self.calculate_beam_intensity()
@@ -2101,184 +2215,16 @@ class PlotData:
     def plot_all_panels(self):
         """Runs the plot calculations and fills with model data on all panels
 
-        fPlotMiddlePanels in IgorPro
-
-        :return: None as it just runs methods
-        :rtype: None
-        """
+        fPlotMiddlePanels in IgorPro"""
         # calculate Qtot, qxqyqz arrays from geometry
         for panel in self.all_detectors:
-            self.plot_panel(panel)
-            self.fill_panel_w_ones(panel)
-
-    def fill_panel_w_ones(self, panel_object):
-        """Takes the specified panel object and added model data to the data parameter based on some parameters and
-        then runs detector_2q_non_linear
-
-        :param HorizontalPanel or VerticalPanel panel_object: The panel that the calculations are being done on
-        :return: None as it just runs calculations and calls detector_2q_non_linear
-        :rtype: None
-        """
-        detector_array = np.asarray(panel_object.detector_array)
-        q_to_t = np.asarray(panel_object.q_to_t_array)
-
-        imon = 1e+11
-        trans = 0.8
-        thick = 0.1
-        ssd = self.get_ssd(panel_object)
-        # Get the setback value of each part
-        ssd = ssd + self.get_setback(panel_object)
-        pix_size_x = panel_object.x_pixel_size
-        pix_size_y = panel_object.y_pixel_size
-
-        tmp_inten = np.ones(q_to_t.shape())
-        # Id not implement if add_emp_bgd ad it did not seem necessary without model application
-        # I also did not implement if back detector as we do not have the back director at this time
-        tmp_inten *= trans * thick * pix_size_x * pix_size_y / np.pow(ssd, 2)
-        tmp_inten *= imon
-        tmp_inten = np.sqrt(tmp_inten)
-        tmp_inten = np.random.normal(tmp_inten)
-        panel_object.detector_array = tmp_inten / (trans * thick * pix_size_x * pix_size_y / np.pow(ssd, 2) * imon)
-
-    def plot_panel(self, panel_object):
-        """Creates the data_real_dist_x and data_real_dist_y arrays and then runs detector_2q_non_linear
-
-        :param HorizontalPanel or VerticalPanel panel_object: The panel that is being ploted
-        :return: None as it just sets values of many things
-        :rtype: None
-        """
-        self.make_real_dist_x_y_waves(panel_object)
-        m_sep = self.get_offset(panel_object)
-        pix_size_x = panel_object.x_pixel_size
-        pix_size_y = panel_object.y_pixel_size
-        n_pixels_x = int(panel_object.pixel_num_x)
-        n_pixels_y = int(panel_object.pixel_num_y)
-        panel_object.beam_center_x_pix = n_pixels_x - (m_sep / pix_size_x)
-        panel_object.beam_center_y_pix = n_pixels_y / 2
-
-        if self.k_bctr_cm:
-            data_real_dist_x = panel_object.data_real_dist_x
-            data_real_dist_y = panel_object.data_real_dist_y
-            panel_object.beam_center_x_pix = (data_real_dist_x[n_pixels_x - 1][0] / 10 + (
-                    panel_object.beam_center_x_pix - n_pixels_x - 1) * pix_size_x)
-            panel_object.beam_center_y_pix = data_real_dist_y[0][int(panel_object.beam_center_y_pix)] / 10
-        ssd = self.get_ssd(panel_object)
-        self.detector_2q_non_linear(panel_object=panel_object)  # Something to set scale
-
-    def detector_2q_non_linear(self, panel_object):
-        """Calculates the q_to_t_array, qx_array, qy_array, and qy_array
-
-        :param HorizontalPanel or VerticalPanel panel_object: The object that the methods are being set on
-        :return: None as it just sets of values of many arrays
-        :rtype: None
-        """
-        panel_object.dx = np.asarray(panel_object.data_real_dist_x) - panel_object.pixel_num_x
-        panel_object.dy = np.asarray(panel_object.data_real_dist_y) - panel_object.pixel_num_y
-        panel_object.phi = np.arctan2(panel_object.dy, panel_object.dx)
-        dist = np.sqrt(np.pow(panel_object.dx, 2) + np.sqrt(np.pow(panel_object.dy, 2)))
-        dist = dist / 10
-        panel_object.two_theta = np.atan(dist / self.get_ssd(panel_object))
-        panel_object.q_val = (4 * np.pi / self.lambda_val) * np.sin(panel_object.two_theta / 2)
-        panel_object.qx = panel_object.q_val * np.cos(panel_object.two_theta / 2) * np.cos(panel_object.phi)
-        panel_object.qy = panel_object.q_val * math.cos(panel_object.two_theta / 2) * math.sin(panel_object.phi)
-        panel_object.qz = panel_object.q_val * math.sqrt(panel_object.two_theta / 2)
-
-    def make_real_dist_x_y_waves(self, panel_object):
-        """Updates the other_array_x and other_array_y arrays based on the orientation of the panel and the gap
-
-        VC_MakeRealDistXYWaves in IGORPro
-
-        :param HorizontalPanel or VerticalPanel panel_object: The panel that the calculations are being done on
-        :return: Nothing as it just runs calculations and sets values
-        :rtype: None
-        """
-        # make the data_realDistX,Y Waves that are needed for the calculation of q
-        tmp_array = np.asarray(panel_object.create_tmp_array())
-        tube_width = 8.4
-        # self.non_linear_correction(data,tmpCalib,tube_width,detStr,destPath)
-
-        # The below is V_NonLinearCorrection in igor
-        horizontal_orientation = panel_object.horizontal_orientation
-        diamX = len(panel_object.detector_array)
-        diamy = len(panel_object.detector_array[0])
-        # Find the panel gap from the list of constants
-        if 'F' in panel_object.short_name:
-            if not horizontal_orientation:
-                gap = 3.5
-            else:
-                gap = 3.3
-        elif 'M' in panel_object.short_name:
-            if not horizontal_orientation:
-                gap = 5.9
-            else:
-                gap = 18.3
-        else:
-            gap = 0.0
-
-        # Params needed to calculate teh real_dist arrays
-        other_array_x = np.asarray(panel_object.data_real_dist_x)  # The array we are editing
-        other_array_y = np.asarray(panel_object.data_real_dist_y)  # The array we are editing
-        offset = self.get_offset(panel_object=panel_object)
-        offset = offset * 10
-
-        # Get the data in the real_dist arrays
-        if not horizontal_orientation:
-            if self.k_bctr_cm:  # Matches what is in IGOR:
-                if 'L' in panel_object.short_name:
-                    other_array_x = offset - (diamX - other_array_x - .5) * tube_width - gap / 2
-                else:  # Matches what is in IGOR
-                    # If it is on the right
-                    other_array_x = tube_width * (other_array_x + .5) + offset + gap / 2
-            else:
-                other_array_x *= tube_width
-            # Set up the y array for the horizontal orientation
-            for a in range(len(other_array_y)):  # Matches what it says in IGOR
-                for b in range(len(other_array_y[0])):
-                    other_array_y[a][b] = tmp_array[0][a] + tmp_array[1][a] * b + tmp_array[2][a] * b * b
-        else:  # If it is a horizontal panel
-            if self.k_bctr_cm:
-                if 'T' in panel_object.short_name:
-                    for a in range(len(other_array_y)):
-                        for b in range(len(other_array_y[0])):
-                            other_array_y[a][b] = tube_width * (b + .5) + offset + gap / 2
-                else:
-                    for a in range(len(other_array_y)):
-                        for b in range(len(other_array_y[0])):
-                            other_array_y[a][b] = offset - (diamy - b - .5) * tube_width - gap / 2
-            else:
-                for a in range(len(other_array_y)):
-                    for b in range(len(other_array_y[0])):
-                        other_array_y[a][b] = tube_width * b
-            for a in range(len(other_array_x)):
-                for b in range(len(other_array_x[0])):
-                    other_array_x[a][b] = tmp_array[0][b] + tmp_array[1][b] * a + tmp_array[2][b] * a * a
-
-    # End calculate panel functions
+            panel.plot_panel()
+            panel.fill_panel_w_ones()
 
     def reset_mask(self):
-        """Resets the panel.data array to zeros to allow for better calculations
-
-        VC_ResetVCALCMask in Igor Pro
-
-        :return: Noting as it just resets all panels data
-        :rtype: None
-        """
+        """Resets the panel.data array to zeros to allow for better calculations"""
         for panel in self.all_detectors:
             panel.data = np.zeros((len(panel.detector_array), len(panel.detector_array[0])))
-
-    def draw_mask(self, panel_object):
-        """Creates the mask based on the given panel object
-
-        VC_DrawVCALCMask in Igor Pro
-
-        :param HorizontalPanel or VerticalPanel panel_object: The panel to do the calculations on
-        :return: Non as it just sets values
-        """
-        # DEVNotes- this is where I stopped
-
-        offset = self.get_offset(panel_object)
-        D2 = self.parent.get_sample_aperture()
-        l2 = self.get_l_2(panel_object)
 
     # DEVNote- Functions created as they were used in igorPro but I did not have time to implement
     # def calculate_beam_intensity(self):
@@ -2304,55 +2250,3 @@ class PlotData:
     #
     # def iq_beam_stop_shadow(self):
     #     pass
-
-    def get_l_2(self, panel_object):
-        """Gets the l_2 of the specified parent panel object based on the carriage
-
-        :param HorizontalPanel or VerticalPanel panel_object: The panel to do the calculations on
-        :return: The value of l_2 that was gotten
-        :rtype: Float
-        """
-        if 'F' in panel_object.short_name:
-            return self.front_carriage.l_2
-        else:
-            return self.middle_carriage.l_2
-
-    @staticmethod
-    def get_offset(panel_object):
-        """Gets the offset value based on the orientation of the panel
-
-        :param HorizontalPanel or VerticalPanel panel_object: The panel to do the calculations on
-        :return: The value of offset that was gotten
-        :rtype: Float
-        """
-        # VCALC_getPanelTranslation in IGOR
-        if panel_object.horizontal_orientation:
-            return panel_object.verticalOffset
-        else:
-            return panel_object.lateral_offset
-
-    @staticmethod
-    def get_setback(panel_object):
-        """Gets the setback if its horizontal and 0 if it is not
-
-        :param HorizontalPanel or VerticalPanel panel_object: The panel to do the calculations on
-        :return: The value of setback that was gotten
-        :rtype: Float        """
-        # VCALC_getPanelTranslation in IGOR
-        if panel_object.horizontal_orientation:
-            return panel_object.setback
-        else:
-            return 0
-
-    def get_ssd(self, panel_object):
-        """Gets the SSD value from the parent panel
-
-        :param HorizontalPanel or VerticalPanel panel_object: The panel to do the calculations on
-        :return: The value of SSD that was gotten
-        :rtype: Float
-        """
-        # VCALC_getPanelTranslation in IGOR
-        if 'F' in panel_object.short_name:
-            return self.front_carriage.ssd
-        else:
-            return self.middle_carriage.ssd
