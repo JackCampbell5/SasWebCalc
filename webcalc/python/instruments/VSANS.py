@@ -99,11 +99,11 @@ class VSANS(Instrument):
         params["beam"]["lambda_T"] = self.constants.get("lambda_T", 6.2)
         params["beam"]["phi_0"] = self.constants.get("phi_0", 1.82e13)
         # Front carriage constants
-        params["front_carriage"]["front_lr_w"] = 40.3
-        params["front_carriage"]["front_lr_h"] = 100.0
-        params["front_carriage"]["front_tb_w"] = 50.0
-        params["front_carriage"]["front_tb_h"] = 40.3
-        params["front_carriage"]["front_ssd_setback"] = 41.0
+        params["front_carriage"]["lr_w"] = 40.3
+        params["front_carriage"]["lr_h"] = 100.0
+        params["front_carriage"]["tb_w"] = 50.0
+        params["front_carriage"]["tb_h"] = 40.3
+        params["front_carriage"]["ssd_setback"] = 41.0
         params["front_left_panel"]["beam_center_x"] = 55
         params["front_left_panel"]["beam_center_y"] = 64
         params["front_right_panel"]["beam_center_x"] = -8
@@ -113,11 +113,11 @@ class VSANS(Instrument):
         params["front_bottom_panel"]["beam_center_x"] = 64
         params["front_bottom_panel"]["beam_center_y"] = 55
         # Middle Carriage constants
-        params["middle_carriage"]["middle_lr_w"] = 40.3
-        params["middle_carriage"]["middle_lr_h"] = 100.0
-        params["middle_carriage"]["middle_tb_w"] = 50.0
-        params["middle_carriage"]["middle_tb_h"] = 40.3
-        params["middle_carriage"]["middle_ssd_setback"] = 41.0
+        params["middle_carriage"]["lr_w"] = 40.3
+        params["middle_carriage"]["lr_h"] = 100.0
+        params["middle_carriage"]["tb_w"] = 50.0
+        params["middle_carriage"]["tb_h"] = 40.3
+        params["middle_carriage"]["ssd_setback"] = 41.0
         params["mid_left_panel"]["beam_center_x"] = 55
         params["mid_left_panel"]["beam_center_y"] = 64
         params["mid_right_panel"]["beam_center_x"] = -8
@@ -996,11 +996,11 @@ class Carriage:
     :param float self.l_2: The calculated value of l_2
     :param float self.refBeamCtr_x: The reference center X
     :param float self.refBeamCtr_y: The reference center Y
-    :param float self.middle_lr_w: The Middle Left Right Panel width
-    :param float self.middle_lr_h: The Middle Left Right Panel height
-    :param float self.middle_tb_w: The Middle Top Bottom Panel width
-    :param float self.middle_tb_h: The Middle Top Bottom Panel height
-    :param float self.middle_ssd_setback: The ssd setback value for the middle
+    :param float self.lr_w: The Left Right Panel width
+    :param float self.lr_h: The Left Right Panel height
+    :param float self.tb_w: The Top Bottom Panel width
+    :param float self.tb_h: The Top Bottom Panel height
+    :param float self.ssd_setback: The ssd setback value for the middle
     """
     def __init__(self, parent: VSANS, params: dict, name: str = "middle_carriage"):
         """ Creates sub object and object parameters for Middle Carriage class and runs set params method
@@ -1027,11 +1027,11 @@ class Carriage:
         self.refBeamCtr_y = 0.0
 
         # Front detector dimensions
-        self.middle_lr_w = 0.0
-        self.middle_lr_h = 0.0
-        self.middle_tb_w = 0.0
-        self.middle_tb_h = 0.0
-        self.middle_ssd_setback = 0.0
+        self.lr_w = 0.0
+        self.lr_h = 0.0
+        self.tb_w = 0.0
+        self.tb_h = 0.0
+        self.ssd_setback = 0.0
 
     def calculate_ssd(self):
         """Calculates the SSD value from the ssd JS value and sample to gv"""
@@ -1079,7 +1079,8 @@ class FrontCarriage(Carriage):
         self.top_panel = HorizontalPanel(self, params.get("front_top_panel", {}), short_name="FT")
         self.bottom_panel = HorizontalPanel(self, params.get("front_bottom_panel", {}), short_name="FB")
         self.dq_calc = DqCalculator(self, params.get("front_dq_values", {}))
-        set_params(instance=self, params=params)
+        carriage_params = params.get("front_carriage", {})
+        set_params(instance=self, params=carriage_params)
 
 
 class DqCalculator:
@@ -1286,10 +1287,6 @@ class Panel:
         self.dy = None
         self.phi = None
         self.two_theta = None
-        self.q_val = None
-        self.qx = None
-        self.qy = None
-        self.qz = None
 
         set_params(instance=self, params=params)
 
@@ -1387,10 +1384,10 @@ class Panel:
         dist = np.sqrt(np.pow(self.dx, 2) + np.sqrt(np.pow(self.dy, 2)))
         dist = dist / 10
         self.two_theta = np.atan(dist / self.parent.ssd)
-        self.q_val = (4 * np.pi / self.parent.parent.get_wavelength()) * np.sin(self.two_theta / 2)
-        self.qx = self.q_val * np.cos(self.two_theta / 2) * np.cos(self.phi)
-        self.qy = self.q_val * np.cos(self.two_theta / 2) * np.sin(self.phi)
-        self.qz = self.q_val * np.sqrt(self.two_theta / 2)
+        self.q_to_t_array = (4 * np.pi / self.parent.parent.get_wavelength()) * np.sin(self.two_theta / 2)
+        self.qx_array = self.q_to_t_array * np.cos(self.two_theta / 2) * np.cos(self.phi)
+        self.qy_array = self.q_to_t_array * np.cos(self.two_theta / 2) * np.sin(self.phi)
+        self.qz_array = self.q_to_t_array * np.sqrt(self.two_theta / 2)
 
     def make_real_dist_x_y_waves(self):
         """Updates the other_array_x and other_array_y arrays based on the orientation of the panel and the gap
@@ -1454,11 +1451,7 @@ class Panel:
                                      tmp_array[2] * self.data_real_dist_x * self.data_real_dist_x)
 
     def draw_mask(self):
-        """Creates the mask based on the given panel object
-
-        VC_DrawVCALCMask in Igor Pro
-
-        :param HorizontalPanel or VerticalPanel panel_object: The panel to do the calculations on"""
+        """Creates the mask based on the given panel object"""
         # DEVNotes- this is where I stopped
 
         offset = self.offset
@@ -2231,7 +2224,6 @@ class PlotData:
         a1_area = math.pi * math.pow(self.parent.collimation.source_aperture / 2., 2)
         a2_area = math.pi * math.pow(self.parent.collimation.sample_aperture / 2., 2)
         d2_phi = phi_0 / (2 * math.pi)
-        print(f"{lambda_t=}, {wavelength=}")
         d2_phi *= math.exp(4 * math.log(lambda_t / wavelength))
         d2_phi *= math.exp(-1 * (lambda_t * lambda_t / wavelength / wavelength ))
         solid_angle = a1_area/ math.pow(self.parent.get_l_1(), 2)
