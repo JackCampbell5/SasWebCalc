@@ -1,6 +1,5 @@
 # TODO: Create slicer class and child slicers
 # built-in imports
-import math
 from typing import Union
 
 import numpy as np
@@ -80,7 +79,7 @@ class Slicer:
         # Averaging Parameters
         self.detector_sections: str = 'both'
         self.phi: float = 0.0
-        self.d_phi: float = math.pi / 2
+        self.d_phi: float = np.pi / 2
         self.q_center: float = 0.0
         self.q_width: float = 0.3
         self.aspect_ratio: float = 1.0
@@ -121,22 +120,23 @@ class Slicer:
 
     def set_values(self):
         # Sets the max and min q values and all the phi values
+        MIN_Q = 1.0e-7
 
         # Min and max Q value
         self.max_qx = 0.3 if len(self.qx_values) == 0 else max(self.qx_values)
         self.max_qy = 0.3 if len(self.qy_values) == 0 else max(self.qy_values)
-        self.min_qx = 0.0 if len(self.qx_values) == 0 else min(self.qx_values)
-        self.min_qy = 0.0 if len(self.qy_values) == 0 else min(self.qy_values)
+        self.min_qx = MIN_Q if len(self.qx_values) == 0 else min(self.qx_values)
+        self.min_qy = MIN_Q if len(self.qy_values) == 0 else min(self.qy_values)
 
         # Calculated parameters
         self.phi_upper = self.phi * self.d_phi
         self.phi_lower = self.phi - self.d_phi
-        self.phi_x = math.cos(self.phi)
-        self.phi_y = math.sin(self.phi)
-        self.phi_to_ur_corner = math.atan(self.max_qy / self.max_qx)
-        self.phi_to_ul_corner = math.atan(self.max_qy / self.min_qx) + math.pi
-        self.phi_to_ll_corner = math.atan(self.min_qy / self.min_qx) + math.pi
-        self.phi_to_lr_corner = math.atan(self.min_qy / self.max_qx) + 2 * math.pi
+        self.phi_x = np.cos(self.phi)
+        self.phi_y = np.sin(self.phi)
+        self.phi_to_ur_corner = np.atan(self.max_qy / self.max_qx)
+        self.phi_to_ul_corner = np.atan(self.max_qy / self.min_qx) + np.pi
+        self.phi_to_ll_corner = np.atan(self.min_qy / self.min_qx) + np.pi
+        self.phi_to_lr_corner = np.atan(self.min_qy / self.max_qx) + 2 * np.pi
 
     def calculate(self):
         """Calculate the average intensity for all Q values at a given instrument configuration"""
@@ -149,12 +149,12 @@ class Slicer:
         x_indices = np.asarray(range(1, len(self.qx_values) + 1))
         y_indices = np.asarray(range(1, len(self.qy_values) + 1))
         # Calculate distance array from the beam center
-        x_distances = np.full((self.x_pixels, self.x_pixels),
-                              calculate_distance_from_beam_center(x_indices, self.x_center, self.pixel_size,
-                                                                  self.coeff))
-        y_distances = np.full((self.y_pixels, self.y_pixels),
-                              calculate_distance_from_beam_center(y_indices, self.y_center, self.pixel_size,
-                                                                  self.coeff))
+
+        qx_2d = np.array(self.y_pixels * list(self.qx_values.flatten()))
+        x_distances = np.array(self.y_pixels * list(calculate_distance_from_beam_center(
+            x_indices, self.x_center, self.pixel_size, self.coeff))).reshape((self.x_pixels, self.y_pixels))
+        y_distances = np.array(self.x_pixels * list(calculate_distance_from_beam_center(
+            y_indices, self.y_center, self.pixel_size, self.coeff))).reshape((self.x_pixels, self.y_pixels))
         # Calculate total distances for all pixels
         total_distances = np.sqrt(x_distances * x_distances + y_distances * y_distances)
         # Convert pixels near the center into 3x3 pixels
@@ -182,7 +182,7 @@ class Slicer:
                             continue
                         i_radius = self.get_i_radius(corrected_dx, corrected_dy)
                         self.n_cells[i_radius] += 1 / n_d_sqr
-                        self.ave_intensity[i_radius] = (0 if self.n_cells[i] == 0 or math.isnan(self.n_cells[i])
+                        self.ave_intensity[i_radius] = (0 if self.n_cells[i] == 0 or np.isnan(self.n_cells[i])
                                                         else self.ave_intensity[i] / self.n_cells[i])
                         self.d_sq[i_radius] += data_px * data_px / n_d_sqr
                         nq = max(i_radius, nq)
@@ -197,7 +197,7 @@ class Slicer:
                               else self.d_sq[i] / self.n_cells[i] for i in nq_array])
         diff = ave_isq - ave_sq
         self.sigma_ave = np.asarray([large_number if diff[i] < 0 or self.n_cells[i] <= 1
-                                     else math.sqrt(diff[i] / (self.n_cells[i] - 1)) for i in nq_array])
+                                     else np.sqrt(diff[i] / (self.n_cells[i] - 1)) for i in nq_array])
 
         self.calculate_resolution()
 
@@ -235,13 +235,13 @@ class Slicer:
         lp = 1 / (1 / l2 + 1 / l1)
         # Calculate variance
         var_lambda = self.lambda_width * self.lambda_width / 6.0
-        term_1 = 0.25 * math.pow(a1 * l2 / l1, 2)
-        term_2 = 0.25 * math.pow(a2 * l2 / lp , 2)
-        term_lens = 0.25 * (2. / 3.) * math.pow(self.lambda_width / self.lambda_val, 2) if is_lenses else 1
+        term_1 = 0.25 * np.pow(a1 * l2 / l1, 2)
+        term_2 = 0.25 * np.pow(a2 * l2 / lp , 2)
+        term_lens = 0.25 * (2. / 3.) * np.pow(self.lambda_width / self.lambda_val, 2) if is_lenses else 1
         var_beam = term_1 + term_lens * term_2
-        var_detector = math.pow(pixel_size / 2.3548, 2) + (pixel_size * pixel_size) / 12
+        var_detector = np.pow(pixel_size / 2.3548, 2) + (pixel_size * pixel_size) / 12
         velocity_neutron = velocity_neutron_1a / self.lambda_val
-        var_y_gravity = 0.5 * gravity_constant * l2 * (l1 + l2) / math.pow(velocity_neutron, 2)
+        var_y_gravity = 0.5 * gravity_constant * l2 * (l1 + l2) / np.pow(velocity_neutron, 2)
         var_gravity = 2.0 * var_lambda * var_y_gravity * var_y_gravity
         r_zero = l2 * np.tan(2.0 * np.arcsin(self.lambda_val * np.asarray(self.q_values) / (4.0 * np.pi)))
         r_zero[r_zero < small_number] = small_number
@@ -250,10 +250,10 @@ class Slicer:
                                 if r_zero[i] >= bs
                                 else np.exp(np.log(gamma(1.5))) * (1 - gammainc(1.5, delta) / gamma(1.5))
                                 for i in range(len(r_zero))])
-        f_sub_s = 0.5 * (1.0 + erf((r_zero - bs) / math.sqrt(2.0 * var_detector)))
+        f_sub_s = 0.5 * (1.0 + erf((r_zero - bs) / np.sqrt(2.0 * var_detector)))
         f_sub_s[f_sub_s < small_number] = small_number
         fr = 1.0 + np.sqrt(var_detector) * np.exp(-1.0 * delta) / (r_zero * f_sub_s * np.sqrt(2.0 + np.pi))
-        fv = inc_gamma / (f_sub_s * np.sqrt(math.pi)) - np.power(r_zero * (fr - 1.0), 2) / var_detector
+        fv = inc_gamma / (f_sub_s * np.sqrt(np.pi)) - np.power(r_zero * (fr - 1.0), 2) / var_detector
         rmd = fr * r_zero
         var_r1 = var_beam + var_detector * fv + var_gravity
         rm = rmd + 0.5 * var_r1 / rmd
@@ -268,7 +268,7 @@ class Slicer:
             pixel_center = self.x_center
         else:
             pixel_center = self.y_center
-        return self.coeff * math.tan(pixel_value - pixel_center) * self.pixel_size / self.coeff
+        return self.coeff * np.tan(pixel_value - pixel_center) * self.pixel_size / self.coeff
 
     # Calculate Q Range Slicer and its helper methods
     def calculate_q_range_slicer(self):
@@ -279,16 +279,16 @@ class Slicer:
         x_pixels = np.array([i for i in range(self.x_pixels)])
         x_distances = calculate_distance_from_beam_center(x_pixels, self.x_center, self.pixel_size, self.coeff)
         theta_x = np.arctan(x_distances / self.detector_distance) / 2.0
-        self.qx_values = (4 * math.pi / self.lambda_val) * np.sin(theta_x)
+        self.qx_values = (4 * np.pi / self.lambda_val) * np.sin(theta_x)
         y_pixels = np.array([i for i in range(self.y_pixels)])
         y_distances = calculate_distance_from_beam_center(y_pixels, self.y_center, self.pixel_size, self.coeff)
         theta_y = np.arctan(y_distances / self.detector_distance) / 2
-        self.qy_values = (4 * math.pi / self.lambda_val) * np.sin(theta_y)
+        self.qy_values = (4 * np.pi / self.lambda_val) * np.sin(theta_y)
         qx_2d = np.full((self.x_pixels, self.y_pixels), self.qx_values)
         qy_2d = np.transpose(np.full((self.y_pixels, self.x_pixels), self.qy_values))
         self.q_2d_values = np.sqrt(qx_2d * qx_2d + qy_2d * qy_2d)
-        min_theta = math.tan(self.beam_stop_size / (2 * self.detector_distance))
-        min_q = (4 * math.pi / self.lambda_val) * math.sin(min_theta / 2)
+        min_theta = np.tan(self.beam_stop_size / (2 * self.detector_distance))
+        min_q = (4 * np.pi / self.lambda_val) * np.sin(min_theta / 2)
         self.intensity_2D = np.where(abs(self.q_2d_values) > min_q, self.intensity_2D, 1e-10)
         self.calculate()
 
@@ -301,7 +301,7 @@ class Slicer:
         """ Generate an array that uses 1 to represent a masked pixel and 0 otherwise. The outer two pixels are masked
         by default."""
         self.mask = np.array([[1 if i <= 1 or i >= self.x_pixels - 2 or j <= 1 or j >= (self.y_pixels - 2) else 0
-                      for i in range(self.x_pixels)] for j in range(self.y_pixels)])
+                      for i in range(self.x_pixels)] for j in range(self.y_pixels)]).transpose()
 
     def include_pixel(self, x_val, y_val, mask):
         return mask == 0
@@ -341,7 +341,7 @@ class Sector(Slicer):
 
     def include_pixel(self, x_val, y_val, mask):
         # Overriding does work
-        pixel_angle = math.atan(x_val / y_val)
+        pixel_angle = np.atan(x_val / y_val)
         is_correct_angle = (pixel_angle > self.phi_lower) and (pixel_angle < self.phi_upper)
         forward = is_correct_angle and x_val > 0
         mirror = is_correct_angle and x_val < 0
@@ -357,10 +357,10 @@ class Rectangular(Slicer):
         self.average_type = "rectangular"
 
     def include_pixel(self, x_val, y_val, mask):
-        corrected_radius = math.sqrt(x_val * x_val + y_val * y_val)
+        corrected_radius = np.sqrt(x_val * x_val + y_val * y_val)
         dot_product = (x_val * self.phi_x + y_val * self.phi_y) / corrected_radius
-        dphi_pixel = math.acos(dot_product)
-        d_perpendicular = corrected_radius * math.sin(dphi_pixel)
+        dphi_pixel = np.acos(dot_product)
+        d_perpendicular = corrected_radius * np.sin(dphi_pixel)
         a = (d_perpendicular <= 0.5 * self.q_width * self.pixel_size)
         b = self.detector_sections == "both"
         c = self.detector_sections == "left" and dot_product >= 0
@@ -380,9 +380,9 @@ class Elliptical(Slicer):
     def calculate_radius(self, x_val, y_val):
         # Supposed to be super().calculate _radius but DNE in slicer class
         i_circular = super().get_i_radius(x_val, y_val)
-        rho = math.atan(x_val / y_val) - self.phi
-        return math.floor(i_circular * math.sqrt(
-            math.cos(rho) * math.cos(rho) + self.aspect_ratio * math.sin(rho) * math.sin(rho))) + 1
+        rho = np.atan(x_val / y_val) - self.phi
+        return np.floor(i_circular * np.sqrt(
+            np.cos(rho) * np.cos(rho) + self.aspect_ratio * np.sin(rho) * np.sin(rho))) + 1
 
 
 if __name__ == '__main__':
