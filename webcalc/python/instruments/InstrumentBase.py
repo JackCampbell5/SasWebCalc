@@ -45,7 +45,7 @@ class Instrument:
         self.data = None
         self.collimation = None
         self.wavelength = None
-        self.detectors = None
+        self.detectors = []
         self.beam_stops = None
         self.beam_flux = None
         self.one_dimensional = {"I": None, "dI": None, "Q": None, "dQ": None, "fSubS": None}
@@ -401,35 +401,35 @@ class Instrument:
         :return: It returns nothing as the parameters it calculates are referenced in the return
         :rtype: None
         """
-        slicer_params = self.slicer_params
+        slicer_params = self.slicer_params if self.slicer_params else {}
 
-        # QUESTION      [0] Do I need to run a loop here? how does this work with multiple detectors
         self.detectors[index].calculate_all_beam_centers()
         slicer_params["x_center"] = self.detectors[index].beam_center_x
         slicer_params["y_center"] = self.detectors[index].beam_center_y
         slicer_params["pixel_size"] = self.detectors[index].pixel_size_x
-        slicer_params["lambda_val"] = self.wavelength.get_wavelength()
-        slicer_params["detector_distance"] = self.collimation.detector_distance
+        slicer_params["lambda_val"] = self.get_wavelength()
+        slicer_params["detector_distance"] = self.get_sample_aperture_to_detector_distance(index)
 
-        slicer_params["lambda_width"] = self.wavelength.wavelength_spread
-        slicer_params["guides"] = self.collimation.guides.number_of_guides
-        slicer_params["lens"] = self.collimation.guides.lenses
+        slicer_params["lambda_width"] = self.get_wavelength_spread()
+        slicer_params["guides"] = self.get_number_of_guides()
+        slicer_params["lens"] = self.collimation.guides.lenses if hasattr(self.collimation, 'guides') else None
         # QUESTION      Is it get_source_aperture_size or get_source_aperture the javascript defines sourceAperture
         # and sampleAperture differently
         slicer_params["source_aperture"] = self.get_source_aperture_size()
         slicer_params["sample_aperture"] = self.get_sample_aperture_size()
-        slicer_params["beam_stop_size"] = self.data.get_calculated_beam_stop_diameter()
+        slicer_params["beam_stop_size"] = self.data.get_calculated_beam_stop_diameter() if self.data else self.get_beam_stop_diameter()
         slicer_params["SSD"] = self.get_source_to_sample_aperture_distance()
         slicer_params["SDD"] = self.get_sample_to_detector_distance()
         averaging_type = self.averaging_type
-        if averaging_type == "sector":
-            self.slicer.insert(index, Sector(slicer_params))
-        elif averaging_type == "rectangular":
-            self.slicer.insert(index, Rectangular(slicer_params))
-        elif averaging_type == "elliptical":
-            self.slicer.insert(index, Elliptical(slicer_params))
-        else:
-            self.slicer.insert(index, Circular(slicer_params))
+        match averaging_type:
+            case "sector":
+                self.slicer.insert(index, Sector(slicer_params))
+            case "rectangular":
+                self.slicer.insert(index, Rectangular(slicer_params))
+            case "elliptical":
+                self.slicer.insert(index, Elliptical(slicer_params))
+            case "circular" | _:
+                self.slicer.insert(index, Circular(slicer_params))
 
     # TODO Fix these run functions and should just be getting values
     def get_attenuation_factor(self):

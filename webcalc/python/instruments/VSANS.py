@@ -3,6 +3,8 @@ import numpy as np
 
 from .InstrumentBase import Instrument
 from ..instrument import set_params, CALC_TYPE
+from ..instrument import Detector as BaseDetector
+from ..instrument import Collimation as BaseCollimation
 from ..instrumentJSParams import *
 
 
@@ -79,6 +81,7 @@ class VSANS(Instrument):
         self.middle_carriage = None
         self.front_carriage = None
         self.plot_data = None
+        self.detectors = []
         self.constants = VSANSConstants().get_constants(self.preset, _create_vsans_dict(is_named=False))
         # if this is necessary
         # Super is the Instrument class
@@ -335,6 +338,14 @@ class VSANS(Instrument):
         self.middle_carriage.calculate_carriage()
         self.front_carriage.calculate_carriage()
 
+    def compile_detectors(self):
+        """A helper method to take the detector arrays from the Carriage objects and create a list."""
+
+        for panel in [self.middle_carriage.left_panel, self.middle_carriage.right_panel, self.middle_carriage.top_panel,
+                      self.middle_carriage.bottom_panel, self.front_carriage.left_panel, self.front_carriage.top_panel,
+                      self.front_carriage.right_panel, self.front_carriage.bottom_panel]:
+            self.detectors.append(panel.detectors)
+
     def calculate_plots(self):
         """A method that  takes in all the params from the other classes needed to calculate the plot data and passes it
         as a parameter to the innit statement of the PLotData class"""
@@ -362,6 +373,18 @@ class VSANS(Instrument):
         """
         return self.beam.wavelength
 
+    # Get methods After here
+    def get_wavelength_spread(self) -> float:
+        """Gets the wavelength parameter from the beam object
+
+        :return: The values of the wavelength parameter
+        :rtype: Float
+        """
+        return self.beam.dlambda
+
+    def get_beam_stop_diameter(self, index=0):
+        return self.all_carriage.beamstop_required
+
     def get_l_1(self) -> float:
         """Gets the l_1 parameter from the collimation object
 
@@ -378,6 +401,9 @@ class VSANS(Instrument):
         """
         return self.middle_carriage.l_2
 
+    def get_source_aperture_size(self):
+        return self.get_source_aperture() / 2.0
+
     def get_source_aperture(self) -> float:
         """Gets the source aperture parameter from the collimation object
 
@@ -385,6 +411,9 @@ class VSANS(Instrument):
         :rtype: Float
         """
         return self.collimation.source_aperture
+
+    def get_sample_aperture_size(self):
+        return self.get_sample_aperture() / 2.0
 
     def get_sample_aperture(self) -> float:
         """Gets the sample aperture parameter from the collimation object
@@ -406,6 +435,11 @@ class VSANS(Instrument):
         # Calculate all the objects
         self.calculate_objects()
         self.calculate_plots()
+        self.compile_detectors()
+        for index in range(len(self.detectors)):
+            panel = self.detectors[index]
+            self.slicer_params = {'coeff': 10000, 'x_pixels': panel.x_dim, 'y_pixels': panel.y_dim}
+            self.calculate_slicer(index)
         # Calculate all the Plots
         user_inaccessible = _create_vsans_dict(is_named=False)
         user_inaccessible["beam"]["wavelength"] = self.beam.wavelength
@@ -648,6 +682,12 @@ class VSANS(Instrument):
         params = check_params(params=params)
         return params
 
+    def get_source_to_sample_aperture_distance(self):
+        return self.collimation.l_1
+
+    def get_sample_to_detector_distance(self):
+        return self.middle_carriage.l_2
+
 
 class Beam:
     """A class for storing and manipulating Beam related data.
@@ -734,7 +774,7 @@ class Beam:
         self.calculate_iSub0()
 
 
-class Collimation:
+class Collimation(BaseCollimation):
     """A class for storing and manipulating Beam related data.
 
     :param VSANS self.parent: The parent VSANS object
@@ -770,8 +810,6 @@ class Collimation:
         :return: None as it just sets the parameters
         :rtype: None
         """
-        self.parent = parent
-        self.name = name
         self.guide_select = 0
         self.num_guides = 0  # No calculation necessary just get the value
         self.cov_beams = False
@@ -787,13 +825,13 @@ class Collimation:
         self.sample_to_gv = 0.0
         self.l_1 = 0.0
         self.a_over_l = 0.0
+        super().__init__(parent, params)
 
-        set_params(instance=self, params=params)
-
-    def calculate_num_guides(self):
+    def get_number_of_guides(self) -> int:
         """Decides if guide select value is CONV BEAMS or NARROW SLITS and if not makes it the int value of what was
         selected"""
         self.num_guides = 0 if self.guide_select in ["CONV_BEAMS", "NARROW_SLITS"] else int(self.guide_select)
+        return self.num_guides
 
     def calculate_source_aperture(self):
         """Calculates the value of the source aperture from the value gotten from JS"""
@@ -828,7 +866,7 @@ class Collimation:
 
     def calculate_collimation(self):
         """Runs all the calculation methods nessasary to calculate the collimation object"""
-        self.calculate_num_guides()
+        self.get_number_of_guides()
         self.calculate_source_aperture()
         self.calculate_source_distance()
         self.calculate_t_guide()
@@ -1258,7 +1296,7 @@ class Panel:
         self.is_valid = False
         self.k_bctr_cm = True
         self.match_button = None
-        self.detectors = Detector(where=short_name)
+        self.detectors = Detector(parent, params, short_name)
 
         # Constants needed for plotting
         self.x_pixel_size = 0.0
@@ -1616,7 +1654,7 @@ class HorizontalPanel(Panel):
         self.calculate_qy_max()
 
 
-class Detector:
+class Detector(BaseDetector):
     """ A class for the detector constants needed for calculations
 
     :param str self.name: The 2 letter name of the detector to use
@@ -1640,11 +1678,12 @@ class Detector:
     :param Float self.panel_gap: The gap in between the panel
     """
 
-    def __init__(self, where="MR"):
+    def __init__(self, parent, params, where="MR"):
         """ Creates object parameters for Detector class and runs set params method
 
         :param str where: The location of the pamel
         """
+        super().__init__(parent, params)
         self.name = where
 
         # Default values needed
