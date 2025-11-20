@@ -228,10 +228,6 @@ def create_app():
         params = _calculate_instrument(instrument, calculate_params)
         q_1d = [np.asarray(array['qValues']) for i, array in params.get('data', {}).items()]
         q_2d = [np.asarray(array['q2DValues']) for i, array in params.get('data', {}).items()]
-        # Get sigma Q for resolution
-        # TODO: Reinstate the resolution once I have figured out why it is overcorrecting
-        # resolution = params.get('sigmaAve', [])
-        # model_params['resolution'] = np.flip(np.array(resolution).reshape(1, len(resolution)))
         # Need size of 1D arrays for 2D array sizes
 
         # Calculate the 1D model
@@ -241,10 +237,6 @@ def create_app():
         for i, data in enumerate(params['data']):
             params['data'][i]['fSubs'] = list(np.asarray(model_1d[i]) * np.asarray(params['data'][i]['fSubs']))
         # Calculate the 2D model
-        model_params.pop('resolution', None)
-        # TODO: Reinstate the resolution once I have figured out why it is overcorrecting
-        # resolution = params.get('sigmaQ', [])
-        # model_params['resolution'] = np.array(resolution).reshape(1, len(resolution) * len(resolution))
         model_2d = _calculate_model(model, model_params, q_2d)
         if len(model_2d) == 1:
             model_2d = [model_2d]
