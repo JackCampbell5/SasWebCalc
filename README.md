@@ -10,7 +10,7 @@ The latest iteration runs using python Flask. To run saswebcalc from source, cre
 
        $ python -m venv saswebcalc
        $ .\saswebcalc\Scripts\activate (Windows) -or- source saswebcalc/bin/activate (Mac/Linux)
-       (saswebcalc) $ python -m pip requirements.txt
+       (saswebcalc) $ python -m pip install -r requirements.txt
        (saswebcalc) $ cd /path/to/saswebcalc/webcalc/
        (saswebcalc) $ python webcalc.py <port>
  
@@ -19,7 +19,7 @@ or [anaconda](https://www.anaconda.com/)::
    
        $ conda create -n saswebcalc
        $ conda activate saswebcalc
-       (saswebcalc) $ python -m pip requirements.txt
+       (saswebcalc) $ python -m pip install -r requirements.txt
        (saswebcalc) $ cd /path/to/saswebcalc/webcalc/
        (saswebcalc) $ python webcalc.py <port>
 
