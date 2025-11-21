@@ -1,18 +1,17 @@
 import math
 import numpy as np
-from typing import Union
 
+from .instruments.InstrumentBase import Instrument
 from .units import Converter
 
-NUMBER_TYPE = Union[float, int]
-VALUE_TYPE = Union[NUMBER_TYPE, str]
-CALC_TYPE = dict[str, Union[VALUE_TYPE, list[Union[VALUE_TYPE]]]]
-PARAM_TYPE = dict[str, dict[str, Union[VALUE_TYPE]]]
+NUMBER_TYPE = float | int
+VALUE_TYPE = NUMBER_TYPE | str
+CALC_TYPE = dict[str, VALUE_TYPE | list[VALUE_TYPE]]
+PARAM_TYPE = dict[str, dict[str, VALUE_TYPE]]
 
 
-def set_params(instance, params, float_params=None):
+def set_params(instance: object, params: dict, float_params: list | tuple | dict | None = None):
     """ Set class attributes based on a dictionary of values. The dict should map <param_name> -> <value>.
-
 
     :param instance: An instance of any class type in this file that needs params set in bulk.
     :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
@@ -58,7 +57,7 @@ class Aperture:
     :param str self.offset_unit: The units of the offset used for converter
     """
 
-    def __init__(self, parent, params, name=None):
+    def __init__(self, parent : Instrument, params: dict, name: str | None = None):
         """Creates object parameters for BeamStop class and runs set params method
         Sets object parameters parent, diameter, diameter_unit, offset, and offset_unit
 
@@ -210,82 +209,72 @@ class Collimation:
 
         :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
         :return: None as it just sets the parameters
-        :rtype: None
         """
         float_params = ["ssd", "ssad", "aperture_offset", "space_offset", "detector_distance"]
         set_params(self, params, float_params)
 
-    def get_source_aperture_radius(self):
+    def get_source_aperture_radius(self) -> float:
         """ Gets the radius attribute from the Source Aperture object
 
         :return: The integer value of the radius
-        :rtype: float
         """
         return self.source_aperture.get_radius()
 
-    def get_source_aperture_diameter(self):
+    def get_source_aperture_diameter(self) -> float:
         """ The diameter attribute from the Source Aperture object
 
         :return: The integer value of the diameter
-        :rtype: float
         """
         return self.source_aperture.get_diameter()
 
-    def get_sample_aperture_radius(self):
+    def get_sample_aperture_radius(self) -> float:
         """Gets the radius attribute from the Sample Aperture object
 
         :return:The integer value of the radius
-        :rtype: float
         """
         return self.sample_aperture.get_radius()
 
-    def get_sample_aperture_diameter(self):
+    def get_sample_aperture_diameter(self) -> float:
         """The diameter attribute from the Sample Aperture object
 
         :return: The integer value of the diameter
-        :rtype: float
         """
         return self.sample_aperture.get_diameter()
 
-    def get_ssd(self):
+    def get_ssd(self) -> float:
         """ The source to sample distance
 
         :return: The ssd value
-        :rtype: float
         """
         return self.parent.d_converter(self.ssd, self.ssd_unit)
 
-    def get_ssad(self):
+    def get_ssad(self) -> float:
         """ The source to sample aperture distance
 
         :return: The SSAD value
-        :rtype: float
         """
         return self.parent.d_converter(self.ssad, self.ssad_unit)
 
-    def get_sample_aperture_offset(self):
+    def get_sample_aperture_offset(self) -> float:
         """
         :return: The sample aperture offset
-        :rtype: float
         """
         return self.sample_aperture.get_offset()
 
     def calculate_source_to_sample_distance(self):
-        """ Calculates the source to sample distance from the ssad value and aperture offset value
-
-        :return: The calculates SSD value
-        :rtype: float
-        """
+        """ Calculates the source to sample distance from the ssad value and aperture offset value"""
         self.ssd = self.ssad - self.aperture_offset
 
-    def calculate_source_to_sample_aperture_distance(self):
+    def calculate_source_to_sample_aperture_distance(self) -> float:
         """ Calculates the source to sample aperture distance from the guide values and sample aperture offset
 
         :return: The calculated SSAD value
         :rtype: float
         """
         self.ssad = (
-                    self.guides.get_maximum_length() - self.guides.get_length_per_guide() * self.guides.number_of_guides - self.get_sample_aperture_offset())
+                    self.guides.get_maximum_length()
+                    - self.guides.get_length_per_guide() * self.guides.number_of_guides
+                    - self.get_sample_aperture_offset())
         return self.ssad
 
 
@@ -461,7 +450,7 @@ class Detector:
         """
         return self.offset
 
-    def calculate_distance_from_beam_center(self, coefficient):
+    def calculate_distance_from_beam_center(self, coefficient: float) -> float:
         """Calculates the distance from the beams center to the point in question
 
         :param int coefficient: The integer of the coefficient that is passed into the calculation
@@ -626,7 +615,7 @@ class Wavelength:
         """
         return self.d_converter(self.wavelength, self.wavelength_unit)
 
-    def set_wavelength(self, value, units):
+    def set_wavelength(self, value: NUMBER_TYPE, units: str):
         """ Sets the value of the wavelength to the value parameter and converts it with the units
 
         :param float value: The value to set it too
@@ -724,7 +713,7 @@ class Data:
         self.flux_time_unit = 's'
         self.set_params(params)
 
-    def set_params(self, params=None):
+    def set_params(self, params: dict | None = None):
         """Set class attributes based on a dictionary of values using the generic set_params function.
 
         :param dict params: A dict mapping <param_name> -> <value> where param_name should be a known class attribute.
@@ -769,7 +758,7 @@ class Data:
         solid_angle = (math.pi / 4) * ((source_aperture / SSD) * (source_aperture / SSD))
         self.flux = area * d2_phi * lambda_spread * solid_angle * total_trans
 
-    def calculate_min_and_max_q(self, index=0):
+    def calculate_min_and_max_q(self, index: int = 0):
         """ Calculate the maximum and minimum q range and max horizontal and vertical q values
 
         :return: Nothing as it calculates and sets the q_max, q_min, q_max_horizon, and q_max_vert
@@ -805,7 +794,7 @@ class Data:
         self.figure_of_merit = math.pow(self.parent.wavelength.get_wavelength(), 2) * self.get_beam_flux()
         return int(self.figure_of_merit)
 
-    def calculate_beam_diameter(self, index=0, direction='maximum'):
+    def calculate_beam_diameter(self, index: int =0, direction: str = 'maximum'):
         """ Calculates the beam diameter from the ssad and ssd among other values
 
         + Usually run by calculate_instrument_parameters
@@ -852,60 +841,19 @@ class Data:
             beam_diam = bm
         self.beam_diameter = beam_diam
 
-    def calculate_beam_stop_diameter(self, index=0):
-        """ Calculates the beam stop diameter
-
-        + Runs calculate beam diameter
+    def calculate_beam_stop_diameter(self, index: int = 0):
+        """ Calculates the beam stop diameter byu first calculating the beam diameter
 
         :param int index: The index in the detector array
         :return: Nothing as it just sets the values
         :rtype: None
         """
         self.calculate_beam_diameter(index, 'maximum')
-        beam_diam = self.get_beam_diameter()
-        for i in self.parent.beam_stops:
-            beam_stop_dict = i
-            if beam_stop_dict.beam_stop_diameter >= beam_diam:
+        for beam_stop_dict in self.parent.beam_stops:
+            if beam_stop_dict.beam_stop_diameter >= self.beam_diameter:
                 self.calculated_beam_stop_diameter = beam_stop_dict.beam_stop_diameter
                 return
         else:
             # If this is reached, that means the beam diameter is larger than the largest known beam stop
             self.calculated_beam_stop_diameter = self.parent.beam_stops[
                 len(self.parent.beam_stops) - 1].beam_stop_diameter
-
-    def get_figure_of_merit(self):
-        """Gets the figure of merit attribute from the Data object and rounds it
-
-        :return: The rounded value of the figure of merit
-        :rtype: int
-        """
-        return int(self.figure_of_merit)
-
-    def get_beam_flux(self):
-        """Gets the beam_flux attribute from the Data object and rounds it
-
-        :return: The rounded value of beam_flux
-        :rtype: int
-        """
-        self.flux = round(self.flux)
-        # TODO  fix this calculation
-        # return (math.pow(self.parent.d_converter(self.flux, self.flux_size_unit), -2)
-        #         * math.pow(self.parent.t_converter(self.flux, self.flux_time_unit),-1))
-        return self.flux
-
-    def get_beam_diameter(self):
-        """ Gets the beam_diameter from the data class
-
-        :return: The value of the beam_diameter
-        :rtype: float
-        """
-
-        return self.beam_diameter
-
-    def get_calculated_beam_stop_diameter(self):
-        """ Gets the calculated_beam_stop_diameter from the data class
-
-        :return: The value of the calculated_beam_stop_diameter
-        :rtype: float
-        """
-        return self.calculated_beam_stop_diameter

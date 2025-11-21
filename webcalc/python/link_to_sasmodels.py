@@ -3,17 +3,16 @@ import sys
 
 import numpy as np
 
-from typing import Dict, List, Union
-
 from sasmodels.core import list_models, load_model, load_model_info
 from sasmodels.direct_model import call_kernel
+from sasmodels.kernel import KernelModel
 
 from .helpers import encode_json
 
-Number = Union[float, int]
+Number = float | int
 
 
-def get_model_list(category=None):
+def get_model_list(category: str = None) -> list[str]:
     """Gets the model list from sasmodels
 
     :param String category: A string value to be passed to the list models parameter in sasmodels
@@ -26,7 +25,7 @@ def get_model_list(category=None):
     return sorted(list(model_list))
 
 
-def get_structure_list():
+def get_structure_list() -> list[str]:
     """Gets a list of all of the models defined as a structure factor with None at the start
 
     To do this is goes through all the models, loads the model info, gets the structure factor and if it is a structure factor adds the model to an array
@@ -38,7 +37,7 @@ def get_structure_list():
     return structure_list
 
 
-def get_multiplicity_models():
+def get_multiplicity_models() -> list[str]:
     """Gets a list of all the Multiplicity Models defined as a structure factor with None at the start
 
     To do this is goes through all the models, gets the parameters, checks to see if there is a multiplicity model and if it is a multiplicity models adds the
@@ -60,7 +59,7 @@ def get_multiplicity_models():
     return return_array
 
 
-def get_model(model_string):
+def get_model(model_string: str) -> KernelModel | None:
     """Loads model params for the specified model
 
     :param str model_string:
@@ -72,7 +71,7 @@ def get_model(model_string):
     return load_model(model_string)
 
 
-def encode_params(params,json_encode = True):
+def encode_params(params: dict, json_encode: bool = True) -> str | dict:
     """Encodes the parameters gotten from sasmodels as a dictionary
 
     :param PyModel params: The pymodel object that contains the params
@@ -101,7 +100,7 @@ def encode_params(params,json_encode = True):
         return return_params
 
 
-def get_all_params(model_string):
+def get_all_params(model_string: str) -> list:
     """Gets all the params by passing True to the get params method
 
     :param str model_string: THe string name of the model
@@ -111,7 +110,7 @@ def get_all_params(model_string):
     return get_params(model_string, True)
 
 
-def get_params(model_string, all=False, encode=True,json_encode=True):
+def get_params(model_string: str, all: bool = False, encode: bool = True,json_encode: bool = True) -> str | dict:
     """Gets most of the params by passing False to the get params method
 
     :param json_encode:
@@ -134,7 +133,7 @@ def get_params(model_string, all=False, encode=True,json_encode=True):
     return encode_params(params,json_encode=json_encode) if encode else params
 
 
-def calculate_model(model_string: str, q: List[np.ndarray], params: Dict[str, float]) -> List[Number]:
+def calculate_model(model_string: str, q: list[np.ndarray], params: dict[str, float]) -> list[Number]:
     """ Takes the model and runs a sequence of code to calculate it
 
     :param str model_string: The string name of the model

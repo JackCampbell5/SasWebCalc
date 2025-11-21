@@ -2,7 +2,7 @@ import json
 from json import JSONDecodeError
 
 
-def encode_json(value=None):
+def encode_json(value: object = None) -> str:
     """Convert value to a JSON string so it can be passed the front-end
 
     :param dict, list, tuple, string, int, float, bool, none value: - Any value that can be converted to a JSON string. This includes dict, list, tuple, string, int, float, bool, none, amongst others.
@@ -16,7 +16,7 @@ def encode_json(value=None):
         return f"Unable to convert {type(value).__name__} to JSON string."
 
 
-def decode_json(value=''):
+def decode_json(value: str = '') -> (str | None, str):
     """Convert value from a JSON encoded string to a python object
 
     :param str value:  string that can be converted to a python object.
