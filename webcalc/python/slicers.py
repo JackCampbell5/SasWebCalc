@@ -1,18 +1,21 @@
-# TODO: Create slicer class and child slicers
-# built-in imports
 import numpy as np
 from scipy.special import gamma, gammainc, erf
-from typing import Union
+
+VALUE_TYPE = str | float | int
 
 
-#  Calculate the x or y distance from the beam center of a given pixel
-def calculate_distance_from_beam_center(pixel_value, pixel_center, pixel_size, coeff):
+def calculate_distance_from_beam_center(
+        pixel_value: float | np.ndarray,
+        pixel_center: float,
+        pixel_size: float,
+        coeff: float) -> float:
+    """Calculate the x or y distance from the beam center of a given pixel"""
     if isinstance(pixel_value, np.ndarray):
         pixel_center = np.full(pixel_value.shape, pixel_center)
     return coeff * np.tan((pixel_value - pixel_center) * pixel_size / coeff)
 
 
-def set_params(instance, params):
+def set_params(instance: object, params: dict[str, VALUE_TYPE]):
     """
     Set class attributes based on a dictionary of values. The dict should map <param_name> -> <value>.
     Args:
@@ -43,7 +46,7 @@ def add_at_location(array, location):
 
 class Slicer:
 
-    def __init__(self, params):
+    def __init__(self, params: dict[str, VALUE_TYPE]):
 
         # Import all parameters for slicer class
 
@@ -118,7 +121,7 @@ class Slicer:
         self.set_values()
 
     def set_values(self):
-        # Sets the max and min q values and all the phi values
+        """Defines derived and calculated values based on the values passed to the class."""
         MIN_Q = 1.0e-7
 
         # Min and max Q value
@@ -139,35 +142,50 @@ class Slicer:
 
     def calculate(self):
         """Calculate the average intensity for all Q values at a given instrument configuration"""
+        # A large number for Q purposes
         large_number = 1.0
         # The radius, in cm, from the center of the beam to slice pixels into a 3x3 grid
         radius_center = 100
         # Number of unique Q points used for the averaging
         nq = 0
+
         # x and y pixel indices
         x_indices = np.asarray(range(1, len(self.qx_values) + 1))
         y_indices = np.asarray(range(1, len(self.qy_values) + 1))
-        # Calculate distance array from the beam center
 
-        qx_2d = np.array(self.y_pixels * list(self.qx_values.flatten()))
-        x_distances = np.array(self.y_pixels * list(calculate_distance_from_beam_center(
-            x_indices, self.x_center, self.pixel_size, self.coeff))).reshape((self.x_pixels, self.y_pixels))
-        y_distances = np.array(self.x_pixels * list(calculate_distance_from_beam_center(
-            y_indices, self.y_center, self.pixel_size, self.coeff))).reshape((self.x_pixels, self.y_pixels))
+        # Calculate distance array from the beam center
+        x_distances = np.array(
+            self.y_pixels * list(
+                calculate_distance_from_beam_center(
+                    x_indices,
+                    self.x_center,
+                    self.pixel_size,
+                    self.coeff))).reshape((self.x_pixels, self.y_pixels))
+        y_distances = np.array(
+            self.x_pixels * list(
+                calculate_distance_from_beam_center(
+                    y_indices,
+                    self.y_center,
+                    self.pixel_size,
+                    self.coeff))).reshape((self.x_pixels, self.y_pixels))
         # Calculate total distances for all pixels
         total_distances = np.sqrt(x_distances * x_distances + y_distances * y_distances)
+
         # Convert pixels near the center into 3x3 pixels
         num_dimensions = np.ones(np.shape(total_distances))
         num_dimensions[total_distances <= radius_center] = 3
+
         # Set existing pixel center value
         center = np.ones(np.shape(total_distances))
         center[total_distances <= radius_center] = 2
-        num_d_squared = num_dimensions * num_dimensions
+        num_d_squared = num_dimensions * num_dimensions  # TODO: Verify if this is needed
+
         # Generate 1D arrays with size of x_pixels*y_pixels
         self.ave_intensity = np.zeros(self.x_pixels * self.y_pixels)
         self.d_sq = np.zeros(self.x_pixels * self.y_pixels)
         self.n_cells = np.zeros(self.x_pixels * self.y_pixels)
 
+        # FIXME: Linearize this...
         for i in range(self.x_pixels):
             for j in range(self.y_pixels):
                 data_px = self.intensity_2D[i][j]
@@ -200,7 +218,7 @@ class Slicer:
 
         self.calculate_resolution()
 
-    def calculate_q(self, i: Union[np.ndarray, int]):
+    def calculate_q(self, i: np.ndarray | int):
         """Calculates the q value for a given detector pixel, i pixels from the center of the beam or a range of
         q values if i is ann array
 
@@ -259,10 +277,10 @@ class Slicer:
         var_r = var_r1 - 0.5 * (var_r1 / rmd) * (var_r1 / rmd)
         var_r[var_r < 0] = 0.0
         self.q_average = (4.0 * np.pi / self.lambda_val) * np.sin(0.5 * np.arctan(rm / l2))
-        self.sigma_q = self.q_average * np.sqrt((var_r / rmd) * (1 / rmd) + var_lambda)
+        self.sigma_q = np.abs(self.q_average * np.sqrt((var_r / rmd) * (1 / rmd) + var_lambda))
         self.f_subs = f_sub_s
 
-    def calculate_distance_from_beam_center(self, pixel_value, x_or_y):
+    def calculate_distance_from_beam_center(self, pixel_value: float | np.ndarray, x_or_y: str) -> float | np.ndarray:
         if x_or_y.lower() == "x":
             pixel_center = self.x_center
         else:
@@ -302,11 +320,11 @@ class Slicer:
         self.mask = np.array([[1 if i <= 1 or i >= self.x_pixels - 2 or j <= 1 or j >= (self.y_pixels - 2) else 0
                       for i in range(self.x_pixels)] for j in range(self.y_pixels)]).transpose()
 
-    def include_pixel(self, x_val, y_val, mask):
+    def include_pixel(self, x_val: int | np.ndarray, y_val: int | np.ndarray, mask: np.ndarray) -> np.ndarray[bool]:
         return mask == 0
 
     # Slicer recturn method for all the values need to return to slicer
-    def slicer_return(self):
+    def slicer_return(self) -> dict:
         slicer_return = {}
         slicer_return["averageType"] = self.average_type
         slicer_return["detectorSections"] = self.detector_sections

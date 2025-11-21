@@ -7,7 +7,6 @@ import sys
 
 import numpy as np
 
-from typing import Dict, List, Optional, Union
 from flask import Flask, render_template, request, send_file
 
 # import specific methods from python files
@@ -15,7 +14,7 @@ from python.link_to_sasmodels import get_model_list, get_multiplicity_models, ge
 from python.link_to_sasmodels import calculate_model as calculate_m
 from python.helpers import decode_json, encode_json
 
-Number = Union[float, int]
+Number = float | int
 
 
 def create_app():
@@ -26,12 +25,12 @@ def create_app():
     # Launches the main program based on a basic link
     @app.route('/', methods=['GET', 'POST'])
     @app.route('/saswebcalc/', methods=['GET', 'POST'])
-    def root():
+    def root() -> str:
         return render_template("index.html")
 
     # The documentation flask calls to get the documentation site to appear
     @app.route("/docs/<name>", methods=['GET', 'POST'])
-    def docs_main(name):
+    def docs_main(name) -> str:
         try:
             return render_template(f"docs/build/html/{name}")
         except Exception as e:
@@ -39,7 +38,7 @@ def create_app():
             return "Documentation Not Loaded Correctly"
 
     @app.route("/docs/api/<name>", methods=['GET', 'POST'])
-    def docs_api(name):
+    def docs_api(name) -> str:
         return render_template(f"docs/build/html/api/{name}")
 
     @app.route("/docs/_static/<name>", methods=['GET', 'POST'])
@@ -59,7 +58,7 @@ def create_app():
         return send_file(f"templates/docs/build/html/_static/css/fonts/{name}")
 
     @app.route('/get/onLoad/', methods=['GET'])
-    def get_all_onload():
+    def get_all_onload() -> str:
         return_array = {}
         return_array["structures"] = get_structure_list()
         return_array["multiplicity_models"] = get_multiplicity_models()
@@ -67,7 +66,7 @@ def create_app():
         return_array["instruments"] = _get_all_instruments()
         return encode_json(return_array)
 
-    def _get_all_instruments():
+    def _get_all_instruments() -> dict[str: str]:
         """Gets a list of all the instruments that are in the python.instruments directory
 
         :return: A dictionary of the structure that includes structure name and the user visible name
@@ -84,17 +83,17 @@ def create_app():
 
     @app.route('/get/params/<model_name>', methods=['GET'])
     @app.route('/get/params/model/<model_name>', methods=['GET'])
-    def get_model_params(model_name):
+    def get_model_params(model_name: str) -> str:
         params = get_params(model_name, json_encode=False)
         return _update_model_params(js_model_params=params)
 
     @app.route('/get/params/instrument/<instrument_name>', methods=['GET'])
-    def get_instrument_params(instrument_name):
+    def get_instrument_params(instrument_name: str) -> str:
         loaded_instruments = _import_instruments()
         return encode_json(loaded_instruments[instrument_name].get_js_params())
 
     @app.route('/update/params/', methods=['POST'])
-    def model_params_update() -> dict:
+    def model_params_update() -> str:
         # Checks the params out differently if it is coming from the JS or the function
         data = decode_json(request.data)[0]
         json_like = json.loads(data)
@@ -107,7 +106,7 @@ def create_app():
             get_model_params(model_name=model)
         return _update_model_params(js_model_params=js_model_params)
 
-    def _update_model_params(js_model_params=None):
+    def _update_model_params(js_model_params=None) -> str:
         """Updates the model params to increasings the number of inputs if there is a multiplicity model
 
         :param dict js_model_params: A dictionary containing the parameters from the JS
@@ -248,7 +247,7 @@ def create_app():
         # Return all data
         return encode_json(params)
 
-    def _model_params_restructure(model_params):
+    def _model_params_restructure(model_params: dict[str: list[str]]) -> dict:
         """Restructures the parameters for the model calculations
 
         :param dict model_params: The model params to restructure
@@ -277,8 +276,8 @@ def create_app():
 
         return encode_json(_calculate_model(model_name, model_params, None))
 
-    def _calculate_model(model_name: str, model_params: Dict[str, Union[Number, str]],
-                         q: Optional[List[np.ndarray]] = None) -> List[Number]:
+    def _calculate_model(model_name: str, model_params: dict[str, Number | str],
+                         q: list[np.ndarray] | None = None) -> list[Number]:
         """Private method to directly call the model calculator
         :param model_name: The string representation of the model name used by sasmodels.
         :param model_params: A dictionary mapping the sasmodel parameter name to the parameter value.
@@ -296,7 +295,7 @@ def create_app():
         # Calculates all the values and returns them
         return encode_json(_calculate_instrument(instrument_name, params))
 
-    def _import_instruments():
+    def _import_instruments() -> dict[str, dict]:
         """Gets a list of the instruments in the python.instruments directory
 
         :return: A dictionary that has the name and the object
@@ -319,7 +318,7 @@ def create_app():
 
         return instruments_dict
 
-    def _calculate_instrument(instrument: str, params: dict) -> Dict[str, Union[Number, str, List[Union[Number, str]]]]:
+    def _calculate_instrument(instrument: str, params: dict) -> dict[str, Number | str | list[Number | str]]:
         """The base calculation script. Creates an instrument class, calculates the instrumental resolution for the
         configuration, and returns two list of intensities
 
