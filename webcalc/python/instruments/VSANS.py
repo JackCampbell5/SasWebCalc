@@ -1,10 +1,11 @@
 import math
+
 import numpy as np
 
 from .InstrumentBase import Instrument
-from ..instrument import set_params, CALC_TYPE
-from ..instrument import Detector as BaseDetector
+from ..instrument import CALC_TYPE, set_params
 from ..instrument import Collimation as BaseCollimation
+from ..instrument import Detector as BaseDetector
 from ..instrumentJSParams import *
 
 

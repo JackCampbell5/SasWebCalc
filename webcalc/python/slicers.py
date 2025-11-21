@@ -1,9 +1,8 @@
 # TODO: Create slicer class and child slicers
 # built-in imports
-from typing import Union
-
 import numpy as np
 from scipy.special import gamma, gammainc, erf
+from typing import Union
 
 
 #  Calculate the x or y distance from the beam center of a given pixel

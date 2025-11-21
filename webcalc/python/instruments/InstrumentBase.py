@@ -1,10 +1,10 @@
 import math
 from typing import Union
 
-from ..units import Converter
 from ..instrument import BeamStop, Collimation, Detector, Data, NUMBER_TYPE, Wavelength
 from ..instrumentJSParams import generate_js_array
-from ..slicers import Circular, Sector, Rectangular, Elliptical
+from ..slicers import Circular, Elliptical, Rectangular, Sector
+from ..units import Converter
 
 
 class Instrument:

@@ -1,8 +1,9 @@
 import json
 import sys
-from typing import Union, Dict, List
 
 import numpy as np
+
+from typing import Dict, List, Union
 
 from sasmodels.core import list_models, load_model, load_model_info
 from sasmodels.direct_model import call_kernel

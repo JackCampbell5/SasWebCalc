@@ -1,16 +1,17 @@
 ﻿# Decides what to do based on link given
-import json
-import sys
 import importlib
-import os
+import json
 import mimetypes
+import os
+import sys
+
 import numpy as np
 
-from typing import Optional, Union, Dict, List
+from typing import Dict, List, Optional, Union
 from flask import Flask, render_template, request, send_file
 
 # import specific methods from python files
-from python.link_to_sasmodels import get_model_list, get_params, get_structure_list, get_multiplicity_models
+from python.link_to_sasmodels import get_model_list, get_multiplicity_models, get_params, get_structure_list
 from python.link_to_sasmodels import calculate_model as calculate_m
 from python.helpers import decode_json, encode_json
 
