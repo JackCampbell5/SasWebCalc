@@ -1,7 +1,6 @@
 import math
 import numpy as np
 
-from .instruments.InstrumentBase import Instrument
 from .units import Converter
 
 NUMBER_TYPE = float | int
@@ -57,7 +56,7 @@ class Aperture:
     :param str self.offset_unit: The units of the offset used for converter
     """
 
-    def __init__(self, parent : Instrument, params: dict, name: str | None = None):
+    def __init__(self, parent, params: dict, name: str | None = None):
         """Creates object parameters for BeamStop class and runs set params method
         Sets object parameters parent, diameter, diameter_unit, offset, and offset_unit
 
@@ -791,7 +790,9 @@ class Data:
         :return: An integer form of the figure of merit
         :rtype: int
         """
-        self.figure_of_merit = math.pow(self.parent.wavelength.get_wavelength(), 2) * self.get_beam_flux()
+        if not self.flux:
+            self.calculate_beam_flux()
+        self.figure_of_merit = math.pow(self.parent.wavelength.get_wavelength(), 2) * self.flux
         return int(self.figure_of_merit)
 
     def calculate_beam_diameter(self, index: int =0, direction: str = 'maximum'):
