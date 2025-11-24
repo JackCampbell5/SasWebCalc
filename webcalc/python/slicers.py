@@ -296,13 +296,13 @@ class Slicer:
         x_pixels = np.array([i for i in range(self.x_pixels)])
         x_distances = calculate_distance_from_beam_center(x_pixels, self.x_center, self.pixel_size, self.coeff)
         theta_x = np.arctan(x_distances / self.detector_distance) / 2.0
-        self.qx_values = (4 * np.pi / self.lambda_val) * np.sin(theta_x)
+        self.qx_values = (4 * np.pi / self.lambda_val) * np.sin(theta_x).flatten()
         y_pixels = np.array([i for i in range(self.y_pixels)])
         y_distances = calculate_distance_from_beam_center(y_pixels, self.y_center, self.pixel_size, self.coeff)
         theta_y = np.arctan(y_distances / self.detector_distance) / 2
-        self.qy_values = (4 * np.pi / self.lambda_val) * np.sin(theta_y)
-        qx_2d = np.full((self.x_pixels, self.y_pixels), self.qx_values)
-        qy_2d = np.transpose(np.full((self.y_pixels, self.x_pixels), self.qy_values))
+        self.qy_values = (4 * np.pi / self.lambda_val) * np.sin(theta_y).flatten()
+        qx_2d = np.full((self.y_pixels, self.x_pixels), self.qx_values)
+        qy_2d = np.transpose(np.full((self.x_pixels, self.y_pixels), self.qy_values))
         self.q_2d_values = np.sqrt(qx_2d * qx_2d + qy_2d * qy_2d)
         min_theta = np.tan(self.beam_stop_size / (2 * self.detector_distance))
         min_q = (4 * np.pi / self.lambda_val) * np.sin(min_theta / 2)
@@ -312,7 +312,7 @@ class Slicer:
     def generate_ones_data(self):
         """Create an array of 1s as a basis for the 2D intensity values. These 1s willed be scaled relative to the
         average intensity for each pixel"""
-        self.intensity_2D = np.ones((self.x_pixels, self.y_pixels))
+        self.intensity_2D = np.ones((self.y_pixels, self.x_pixels))
 
     def generate_standard_mask(self):
         """ Generate an array that uses 1 to represent a masked pixel and 0 otherwise. The outer two pixels are masked
