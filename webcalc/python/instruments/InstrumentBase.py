@@ -261,13 +261,13 @@ class Instrument:
         # Final output returned to the JS
         python_return = {}
         python_return["user_inaccessible"] = generate_js_array(name=False)
-        python_return["user_inaccessible"]["Wavelength"]["beamFlux"] = self.data.get_beam_flux()
-        python_return["user_inaccessible"]["Wavelength"]["figureOfMerit"] = self.data.get_figure_of_merit()
+        python_return["user_inaccessible"]["Wavelength"]["beamFlux"] = self.data.flux
+        python_return["user_inaccessible"]["Wavelength"]["figureOfMerit"] = self.data.figure_of_merit
         python_return["user_inaccessible"]["Wavelength"]["attenuators"] = self.get_attenuator_number()
         python_return["user_inaccessible"]["Collimation"]["sSD"] = self.collimation.ssd
         python_return["user_inaccessible"]["Detector"]["sDD"] = self.detectors[0].get_sdd()
         python_return["user_inaccessible"]["Detector"]["beamDiameter"] = int(self.get_beam_diameter() * 10000) / 10000
-        python_return["user_inaccessible"]["Detector"]["beamStopSize"] = self.data.get_calculated_beam_stop_diameter()
+        python_return["user_inaccessible"]["Detector"]["beamStopSize"] = self.data.calculated_beam_stop_diameter
         python_return["user_inaccessible"]["Wavelength"]["attenuationFactor"] = self.get_attenuation_factor()
         python_return["user_inaccessible"]["QRange"]["maximumVerticalQ"] = self.data.q_max_vert
         python_return["user_inaccessible"]["QRange"]["maximumHorizontalQ"] = self.data.q_max_horizon
@@ -417,7 +417,7 @@ class Instrument:
         # and sampleAperture differently
         slicer_params["source_aperture"] = self.get_source_aperture_size()
         slicer_params["sample_aperture"] = self.get_sample_aperture_size()
-        slicer_params["beam_stop_size"] = self.data.get_calculated_beam_stop_diameter() if self.data else self.get_beam_stop_diameter()
+        slicer_params["beam_stop_size"] = self.data.calculated_beam_stop_diameter if self.data else self.get_beam_stop_diameter()
         slicer_params["SSD"] = self.get_source_to_sample_aperture_distance()
         slicer_params["SDD"] = self.get_sample_to_detector_distance()
         averaging_type = self.averaging_type
@@ -458,7 +458,8 @@ class Instrument:
         :rtype: int
         """
         # Beam flux in cm^-2-s^-1
-        return self.data.get_beam_flux()
+        self.data.calculate_beam_flux()
+        return self.data.flux
 
     def get_beam_diameter(self, index=0):
         """ Gets the beam diameter value from the bea stops class at the specified index
