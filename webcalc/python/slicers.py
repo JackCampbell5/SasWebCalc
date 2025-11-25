@@ -98,8 +98,9 @@ class Slicer:
         self.beam_stop_size: float = 5.08
         self.SSD: float = 1627
         self.SDD: float = 1530
-        # TODO: not all pixels are square => differentiate pixel_size_x from pixel_size_y
         self.pixel_size = 5.08
+        self.pixel_size_x = self.pixel_size
+        self.pixel_size_y = self.pixel_size
         self.coeff: float = 10000
         self.x_center: float = 64.5
         self.y_center: float = 64.5
@@ -159,14 +160,14 @@ class Slicer:
                 calculate_distance_from_beam_center(
                     x_indices,
                     self.x_center,
-                    self.pixel_size,
+                    self.pixel_size_x,
                     self.coeff))).reshape((self.x_pixels, self.y_pixels))
         y_distances = np.array(
             self.x_pixels * list(
                 calculate_distance_from_beam_center(
                     y_indices,
                     self.y_center,
-                    self.pixel_size,
+                    self.pixel_size_y,
                     self.coeff))).reshape((self.x_pixels, self.y_pixels))
         # Calculate total distances for all pixels
         total_distances = np.sqrt(x_distances * x_distances + y_distances * y_distances)
@@ -191,10 +192,10 @@ class Slicer:
                 data_px = self.intensity_2D[i][j]
                 nd = int(num_dimensions[i][j])
                 for k in range(1, nd):
-                    corrected_dx = x_distances[i][j] + (k - center[i][j]) * self.pixel_size / k
+                    corrected_dx = x_distances[i][j] + (k - center[i][j]) * self.pixel_size_x / k
                     n_d_sqr = nd
                     for el in range(1, nd):
-                        corrected_dy = y_distances[i][j] + (el - center[i][j]) * self.pixel_size / el
+                        corrected_dy = y_distances[i][j] + (el - center[i][j]) * self.pixel_size_y / el
                         if not self.include_pixel(corrected_dx, corrected_dy, self.mask[i][j]):
                             continue
                         i_radius = self.get_i_radius(corrected_dx, corrected_dy)
@@ -233,6 +234,8 @@ class Slicer:
             self.q_values[i] = (4 * np.pi / self.lambda_val) * np.sin(theta)
 
     def get_i_radius(self, x_val, y_val):
+        if not self.pixel_size:
+            self.pixel_size = (self.pixel_size_x + self.pixel_size_y) / 2.0
         return int(np.floor(np.sqrt(x_val * x_val + y_val * y_val) / self.pixel_size) + 1)
 
     def calculate_resolution(self):
@@ -296,13 +299,13 @@ class Slicer:
         x_pixels = np.array([i for i in range(self.x_pixels)])
         x_distances = calculate_distance_from_beam_center(x_pixels, self.x_center, self.pixel_size, self.coeff)
         theta_x = np.arctan(x_distances / self.detector_distance) / 2.0
-        self.qx_values = (4 * np.pi / self.lambda_val) * np.sin(theta_x).flatten()
+        self.qx_values = (4 * np.pi / self.lambda_val) * np.sin(theta_x)
         y_pixels = np.array([i for i in range(self.y_pixels)])
         y_distances = calculate_distance_from_beam_center(y_pixels, self.y_center, self.pixel_size, self.coeff)
         theta_y = np.arctan(y_distances / self.detector_distance) / 2
-        self.qy_values = (4 * np.pi / self.lambda_val) * np.sin(theta_y).flatten()
-        qx_2d = np.full((self.y_pixels, self.x_pixels), self.qx_values)
-        qy_2d = np.transpose(np.full((self.x_pixels, self.y_pixels), self.qy_values))
+        self.qy_values = (4 * np.pi / self.lambda_val) * np.sin(theta_y)
+        qx_2d = np.transpose(np.full((self.y_pixels, self.x_pixels), self.qx_values))
+        qy_2d = np.full((self.x_pixels, self.y_pixels), self.qy_values)
         self.q_2d_values = np.sqrt(qx_2d * qx_2d + qy_2d * qy_2d)
         min_theta = np.tan(self.beam_stop_size / (2 * self.detector_distance))
         min_q = (4 * np.pi / self.lambda_val) * np.sin(min_theta / 2)
@@ -312,7 +315,7 @@ class Slicer:
     def generate_ones_data(self):
         """Create an array of 1s as a basis for the 2D intensity values. These 1s willed be scaled relative to the
         average intensity for each pixel"""
-        self.intensity_2D = np.ones((self.y_pixels, self.x_pixels))
+        self.intensity_2D = np.ones((self.x_pixels, self.y_pixels))
 
     def generate_standard_mask(self):
         """ Generate an array that uses 1 to represent a masked pixel and 0 otherwise. The outer two pixels are masked
