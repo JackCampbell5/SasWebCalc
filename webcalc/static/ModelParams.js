@@ -9,6 +9,7 @@ const template = `
       :min="(param.lower_limit == '-inf') ? null : param.lower_limit"
       :max="(param.upper_limit == 'inf') ? null : param.upper_limit"
       @change="onChangeValue"
+      :id="active_model + '_' + param_name"
         />
     </li>
   </ul>
