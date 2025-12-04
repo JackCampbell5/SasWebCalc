@@ -448,7 +448,6 @@ class VSANS(Instrument):
         user_inaccessible["beam"]["frontend_trans"] = self.beam.frontend_trans
         user_inaccessible["beam"]["flux"] = self.beam.flux
         user_inaccessible["beam"]["beam_current"] = self.beam.beam_current
-        user_inaccessible["beam"]["i_sub_zero"] = self.beam.i_sub_zero
         user_inaccessible["collimation"]["guide_select"] = self.collimation.guide_select
         user_inaccessible["collimation"]["source_aperture_js"] = self.collimation.source_aperture_js
         user_inaccessible["collimation"]["source_distance"] = self.collimation.source_distance
