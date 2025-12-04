@@ -514,9 +514,21 @@ class VSANS(Instrument):
         user_inaccessible["front_bottom_panel"]["qy_max"] = self.front_carriage.bottom_panel.qy_max
         user_inaccessible["front_bottom_panel"]["qy_min"] = self.front_carriage.bottom_panel.qy_min
         user_inaccessible["front_bottom_panel"]["match_button"] = self.front_carriage.bottom_panel.match_button
-        python_return = {"user_inaccessible": user_inaccessible,
-                         'qValues': [detector.q_to_t_array for detector in self.plot_data.all_detectors],
-                         'q2DValues': [detector.q_to_t_array for detector in self.plot_data.all_detectors]}
+        python_return = {"user_inaccessible": user_inaccessible, "data": {}}
+        for i, slicer in enumerate(self.slicer):
+            python_return["data"][i] = {}
+            python_return["data"][i]["nCells"] = slicer.n_cells.tolist()
+            python_return["data"][i]["qsq"] = slicer.d_sq.tolist()
+            python_return["data"][i]["sigmaAve"] = slicer.sigma_ave.tolist()
+            python_return["data"][i]["qAverage"] = slicer.q_average.tolist()
+            python_return["data"][i]["sigmaQ"] = slicer.sigma_q.tolist()
+            python_return["data"][i]["fSubs"] = slicer.f_subs.tolist()
+            python_return["data"][i]["qxValues"] = slicer.qx_values.tolist()
+            python_return["data"][i]["qyValues"] = slicer.qy_values.tolist()
+            python_return["data"][i]["q2DValues"] = slicer.q_2d_values.tolist()
+            python_return["data"][i]["intensity2D"] = slicer.intensity_2D.tolist()
+            python_return["data"][i]["qValues"] = slicer.q_values.tolist()
+            python_return["data"][i]["slicer_params"] = slicer.slicer_return()
         if self.options is not {}:
             python_return['options'] = self.options
         return python_return
