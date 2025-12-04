@@ -1349,7 +1349,7 @@ class Panel:
                 self._calculate_match()
                 self.parent.parent.options[self.name + "_offset"] = {"type": "readonly", "set_to": True}
             else:
-                self.parent.parent.options[self.name + "_offset"] = {"type": "readonly", "set_to": False}
+                pass
 
     def _calculate_match(self):
         """Pseudo-Abstract method: Child Classes must implement or error will be thrown."""
