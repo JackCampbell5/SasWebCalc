@@ -1601,7 +1601,7 @@ class HorizontalPanel(Panel):
         self.horizontal_orientation = True
 
         # Constants needed for plotting
-        self.x_pixel_size = 0.4
+        self.x_pixel_size = 0.8
         self.y_pixel_size = 0.84
         self.pixel_num_x = 128
         self.pixel_num_y = 48
