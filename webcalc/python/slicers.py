@@ -334,15 +334,6 @@ class Slicer:
         slicer_return["phi"] = self.phi
         slicer_return["phiUpper"] = self.phi_upper
         slicer_return["phiUpper"] = self.phi_lower
-        slicer_return["phiToURCorner"] = self.phi_to_ur_corner
-        slicer_return["phiToURCorner"] = self.phi_to_ul_corner
-        slicer_return["phiToLLCorner"] = self.phi_to_ll_corner
-        slicer_return["phiToLRCorner"] = self.phi_to_lr_corner
-        slicer_return["maxQx"] = self.max_qx
-        slicer_return["maxQy"] = self.max_qy
-        slicer_return["minQx"] = self.min_qy
-        slicer_return["minQx"] = self.min_qx
-        slicer_return["qWidth"] = self.q_width
         return slicer_return
 
 
