@@ -228,7 +228,6 @@ def create_app():
         params = _calculate_instrument(instrument, calculate_params)
         q_1d = [np.asarray(array['qValues']) for i, array in params.get('data', {}).items()]
         q_2d = [np.asarray(array['q2DValues']) for i, array in params.get('data', {}).items()]
-        # Need size of 1D arrays for 2D array sizes
 
         # Calculate the 1D model
         model_1d = _calculate_model(model, model_params, q_1d)
