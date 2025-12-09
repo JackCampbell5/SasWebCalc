@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "SasWebCalc"
 version = "1.0.1"
-requires-python = "<= 3.12"
+requires-python = "< 3.13"
 authors = [
     {name = "Brian Maranville", email = 'brian.maranville@nist.gov'},
     {name = "Jack Campbell"}
@@ -22,7 +22,7 @@ dependencies = {file = ["requirements.txt"]}
 
 [tool.setuptools.packages.find]
 where = ["webcalc"]
-include = ['static*', 'templates*', '*.css', '*.js', '*.html', '*.doctree', '*.pickle']
+include = ['python', 'static*', 'templates*', '*.css', '*.js', '*.html', '*.doctree', '*.pickle']
 
 [project.urls]
 Repository = 'https://gitlab.nist.gov/gitlab/jkrzywon/saswebcalc.git'
@@ -32,10 +32,8 @@ Issues = 'https://gitlab.nist.gov/gitlab/jkrzywon/saswebcalc/-/issues'
 webcalc = ['numpy', 'flask', 'sasmodels', 'gunicorn']
 
 [project.scripts]
-local-host = "webcalc:main"
-
-[project.gui-scripts]
-production = "wsgi:application"
+webcalc-dev = "webcalc:main"
+webcalc-prod = "wsgi:application"
 
 [project.entry-points."docker"]
 gunicorn = "wsgi:application"
