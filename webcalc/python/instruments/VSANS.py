@@ -83,6 +83,7 @@ class VSANS(Instrument):
         self.front_carriage = None
         self.plot_data = None
         self.detectors = []
+        self.panels = []
         self.constants = VSANSConstants().get_constants(self.preset, _create_vsans_dict(is_named=False))
         # if this is necessary
         # Super is the Instrument class
@@ -341,10 +342,11 @@ class VSANS(Instrument):
 
     def compile_detectors(self):
         """A helper method to take the detector arrays from the Carriage objects and create a list."""
-
-        for panel in [self.middle_carriage.left_panel, self.middle_carriage.right_panel, self.middle_carriage.top_panel,
+        self.panels = [self.middle_carriage.left_panel, self.middle_carriage.right_panel, self.middle_carriage.top_panel,
                       self.middle_carriage.bottom_panel, self.front_carriage.left_panel, self.front_carriage.top_panel,
-                      self.front_carriage.right_panel, self.front_carriage.bottom_panel]:
+                      self.front_carriage.right_panel, self.front_carriage.bottom_panel]
+
+        for panel in self.panels:
             self.detectors.append(panel.detectors)
 
     def calculate_plots(self):
@@ -437,8 +439,7 @@ class VSANS(Instrument):
         self.calculate_objects()
         self.calculate_plots()
         self.compile_detectors()
-        for index in range(len(self.detectors)):
-            panel = self.detectors[index]
+        for index, panel in enumerate(self.detectors):
             self.slicer_params = {'coeff': 10000, 'x_pixels': panel.x_dim, 'y_pixels': panel.y_dim}
             self.calculate_slicer(index)
         # Calculate all the Plots
