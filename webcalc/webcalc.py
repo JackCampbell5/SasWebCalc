@@ -300,18 +300,11 @@ def create_app():
         :return: A dictionary that has the name and the object
         :rtype; Dict
         """
-        # Specify the directory containing the classes
-        directory = 'python/instruments'
-
-        # Get a list of all Python files in the directory
-        files = [file[:-3] for file in os.listdir(directory) if file.endswith('.py')]
+        # Imports all usable instruments which are then added to the instrument dict
+        import python.instruments as instruments
 
         instruments_dict = {}
-        # Import all classes from the files
-        for file in files:
-            importlib.import_module(directory.replace("/", ".")+'.' + file)
-        from python.instruments.InstrumentBase import Instrument
-        for class_ in Instrument.__subclasses__():
+        for class_ in instruments.Instrument.__subclasses__():
             if class_.__name__ != "Example":
                 instruments_dict[class_.__name__] = class_
 
