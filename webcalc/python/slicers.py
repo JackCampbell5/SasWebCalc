@@ -64,6 +64,8 @@ class Slicer:
         self.qx_values = None
         self.qy_values = None
         self.q_2d_values = None
+        self.qx_2d_values = None
+        self.qy_2d_values = None
         self.q_values = None
         self.ave_intensity = None
         self.d_sq = [0]
@@ -347,14 +349,18 @@ class Slicer:
         self.generate_ones_data()
         self.generate_standard_mask()
         # Calculate Qx and Qy values
+        # Per-pixel Q from the pixel's real-space position (Igor: V_CalcQval, V_CalcQX, V_CalcQY). [i][j] is (x_i, y_j)
         x_distances, y_distances = self.pixel_distances()
-        theta_x = np.arctan(x_distances / self.detector_distance) / 2.0
-        self.qx_values = (4 * np.pi / self.lambda_val) * np.sin(theta_x)
-        theta_y = np.arctan(y_distances / self.detector_distance) / 2
-        self.qy_values = (4 * np.pi / self.lambda_val) * np.sin(theta_y)
-        qx_2d = np.transpose(np.full((self.y_pixels, self.x_pixels), self.qx_values))
-        qy_2d = np.full((self.x_pixels, self.y_pixels), self.qy_values)
-        self.q_2d_values = np.sqrt(qx_2d * qx_2d + qy_2d * qy_2d)
+        x_2d, y_2d = np.meshgrid(x_distances, y_distances, indexing='ij')
+        two_theta = np.arctan(np.hypot(x_2d, y_2d) / self.SDD)
+        phi = np.arctan2(y_2d, x_2d)
+        self.q_2d_values = (4 * np.pi / self.lambda_val) * np.sin(two_theta / 2)
+        # Project onto the detector plane (the remainder is qz)
+        self.qx_2d_values = self.q_2d_values * np.cos(two_theta / 2) * np.cos(phi)
+        self.qy_2d_values = self.q_2d_values * np.cos(two_theta / 2) * np.sin(phi)
+        # Axes for plotting the panel as an image: linear from the min to max Q, as Igor's SetScale/I does
+        self.qx_values = np.linspace(self.qx_2d_values.min(), self.qx_2d_values.max(), self.x_pixels)
+        self.qy_values = np.linspace(self.qy_2d_values.min(), self.qy_2d_values.max(), self.y_pixels)
         min_theta = np.arctan(self.beam_stop_size / (2 * self.detector_distance))
         min_q = (4 * np.pi / self.lambda_val) * np.sin(min_theta / 2)
         self.intensity_2D = np.where(abs(self.q_2d_values) > min_q, self.intensity_2D, 1e-10)
