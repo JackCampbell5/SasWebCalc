@@ -528,6 +528,7 @@ class VSANS(Instrument):
             python_return["data"][i]["intensity2D"] = slicer.intensity_2D.tolist()
             python_return["data"][i]["qValues"] = slicer.q_values.tolist()
             python_return["data"][i]["slicer_params"] = slicer.slicer_return()
+            python_return["data"][i]["name"] = self.panels[i].short_name if i < len(self.panels) else f"Panel {i}"
         if self.options is not {}:
             python_return['options'] = self.options
         return python_return
@@ -694,26 +695,84 @@ class VSANS(Instrument):
         params = check_params(params=params)
         return params
 
+    @staticmethod
+    def vcalc_pixel_positions(panel) -> tuple[np.ndarray, np.ndarray, float, float]:
+        """Real-space pixel positions of a panel relative to the beam center, as calculated by VCALC in Igor.
+
+        Port of VC_MakeRealDistXYWaves -> V_NonLinearCorrection (with the "perfect" tube calibration) and of the
+        kBCTR_CM beam center calculation in VC_CalculateQFrontPanels / VC_CalculateQMiddlePanels.
+
+        * The panel offset (VCALC "translation") is the position [cm] of the panel's inner edge relative to the beam:
+          negative to the left/below the beam, positive to the right/above it. Each panel's tubes start half the
+          panel gap away from that edge.
+        * Vertical (L/R) panels: x is set by the 48 tubes (8.4 mm wide), y by the position along the tube
+          (-521 mm + 8.14 mm * pixel). Horizontal (T/B) panels: y is set by the tubes, x by -266 mm + 4.16 mm * pixel.
+
+        :param panel: A VerticalPanel or HorizontalPanel
+        :return: x positions [cm] (one per pixel column), y positions [cm] (one per pixel row), and the beam center
+            x, y [mm] in the panel's real-distance coordinates
+        """
+        detector = panel.detectors
+        name = panel.short_name
+        side = name[1]
+        tube_width = 8.4  # [mm]
+        gap = detector.panel_gap * 10.0  # [mm]
+        sep = float(panel.offset or 0.0)  # [cm]
+        offset = sep * 10.0  # [mm]
+        n_x, n_y = int(detector.x_dim), int(detector.y_dim)
+        p = np.arange(n_x, dtype=float)
+        q = np.arange(n_y, dtype=float)
+        pix_x, pix_y = panel.x_pixel_size, panel.y_pixel_size  # [cm]
+        if not panel.horizontal_orientation:
+            if side == "L":
+                real_x = offset - (n_x - p - 0.5) * tube_width - gap / 2
+            else:
+                real_x = tube_width * (p + 0.5) + offset + gap / 2
+            real_y = -521.0 + 8.14 * q
+            # Beam center in pixels, then converted to cm (kBCTR_CM)
+            if side == "L":
+                x_ctr = real_x[n_x - 1] / 10 + ((n_x - sep / pix_x) - n_x - 1) * pix_x
+            else:
+                x_ctr = real_x[0] / 10 + (-(sep / pix_x) - 1) * pix_x
+            y_ctr = real_y[int(n_y / 2)] / 10
+        else:
+            if side == "T":
+                real_y = tube_width * (q + 0.5) + offset + gap / 2
+            else:
+                real_y = offset - (n_y - q - 0.5) * tube_width - gap / 2
+            real_x = -266.0 + 4.16 * p
+            # VCALC uses half the translation for the front T/B beam centers, but the full value for the middle
+            sep_ctr = sep / 2 if name[0] == "F" else sep
+            x_ctr = real_x[int(n_x / 2)] / 10
+            if side == "T":
+                y_ctr = real_y[0] / 10 + (-(sep_ctr / pix_y) - 1) * pix_y
+            else:
+                y_ctr = real_y[n_y - 1] / 10 + ((n_y - sep_ctr / pix_y) - n_y - 1) * pix_y
+        # VCALC passes these centers (computed in cm) straight to V_CalcQval, which subtracts them from the mm
+        # real-distance waves. The same is done here so the Q values match VCALC.
+        # The reference beam center (cm) shifts the beam relative to the panels.
+        x_ctr_mm = x_ctr + panel.parent.refBeamCtr_x * 10.0
+        y_ctr_mm = y_ctr + panel.parent.refBeamCtr_y * 10.0
+        x_positions = (real_x - x_ctr_mm) / 10.0
+        y_positions = (real_y - y_ctr_mm) / 10.0
+        return x_positions, y_positions, x_ctr_mm, y_ctr_mm
+
     def calculate_slicer(self, index=0):
         """Creates the slicer for a single VSANS panel.
 
         The generic Instrument.calculate_slicer() reads pixel size and beam center from a base Detector, which VSANS
         does not populate, so the panel geometry is passed explicitly here. Pixel positions relative to the beam are
-        taken from the panel's Detector x()/y() methods plus the panel offset, matching the qx/qy min/max calculations.
-        All lengths are in cm.
+        calculated as VCALC does (see vcalc_pixel_positions). All lengths are in cm.
 
         :param int index: The index of the panel in self.panels
         """
         panel = self.panels[index]
         detector = panel.detectors
         carriage = panel.parent
-        # Vertical (L/R) panels move laterally, horizontal (T/B) panels move vertically
-        lateral_offset = 0.0 if panel.horizontal_orientation else (panel.offset or 0.0)
-        vertical_offset = (panel.offset or 0.0) if panel.horizontal_orientation else 0.0
-        x_positions = np.asarray([detector.x(i) for i in range(detector.x_dim)], dtype=float)
-        y_positions = np.asarray([detector.y(j) for j in range(detector.y_dim)], dtype=float)
-        x_positions = x_positions + lateral_offset - carriage.refBeamCtr_x
-        y_positions = y_positions + vertical_offset - carriage.refBeamCtr_y
+        x_positions, y_positions, _, _ = self.vcalc_pixel_positions(panel)
+        # Pixel spacing from the real-distance waves
+        pixel_size_x = float(np.mean(np.diff(x_positions)))
+        pixel_size_y = float(np.mean(np.diff(y_positions)))
 
         slicer_params = dict(self.slicer_params) if self.slicer_params else {}
         slicer_params.update({
@@ -721,9 +780,9 @@ class VSANS(Instrument):
             "y_pixels": detector.y_dim,
             "x_positions": x_positions,
             "y_positions": y_positions,
-            "pixel_size_x": panel.x_pixel_size,
-            "pixel_size_y": panel.y_pixel_size,
-            "pixel_size": (panel.x_pixel_size + panel.y_pixel_size) / 2.0,
+            "pixel_size_x": pixel_size_x,
+            "pixel_size_y": pixel_size_y,
+            "pixel_size": (pixel_size_x + pixel_size_y) / 2.0,
             # VCALC uses the pixel size as the detector resolution (V_getResolution: DDet = pixel size x)
             "detector_resolution": panel.x_pixel_size,
             "lambda_val": self.get_wavelength(),
@@ -735,7 +794,8 @@ class VSANS(Instrument):
             # front carriage panels.
             "beam_stop_size": 0.0 if carriage is self.front_carriage else self.get_beam_stop_diameter() * 2.54,
             "SSD": self.get_source_to_sample_aperture_distance(),
-            # Sample to detector and sample aperture to detector, including the panel setback
+            # Sample to detector (VC_getSDD: gate valve to detector + sample to gate valve) and sample aperture to
+            # detector, including the 41 cm setback of the T/B panels (VCALC_getTopBottomSDDSetback)
             "SDD": carriage.ssd + detector.setback,
             "detector_distance": carriage.l_2 + detector.setback,
         })
