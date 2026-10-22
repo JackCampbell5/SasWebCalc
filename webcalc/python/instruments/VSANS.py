@@ -439,8 +439,7 @@ class VSANS(Instrument):
         self.calculate_objects()
         self.calculate_plots()
         self.compile_detectors()
-        for index, panel in enumerate(self.detectors):
-            self.slicer_params = {'coeff': 10000, 'x_pixels': panel.x_dim, 'y_pixels': panel.y_dim}
+        for index in range(len(self.panels)):
             self.calculate_slicer(index)
         # Calculate all the Plots
         user_inaccessible = _create_vsans_dict(is_named=False)
@@ -694,6 +693,53 @@ class VSANS(Instrument):
 
         params = check_params(params=params)
         return params
+
+    def calculate_slicer(self, index=0):
+        """Creates the slicer for a single VSANS panel.
+
+        The generic Instrument.calculate_slicer() reads pixel size and beam center from a base Detector, which VSANS
+        does not populate, so the panel geometry is passed explicitly here. Pixel positions relative to the beam are
+        taken from the panel's Detector x()/y() methods plus the panel offset, matching the qx/qy min/max calculations.
+        All lengths are in cm.
+
+        :param int index: The index of the panel in self.panels
+        """
+        panel = self.panels[index]
+        detector = panel.detectors
+        carriage = panel.parent
+        # Vertical (L/R) panels move laterally, horizontal (T/B) panels move vertically
+        lateral_offset = 0.0 if panel.horizontal_orientation else (panel.offset or 0.0)
+        vertical_offset = (panel.offset or 0.0) if panel.horizontal_orientation else 0.0
+        x_positions = np.asarray([detector.x(i) for i in range(detector.x_dim)], dtype=float)
+        y_positions = np.asarray([detector.y(j) for j in range(detector.y_dim)], dtype=float)
+        x_positions = x_positions + lateral_offset - carriage.refBeamCtr_x
+        y_positions = y_positions + vertical_offset - carriage.refBeamCtr_y
+
+        slicer_params = dict(self.slicer_params) if self.slicer_params else {}
+        slicer_params.update({
+            "x_pixels": detector.x_dim,
+            "y_pixels": detector.y_dim,
+            "x_positions": x_positions,
+            "y_positions": y_positions,
+            "pixel_size_x": panel.x_pixel_size,
+            "pixel_size_y": panel.y_pixel_size,
+            "pixel_size": (panel.x_pixel_size + panel.y_pixel_size) / 2.0,
+            # VCALC uses the pixel size as the detector resolution (V_getResolution: DDet = pixel size x)
+            "detector_resolution": panel.x_pixel_size,
+            "lambda_val": self.get_wavelength(),
+            "lambda_width": self.get_wavelength_spread(),  # dlambda is fractional, as the slicer expects
+            "lens": False,
+            "source_aperture": self.get_source_aperture_size(),  # radius, cm
+            "sample_aperture": self.get_sample_aperture_size(),  # radius, cm
+            # beamstop_required is in inches. The beam stop sits on the middle carriage, so it doesn't shadow the
+            # front carriage panels.
+            "beam_stop_size": 0.0 if carriage is self.front_carriage else self.get_beam_stop_diameter() * 2.54,
+            "SSD": self.get_source_to_sample_aperture_distance(),
+            # Sample to detector and sample aperture to detector, including the panel setback
+            "SDD": carriage.ssd + detector.setback,
+            "detector_distance": carriage.l_2 + detector.setback,
+        })
+        self.create_slicer(index, slicer_params)
 
     def get_source_to_sample_aperture_distance(self):
         return self.collimation.l_1
