@@ -94,8 +94,11 @@ export default {
             x: this.data_2d[key].qxValues,
             y: this.data_2d[key].qyValues,
             z: this.data_2d[key].intensity2D,
+            // intensity2D is indexed [x][y]; plotly expects z[row = y][column = x]
+            transpose: true,
             type: 'heatmap',
-            colorscale: 'Portland',
+            // All panels share one color scale so overlapping detectors are directly comparable
+            coloraxis: 'coloraxis',
             name: 'name' in value ? value.name : "SASCALC"
           };
           dataSets.push(dataSet);
@@ -133,6 +136,9 @@ export default {
             title: "Qy (Å^-1)",
             scaleanchor: "x",
             scaleratio: 1,
+        },
+        coloraxis: {
+            colorscale: 'Jet',
         },
         shapes: this.shapes,
       };
