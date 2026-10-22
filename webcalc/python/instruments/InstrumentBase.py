@@ -53,7 +53,7 @@ class Instrument:
         if not params:
             params = {}  # Only store values used for calculations in Instrument class
         self.name = name
-        self.params = params
+        self._params = params
 
     @property
     def params(self):
