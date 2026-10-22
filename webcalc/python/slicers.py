@@ -87,23 +87,32 @@ class Slicer:
         self.aspect_ratio: float = 1.0
 
         # Instrumental Parameters
-        # TODO: Maybe pass the instrument class as a parameter...
         self.lambda_val: float = 6.0
-        self.lambda_width: float = 0.14
+        self.lambda_width: float = 0.14  # Fractional wavelength spread (FWHM), e.g. 0.14 for 14%
         self.guides: int = 0
         self.lens = False
-        self.source_aperture: float = 25.4
-        self.sample_aperture: float = 6.35
+        # All lengths in cm. Apertures are radii, the beam stop size is a diameter.
+        self.source_aperture: float = 2.54
+        self.sample_aperture: float = 0.635
         self.aperture_offset: float = 5.00
         self.beam_stop_size: float = 5.08
+        # Detector spatial resolution (FWHM) in cm - 0.5 cm for the Ordela detectors (Igor: DDet)
+        self.detector_resolution: float = 0.5
+        # Annulus width in pixels (Igor: gBinWidth)
+        self.bin_width: float = 1.0
         self.SSD: float = 1627
         self.SDD: float = 1530
-        self.pixel_size = 5.08
-        self.pixel_size_x = self.pixel_size
-        self.pixel_size_y = self.pixel_size
+        self.pixel_size = 0.508
+        # Pixel sizes along x and y in cm. If not given they default to pixel_size (set after params are loaded).
+        self.pixel_size_x = None
+        self.pixel_size_y = None
         self.coeff: float = 10000
         self.x_center: float = 64.5
         self.y_center: float = 64.5
+        # Optional pixel positions (cm) relative to the beam center, one per pixel along x and along y. When given,
+        # they are used instead of the beam center/pixel size/coeff calculation (e.g. VSANS tube panels).
+        self.x_positions = None
+        self.y_positions = None
 
         # Calculate parameters
         self.phi_upper: float = 0.0
@@ -116,10 +125,54 @@ class Slicer:
         self.phi_to_lr_corner: float = 0.0
 
         # set params
-        # TODO: set_params should be a class method
         set_params(self, params)
+        self.validate_geometry()
+        # The angular values are needed by include_pixel() during the average, so set them first
+        self.set_angular_values()
         self.calculate_q_range_slicer()
         self.set_values()
+
+    def validate_geometry(self):
+        """Fill in derived pixel sizes and fail early with a clear message on unusable detector geometry."""
+        if not self.pixel_size_x:
+            self.pixel_size_x = self.pixel_size
+        if not self.pixel_size_y:
+            self.pixel_size_y = self.pixel_size
+        if not self.pixel_size:
+            self.pixel_size = (self.pixel_size_x + self.pixel_size_y) / 2.0
+        if not self.pixel_size or self.pixel_size <= 0 or self.pixel_size_x <= 0 or self.pixel_size_y <= 0:
+            raise ValueError(f"Slicer pixel sizes must be > 0 cm (pixel_size={self.pixel_size}, "
+                             f"pixel_size_x={self.pixel_size_x}, pixel_size_y={self.pixel_size_y}).")
+        if not self.x_pixels or not self.y_pixels:
+            raise ValueError(f"Slicer needs the number of pixels (x_pixels={self.x_pixels}, y_pixels={self.y_pixels}).")
+        self.x_pixels = int(self.x_pixels)
+        self.y_pixels = int(self.y_pixels)
+        for name, n in (('x_positions', self.x_pixels), ('y_positions', self.y_pixels)):
+            value = getattr(self, name)
+            if value is not None and len(value) != n:
+                raise ValueError(f"{name} has {len(value)} entries but the detector has {n} pixels.")
+
+    def pixel_distances(self) -> tuple[np.ndarray, np.ndarray]:
+        """Returns the x and y distances (cm) of each pixel column/row from the beam center."""
+        if self.x_positions is not None:
+            x_dist = np.asarray(self.x_positions, dtype=float)
+        else:
+            # 1-based pixel numbers, like Igor
+            x_dist = calculate_distance_from_beam_center(
+                np.arange(1, self.x_pixels + 1, dtype=float), self.x_center, self.pixel_size_x, self.coeff)
+        if self.y_positions is not None:
+            y_dist = np.asarray(self.y_positions, dtype=float)
+        else:
+            y_dist = calculate_distance_from_beam_center(
+                np.arange(1, self.y_pixels + 1, dtype=float), self.y_center, self.pixel_size_y, self.coeff)
+        return x_dist, y_dist
+
+    def set_angular_values(self):
+        """Defines the sector/rectangle angles used to select pixels while averaging."""
+        self.phi_upper = self.phi + self.d_phi
+        self.phi_lower = self.phi - self.d_phi
+        self.phi_x = np.cos(self.phi)
+        self.phi_y = np.sin(self.phi)
 
     def set_values(self):
         """Defines derived and calculated values based on the values passed to the class."""
@@ -132,156 +185,154 @@ class Slicer:
         self.min_qy = MIN_Q if len(self.qy_values) == 0 else min(self.qy_values)
 
         # Calculated parameters
-        self.phi_upper = self.phi * self.d_phi
-        self.phi_lower = self.phi - self.d_phi
-        self.phi_x = np.cos(self.phi)
-        self.phi_y = np.sin(self.phi)
+        self.set_angular_values()
         self.phi_to_ur_corner = np.atan(self.max_qy / self.max_qx)
         self.phi_to_ul_corner = np.atan(self.max_qy / self.min_qx) + np.pi
         self.phi_to_ll_corner = np.atan(self.min_qy / self.min_qx) + np.pi
         self.phi_to_lr_corner = np.atan(self.min_qy / self.max_qx) + 2 * np.pi
 
     def calculate(self):
-        """Calculate the average intensity for all Q values at a given instrument configuration"""
-        # A large number for Q purposes
+        """Calculate the average intensity for all Q values at a given instrument configuration.
+
+        Port of S_CircularAverageTo1D / S_IncrementPixel from SASCALC.ipf. All lengths are in cm.
+        """
+        # Error value used when an error can't be estimated (Igor uses 1, not 1e10, so it plots sensibly)
         large_number = 1.0
-        # The radius, in cm, from the center of the beam to slice pixels into a 3x3 grid
-        radius_center = 100
-        # Number of unique Q points used for the averaging
-        nq = 0
+        # Pixels within this radius (cm) of the beam center are split into a 3x3 grid (Igor: 100 mm)
+        radius_center = 10.0
 
-        # x and y pixel indices
-        x_indices = np.asarray(range(1, len(self.qx_values) + 1))
-        y_indices = np.asarray(range(1, len(self.qy_values) + 1))
+        pixel_size_x = self.pixel_size_x
+        pixel_size_y = self.pixel_size_y
+        ddr = self.bin_width * self.pixel_size  # Annulus width in cm
 
-        # Calculate distance array from the beam center
-        x_distances = np.array(
-            self.y_pixels * list(
-                calculate_distance_from_beam_center(
-                    x_indices,
-                    self.x_center,
-                    self.pixel_size_x,
-                    self.coeff))).reshape((self.x_pixels, self.y_pixels))
-        y_distances = np.array(
-            self.x_pixels * list(
-                calculate_distance_from_beam_center(
-                    y_indices,
-                    self.y_center,
-                    self.pixel_size_y,
-                    self.coeff))).reshape((self.x_pixels, self.y_pixels))
-        # Calculate total distances for all pixels
-        total_distances = np.sqrt(x_distances * x_distances + y_distances * y_distances)
+        # Distance of every pixel from the beam center.
+        # x varies along axis 0 and y varies along axis 1 so that [i][j] is pixel (x_i, y_j).
+        x_dist, y_dist = self.pixel_distances()
+        x_distances, y_distances = np.meshgrid(x_dist, y_dist, indexing='ij')
+        split_pixel = np.hypot(x_distances, y_distances) <= radius_center
 
-        # Convert pixels near the center into 3x3 pixels
-        num_dimensions = np.ones(np.shape(total_distances))
-        num_dimensions[total_distances <= radius_center] = 3
+        unmasked = np.asarray(self.mask) == 0
+        data = np.asarray(self.intensity_2D, dtype=float)
 
-        # Set existing pixel center value
-        center = np.ones(np.shape(total_distances))
-        center[total_distances <= radius_center] = 2
-        num_d_squared = num_dimensions * num_dimensions  # TODO: Verify if this is needed
+        # Accumulators - sized to hold every possible annulus on the detector
+        n_bins = int(np.ceil(np.hypot(np.max(np.abs(x_dist)), np.max(np.abs(y_dist))) / ddr)) + 3
+        ave_intensity = np.zeros(n_bins)
+        d_sq = np.zeros(n_bins)
+        n_cells = np.zeros(n_bins)
 
-        # Generate 1D arrays with size of x_pixels*y_pixels
-        self.ave_intensity = np.zeros(self.x_pixels * self.y_pixels)
-        self.d_sq = np.zeros(self.x_pixels * self.y_pixels)
-        self.n_cells = np.zeros(self.x_pixels * self.y_pixels)
+        # (split?, nd, fd): whole pixels are used as-is, pixels near the beam center are broken into 9 parts
+        for is_split, nd, fd in ((False, 1, 1), (True, 3, 2)):
+            selected = unmasked & (split_pixel == is_split)
+            if not np.any(selected):
+                continue
+            data_px = data[selected]
+            dx = x_distances[selected]
+            dy = y_distances[selected]
+            weight = 1.0 / (nd * nd)
+            for ll in range(1, nd + 1):
+                dxx = dx + (ll - fd) * pixel_size_x / 3
+                for kk in range(1, nd + 1):
+                    dyy = dy + (kk - fd) * pixel_size_y / 3
+                    # Mask has already been applied, so pass an all-zero mask to the selection method
+                    keep = np.broadcast_to(
+                        np.asarray(self.include_pixel(dxx, dyy, np.zeros_like(dxx)), dtype=bool), dxx.shape)
+                    if not np.any(keep):
+                        continue
+                    i_radius = self.get_i_radius(dxx[keep], dyy[keep])
+                    np.add.at(ave_intensity, i_radius, data_px[keep] * weight)
+                    np.add.at(d_sq, i_radius, data_px[keep] * data_px[keep] * weight)
+                    np.add.at(n_cells, i_radius, weight)
 
-        # FIXME: Linearize this...
-        for i in range(self.x_pixels):
-            for j in range(self.y_pixels):
-                data_px = self.intensity_2D[i][j]
-                nd = int(num_dimensions[i][j])
-                for k in range(1, nd):
-                    corrected_dx = x_distances[i][j] + (k - center[i][j]) * self.pixel_size_x / k
-                    n_d_sqr = nd
-                    for el in range(1, nd):
-                        corrected_dy = y_distances[i][j] + (el - center[i][j]) * self.pixel_size_y / el
-                        if not self.include_pixel(corrected_dx, corrected_dy, self.mask[i][j]):
-                            continue
-                        i_radius = self.get_i_radius(corrected_dx, corrected_dy)
-                        self.n_cells[i_radius] += 1 / n_d_sqr
-                        self.ave_intensity[i_radius] = (0 if self.n_cells[i] == 0 or np.isnan(self.n_cells[i])
-                                                        else self.ave_intensity[i] / self.n_cells[i])
-                        self.d_sq[i_radius] += data_px * data_px / n_d_sqr
-                        nq = max(i_radius, nq)
+        # Keep only annuli that contain pixels (panels away from the beam center have no inner annuli)
+        filled = np.nonzero(n_cells)[0]
+        ave_intensity = ave_intensity[filled]
+        self.d_sq = d_sq[filled]
+        self.n_cells = n_cells[filled]
 
-        self.ave_intensity = self.ave_intensity[:nq]
-        self.d_sq = self.d_sq[:nq]
-        self.n_cells = self.n_cells[:nq]
-        nq_array = np.arange(nq)
-        self.calculate_q(nq_array)
-        ave_sq = self.ave_intensity * self.ave_intensity
-        ave_isq = np.asarray([self.d_sq[i] if (np.isfinite(self.n_cells[i]) or self.n_cells[i] <= 0)
-                              else self.d_sq[i] / self.n_cells[i] for i in nq_array])
-        diff = ave_isq - ave_sq
-        self.sigma_ave = np.asarray([large_number if diff[i] < 0 or self.n_cells[i] <= 1
-                                     else np.sqrt(diff[i] / (self.n_cells[i] - 1)) for i in nq_array])
+        with np.errstate(divide='ignore', invalid='ignore'):
+            self.ave_intensity = np.where(self.n_cells > 0, ave_intensity / self.n_cells, 0.0)
+            ave_isq = np.where(self.n_cells > 0, self.d_sq / self.n_cells, 0.0)
+            diff = ave_isq - self.ave_intensity * self.ave_intensity
+            self.sigma_ave = np.where((self.n_cells > 1) & (diff > 0),
+                                      np.sqrt(diff / (self.n_cells - 1)), large_number)
 
+        self.calculate_q(filled)
         self.calculate_resolution()
 
     def calculate_q(self, i: np.ndarray | int):
-        """Calculates the q value for a given detector pixel, i pixels from the center of the beam or a range of
-        q values if i is ann array
+        """Calculates the q value at the center of annulus i (0-based) or a range of q values if i is an array
 
         Args:
             i: Either an integer or an array of integers
         """
-        radius = (i + 1) * self.pixel_size
+        # Bin center, Igor: rr = (2*kk-1)*ddr/2 with 1-based kk
+        radius = (np.asarray(i) + 0.5) * self.bin_width * self.pixel_size
         theta = np.arctan(radius / self.SDD) / 2
+        q = (4 * np.pi / self.lambda_val) * np.sin(theta)
         if isinstance(i, (np.ndarray, np.generic)):
-            self.q_values = (4 * np.pi / self.lambda_val) * np.sin(theta)
+            self.q_values = q
         else:
-            self.q_values[i] = (4 * np.pi / self.lambda_val) * np.sin(theta)
+            self.q_values[i] = q
 
     def get_i_radius(self, x_val, y_val):
+        """Returns the 0-based annulus index for a position (equivalent to Igor's ir - 1)"""
         if not self.pixel_size:
             self.pixel_size = (self.pixel_size_x + self.pixel_size_y) / 2.0
-        return int(np.floor(np.sqrt(x_val * x_val + y_val * y_val) / self.pixel_size) + 1)
+        ddr = self.bin_width * self.pixel_size
+        return np.floor(np.sqrt(x_val * x_val + y_val * y_val) / ddr).astype(int)
 
     def calculate_resolution(self):
-        velocity_neutron_1a = 3.956e5
-        gravity_constant = 981.0
+        """Calculates sigma Q, Q bar, and the beam stop shadow factor for every q value.
+
+        Port of S_getResolution from SASCALC.ipf (JGB = Barker & Pedersen, J. Appl. Cryst. 28, 105 (1995)).
+        All lengths are in cm. Apertures are radii, the beam stop size is a diameter, and the wavelength
+        spread is fractional (FWHM).
+        """
+        velocity_neutron_1a = 3.956e5  # Velocity [cm/s] of a 1 A neutron
+        gravity_constant = 981.0  # [cm/s^2]
         small_number = 1e-10
-        is_lenses = self.lens
-        # Pixel size in mm
-        pixel_size = self.pixel_size * 0.1
-        # Base calculations
-        l1 = self.SSD
-        l2 = self.SDD
-        a1 = self.source_aperture
-        a2 = self.sample_aperture
-        bs = 0.5 * self.beam_stop_size
-        # self.ssd is the issue
+        # Base values
+        lambda_val = self.lambda_val
+        lambda_width = self.lambda_width  # Fractional FWHM (param_restructure already divides the % by 100)
+        l1 = self.SSD  # Source aperture to sample aperture
+        # Sample aperture to detector (Igor: L2 = SDD + apOff)
+        l2 = self.detector_distance if self.detector_distance else self.SDD + self.aperture_offset
+        s1 = self.source_aperture  # Source aperture radius
+        s2 = self.sample_aperture  # Sample aperture radius
+        bs = 0.5 * self.beam_stop_size  # Beam stop radius
+        del_r = self.bin_width * self.pixel_size  # Annulus width
         lp = 1 / (1 / l2 + 1 / l1)
-        # Calculate variance
-        var_lambda = self.lambda_width * self.lambda_width / 6.0
-        term_1 = 0.25 * np.pow(a1 * l2 / l1, 2)
-        term_2 = 0.25 * np.pow(a2 * l2 / lp , 2)
-        term_lens = 0.25 * (2. / 3.) * np.pow(self.lambda_width / self.lambda_val, 2) if is_lenses else 1
-        var_beam = term_1 + term_lens * term_2
-        var_detector = np.pow(pixel_size / 2.3548, 2) + (pixel_size * pixel_size) / 12
-        velocity_neutron = velocity_neutron_1a / self.lambda_val
-        var_y_gravity = 0.5 * gravity_constant * l2 * (l1 + l2) / np.pow(velocity_neutron, 2)
-        var_gravity = 2.0 * var_lambda * var_y_gravity * var_y_gravity
-        r_zero = l2 * np.tan(2.0 * np.arcsin(self.lambda_val * np.asarray(self.q_values) / (4.0 * np.pi)))
-        r_zero[r_zero < small_number] = small_number
+        # Calculate variances
+        var_lambda = lambda_width * lambda_width / 6.0
+        if self.lens:
+            # JGB eq (6) and eq (20) from Mildner paper
+            var_beam = 0.25 * np.pow(s1 * l2 / l1, 2) + 0.25 * (2. / 3.) * lambda_width ** 2 * np.pow(s2 * l2 / lp, 2)
+        else:
+            var_beam = 0.25 * np.pow(s1 * l2 / l1, 2) + 0.25 * np.pow(s2 * l2 / lp, 2)
+        # JGB eq (7) - 2.3548 converts the detector FWHM to a Gaussian sigma
+        var_detector = np.pow(self.detector_resolution / 2.3548, 2) + (del_r * del_r) / 12.0
+        velocity_neutron = velocity_neutron_1a / lambda_val
+        y_gravity = 0.5 * gravity_constant * l2 * (l1 + l2) / np.pow(velocity_neutron, 2)  # JGB eq (8)
+        var_gravity = 2.0 * var_lambda * y_gravity * y_gravity  # JGB eq (9), 2022 form
+        r_zero = l2 * np.tan(2.0 * np.arcsin(lambda_val * np.asarray(self.q_values, dtype=float) / (4.0 * np.pi)))
+        r_zero = np.where(r_zero < small_number, small_number, r_zero)
         delta = 0.5 * np.power(bs - r_zero, 2) / var_detector
-        inc_gamma = np.asarray([np.exp(np.log(gamma(1.5))) * (1 + gammainc(1.5, delta) / gamma(1.5))
-                                if r_zero[i] >= bs
-                                else np.exp(np.log(gamma(1.5))) * (1 - gammainc(1.5, delta) / gamma(1.5))
-                                for i in range(len(r_zero))])
-        f_sub_s = 0.5 * (1.0 + erf((r_zero - bs) / np.sqrt(2.0 * var_detector)))
-        f_sub_s[f_sub_s < small_number] = small_number
-        fr = 1.0 + np.sqrt(var_detector) * np.exp(-1.0 * delta) / (r_zero * f_sub_s * np.sqrt(2.0 + np.pi))
-        fv = inc_gamma / (f_sub_s * np.sqrt(np.pi)) - np.power(r_zero * (fr - 1.0), 2) / var_detector
+        # scipy's gammainc is already regularized (== Igor's gammp), so no extra division by gamma(1.5)
+        inc_gamma = np.where(r_zero < bs,
+                             gamma(1.5) * (1.0 - gammainc(1.5, delta)),
+                             gamma(1.5) * (1.0 + gammainc(1.5, delta)))
+        f_sub_s = 0.5 * (1.0 + erf((r_zero - bs) / np.sqrt(2.0 * var_detector)))  # JGB eq (11)
+        f_sub_s = np.where(f_sub_s <= 0.0, small_number, f_sub_s)
+        fr = 1.0 + np.sqrt(var_detector) * np.exp(-1.0 * delta) / (r_zero * f_sub_s * np.sqrt(2.0 * np.pi))  # eq (12)
+        fv = inc_gamma / (f_sub_s * np.sqrt(np.pi)) - np.power(r_zero * (fr - 1.0), 2) / var_detector  # eq (13)
         rmd = fr * r_zero
         var_r1 = var_beam + var_detector * fv + var_gravity
         rm = rmd + 0.5 * var_r1 / rmd
         var_r = var_r1 - 0.5 * (var_r1 / rmd) * (var_r1 / rmd)
-        var_r[var_r < 0] = 0.0
-        self.q_average = (4.0 * np.pi / self.lambda_val) * np.sin(0.5 * np.arctan(rm / l2))
-        self.sigma_q = np.abs(self.q_average * np.sqrt((var_r / rmd) * (1 / rmd) + var_lambda))
-        self.f_subs = f_sub_s
+        var_r = np.where(var_r < 0, 0.0, var_r)
+        self.q_average = (4.0 * np.pi / lambda_val) * np.sin(0.5 * np.arctan(rm / l2))
+        self.sigma_q = self.q_average * np.sqrt(var_r / (rmd * rmd) + var_lambda)  # JGB eq (4)
+        self.f_subs = f_sub_s + 1e-8  # Keep the values from being too small
 
     def calculate_distance_from_beam_center(self, pixel_value: float | np.ndarray, x_or_y: str) -> float | np.ndarray:
         if x_or_y.lower() == "x":
@@ -296,18 +347,15 @@ class Slicer:
         self.generate_ones_data()
         self.generate_standard_mask()
         # Calculate Qx and Qy values
-        x_pixels = np.array([i for i in range(self.x_pixels)])
-        x_distances = calculate_distance_from_beam_center(x_pixels, self.x_center, self.pixel_size, self.coeff)
+        x_distances, y_distances = self.pixel_distances()
         theta_x = np.arctan(x_distances / self.detector_distance) / 2.0
         self.qx_values = (4 * np.pi / self.lambda_val) * np.sin(theta_x)
-        y_pixels = np.array([i for i in range(self.y_pixels)])
-        y_distances = calculate_distance_from_beam_center(y_pixels, self.y_center, self.pixel_size, self.coeff)
         theta_y = np.arctan(y_distances / self.detector_distance) / 2
         self.qy_values = (4 * np.pi / self.lambda_val) * np.sin(theta_y)
         qx_2d = np.transpose(np.full((self.y_pixels, self.x_pixels), self.qx_values))
         qy_2d = np.full((self.x_pixels, self.y_pixels), self.qy_values)
         self.q_2d_values = np.sqrt(qx_2d * qx_2d + qy_2d * qy_2d)
-        min_theta = np.tan(self.beam_stop_size / (2 * self.detector_distance))
+        min_theta = np.arctan(self.beam_stop_size / (2 * self.detector_distance))
         min_q = (4 * np.pi / self.lambda_val) * np.sin(min_theta / 2)
         self.intensity_2D = np.where(abs(self.q_2d_values) > min_q, self.intensity_2D, 1e-10)
         self.calculate()
@@ -333,7 +381,7 @@ class Slicer:
         slicer_return["detectorSections"] = self.detector_sections
         slicer_return["phi"] = self.phi
         slicer_return["phiUpper"] = self.phi_upper
-        slicer_return["phiUpper"] = self.phi_lower
+        slicer_return["phiLower"] = self.phi_lower
         return slicer_return
 
 
@@ -351,15 +399,20 @@ class Sector(Slicer):
         self.average_type = "sector"
 
     def include_pixel(self, x_val, y_val, mask):
-        # Overriding does work
-        pixel_angle = np.atan(x_val / y_val)
-        is_correct_angle = (pixel_angle > self.phi_lower) and (pixel_angle < self.phi_upper)
-        forward = is_correct_angle and x_val > 0
-        mirror = is_correct_angle and x_val < 0
-        both = self.detector_sections == "both" and (mirror or forward)
-        left = self.detector_sections == "left" and mirror
-        right = self.detector_sections == "right" and forward
-        return (both or left or right) and (mask == 0)
+        """Vectorized sector selection (Igor: dphi_pixel). Accepts arrays of positions."""
+        radius = np.hypot(x_val, y_val)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            dot_product = np.where(radius > 0, (x_val * self.phi_x + y_val * self.phi_y) / radius, 1.0)
+        dphi_pixel = np.arccos(np.clip(dot_product, -1.0, 1.0))
+        forward = dphi_pixel < self.d_phi
+        mirror = (np.pi - dphi_pixel) < self.d_phi
+        if self.detector_sections == "right":
+            selected = forward
+        elif self.detector_sections == "left":
+            selected = mirror
+        else:
+            selected = forward | mirror
+        return selected & (mask == 0)
 
 
 class Rectangular(Slicer):
@@ -368,16 +421,21 @@ class Rectangular(Slicer):
         self.average_type = "rectangular"
 
     def include_pixel(self, x_val, y_val, mask):
-        corrected_radius = np.sqrt(x_val * x_val + y_val * y_val)
-        dot_product = (x_val * self.phi_x + y_val * self.phi_y) / corrected_radius
-        dphi_pixel = np.acos(dot_product)
+        """Vectorized rectangular selection. Accepts arrays of positions."""
+        corrected_radius = np.hypot(x_val, y_val)
+        with np.errstate(divide='ignore', invalid='ignore'):
+            dot_product = np.where(corrected_radius > 0,
+                                   (x_val * self.phi_x + y_val * self.phi_y) / corrected_radius, 1.0)
+        dphi_pixel = np.arccos(np.clip(dot_product, -1.0, 1.0))
         d_perpendicular = corrected_radius * np.sin(dphi_pixel)
-        a = (d_perpendicular <= 0.5 * self.q_width * self.pixel_size)
-        b = self.detector_sections == "both"
-        c = self.detector_sections == "left" and dot_product >= 0
-        d = self.detector_sections == "right" and dot_product < 0
-        return a and (b or c or d) and (mask == 0)
-
+        in_strip = d_perpendicular <= 0.5 * self.q_width * self.pixel_size
+        if self.detector_sections == "left":
+            side = dot_product >= 0
+        elif self.detector_sections == "right":
+            side = dot_product < 0
+        else:
+            side = np.ones_like(in_strip, dtype=bool)
+        return in_strip & side & (mask == 0)
 
 class Elliptical(Slicer):
     def __init__(self, params):
@@ -385,7 +443,6 @@ class Elliptical(Slicer):
         self.average_type = "elliptical"
 
     def calculate_q(self, theta):
-        # FIXME: This needs to know the pixel position
         return super().calculate_q(theta)
 
     def calculate_radius(self, x_val, y_val):
