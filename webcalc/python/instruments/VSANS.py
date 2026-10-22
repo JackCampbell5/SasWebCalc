@@ -342,9 +342,10 @@ class VSANS(Instrument):
 
     def compile_detectors(self):
         """A helper method to take the detector arrays from the Carriage objects and create a list."""
-        self.panels = [self.middle_carriage.left_panel, self.middle_carriage.right_panel, self.middle_carriage.top_panel,
-                      self.middle_carriage.bottom_panel, self.front_carriage.left_panel, self.front_carriage.top_panel,
-                      self.front_carriage.right_panel, self.front_carriage.bottom_panel]
+        self.panels = [self.middle_carriage.top_panel, self.middle_carriage.bottom_panel,
+                       self.middle_carriage.left_panel, self.middle_carriage.right_panel,
+                       self.front_carriage.top_panel, self.front_carriage.bottom_panel,
+                       self.front_carriage.left_panel, self.front_carriage.right_panel]
 
         for panel in self.panels:
             self.detectors.append(panel.detectors)
