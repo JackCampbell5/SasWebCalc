@@ -191,6 +191,10 @@ export default {
             qyValues: value["qyValues"],
             intensity2D: value["intensity2D"]
           };
+          if ('name' in value) {
+            one_d[key].name = value['name'];
+            two_d[key].name = value['name'];
+          }
         }
         this.data_1d = one_d;
         this.data_2d = two_d;
