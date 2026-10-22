@@ -73,11 +73,9 @@ export default {
             y: this.data_1d[key].intensity,
             mode: 'lines+markers',
             marker: {
-                color: chartColors.black,
                 size: 5,
             },
             line: {
-                color: chartColors.black,
                 size: 1,
             },
             name: 'name' in value ? value.name : "SASCALC"
