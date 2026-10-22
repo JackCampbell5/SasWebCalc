@@ -133,7 +133,6 @@ class Instrument:
         # Better arrangement for the get statements below - missing  else None from Jeff's changes
         params["collimation"]["sample_aperture"]["diameter"] = _param_get_helper(name="sampleAperture",
                                                                                  category="Collimation")
-        # FIXME Can not set sample aperture unit otherwise creates errors
         params["collimation"]["source_aperture"] = {}
         params["collimation"]["source_aperture"]["diameter_unit"] = _param_get_helper(name="sourceAperture",
                                                                                       category="Collimation",
@@ -235,7 +234,6 @@ class Instrument:
         self.detectors = [Detector(self, detector_params) for detector_params in params.get('detectors', [{}])]
         self.collimation = Collimation(self, params.get('collimation', {}))
         self.wavelength = Wavelength(self, params.get('wavelength', {}))
-        # TODO   What class should be imported into data
         self.data = Data(self, params.get('data', {}))
 
         # gets the parameters for slicer object and updates the parameters dictionary for that
@@ -431,14 +429,12 @@ class Instrument:
             case "circular" | _:
                 self.slicer.insert(index, Circular(slicer_params))
 
-    # TODO Fix these run functions and should just be getting values
     def get_attenuation_factor(self):
         """ Gets the attenuation factor
 
         :return: The result of calculate attenuation factor
         :rtype: Float
         """
-        # TODO Fix The attenuation factor value calculated based on the number of attenuators
         return self.wavelength.attenuation_factor
 
     def get_attenuator_number(self):
@@ -479,7 +475,6 @@ class Instrument:
         :rtype: int
         """
         # Beam stop diameter in inches
-        # TODO: Convert to centimeters
         return self.beam_stops[index].beam_stop_diameter
 
     def get_number_of_guides(self):
