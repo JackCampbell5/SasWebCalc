@@ -418,8 +418,15 @@ class Instrument:
         slicer_params["beam_stop_size"] = self.data.calculated_beam_stop_diameter if self.data else self.get_beam_stop_diameter()
         slicer_params["SSD"] = self.get_source_to_sample_aperture_distance()
         slicer_params["SDD"] = self.get_sample_to_detector_distance()
-        averaging_type = self.averaging_type
-        match averaging_type:
+        self.create_slicer(index, slicer_params)
+
+    def create_slicer(self, index: int, slicer_params: dict):
+        """Creates the slicer object matching the averaging type and inserts it into the slicer list
+
+        :param index: The index in the detector array
+        :param slicer_params: The fully populated slicer parameters (all lengths in cm, fractional wavelength spread)
+        """
+        match self.averaging_type:
             case "sector":
                 self.slicer.insert(index, Sector(slicer_params))
             case "rectangular":
