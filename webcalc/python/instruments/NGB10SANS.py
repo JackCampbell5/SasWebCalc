@@ -22,6 +22,8 @@ class NGB10SANS(Instrument):
         self.name = name if name else "ngb10"
         params = self.param_restructure(params)
         super().__init__(name, params)
+        # Instrument.__init__ only stores the params, so the instrument must load them itself (as VSANS does)
+        self.load_params(params)
 
     def load_params(self, params):
         """A method that loads the constants of the NG7SANS Instrument
