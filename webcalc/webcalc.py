@@ -12,6 +12,9 @@ from flask import Flask, render_template, request, send_file
 # import specific methods from python files
 from python.link_to_sasmodels import get_model_list, get_multiplicity_models, get_params, get_structure_list
 from python.link_to_sasmodels import calculate_model as calculate_m
+from python.link_to_sasmodels import get_model
+from sasmodels.direct_model import call_kernel
+from sasmodels.resolution import Pinhole1D
 from python.helpers import decode_json, encode_json
 
 Number = float | int
@@ -226,23 +229,21 @@ def create_app():
 
         # Calculate the instrument and slicer
         params = _calculate_instrument(instrument, calculate_params)
-        q_1d = [np.asarray(array['qValues']) for i, array in params.get('data', {}).items()]
-        q_2d = [np.asarray(array['q2DValues']) for i, array in params.get('data', {}).items()]
+        data_sets = list(params.get('data', {}).values())
+        q_1d = [np.asarray(data_set['qValues']) for data_set in data_sets]
+        sigma_q_1d = [np.asarray(data_set.get('sigmaQ', [])) for data_set in data_sets]
+        q_2d = [np.asarray(data_set['q2DValues']) for data_set in data_sets]
 
-        # Calculate the 1D model
-        model_1d = _calculate_model(model, model_params, q_1d)
-        if len(q_1d) == 1:
-            model_1d = [model_1d]
-        for i, data in enumerate(params['data']):
-            params['data'][i]['fSubs'] = list(np.asarray(model_1d[i]) * np.asarray(params['data'][i]['fSubs']))
-        # Calculate the 2D model
+        # Calculate the resolution smeared 1D model, then apply the beam stop shadowing factor
+        model_1d = _calculate_model(model, model_params, q_1d, sigma_q_1d)
+        for data_set, i_1d in zip(data_sets, model_1d):
+            data_set['fSubs'] = (np.asarray(i_1d) * np.asarray(data_set['fSubs'])).tolist()
+        # Calculate the 2D model (unsmeared)
         model_2d = _calculate_model(model, model_params, q_2d)
-        if len(model_2d) == 1:
-            model_2d = [model_2d]
-        for i, data in enumerate(params['data']):
-            i_2d = np.asarray(params['data'][i]['intensity2D'])
-            comb_2d = np.asarray(model_2d).reshape(i_2d.shape) * i_2d
-            params['data'][i]['intensity2D'] = comb_2d.tolist()
+        for data_set, i_2d_model in zip(data_sets, model_2d):
+            i_2d = np.asarray(data_set['intensity2D'])
+            comb_2d = np.asarray(i_2d_model).reshape(i_2d.shape) * i_2d
+            data_set['intensity2D'] = comb_2d.tolist()
         # Return all data
         return encode_json(params)
 
@@ -273,20 +274,41 @@ def create_app():
         # Gets the model and model params out of the dict
         model_params = json_like.get('model_params', {})
 
-        return encode_json(_calculate_model(model_name, model_params, None))
+        return encode_json(_calculate_model(model_name, model_params, None)[0])
 
     def _calculate_model(model_name: str, model_params: dict[str, Number | str],
-                         q: list[np.ndarray] | None = None) -> list[Number]:
+                         q: list[np.ndarray] | None = None,
+                         sigma_q: list[np.ndarray] | None = None) -> list[list[Number]]:
         """Private method to directly call the model calculator
         :param model_name: The string representation of the model name used by sasmodels.
         :param model_params: A dictionary mapping the sasmodel parameter name to the parameter value.
-        :param q: An n-dimensional array of Q values.
-        :return: A json-like string representation of a list of intensities.
+        :param q: A list of Q arrays, one per detector panel/data set.
+        :param sigma_q: An optional list of 1-sigma Q resolution arrays matching q. When given, the model is
+            resolution smeared with a Gaussian (pinhole) resolution function.
+        :return: A list (one entry per Q array) of lists of intensities.
         """
         if q is None:
             # If no instrument data sent, use a default Q range of 0.0001 to 1.0 A^-1
-            q = np.logspace(0.0001, 1.0, 125)
-        return calculate_m(model_name, [q_i.flatten() for q_i in q], model_params)
+            q = [np.logspace(-4, 0, 125)]
+        if sigma_q is None:
+            sigma_q = [None] * len(q)
+        # Each panel gets its own kernel so multi-panel instruments (VSANS) are not treated as N-dimensional Q
+        return [_calculate_single_model(model_name, model_params, np.asarray(q_i).flatten(), dq_i)
+                for q_i, dq_i in zip(q, sigma_q)]
+
+    def _calculate_single_model(model_name: str, model_params: dict[str, Number | str], q: np.ndarray,
+                                sigma_q: np.ndarray | None = None) -> list[Number]:
+        """Calculate a model for a single Q array, applying pinhole smearing when a valid sigma_q is supplied."""
+        if sigma_q is None or np.size(sigma_q) != np.size(q) or not np.any(np.asarray(sigma_q) > 0):
+            return calculate_m(model_name, [q], model_params)
+        sigma_q = np.asarray(sigma_q, dtype=float).flatten()
+        sigma_q = np.where(np.isfinite(sigma_q) & (sigma_q > 0), sigma_q, 0.0)
+        resolution = Pinhole1D(q, sigma_q)
+        kernel = get_model(model_name).make_kernel([resolution.q_calc])
+        i_q = resolution.apply(call_kernel(kernel, model_params))
+        i_q = np.where(i_q != np.inf, i_q, 9999999)
+        i_q = np.where(~np.isnan(i_q), i_q, 8888888)
+        return i_q.tolist()
 
     @app.route('/calculate/instrument/<instrument_name>', methods=['POST'])
     def calculate_instrument(instrument_name: str) -> str:
